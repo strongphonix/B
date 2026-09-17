@@ -314,6 +314,21 @@
   .role-mid { background:#5b8cff22; color:#8fb0ff; border:1px solid #5b8cff55; }
   .bd-roles { font-size:12px; color:var(--muted); margin-top:8px; line-height:1.9; }
   .bd-roles b { color:var(--text); }
+
+  /* ---------- MA5 终极策略提示 ---------- */
+  .ma5-chip { display:inline-block; font-size:10.5px; font-weight:800; padding:1px 7px; border-radius:5px; margin-left:6px; white-space:nowrap; }
+  .ma5-ul { list-style:none; margin:6px 0 0; padding:0; }
+  .ma5-ul li { font-size:12.5px; line-height:1.9; color:#cfd6ea; padding-left:14px; position:relative; }
+  .ma5-ul li::before { content:'·'; position:absolute; left:2px; color:var(--muted); }
+  .ma5-buy, .ma5-forbid { margin-top:12px; padding:10px 12px; border-radius:9px; font-size:12.5px; }
+  .ma5-buy { background:#26c28112; border:1px solid #26c28133; }
+  .ma5-forbid { background:#ff525212; border:1px solid #ff525233; }
+  .ma5-exec { margin-top:12px; padding:10px 12px; border-radius:9px; font-size:12.5px; background:#5b8cff12; border:1px solid #5b8cff33; }
+  .ma5-buy b, .ma5-forbid b, .ma5-exec b { color:var(--text); margin-right:6px; }
+  .ma5-ok { color:var(--good); font-weight:700; margin-left:8px; }
+  .ma5-no { color:var(--danger); font-weight:700; margin-left:8px; }
+  .ma5-rule { margin-top:12px; font-size:11.5px; color:var(--dim); line-height:1.9; border-top:1px dashed var(--line); padding-top:10px; }
+  .ma5-rule b { color:var(--muted); }
 </style>
 </head>
 <body>
@@ -1317,6 +1332,112 @@ function indItem(label, value, desc, status) {
     '<div class="i-value">' + value + '</div><div class="i-desc">' + desc + '</div></div>';
 }
 
+/* =========================================================================
+   MA5 终极系统化交易策略（四态：清仓 / 减仓 / 持有 / 观察 + 超涨止盈）
+   铁律优先级：MA5斜率 ＞ 连续破线天数 ＞ 是否站线 ＞ 偏离度
+   ========================================================================= */
+var MA5_STATES = {
+  clear:      { key: 'clear',      name: '无条件清仓 · 离场', short: '清仓', color: '#ff5252', cls: 'sell', pos: '0 成（清仓离场）' },
+  reduce:     { key: 'reduce',     name: '减仓防守',        short: '减仓', color: '#ffb74d', cls: 'warn', pos: '半仓以下 / 降仓' },
+  overbought: { key: 'overbought', name: '超涨止盈警戒',    short: '止盈', color: '#ffcc66', cls: 'warn', pos: '分批止盈（不加仓）' },
+  hold:       { key: 'hold',       name: '坚定持有 · 持仓不动', short: '持有', color: '#26c281', cls: 'buy',  pos: '正常仓位（持有）' },
+  watch:      { key: 'watch',      name: '观察池 · 只看不买', short: '观察', color: '#8892b0', cls: 'hold', pos: '0 成（只看不买）' }
+};
+
+function computeMA5Strategy(ind) {
+  var slopeUp = ind.ma5Slope > 0, above = ind.price > ind.ma5v, dev = ind.dev, bd = ind.breakDays;
+  var i = ind.i, ma5 = ind.ma5, cl = ind.closes;
+  var stand2 = (i >= 1) && (cl[i] > ma5[i]) && (cl[i - 1] > ma5[i - 1]);   // 连续 2 日站稳 MA5
+  var state, reasons = [], notes = [];
+
+  if (!slopeUp && bd >= 3) {
+    state = 'clear';
+    reasons.push('MA5 斜率向下 + 连续跌破 MA5 ' + bd + ' 天（≥3 天 = 趋势终结）');
+    notes.push('短期趋势彻底拐头、多次支撑失效，下跌趋势确立 → 无条件离场，不博弈反弹');
+  } else if (dev >= 8 && slopeUp && above) {
+    state = 'overbought';
+    reasons.push('dev ' + dev.toFixed(1) + '%（>+8% 超涨，乖离过大、随时技术性回踩）');
+    reasons.push('MA5 斜率向上、站上 MA5（趋势仍强）');
+    notes.push('不再新开仓 → 持仓分批止盈、锁定利润 → 等回踩 MA5 再接');
+  } else if (!slopeUp) {
+    state = 'reduce';
+    reasons.push('MA5 斜率向下 → 一律视为弱势反弹 / 修复行情，不可重仓');
+    if (bd >= 1 && bd <= 2) reasons.push('连续破线 ' + bd + ' 天（反复破线 1-2 天）');
+    if (!above) reasons.push('当日跌破 MA5（价格在 MA5 下方）');
+    else reasons.push('价格暂时收回 MA5，但 MA5 斜率已拐头向下');
+    notes.push('只卖不买；尾盘不能站稳 MA5 → 必须减仓；次日即使反弹，只做套利、不加仓');
+  } else if (above && dev < 8 && bd === 0) {
+    state = 'hold';
+    reasons.push('MA5 斜率向上（唯一合法做多趋势）');
+    reasons.push('价格持续站稳 MA5 上方' + (stand2 ? '（连续 2 日站稳）' : ''));
+    reasons.push('dev ' + dev.toFixed(1) + '%（<+8%，未超涨、无背离）');
+    notes.push('短期趋势完美、上涨惯性稳定、无超乖离 → 允许完整吃波段，持仓不动');
+  } else {
+    state = 'watch';
+    if (!above) reasons.push('价格仍在 MA5 下方（' + ind.price.toFixed(2) + ' < MA5 ' + ind.ma5v.toFixed(2) + '）');
+    if (slopeUp && !above) reasons.push('MA5 斜率已向上，但价格尚未站上 MA5 → 等站上确认');
+    if (slopeUp && above && dev >= 8) reasons.push('站上 MA5 但 dev ' + dev.toFixed(1) + '% 偏高 → 等回踩');
+    if (ind.volRatio > 1.2 && !slopeUp) reasons.push('近期有放量阳线，但 MA5 斜率向下（趋势未修复，不建仓）');
+    if (!reasons.length) reasons.push('趋势未修复 / 拐点未确认，等待买点');
+    notes.push('只看不买、不操作：跟踪 MA5 斜率能否翻上 + 是否出现资金动作（放量阳线）；两者确认、满足买入信号后再执行，其间一直跟踪；若近 20 日无放量阳线、无资金动作 → 可剔出自选');
+  }
+
+  // ---- 买入信号（收盘判定）：斜率翻上 + 连续2日站线 + dev 0~6% + 放量阳线（须全部满足）----
+  var buyChecks = [
+    { ok: slopeUp, t: '① MA5 斜率向上（由下翻上）' },
+    { ok: stand2 || (above && bd === 0), t: '② 价格连续 2 日站稳 MA5' },
+    { ok: (dev >= 0 && dev <= 6), t: '③ 偏离度 0%~6%（不追高）' },
+    { ok: (ind.volRatio > 1.2 || ind.bigYang5 >= 1), t: '④ 近期有放量阳线（资金沉淀）' }
+  ];
+  var buySignal = buyChecks.every(function (c) { return c.ok; });
+
+  // 次日执行计划
+  var exec = [
+    '① 次日尾盘 14:50 复核：MA5 斜率仍向上 + 连续站稳 MA5 + dev 仍 0~6% → 尾盘买入',
+    '② 或次日开盘回踩 MA5 不破（缩量回踩）→ 低吸买入',
+    '③ 若开盘跳空高开致 dev > 6% → 不追高，等回踩 MA5 再买'
+  ];
+  // 信号失效（作废）规则
+  var invalidate = [
+    '次日跌破 MA5 且收盘未收回',
+    'MA5 斜率重新拐头向下',
+    'dev > 8%（超涨，禁止追）',
+    '放量破位（放量跌破 MA5 / MA10）'
+  ];
+
+  var forbid = [];
+  if (!slopeUp) forbid.push('MA5 斜率向下 → 一切反弹不参与');
+  if (dev > 8) forbid.push('偏离度 ' + dev.toFixed(1) + '% > 8% → 超涨不追');
+  if (bd > 2) forbid.push('连续破线 ' + bd + ' 天（>2 天）→ 弱势票不买');
+
+  return {
+    state: state, meta: MA5_STATES[state], reasons: reasons, notes: notes,
+    buyChecks: buyChecks, buyOK: buySignal, buySignal: buySignal,
+    exec: exec, invalidate: invalidate, forbid: forbid,
+    slopeUp: slopeUp, above: above, stand2: stand2
+  };
+}
+
+function renderMA5StrategyCard(ms) {
+  if (!ms) return '';
+  var m = ms.meta;
+  function ul(arr) { return '<ul class="ma5-ul">' + arr.map(function (x) { return '<li>' + escapeHtml(x) + '</li>'; }).join('') + '</ul>'; }
+  var h = '<div class="card"><div class="card-title">MA5 终极策略提示（买卖 / 持有）</div>';
+  h += '<div class="stage-top"><div class="stage-badge ' + m.cls + '">' + m.name + '</div>' +
+    '<div class="conf">操作建议：' + m.pos + '</div></div>';
+  h += '<div class="stage-desc" style="margin-top:10px">' + escapeHtml(ms.notes.join('；')) + '</div>';
+  h += '<div style="margin-top:12px;font-size:12.5px;color:var(--muted)">触发依据（铁律优先级：斜率 ＞ 破线天数 ＞ 站线 ＞ 偏离度）：</div>' + ul(ms.reasons);
+  h += '<div class="ma5-buy"><b>买入信号（收盘判定）</b>' +
+    (ms.buySignal ? '<span class="ma5-ok">✓ 已生成买入信号 → 待次日执行</span>' : '<span class="ma5-no">✗ 未生成（收盘未全部满足）</span>') +
+    ul(ms.buyChecks.map(function (c) { return (c.ok ? '✓ ' : '✗ ') + c.t; })) + '</div>';
+  h += '<div class="ma5-exec"><b>次日执行</b>' + ul(ms.exec) + '</div>';
+  h += '<div class="ma5-forbid"><b>信号失效（作废）</b>' + ul(ms.invalidate) + '</div>';
+  if (ms.forbid.length) h += '<div class="ma5-forbid" style="margin-top:8px"><b>禁止买点</b>' + ul(ms.forbid) + '</div>';
+  h += '<div class="ma5-rule">每日两重复盘：<b>盘中</b>实时跟踪（斜率 / 站线破线 / dev / 破线天数）；<b>尾盘</b>收盘定局 —— 收盘站稳 MA5 + 斜率向上 → 明日持有；收盘跌破 MA5 + 斜率向下 → 减仓；收盘连续破线 ≥3 天 → 明日清仓。</div>';
+  h += '</div>';
+  return h;
+}
+
 function buildResultHTML(quote, ind, sr, compact, source, gene, cap, rec) {
   var st = STAGES[sr.stage] || STAGES.new;
   var chgCls = ind.chgToday >= 0 ? 'up' : 'down';
@@ -1359,6 +1480,9 @@ function buildResultHTML(quote, ind, sr, compact, source, gene, cap, rec) {
     '<div class="flow">' + flow + '</div>' +
     '<div class="safety">' + safetyHtml + '</div>' +
     '</div>';
+
+  // MA5 终极策略提示（清仓 / 减仓 / 持有 / 观察 + 超涨止盈）
+  html += renderMA5StrategyCard(computeMA5Strategy(ind));
 
   html += '<div class="card"><div class="card-title">判断依据（命中 ' + sr.evidence.length + ' 条特征）</div><ul class="evidence-list">' +
     sr.evidence.map(function (e) { return '<li class="' + e.type + '">' + escapeHtml(e.text) + '</li>'; }).join('') + '</ul></div>';
@@ -1443,7 +1567,7 @@ async function analyzeStock(stock, ctx) {
   if (stock.amount != null) gctx.amount = stock.amount;               // 当日成交额（元）
   var rec = computeRecognition(ind, quote, gctx);                     // 股票辨识度评级
   return { ok: true, token: stock.code, code: stock.code, sym: stock.sym, name: quote.name || stock.name,
-    quote: quote, ind: ind, sr: sr, gene: gene, cap: cap, rec: rec, source: data.source, ts: Date.now() };
+    quote: quote, ind: ind, sr: sr, gene: gene, cap: cap, rec: rec, ma5: computeMA5Strategy(ind), source: data.source, ts: Date.now() };
 }
 
 async function evaluateOne(token, ctx) {
@@ -2355,6 +2479,7 @@ var ST = {
   geneFilter: 'all',
   capFilter: 'all',
   recFilter: 'all',
+  ma5Filter: 'all',       // MA5 策略四态筛选：all / clear / reduce / overbought / hold / watch
   rowSort: 'chg',
   ztTime: {},            // code -> 首次触板时间 "09:37"
   roles: null,           // { leader:{...}, mids:{code:reason} }
@@ -2572,7 +2697,7 @@ async function openBoard(code, name, chg) {
   ST.runId++; ST.stopFlag = true; ST.running = false;
   ST.detail = { code: code, name: name, stocks: null, err: null, chg: (chg === undefined || chg === null || isNaN(chg)) ? null : +chg, upCount: 0, downCount: 0, flow: 0 };
   ST.stocksLoading = true;
-  ST.rowOpen = {}; ST.stageFilter = 'all'; ST.capFilter = 'all'; ST.geneFilter = 'all'; ST.recFilter = 'all';
+  ST.rowOpen = {}; ST.stageFilter = 'all'; ST.capFilter = 'all'; ST.geneFilter = 'all'; ST.recFilter = 'all'; ST.ma5Filter = 'all';
   ST.ztTime = {}; ST.roles = null;
   ST.progress = { done: 0, total: 0 }; ST.truncated = false;
   el('boardListWrap').style.display = 'none';
@@ -2677,7 +2802,8 @@ function autoAnalyze() {
 function boardStat() {
   var stocks = (ST.detail && ST.detail.stocks) || [];
   var stat = { all: 0, done: 0, fail: 0, counts: {}, gStrong: 0, gBase: 0, gWeak: 0, gNone: 0, geneDone: 0, geneTop: [],
-    recDone: 0, recHigh: 0, recMid: 0, recLow: 0, recTop: [] };
+    recDone: 0, recHigh: 0, recMid: 0, recLow: 0, recTop: [],
+    ma5Done: 0, ma5Buy: 0, ma5: { clear: 0, reduce: 0, overbought: 0, hold: 0, watch: 0 } };
   STAGE_KEYS.forEach(function (k) { stat.counts[k] = 0; });
   stocks.forEach(function (s) {
     stat.all++;
@@ -2686,6 +2812,12 @@ function boardStat() {
     if (!r.ok) { stat.fail++; return; }
     stat.done++;
     stat.counts[r.sr.stage] = (stat.counts[r.sr.stage] || 0) + 1;
+    var ms = r.ma5 || computeMA5Strategy(r.ind);
+    if (ms) {
+      stat.ma5Done++;
+      stat.ma5[ms.state] = (stat.ma5[ms.state] || 0) + 1;
+      if (ms.buySignal) stat.ma5Buy++;
+    }
     if (r.rec) {
       stat.recDone++;
       if (r.rec.tier.key === 'high') stat.recHigh++;
@@ -2799,6 +2931,28 @@ function renderDetailHead() {
       }).join('') + '</div>';
     h += '<div style="font-size:11.5px;color:var(--dim);margin-top:10px">点击阶段标签可只看该阶段股票；点击任意股票行可展开完整生命周期分析。</div>';
 
+    // ---------- MA5 终极策略：四态汇总 + 筛选 ----------
+    if (stat.ma5Done) {
+      var M = stat.ma5;
+      h += '<div class="gene-strip" style="margin-top:14px">' +
+        '<span class="gs-title">MA5 终极策略</span>' +
+        '<span class="gs-item" style="color:#26c281">💰 买入信号 <b>' + (stat.ma5Buy || 0) + '</b></span>' +
+        '<span class="gs-item" style="color:#ff5252">清仓票 <b>' + (M.clear || 0) + '</b></span>' +
+        '<span class="gs-item" style="color:#ffb74d">减仓票 <b>' + (M.reduce || 0) + '</b></span>' +
+        '<span class="gs-item" style="color:#ffcc66">超涨止盈 <b>' + (M.overbought || 0) + '</b></span>' +
+        '<span class="gs-item" style="color:#26c281">持有票 <b>' + (M.hold || 0) + '</b></span>' +
+        '<span class="gs-item" style="color:#8892b0">观察票 <b>' + (M.watch || 0) + '</b></span>' +
+        '<span style="margin-left:auto"></span>' +
+        '<span class="gs-top">斜率向上=唯一合法做多；斜率向下=弱势反弹；破线≥3天=清仓</span>' +
+        '</div>';
+      h += '<div class="stage-chips">' +
+        [['all', '全部策略态'], ['buy', '💰 买入信号票'], ['hold', '持有票'], ['reduce', '减仓票'], ['overbought', '超涨止盈票'], ['clear', '清仓票'], ['watch', '观察票']].map(function (o) {
+          return '<button class="schip' + (ST.ma5Filter === o[0] ? ' on' : '') + '" data-act="ma5f" data-ma5="' + o[0] + '">' +
+            '<i class="dot" style="background:linear-gradient(135deg,#ff5252,#26c281)"></i>' + o[1] +
+            (o[0] === 'all' ? ' <b>' + stat.ma5Done + '</b>' : '') + '</button>';
+        }).join('') + '</div>';
+    }
+
     // ---------- 涨停基因筛选与排序 ----------
     if (stat.geneDone) {
       h += '<div class="gene-strip">' +
@@ -2895,7 +3049,10 @@ function rowCells(s) {
   }
   var ind = r.ind, sr = r.sr, stg = sr.stage;
   var chipStyle = 'background:' + stageColorOf(stg) + '22;color:' + stageColorOf(stg) + ';border:1px solid ' + stageColorOf(stg) + '55';
-  cells += '<td><span class="st-chip" style="' + chipStyle + '">' + stageNameOf(stg) + '</span><em class="conf-mini">' + sr.confidence + '</em></td>';
+  var ms = r.ma5 || computeMA5Strategy(ind);
+  var msChip = '<span class="ma5-chip" style="background:' + ms.meta.color + '22;color:' + ms.meta.color + ';border:1px solid ' + ms.meta.color + '55" title="MA5 终极策略：' + escapeHtml(ms.meta.name) + '｜' + escapeHtml(ms.meta.pos) + '">' + ms.meta.short + '</span>';
+  if (ms.buySignal) msChip += '<span class="ma5-chip" style="background:#26c28122;color:#26c281;border:1px solid #26c28155" title="收盘已满足买入信号：斜率翻上 + 连续2日站线 + dev 0~6% + 放量阳线；次日 14:50 复核买入 或 开盘回踩MA5买入（失效则作废）">买点</span>';
+  cells += '<td><span class="st-chip" style="' + chipStyle + '">' + stageNameOf(stg) + '</span><em class="conf-mini">' + sr.confidence + '</em>' + msChip + '</td>';
   if (r.rec) {
     cells += '<td class="rec-cell" style="color:' + r.rec.tier.color + '" title="' + escapeHtml(r.rec.tier.name + '：' + r.rec.reason) + '">' +
       r.rec.tier.short + ' <em>' + r.rec.score + '</em></td>';
@@ -2964,6 +3121,12 @@ function renderDetailBody() {
     if (ST.recFilter !== 'all') {
       if (!r || !r.ok || !r.rec) return false;
       if (r.rec.tier.key !== ST.recFilter) return false;
+    }
+    if (ST.ma5Filter && ST.ma5Filter !== 'all') {
+      if (!r || !r.ok) return false;
+      var msf = r.ma5 || computeMA5Strategy(r.ind);
+      if (ST.ma5Filter === 'buy') { if (!msf.buySignal) return false; }
+      else if (msf.state !== ST.ma5Filter) return false;
     }
     if (ST.geneFilter === 'all') return true;
     if (!r || !r.ok || !r.gene) return false;
@@ -3404,6 +3567,7 @@ function init() {
       if (act === 'genef') { ST.geneFilter = a.getAttribute('data-gene'); return renderBoardDetail(); }
       if (act === 'capf') { ST.capFilter = a.getAttribute('data-cap'); return renderBoardDetail(); }
       if (act === 'recf') { ST.recFilter = a.getAttribute('data-rec'); return renderBoardDetail(); }
+      if (act === 'ma5f') { ST.ma5Filter = a.getAttribute('data-ma5'); return renderBoardDetail(); }
       if (act === 'lhb') { return loadBoardLHB(); }
       if (act === 'reload') { if (ST.detail) return openBoard(ST.detail.code, ST.detail.name, ST.detail.chg); }
       return;
