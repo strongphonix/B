@@ -3556,6 +3556,9 @@ function rowCells(s) {
   var msChip = '<span class="ma5-chip" style="background:' + ms.meta.color + '22;color:' + ms.meta.color + ';border:1px solid ' + ms.meta.color + '55" title="MA5 终极策略：' + escapeHtml(ms.meta.name) + '｜' + escapeHtml(ms.meta.pos) + '">' + ms.meta.short + '</span>';
   if (ms.buySignal) msChip += '<span class="ma5-chip" style="background:#26c28122;color:#26c281;border:1px solid #26c28155" title="收盘已满足买入信号：斜率翻上 + 连续2日站线 + dev 0~6% + 放量阳线；次日 14:50 复核买入 或 开盘回踩MA5买入（失效则作废）">买点</span>';
   cells += '<td><span class="st-chip" style="' + chipStyle + '">' + stageNameOf(stg) + '</span>' + msChip + '</td>';
+  // 建议仓位（与MA5策略一致）
+  var pInfo = ma5PositionInfo(ind, STAGES[sr.stage].position);
+  cells += '<td style="color:' + pInfo.color + ';font-size:11.5px">' + pInfo.text + '</td>';
   if (r.rec) {
     cells += '<td class="rec-cell" style="color:' + r.rec.tier.color + '" title="' + escapeHtml(r.rec.tier.name + '：' + r.rec.reason) + '">' +
       r.rec.tier.short + ' <em>' + r.rec.score + '</em></td>';
@@ -3574,9 +3577,6 @@ function rowCells(s) {
       r.cap.verdict.name.split(' ')[0].split('（')[0] + ' <em>' + r.cap.volRatio.toFixed(2) + '</em></td>';
   } else cells += '<td class="cap-cell-td" style="color:var(--dim)">—</td>';
   cells += '<td class="' + (s.flow >= 0 ? 'up' : 'down') + '">' + fmtYi(s.flow) + '</td>';
-  // 建议仓位（与MA5策略一致）
-  var pInfo = ma5PositionInfo(ind, STAGES[sr.stage].position);
-  cells += '<td style="color:' + pInfo.color + ';font-size:11.5px">' + pInfo.text + '</td>';
   cells += '<td class="' + ((s.gain60 || 0) >= 0 ? 'up' : 'down') + '">' + (s.gain60 === null ? '—' : fmtPct(s.gain60)) + '</td>';
   // 开盘强弱（开盘八法）
   if (r.open8 && r.open8.ok && r.open8.form) {
@@ -3608,8 +3608,8 @@ function stockRowHTML(s) {
     (ST.rowOpen[s.code] ? detailRowHTML(s.code) : '');
 }
 
-var TABLE_HEAD = '<thead><tr><th>股票</th><th>现价</th><th>涨跌幅</th><th>阶段</th><th>辨识度</th><th>涨停基因</th>' +
-  '<th>dev</th><th>MA5斜率</th><th>破线</th><th>换手</th><th>主力参与</th><th>主力净流入</th><th>建议仓位</th><th>60日涨幅</th><th>开盘强弱</th></tr></thead>';
+var TABLE_HEAD = '<thead><tr><th>股票</th><th>现价</th><th>涨跌幅</th><th>阶段</th><th>建议仓位</th><th>辨识度</th><th>涨停基因</th>' +
+  '<th>dev</th><th>MA5斜率</th><th>破线</th><th>换手</th><th>主力参与</th><th>主力净流入</th><th>60日涨幅</th><th>开盘强弱</th></tr></thead>';
 
 function renderDetailBody() {
   var d = ST.detail;
@@ -3989,8 +3989,8 @@ function renderSingle() {
 
   var summary = '<div class="batch-toolbar"><span class="count">共 ' + arr.length + ' 只，成功 ' + okList.length + ' 只</span><span style="margin-left:auto"></span></div>';
   el('resultArea').innerHTML = '<div class="card">' + summary +
-    '<div style="overflow-x:auto"><table class="batch-table"><thead><tr><th>股票</th><th>现价</th><th>涨跌幅</th><th>阶段</th><th>辨识度</th><th>涨停基因</th>' +
-    '<th>dev</th><th>MA5斜率</th><th>破线</th><th>换手</th><th>主力参与</th><th>主力净流入</th><th>建议仓位</th><th>60日涨幅</th><th>开盘强弱</th></tr></thead><tbody>' + body + '</tbody></table></div></div>';
+    '<div style="overflow-x:auto"><table class="batch-table"><thead><tr><th>股票</th><th>现价</th><th>涨跌幅</th><th>阶段</th><th>建议仓位</th><th>辨识度</th><th>涨停基因</th>' +
+    '<th>dev</th><th>MA5斜率</th><th>破线</th><th>换手</th><th>主力参与</th><th>主力净流入</th><th>60日涨幅</th><th>开盘强弱</th></tr></thead><tbody>' + body + '</tbody></table></div></div>';
 }
 
 async function runSearch() {
@@ -4209,8 +4209,8 @@ function renderWatch() {
 
   var body = watchBatchBody();
   list.innerHTML = stageChips + ma5Chips +
-    '<div class="card"><div style="overflow-x:auto"><table class="batch-table"><thead><tr><th>股票</th><th>现价</th><th>涨跌幅</th><th>阶段</th><th>辨识度</th><th>涨停基因</th>' +
-    '<th>dev</th><th>MA5斜率</th><th>破线</th><th>换手</th><th>主力参与</th><th>主力净流入</th><th>建议仓位</th><th>60日涨幅</th><th>开盘强弱</th></tr></thead><tbody>' + body + '</tbody></table></div></div>';
+    '<div class="card"><div style="overflow-x:auto"><table class="batch-table"><thead><tr><th>股票</th><th>现价</th><th>涨跌幅</th><th>阶段</th><th>建议仓位</th><th>辨识度</th><th>涨停基因</th>' +
+    '<th>dev</th><th>MA5斜率</th><th>破线</th><th>换手</th><th>主力参与</th><th>主力净流入</th><th>60日涨幅</th><th>开盘强弱</th></tr></thead><tbody>' + body + '</tbody></table></div></div>';
 }
 
 /* =========================================================================
