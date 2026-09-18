@@ -329,6 +329,65 @@
   .ma5-no { color:var(--danger); font-weight:700; margin-left:8px; }
   .ma5-rule { margin-top:12px; font-size:11.5px; color:var(--dim); line-height:1.9; border-top:1px dashed var(--line); padding-top:10px; }
   .ma5-rule b { color:var(--muted); }
+  /* ===== 自选列表 ===== */
+  .wl-toolbar { display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+  .wl-count { font-size:13px; color:var(--muted,#7a85a3); }
+  .wl-hint { font-size:12px; color:#5d6788; margin-left:auto; }
+  .wl-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px; }
+  .wl-card { background:#171c2b; border:1px solid #283047; border-radius:12px; padding:14px 16px; display:flex; flex-direction:column; gap:10px; }
+  .wl-name { font-size:15px; font-weight:600; color:#e8edff; }
+  .wl-code { font-size:12px; color:#5d6788; font-weight:400; margin-left:5px; }
+  .wl-actions { display:flex; gap:8px; }
+  .btn.small { padding:6px 14px; font-size:12.5px; border-radius:8px; }
+  .wl-btn { margin-left:10px; padding:4px 10px; font-size:12px; border-radius:8px; border:1px solid #283047; background:transparent; color:#7a85a3; cursor:pointer; white-space:nowrap; }
+  .wl-btn:hover { border-color:#5b8cff; color:#9fb4ff; }
+  .wl-btn.on { color:#ffce54; border-color:#ffce5455; background:rgba(255,206,84,.10); }
+  .wl-status { font-size:12px; color:#5d6788; margin-left:10px; }
+  .wl-x { margin-left:6px; padding:0 6px; font-size:11px; line-height:18px; border-radius:5px; border:1px solid #283047; background:transparent; color:#5d6788; cursor:pointer; vertical-align:middle; }
+  .wl-x:hover { color:#ff6b6b; border-color:#ff6b6b55; }
+  .wl-loading { padding:40px; text-align:center; color:#5d6788; font-size:13px; }
+
+  /* ===== 早盘5分钟K线（开盘八法） ===== */
+  .open8-head { display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:12px; }
+  .open8-form { font-size:16px; font-weight:700; padding:5px 14px; border:1.5px solid; border-radius:10px; }
+  .open8-pat { font-size:13px; color:#9fb4ff; }
+  .open8-forecast { margin-left:auto; font-size:13px; font-weight:600; }
+  .open8-bars { display:flex; gap:10px; margin:6px 0 14px; }
+  .ob { flex:1; min-width:0; border:1px solid #283047; border-radius:10px; padding:8px 6px; text-align:center; background:#121724; }
+  .ob.up { border-color:#26c28155; background:rgba(38,194,129,.07); }
+  .ob.down { border-color:#ff5b5b55; background:rgba(255,91,91,.07); }
+  .ob .obk { font-size:11px; color:#5d6788; }
+  .ob .obh, .ob .obl { font-size:11px; line-height:1.5; color:#7a85a3; }
+  .ob .obh { color:#ff8a8a; } .ob .obl { color:#7fd1a0; }
+  .ob .obbody { display:flex; flex-direction:column; gap:1px; margin:3px 0; }
+  .ob .obc { font-size:14px; font-weight:700; color:#e8edff; }
+  .ob .obo { font-size:11px; color:#5d6788; }
+  .ob .obv { font-size:10.5px; color:#5d6788; margin-top:3px; }
+  .open8-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:8px 14px; }
+  .open8-item { display:flex; justify-content:space-between; gap:10px; padding:7px 10px; background:#121724; border:1px solid #20283b; border-radius:8px; font-size:12.5px; }
+  .open8-item .k { color:#7a85a3; white-space:nowrap; }
+  .open8-item .v { color:#cdd6f4; text-align:right; }
+  .open8-advice { margin-top:12px; border-top:1px solid #20283b; padding-top:10px; }
+  .oa-title { font-size:13px; color:#9fb4ff; margin-bottom:6px; }
+  .oa-row { display:flex; gap:12px; font-size:12.5px; padding:3px 0; }
+  .oa-row .oa-k { color:#7a85a3; min-width:42px; flex-shrink:0; }
+  .oa-row span:last-child { color:#cdd6f4; }
+  .open8-cell { font-size:12px; }
+
+  /* ===== 钉钉提醒 ===== */
+  .ding-form { display:flex; flex-direction:column; gap:6px; }
+  .ding-form label { font-size:12.5px; color:#9fb4ff; margin-top:6px; }
+  .ding-form input, .ding-form select { padding:9px 12px; border-radius:9px; border:1px solid #283047; background:#121724; color:#e8edff; font-size:13px; }
+  .ding-checks { display:flex; flex-direction:column; gap:7px; margin-top:4px; }
+  .ding-checks label { display:flex; align-items:center; gap:8px; color:#cdd6f4; font-size:12.5px; margin:0; }
+  .ding-actions { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
+  .ding-log { list-style:none; padding:0; margin:0; }
+  .ding-log li { font-size:12.5px; padding:6px 0; border-bottom:1px solid #1c2333; color:#cdd6f4; }
+  .ding-log .t { color:#5d6788; margin-right:6px; }
+  .ding-log .c { color:#5d6788; margin:0 6px; }
+  .ding-log .g { color:#ffce54; font-size:11.5px; }
+  .ding-prev { white-space:pre-wrap; word-break:break-word; font-size:12px; color:#9fb4ff; background:#0e1320; border:1px solid #20283b; border-radius:9px; padding:12px; margin:0; font-family:Consolas,Menlo,monospace; line-height:1.7; }
+  .ding-warn { font-size:12px; color:#ffb74d; margin-top:10px; line-height:1.75; }
 </style>
 </head>
 <body>
@@ -342,6 +401,8 @@
   <div class="tabs">
     <button class="tab on" data-view="board">板块全景</button>
     <button class="tab" data-view="single">个股诊断</button>
+    <button class="tab" data-view="watch">⭐ 自选</button>
+    <button class="tab" data-view="ding">🔔 钉钉提醒</button>
   </div>
 
   <!-- ======================= 视图一：板块全景 ======================= -->
@@ -386,6 +447,55 @@
         <p style="font-size:12px;color:#5d6788;margin-top:8px;">启动 → 爆发 → 主升 → 加速 → 分歧 → 修复 → 退潮 → 新一轮</p>
       </div>
     </div>
+  </div>
+
+  <!-- ======================= 视图三：自选列表 ======================= -->
+  <div class="view" id="view-watch">
+    <div class="wl-toolbar">
+      <span class="wl-count" id="wlCount">自选 0 只</span>
+      <button class="btn" id="wlQueryAll">刷新查询</button>
+      <button class="btn ghost" id="wlClear">清空自选</button>
+      <span class="wl-status" id="wlStatus"></span>
+      <span class="wl-hint">自选股实时行情与诊断 · 收藏在本地浏览器，关闭页面不丢失</span>
+    </div>
+    <div id="wlList"></div>
+  </div>
+
+  <!-- ======================= 视图四：钉钉提醒 ======================= -->
+  <div class="view" id="view-ding">
+    <div class="card">
+      <div class="card-title">🔔 钉钉机器人 · 买点提醒配置</div>
+      <div class="ding-form">
+        <label>Webhook 地址（钉钉群 → 群设置 → 智能群助手 → 添加自定义机器人 → 复制 Webhook）</label>
+        <input id="dingUrl" placeholder="https://oapi.dingtalk.com/robot/send?access_token=xxxxxxxx" autocomplete="off">
+        <label>加签 Secret（可选 · 机器人安全设置勾了「加签」才填，SEC 开头）</label>
+        <input id="dingSecret" placeholder="SECxxxxxxxxxxxxxxxx" autocomplete="off">
+        <label>自定义关键词（可选 · 机器人安全设置勾了「自定义关键词」就填，推送内容会自动带上它）</label>
+        <input id="dingKeyword" placeholder="如：买点提醒" autocomplete="off">
+        <label>监控范围</label>
+        <select id="dingScope">
+          <option value="watch">自选列表</option>
+          <option value="board">当前打开的板块</option>
+          <option value="both">自选 + 当前板块</option>
+        </select>
+        <label>触发条件（买点判定）</label>
+        <div class="ding-checks">
+          <label><input type="checkbox" id="trigMa5" checked> MA5 买入信号（斜率翻上 + 连续2日站线 + dev 0~6% + 放量阳线）</label>
+          <label><input type="checkbox" id="trigOpen8"> 开盘八法多方盘（三高盘 / 两高盘 / 平移上）</label>
+        </div>
+        <label>盘中自动检测间隔（分钟 · 0 = 仅手动）</label>
+        <input id="dingInterval" type="number" min="0" max="60" value="5">
+        <div class="ding-actions">
+          <button class="btn" id="dingSave">保存配置</button>
+          <button class="btn ghost" id="dingTest">测试推送</button>
+          <button class="btn" id="dingScan">立即检测并推送</button>
+          <button class="btn ghost" id="dingClearLog">清空推送记录</button>
+        </div>
+        <div class="wl-status" id="dingStatus"></div>
+        <div class="ding-warn">⚠️ 说明：浏览器直连钉钉 Webhook 属于「静默投递」——消息能送达，但读不到钉钉回执；请到群里确认。<b>需保持本页面打开</b>（含盘中自动检测）；若希望关掉浏览器也能推，可改用「WorkBuddy 定时任务」方案（见页面下方说明）。机器人安全设置推荐用「加签」或「自定义关键词」，不要用「IP 白名单」（浏览器出口 IP 会变）。</div>
+      </div>
+    </div>
+    <div id="dingResult"></div>
   </div>
 
   <div class="notice">
@@ -632,6 +742,18 @@ async function emListAll(fs, fields, opt) {
 function lsGet(k) { try { var s = localStorage.getItem(k); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
 function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 
+/* 自选列表（持久化到 localStorage，跨会话保留） */
+var WL_KEY = 'bwork_watchlist';
+function wlGet() { var a = lsGet(WL_KEY); return Array.isArray(a) ? a : []; }
+function wlHas(code) { return wlGet().some(function (x) { return x.code === code; }); }
+function wlAdd(code, name) {
+  var a = wlGet();
+  if (!a.some(function (x) { return x.code === code; })) { a.unshift({ code: code, name: name || code, t: Date.now() }); lsSet(WL_KEY, a); }
+  return a;
+}
+function wlRemove(code) { var a = wlGet().filter(function (x) { return x.code !== code; }); lsSet(WL_KEY, a); return a; }
+function wlToggle(code, name) { return wlHas(code) ? wlRemove(code) : wlAdd(code, name); }
+
 // 板块列表（内存 2 分钟缓存 + 本地 6 小时兜底缓存）
 var __boardCache = {};
 async function getBoards(type) {
@@ -808,6 +930,34 @@ async function fetchTencentRealtime(sym) {
     raw = await loadScriptVar(url, vn, 'GBK', 10000);  // JSONP 兜底
   }
   return parseTencentQuote(String(raw), sym);
+}
+
+// 腾讯 5 分钟分时 K 线（当日「开盘八法」用）：主路径 web.ifzq 会 301 跳转到 ifzq，fetchJson 自动跟随
+var M5_SRC = [
+  { host: 'https://web.ifzq.gtimg.cn/appstock/app/kline/mkline', fail: 0 },
+  { host: 'https://ifzq.gtimg.cn/appstock/app/kline/mkline', fail: 0 }
+];
+async function fetchM5Parse(sym) {
+  var order = [0, 1], lastErr = null;
+  for (var k = 0; k < order.length; k++) {
+    var src = M5_SRC[order[k]];
+    if (src.fail >= 3) continue;
+    try {
+      var url = src.host + '?param=' + sym + ',m5&_=' + Date.now();
+      var obj = await fetchJson(url, 12000);
+      var node = obj && obj.data && obj.data[sym];
+      var arr = node && node.m5;
+      if (!Array.isArray(arr) || !arr.length) throw new Error('无5分钟数据');
+      var bars = arr.map(function (r) {
+        return { time: String(r[0]), date: String(r[0]).slice(0, 8),
+          open: +r[1], close: +r[2], high: +r[3], low: +r[4], vol: +r[5] };
+      }).filter(function (b) { return isFinite(b.close) && b.close > 0; });
+      if (!bars.length) throw new Error('5分钟解析为空');
+      src.fail = 0;
+      return bars;
+    } catch (e) { src.fail++; lastErr = e; }
+  }
+  throw (lastErr || new Error('5分钟接口不可用'));
 }
 
 // 东方财富兜底（JSONP；失败自动重试一次）
@@ -1418,6 +1568,156 @@ function computeMA5Strategy(ind) {
   };
 }
 
+/* =========================================================================
+   早盘5分钟K线诊断（开盘八法）
+   基于当日前3根5分钟K线（09:30-09:45）的收盘/开盘比较，归类8种形态，
+   配合量价、量比、关键价位、与昨日对比给出全天预判与操作建议。
+   ========================================================================= */
+var OPEN8_FORMS = {
+  '涨涨涨': { name: '三高盘', side: 'bull', strength: '强', full: '多方最强，全天偏强', op: '持有/回踩低吸；高位巨量警惕诱多' },
+  '涨涨跌': { name: '两高盘', side: 'bull', strength: '中', full: '多方占优但有分歧', op: '观察第3根阴线是否破第1根低点' },
+  '涨跌涨': { name: '平移上', side: 'bull', strength: '中', full: '震荡偏多，洗盘后再上', op: '第3根突破第1根高点=买点' },
+  '涨跌跌': { name: '一高盘', side: 'bull', strength: '弱', full: '冲高回落，压力盘', op: '警惕诱多，不追高；破第1根低点离场' },
+  '跌跌跌': { name: '三低盘', side: 'bear', strength: '强', full: '空方最强，全天偏弱', op: '不抄底，反弹减仓' },
+  '跌跌涨': { name: '两低盘', side: 'bear', strength: '中', full: '空方占优但有抵抗', op: '观察反弹是否破第1根高点' },
+  '跌涨涨': { name: '一低盘', side: 'bear', strength: '弱', full: '低开高走，可能V反', op: '突破第1根高点=转强信号' },
+  '跌涨跌': { name: '平移下', side: 'bear', strength: '中', full: '震荡偏空，反弹无力', op: '跌破第1根低点=继续看空' }
+};
+
+function computeOpen8(ind, quote, m5) {
+  if (!m5 || !m5.length) return { ok: false, reason: '未取到当日5分钟K线' };
+  var maxDate = '';
+  m5.forEach(function (b) { if (b.date > maxDate) maxDate = b.date; });
+  var today = m5.filter(function (b) { return b.date === maxDate; })
+    .sort(function (a, b) { return a.time < b.time ? -1 : (a.time > b.time ? 1 : 0); });
+  if (!today.length) return { ok: false, reason: '当日无5分钟K线' };
+  var n = today.length;
+  var first3 = today.slice(0, 3);
+  var ups = first3.map(function (b) { return b.close >= b.open; });
+  var pat = ups.map(function (u) { return u ? '涨' : '跌'; }).join('');
+  var form = OPEN8_FORMS[pat] || null;
+  var hi3 = first3[0].high, lo3 = first3[0].low;
+  first3.forEach(function (b) { if (b.high > hi3) hi3 = b.high; if (b.low < lo3) lo3 = b.low; });
+  var sv = 0, svq = 0; first3.forEach(function (b) { sv += b.close * b.vol; svq += b.vol; });
+  var vwap3 = svq ? sv / svq : null;
+  var sv2 = 0, svq2 = 0; today.forEach(function (b) { sv2 += b.close * b.vol; svq2 += b.vol; });
+  var vwapNow = svq2 ? sv2 / svq2 : null;
+  var keyBar = first3[0], kv = -1;
+  first3.forEach(function (b) { if (b.vol > kv) { kv = b.vol; keyBar = b; } });
+  var open0 = first3[0].open, lastClose = today[n - 1].close;
+  var chgPct = open0 ? (lastClose - open0) / open0 * 100 : 0;
+  var flat = Math.abs(chgPct) < 0.3;
+  var vr = (quote && isFinite(quote.volRatio)) ? quote.volRatio : null;
+  if (vr == null) {                       // 实时量比缺失 → 用「首根5分钟量 / 近N日首根均量」近似开盘量比
+    var byDate = {}, dates = [];
+    m5.forEach(function (b) { if (b.date === maxDate) return; if (!byDate[b.date]) { byDate[b.date] = b; dates.push(b.date); } });
+    if (dates.length >= 3) {
+      var ssum = 0; dates.forEach(function (d) { ssum += byDate[d].vol; });
+      var avg = ssum / dates.length;
+      if (avg > 0) vr = today[0].vol / avg;
+    }
+  }
+  var volUp = (vr == null) ? null : (vr >= 1);
+  var vp;
+  if (flat) vp = '量缩价稳';
+  else if (chgPct > 0) vp = volUp ? '量增价涨' : '量缩价涨';
+  else vp = volUp ? '量增价跌' : '量缩价跌';
+  var vrLevel;
+  if (vr == null) vrLevel = '—';
+  else if (vr > 5) vrLevel = '显著放量·大资金抢筹';
+  else if (vr >= 3) vrLevel = '放量异动·有资金进场';
+  else if (vr >= 1.5) vrLevel = '温和放量·正常参与';
+  else if (vr >= 0.8) vrLevel = '平平无奇·无主力加持';
+  else vrLevel = '缩量冷清·不参与';
+  var y = null;
+  if (ind.klines && ind.klines.length >= 2) { var yb = ind.klines[ind.klines.length - 2]; y = { high: yb.high, low: yb.low }; }
+  var vs = null;
+  if (y && isFinite(ind.price)) {
+    if (ind.price > y.high) vs = '突破昨日高点';
+    else if (ind.price < y.low) vs = '跌破昨日低点';
+    else vs = '在昨日高低间震荡';
+  }
+  var forecast = form ? (form.side === 'bull' ? '偏强' : form.side === 'bear' ? '偏弱' : '震荡') : '—';
+  var aboveVwap = (vwapNow != null && isFinite(ind.price)) ? ind.price > vwapNow : null;
+  var keyLow = Math.min(keyBar.open, keyBar.close), keyHigh = Math.max(keyBar.open, keyBar.close);
+  var aboveKey = isFinite(ind.price) ? ind.price >= keyHigh : null;
+  var belowKey = isFinite(ind.price) ? ind.price < keyLow : null;
+  var p2 = hi3.toFixed(2), p3 = lo3.toFixed(2), vwn = vwapNow != null ? vwapNow.toFixed(2) : '—';
+  var buy = (form && form.side === 'bull')
+    ? '突破前3根高点 ' + p2 + ' 放量介入；或回踩均价线 ' + vwn + ' 不破低吸'
+    : '空方盘不追，等突破前3根高点 ' + p2 + ' 且放量转强再考虑';
+  var stop = '跌破前3根最低点 ' + p3 + ' 无条件离场';
+  var watchCond = '10:30 前未突破早盘前高则放弃追涨；警惕缩量假突破';
+  var risk;
+  if (!form) risk = '早盘形态不足3根，仅供参考';
+  else if (form.side === 'bull' && ind.dev > 8) risk = '高位偏多盘+巨量警惕诱多，不追高';
+  else if (form.side === 'bear') risk = '空方盘，三低不抄底，反弹减仓';
+  else risk = '多空分歧，等 10:30 方向确认';
+  return { ok: true, date: maxDate, nBars: n, first3: first3, pat: pat, form: form,
+    pressure: hi3, support: lo3, vwap3: vwap3, vwapNow: vwapNow, keyBar: keyBar,
+    vp: vp, vr: vr, vrLevel: vrLevel, vs: vs, y: y, forecast: forecast,
+    aboveVwap: aboveVwap, aboveKey: aboveKey, belowKey: belowKey, priceUp: chgPct > 0,
+    buy: buy, stop: stop, watchCond: watchCond, risk: risk, incomplete: (first3.length < 3) };
+}
+
+function renderOpen8Card(o8) {
+  if (!o8 || !o8.ok) {
+    return '<div class="card"><div class="card-title">早盘5分钟K线诊断（开盘八法）</div>' +
+      '<div class="stage-desc">' + ((o8 && o8.reason) ? escapeHtml(o8.reason) : '未取到当日5分钟K线（休市或接口异常）') + '</div>' +
+      '<div class="stage-desc" style="font-size:12px;color:#5d6788">开盘八法基于当日前3根5分钟K线（09:30-09:45），仅在交易时段及之后可用；点击「刷新查询」可更新当日实时走势。</div></div>';
+  }
+  var form = o8.form;
+  var sideColor = form ? (form.side === 'bull' ? '#26c281' : form.side === 'bear' ? '#ff5b5b' : '#ffb74d') : '#8892b0';
+  var sideName = form ? (form.side === 'bull' ? '多方盘' : form.side === 'bear' ? '空方盘' : '震荡盘') : '—';
+  var p2 = o8.pressure.toFixed(2), p3 = o8.support.toFixed(2);
+  var vwn = o8.vwapNow != null ? o8.vwapNow.toFixed(2) : '—';
+  var bars = '<div class="open8-bars">' + o8.first3.map(function (b) {
+    var up = b.close >= b.open;
+    var volTxt = b.vol >= 10000 ? (b.vol / 10000).toFixed(1) + '万' : b.vol.toFixed(0);
+    return '<div class="ob' + (up ? ' up' : ' down') + '"><div class="obk">' + b.time.slice(8, 10) + ':' + b.time.slice(10, 12) + '</div>' +
+      '<div class="obh">' + b.high.toFixed(2) + '</div>' +
+      '<div class="obbody"><span class="obc">' + b.close.toFixed(2) + '</span><span class="obo">' + b.open.toFixed(2) + '</span></div>' +
+      '<div class="obl">' + b.low.toFixed(2) + '</div>' +
+      '<div class="obv">' + volTxt + '手</div></div>';
+  }).join('') + '</div>';
+  var vwapState = o8.aboveVwap == null ? '—' : (o8.aboveVwap ? '上方(强势)' : '下方(弱势)');
+  var keyState = o8.aboveKey ? '站在关键K线上方(做多)' : (o8.belowKey ? '跌破关键K线实体(做空)' : '在关键K线实体内');
+  var html = '';
+  html += '<div class="card"><div class="card-title">早盘5分钟K线诊断（开盘八法）· ' + o8.date + (o8.incomplete ? ' · 早盘未走完(' + o8.first3.length + '根)' : '') + '</div>';
+  html += '<div class="open8-head"><div class="open8-form" style="border-color:' + sideColor + ';color:' + sideColor + '">' + (form ? form.name : '形态不足') + '</div>' +
+    '<div class="open8-pat">' + (o8.pat || '—') + ' · ' + sideName + ' · 力道' + (form ? form.strength : '—') + '</div>' +
+    '<div class="open8-forecast" style="color:' + sideColor + '">全天预判：' + o8.forecast + '</div></div>';
+  html += bars;
+  html += '<div class="open8-grid">' +
+    okv('量价配合', o8.vp) +
+    okv('开盘量比', (o8.vr != null ? o8.vr.toFixed(2) : '—') + ' · ' + o8.vrLevel) +
+    okv('均价线(当前)', vwn + ' · ' + vwapState) +
+    okv('与昨日对比', o8.vs || '—') +
+    okv('前3根压力位', p2) +
+    okv('前3根支撑位', p3) +
+    okv('关键K线', keyState) +
+    okv('全天预判', o8.forecast) +
+    '</div>';
+  html += '<div class="open8-advice"><div class="oa-title">操作建议</div>' +
+    '<div class="oa-row"><span class="oa-k">买点</span><span>' + escapeHtml(o8.buy) + '</span></div>' +
+    '<div class="oa-row"><span class="oa-k">止损</span><span>' + escapeHtml(o8.stop) + '</span></div>' +
+    '<div class="oa-row"><span class="oa-k">观望</span><span>' + escapeHtml(o8.watchCond) + '</span></div></div>';
+  html += '<div class="stage-desc" style="color:#ff9a9a;font-size:12.5px;margin-top:8px">风险提示：' + escapeHtml(o8.risk) + '</div>';
+  html += '</div>';
+  return html;
+  function okv(k, v) { return '<div class="open8-item"><div class="k">' + k + '</div><div class="v">' + escapeHtml(v) + '</div></div>'; }
+}
+
+// 自选/批量表格里的紧凑「开盘八法」单元
+function open8Cell(r) {
+  var o = r && r.open8;
+  if (!o || !o.ok || !o.form) return '<td class="open8-cell">—</td>';
+  var form = o.form;
+  var c = form.side === 'bull' ? '#26c281' : form.side === 'bear' ? '#ff5b5b' : '#ffb74d';
+  return '<td class="open8-cell"><span class="st-chip" style="background:' + c + '22;color:' + c + ';border:1px solid ' + c + '55">' + form.name + '</span>' +
+    '<div style="font-size:11px;color:#5d6788;margin-top:2px">' + o.vp + '</div></td>';
+}
+
 function renderMA5StrategyCard(ms) {
   if (!ms) return '';
   var m = ms.meta;
@@ -1438,7 +1738,7 @@ function renderMA5StrategyCard(ms) {
   return h;
 }
 
-function buildResultHTML(quote, ind, sr, compact, source, gene, cap, rec) {
+function buildResultHTML(quote, ind, sr, compact, source, gene, cap, rec, open8) {
   var st = STAGES[sr.stage] || STAGES.new;
   var chgCls = ind.chgToday >= 0 ? 'up' : 'down';
   var name = (quote && quote.name) ? quote.name : (quote && quote.code ? quote.code : '');
@@ -1450,7 +1750,9 @@ function buildResultHTML(quote, ind, sr, compact, source, gene, cap, rec) {
   html += '<div class="card"><div class="stock-head">' +
     '<div><div class="name">' + escapeHtml(name) +
     '<span class="code">' + escapeHtml(quote.code) + '</span>' +
-    '<span class="board">' + ind.board.label + ' · 涨停' + ind.board.zt + '%</span></div></div>' +
+    '<span class="board">' + ind.board.label + ' · 涨停' + ind.board.zt + '%</span></div>' +
+    (quote.code ? '<button type="button" class="wl-btn' + (wlHas(quote.code) ? ' on' : '') + '" data-code="' + escapeHtml(quote.code) + '" data-name="' + escapeHtml(name) + '" title="加入 / 移出自选列表">' + (wlHas(quote.code) ? '★ 已自选' : '☆ 加自选') + '</button>' : '') +
+    '</div>' +
     '<div class="px"><div class="now ' + chgCls + '">' + ind.price.toFixed(2) + '</div>' +
     '<div class="chg ' + chgCls + '">' + fmtPct(ind.chgToday) + '</div></div>' +
     '<div class="meta-line">数据来源：' + escapeHtml(source || '腾讯行情') + ' · 更新 ' + upd +
@@ -1483,6 +1785,9 @@ function buildResultHTML(quote, ind, sr, compact, source, gene, cap, rec) {
 
   // MA5 终极策略提示（清仓 / 减仓 / 持有 / 观察 + 超涨止盈）
   html += renderMA5StrategyCard(computeMA5Strategy(ind));
+
+  // 早盘5分钟K线诊断（开盘八法）— 实时基于当日前3根5分钟K线
+  if (open8) html += renderOpen8Card(open8);
 
   html += '<div class="card"><div class="card-title">判断依据（命中 ' + sr.evidence.length + ' 条特征）</div><ul class="evidence-list">' +
     sr.evidence.map(function (e) { return '<li class="' + e.type + '">' + escapeHtml(e.text) + '</li>'; }).join('') + '</ul></div>';
@@ -1580,8 +1885,12 @@ async function evaluateOne(token, ctx) {
   var ind = computeIndicators(data.klines, quote, r.code);
   if (!ind) throw new Error('K线数据不足（需 ≥22 个交易日）');
   var sr = judgeStage(ind);
-  var out = { ok: true, token: token, code: r.code, sym: r.sym, name: quote.name || r.name,
-    quote: quote, ind: ind, sr: sr, source: data.source };
+  // 早盘5分钟K线（开盘八法）：失败不阻断主流程
+  var open8 = null;
+  try { var m5b = await fetchM5Parse(r.sym); open8 = computeOpen8(ind, quote, m5b); }
+  catch (e2) { open8 = { ok: false, reason: '5分钟数据获取失败' }; }
+  var out = { ok: true, token: token, code: r.code, sym: r.sym, name: (quote && quote.name) || (r && r.name) || token,
+    quote: quote, ind: ind, sr: sr, source: data.source, open8: open8 };
   return out;
 }
 
@@ -3085,7 +3394,7 @@ function detailRowHTML(code) {
   var inner;
   if (!r) inner = '<div class="card"><div class="card-title">' + escapeHtml(s ? s.name : code) + '</div><div class="stage-desc">该股票尚未完成分析，请点击「开始分析」。</div></div>';
   else if (!r.ok) inner = '<div class="card"><div class="err-box">数据获取失败：' + escapeHtml(r.error || '') + '<br>可稍后重试（点击「清空重算」）。</div></div>';
-  else inner = buildResultHTML(r.quote, r.ind, r.sr, true, r.source, r.gene, r.cap, r.rec);
+  else inner = buildResultHTML(r.quote, r.ind, r.sr, true, r.source, r.gene, r.cap, r.rec, r.open8);
   return '<tr class="batch-detail" data-detail="' + code + '" style="display:none"><td colspan="13">' + inner + '</td></tr>';
 }
 
@@ -3435,7 +3744,7 @@ function renderSingle() {
     var open = SINGLE.open[r.token];
     if (!r.ok) {
       return '<tr class="batch-row" data-idx="' + escapeHtml(r.token) + '"><td><span class="caret">▶</span>' + escapeHtml(r.token) + '</td>' +
-        '<td colspan="10" class="fail">数据获取失败：' + escapeHtml(r.error || '') + '</td></tr>';
+        '<td colspan="13" class="fail">数据获取失败：' + escapeHtml(r.error || '') + '</td></tr>';
     }
     var ind = r.ind, sr = r.sr;
     var col = stageColorOf(sr.stage);
@@ -3457,15 +3766,15 @@ function renderSingle() {
       '<td>' + ind.breakDays + '天</td>' +
       '<td>' + fmtN(ind.turnover) + '%</td>' +
       '<td>' + ind.volRatio.toFixed(2) + '</td>' +
-      '<td style="color:var(--gold)">' + STAGES[sr.stage].position + '</td>' +
+      '<td style="color:var(--gold)">' + STAGES[sr.stage].position + '</td>' + open8Cell(r) +
       '</tr>' +
-      (open ? '<tr class="batch-detail"><td colspan="12">' + buildResultHTML(r.quote, r.ind, r.sr, false, r.source, r.gene, r.cap, r.rec) + '</td></tr>' : '');
+      (open ? '<tr class="batch-detail"><td colspan="13">' + buildResultHTML(r.quote, r.ind, r.sr, false, r.source, r.gene, r.cap, r.rec, r.open8) + '</td></tr>' : '');
   }).join('');
 
   var summary = '<div class="batch-toolbar"><span class="count">共 ' + arr.length + ' 只，成功 ' + okList.length + ' 只</span><span style="margin-left:auto"></span></div>';
   el('resultArea').innerHTML = '<div class="card">' + summary +
     '<div style="overflow-x:auto"><table class="batch-table"><thead><tr><th>股票</th><th>现价</th><th>涨跌幅</th><th>阶段</th><th>涨停基因</th><th>置信度</th>' +
-    '<th>dev</th><th>MA5斜率</th><th>破线</th><th>换手</th><th>量能倍数</th><th>建议仓位</th></tr></thead><tbody>' + body + '</tbody></table></div></div>';
+    '<th>dev</th><th>MA5斜率</th><th>破线</th><th>换手</th><th>量能倍数</th><th>建议仓位</th><th>开盘八法</th></tr></thead><tbody>' + body + '</tbody></table></div></div>';
 }
 
 async function runSearch() {
@@ -3512,6 +3821,360 @@ async function runSearch() {
 }
 
 /* =========================================================================
+   自选列表：自动拉取每只自选股的实时诊断并内联成表格
+   ========================================================================= */
+var WATCH = { running: false, runId: 0, results: [], open: {}, loaded: false, lastTs: 0 };
+
+async function runWatchSearch() {
+  var a = wlGet();
+  if (!a.length) { WATCH.loaded = false; WATCH.results = []; renderWatch(); return; }
+  if (WATCH.running) return;
+  WATCH.running = true; WATCH.open = {}; WATCH.results = [];
+  var runId = ++WATCH.runId;
+  renderWatch(); // 显示「查询中」
+  var tokens = a.map(function (x) { return x.code; });
+  await mapPool(tokens, 4, async function (t) {
+    var r;
+    try {
+      r = await evaluateOne(t);
+      try {
+        var ctx = await geneCtxForSingle(r);
+        var kk = r.ind.klines, ii = kk.length - 1, jj = Math.max(0, ii - 60);
+        if (jj < ii) ctx.gain60 = (kk[ii].close / kk[jj].close - 1) * 100;
+        r.gene = computeGene(r.ind, r.quote, ctx);
+        r.cap = computeCapital(r.ind, r.quote, ctx);
+        ctx.geneTotal = r.gene ? r.gene.total : null;
+        ctx.turnState = r.cap.turnState; ctx.volState = r.cap.volState;
+        ctx.amp20 = r.gene ? r.gene.stats.amp20 : null;
+        ctx.ztCount6 = r.gene ? r.gene.stats.nat6 : null;
+        ctx.hasOneWord = r.gene ? r.gene.stats.oneWord > 0 : false;
+        r.rec = computeRecognition(r.ind, r.quote, ctx);
+      } catch (e2) { r.gene = null; }
+    } catch (e) { r = { ok: false, token: t, code: t, error: e.message || String(e) }; }
+    if (runId !== WATCH.runId) return;
+    WATCH.results.push(r);
+  });
+  WATCH.running = false;
+  if (runId !== WATCH.runId) return;
+  WATCH.loaded = true; WATCH.lastTs = Date.now();
+  renderWatch();
+}
+
+function watchBatchBody() {
+  var arr = WATCH.results.slice();
+  if (!arr.length) return '';
+  var order = { main: 0, burst: 1, start: 2, accel: 3, diverge: 4, repair: 5, ebb: 6, new: 7 };
+  arr.sort(function (a, b) {
+    if (!a.ok && !b.ok) return 0;
+    if (!a.ok) return 1;
+    if (!b.ok) return -1;
+    var d = (order[a.sr.stage] || 9) - (order[b.sr.stage] || 9);
+    if (d) return d;
+    return b.ind.chgToday - a.ind.chgToday;
+  });
+  return arr.map(function (r) {
+    var tk = r.code || r.token;
+    var open = WATCH.open[tk];
+    if (!r.ok) {
+      return '<tr class="batch-row" data-idx="' + escapeHtml(tk) + '"><td colspan="13" class="fail">⚠ ' + escapeHtml(tk) +
+        ' 数据获取失败：' + escapeHtml(r.error || '') + '</td></tr>';
+    }
+    var ind = r.ind, sr = r.sr;
+    var col = stageColorOf(sr.stage);
+    var chgCls = ind.chgToday >= 0 ? 'up' : 'down';
+    var geneCell = r.gene
+      ? '<td class="gene-cell" style="color:' + r.gene.grade.color + '">' + r.gene.total +
+        '<em>' + (r.gene.total >= 80 ? '强' : r.gene.total >= 60 ? '基础' : r.gene.total >= 40 ? '弱' : '无') + '</em></td>'
+      : '<td class="gene-cell">—</td>';
+    return '<tr class="batch-row' + (open ? ' open' : '') + '" data-idx="' + escapeHtml(tk) + '">' +
+      '<td><span class="caret">' + (open ? '▼' : '▶') + '</span>' + escapeHtml(r.quote.name || r.code) +
+      ' <span style="color:var(--dim)">' + r.code + '</span>' +
+      ' <button type="button" class="wl-x" data-act="del" data-code="' + escapeHtml(r.code) + '" title="取消自选">✕</button></td>' +
+      '<td>' + ind.price.toFixed(2) + '</td>' +
+      '<td class="' + chgCls + '">' + fmtPct(ind.chgToday) + '</td>' +
+      '<td><span class="st-chip" style="background:' + col + '22;color:' + col + ';border:1px solid ' + col + '55">' + stageNameOf(sr.stage) + '</span></td>' +
+      geneCell +
+      '<td style="color:var(--muted)">' + sr.confidence + '</td>' +
+      '<td>' + ind.dev.toFixed(1) + '%</td>' +
+      '<td class="' + (ind.ma5Slope > 0 ? 'up' : 'down') + '">' + fmtPct(ind.ma5SlopePct) + '</td>' +
+      '<td>' + ind.breakDays + '天</td>' +
+      '<td>' + fmtN(ind.turnover) + '%</td>' +
+      '<td>' + ind.volRatio.toFixed(2) + '</td>' +
+      '<td style="color:var(--gold)">' + STAGES[sr.stage].position + '</td>' + open8Cell(r) +
+      '</tr>' +
+      (open ? '<tr class="batch-detail"><td colspan="13">' + buildResultHTML(r.quote, r.ind, r.sr, false, r.source, r.gene, r.cap, r.rec, r.open8) + '</td></tr>' : '');
+  }).join('');
+}
+
+function renderWatch() {
+  var a = wlGet();
+  var cnt = el('wlCount'); if (cnt) cnt.textContent = '自选 ' + a.length + ' 只';
+  var list = el('wlList');
+  var st = el('wlStatus');
+  if (!list) return;
+  if (!a.length) {
+    if (st) st.textContent = '';
+    list.innerHTML = '<div class="empty-state"><div class="icon">⭐</div><p>还没有自选股票</p><p style="font-size:12px;color:#5d6788;margin-top:8px">在「个股诊断」里查询后，点报告里的「☆ 加自选」即可收藏到这里</p></div>';
+    return;
+  }
+  if (WATCH.running) {
+    if (st) st.textContent = '正在查询 ' + a.length + ' 只自选股…';
+    list.innerHTML = '<div class="wl-loading">正在查询自选股实时行情，请稍候…</div>';
+    return;
+  }
+  if (!WATCH.loaded) {
+    if (st) st.textContent = '点上方「刷新查询」加载实时行情';
+    list.innerHTML = '<div class="wl-grid">' + a.map(function (x) {
+      var d = x.t ? new Date(x.t) : null;
+      var ds = d ? (d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2)) : '';
+      return '<div class="wl-card"><div class="wl-name">' + escapeHtml(x.name) + '<span class="wl-code">' + escapeHtml(x.code) + '</span></div>' +
+        '<div style="font-size:11.5px;color:#5d6788">加入 ' + ds + '</div>' +
+        '<div class="wl-actions"><button class="btn small" data-act="q" data-code="' + escapeHtml(x.code) + '">查询</button>' +
+        '<button class="btn small ghost" data-act="del" data-code="' + escapeHtml(x.code) + '">删除</button></div></div>';
+    }).join('') + '</div>';
+    return;
+  }
+  if (st) {
+    var okN = WATCH.results.filter(function (r) { return r.ok; }).length;
+    var ts = WATCH.lastTs ? new Date(WATCH.lastTs) : null;
+    var tss = ts ? (('0' + ts.getHours()).slice(-2) + ':' + ('0' + ts.getMinutes()).slice(-2)) : '';
+    st.textContent = '查询于 ' + tss + ' · 成功 ' + okN + '/' + WATCH.results.length + ' 只 · 点股票行展开详情';
+  }
+  var body = watchBatchBody();
+  list.innerHTML = '<div class="card"><div style="overflow-x:auto"><table class="batch-table"><thead><tr><th>股票</th><th>现价</th><th>涨跌幅</th><th>阶段</th><th>涨停基因</th><th>置信度</th>' +
+    '<th>dev</th><th>MA5斜率</th><th>破线</th><th>换手</th><th>量能倍数</th><th>建议仓位</th><th>开盘八法</th></tr></thead><tbody>' + body + '</tbody></table></div></div>';
+}
+
+/* =========================================================================
+   钉钉机器人 · 买点提醒推送
+   原理：浏览器直接 POST 钉钉自定义机器人 Webhook。
+     · 加签：Web Crypto HMAC-SHA256（file:// 亦为安全上下文，可用）
+     · 跨域：钉钉不回 CORS 头 → 用 mode:'no-cors' 静默投递（消息可达、读不到回执）
+     · 去重：按「日期 + 代码 + 触发信号」记录，同一天同一信号只推一次
+   限制：需保持本页面打开（含盘中自动检测）；关闭页面即停止。
+   ========================================================================= */
+var DING_KEY = 'bwork_ding';
+var DING_LOG_KEY = 'bwork_ding_log';
+var DING = { running: false, timer: null, lastHits: [], lastFresh: [], lastMsg: '' };
+
+function dingGet() { var o = lsGet(DING_KEY); return (o && typeof o === 'object') ? o : {}; }
+function dingSaveCfg(o) { lsSet(DING_KEY, o); }
+function dingLogGet() { var a = lsGet(DING_LOG_KEY); return Array.isArray(a) ? a : []; }
+function dingLogSet(a) { lsSet(DING_LOG_KEY, a); }
+function dateKey() { var d = new Date(); return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+function nowHM() { var d = new Date(); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+function inTrading() {
+  var d = new Date(), w = d.getDay();
+  if (w === 0 || w === 6) return false;
+  var m = d.getHours() * 60 + d.getMinutes();
+  return (m >= 570 && m <= 690) || (m >= 780 && m <= 900);   // 09:30-11:30 / 13:00-15:00
+}
+function dingStatus(msg, err) {
+  var s = el('dingStatus');
+  if (s) { s.textContent = msg; s.style.color = err ? '#ff6b6b' : '#7fd1a0'; }
+}
+
+async function dingSignedQuery(secret) {
+  var ts = Date.now();
+  try {
+    var c = (typeof window !== 'undefined' && window.crypto) ? window.crypto
+      : (typeof crypto !== 'undefined' ? crypto : null);
+    if (!c || !c.subtle) return '&timestamp=' + ts;
+    var enc = new TextEncoder();
+    var key = await c.subtle.importKey('raw', enc.encode(String(secret)), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+    var sig = await c.subtle.sign('HMAC', key, enc.encode(ts + '\n' + String(secret)));
+    var u8 = new Uint8Array(sig), s = '';
+    for (var i = 0; i < u8.length; i++) s += String.fromCharCode(u8[i]);
+    return '&timestamp=' + ts + '&sign=' + encodeURIComponent(btoa(s));
+  } catch (e) { return '&timestamp=' + ts; }
+}
+
+async function buildDingUrl(cfg) {
+  var u = cfg.url;
+  if (!u) throw new Error('未配置钉钉 Webhook 地址');
+  if (cfg.secret) {
+    var q = await dingSignedQuery(cfg.secret);
+    u += (u.indexOf('?') < 0 ? '?' + q.slice(1) : q);
+  }
+  return u;
+}
+
+async function dingPost(text, title) {
+  var cfg = dingGet();
+  var url = await buildDingUrl(cfg);
+  var payload = { msgtype: 'markdown', markdown: { title: title || '买点提醒', text: text } };
+  // 静默投递：钉钉不回 CORS 头，no-cors 下 body 仍会送达（content-type 用 text/plain 才免预检）
+  await fetch(url, {
+    method: 'POST', mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+    body: JSON.stringify(payload)
+  });
+}
+
+function composeDingText(list) {
+  var cfg = dingGet();
+  var kw = cfg.keyword ? (cfg.keyword + ' ') : '';
+  var out = ['## ' + kw + '🔔 买点提醒 · ' + dateKey() + ' ' + nowHM()];
+  list.forEach(function (h) {
+    var ind = h.ind, sr = h.sr;
+    out.push('');
+    out.push('**' + h.name + ' (' + h.code + ')**' + (h.board ? ' · ' + h.board : ''));
+    out.push('- 触发：' + h.trig.join(' + '));
+    out.push('- 现价 ' + ind.price.toFixed(2) + '（' + fmtPct(ind.chgToday) + '）· 阶段 ' + stageNameOf(sr.stage) +
+      ' · dev ' + ind.dev.toFixed(1) + '% · 换手 ' + fmtN(ind.turnover) + '%');
+    out.push('- 建议仓位：' + ((STAGES[sr.stage] && STAGES[sr.stage].position) || '—'));
+    if (h.trig.join().indexOf('MA5') >= 0) out.push('- 执行：次日 14:50 复核买入 或 开盘回踩 MA5 低吸（失效作废）');
+    if (h.o8 && h.o8.ok && h.o8.form) {
+      out.push('- 开盘八法：' + h.o8.form.name + '（' + h.o8.pat + '）· ' + h.o8.vp +
+        ' · 压力 ' + h.o8.pressure.toFixed(2) + ' / 支撑 ' + h.o8.support.toFixed(2));
+    }
+  });
+  return out.join('\n');
+}
+
+function dingScopeTokens() {
+  var cfg = dingGet();
+  var scope = cfg.scope || 'watch';
+  var out = [];
+  if (scope === 'watch' || scope === 'both') {
+    wlGet().forEach(function (x) { out.push({ code: x.code, name: x.name }); });
+  }
+  if (scope === 'board' || scope === 'both') {
+    if (ST.detail && ST.detail.stocks) {
+      ST.detail.stocks.forEach(function (s) { out.push({ code: s.code, name: s.name, board: ST.detail.name }); });
+    }
+  }
+  var seen = {}, uniq = [];
+  out.forEach(function (x) { if (x.code && !seen[x.code]) { seen[x.code] = 1; uniq.push(x); } });
+  return uniq.slice(0, 80);
+}
+
+async function dingScan(silent) {
+  if (DING.running) return;
+  var cfg = dingGet();
+  if (!cfg.url) { dingStatus('请先填写并保存钉钉 Webhook 地址', true); return; }
+  var list = dingScopeTokens();
+  if (!list.length) { dingStatus('没有可检测的股票：自选为空 / 未打开板块', true); return; }
+  DING.running = true;
+  if (!silent) dingStatus('正在检测 ' + list.length + ' 只…（' + nowHM() + '）');
+  var hits = [];
+  await mapPool(list, 4, async function (x) {
+    var r;
+    try { r = await evaluateOne(x.code); } catch (e) { return; }
+    var trig = [];
+    try { if (cfg.trigMa5 !== false && computeMA5Strategy(r.ind).buySignal) trig.push('MA5买入信号'); } catch (e) {}
+    var o8 = r.open8;
+    if (cfg.trigOpen8 && o8 && o8.ok && o8.form && o8.form.side === 'bull') trig.push('开盘八法·' + o8.form.name);
+    if (trig.length) {
+      hits.push({ code: r.code, name: (r.quote && r.quote.name) || x.name, board: x.board,
+        ind: r.ind, sr: r.sr, o8: o8, trig: trig });
+    }
+  });
+  DING.running = false;
+  DING.lastHits = hits;
+  var tk = dateKey(), log = dingLogGet();
+  var fresh = hits.filter(function (h) {
+    var sig = h.trig.join('|');
+    return !log.some(function (l) { return l.date === tk && l.code === h.code && l.sig === sig; });
+  });
+  DING.lastFresh = fresh;
+  if (!fresh.length) {
+    dingStatus('检测完成（' + nowHM() + '）：命中 ' + hits.length + ' 只' +
+      (hits.length ? '，均已在今天推送过' : '，暂无买点'), false);
+    renderDing(); return;
+  }
+  try {
+    var text = composeDingText(fresh);
+    DING.lastMsg = text;
+    await dingPost(text, '买点提醒');
+    fresh.forEach(function (h) { log.push({ date: tk, code: h.code, name: h.name, sig: h.trig.join('|'), ts: Date.now() }); });
+    dingLogSet(log);
+    dingStatus('已推送 ' + fresh.length + ' 只到钉钉（' + nowHM() + '）· 请到群里确认', false);
+  } catch (e) {
+    dingStatus('推送失败：' + (e.message || e), true);
+  }
+  renderDing();
+}
+
+async function dingTest() {
+  try {
+    var cfg = dingGet();
+    if (!cfg.url) { dingStatus('请先填写并保存 Webhook 地址', true); return; }
+    var kw = cfg.keyword ? (cfg.keyword + ' ') : '';
+    await dingPost('## ' + kw + '✅ 测试消息\n工作台已成功连上钉钉机器人。\n时间：' + dateKey() + ' ' + nowHM(), '测试');
+    dingStatus('测试消息已投递（浏览器读不到回执，请到钉钉群确认）', false);
+  } catch (e) { dingStatus('测试失败：' + (e.message || e), true); }
+}
+
+function renderDingForm() {
+  var c = dingGet();
+  if (el('dingUrl')) el('dingUrl').value = c.url || '';
+  if (el('dingSecret')) el('dingSecret').value = c.secret || '';
+  if (el('dingKeyword')) el('dingKeyword').value = c.keyword || '';
+  if (el('dingScope')) el('dingScope').value = c.scope || 'watch';
+  if (el('dingInterval')) el('dingInterval').value = (c.interval == null ? 5 : c.interval);
+  if (el('trigMa5')) el('trigMa5').checked = (c.trigMa5 !== false);
+  if (el('trigOpen8')) el('trigOpen8').checked = !!c.trigOpen8;
+}
+function readDingForm() {
+  return {
+    url: (el('dingUrl').value || '').trim(),
+    secret: (el('dingSecret').value || '').trim(),
+    keyword: (el('dingKeyword').value || '').trim(),
+    scope: el('dingScope').value,
+    interval: Math.max(0, parseInt(el('dingInterval').value, 10) || 0),
+    trigMa5: el('trigMa5').checked,
+    trigOpen8: el('trigOpen8').checked
+  };
+}
+function dingSetupAuto() {
+  if (DING.timer) { clearInterval(DING.timer); DING.timer = null; }
+  var c = dingGet();
+  var mi = (c.interval == null ? 0 : c.interval);
+  if (!c.url || !mi) return;
+  DING.timer = setInterval(function () {
+    if (DING.running || !inTrading()) return;
+    dingScan(true);
+  }, mi * 60000);
+}
+function renderDing() {
+  var out = el('dingResult'); if (!out) return;
+  var log = dingLogGet().filter(function (l) { return l.date === dateKey(); });
+  var html = '';
+  html += '<div class="card"><div class="card-title">今日推送记录（' + log.length + ' 条）</div>';
+  if (!log.length) html += '<div class="stage-desc">今天还没有推送记录。</div>';
+  else html += '<ul class="ding-log">' + log.slice().reverse().map(function (l) {
+    var d = new Date(l.ts);
+    return '<li><span class="t">' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2) + '</span>' +
+      escapeHtml(l.name || l.code) + ' <span class="c">' + escapeHtml(l.code) + '</span><span class="g">' + escapeHtml(l.sig) + '</span></li>';
+  }).join('') + '</ul>';
+  html += '</div>';
+  if (DING.lastHits && DING.lastHits.length) {
+    html += '<div class="card"><div class="card-title">本次检测命中 ' + DING.lastHits.length + ' 只（新推送 ' +
+      (DING.lastFresh ? DING.lastFresh.length : 0) + '）</div><ul class="ding-log">' +
+      DING.lastHits.map(function (h) {
+        return '<li>' + escapeHtml(h.name) + ' <span class="c">' + escapeHtml(h.code) + '</span><span class="g">' +
+          escapeHtml(h.trig.join(' + ')) + '</span></li>';
+      }).join('') + '</ul></div>';
+  }
+  if (DING.lastMsg) {
+    html += '<div class="card"><div class="card-title">最近一次推送内容预览</div><pre class="ding-prev">' + escapeHtml(DING.lastMsg) + '</pre></div>';
+  }
+  out.innerHTML = html;
+}
+
+function switchToSingle(tokens) {
+  document.querySelectorAll('.tabs .tab').forEach(function (x) { x.classList.remove('on'); });
+  var tb = document.querySelector('.tabs .tab[data-view="single"]'); if (tb) tb.classList.add('on');
+  el('view-board').classList.remove('on');
+  el('view-watch').classList.remove('on');
+  el('view-ding').classList.remove('on');
+  el('view-single').classList.add('on');
+  el('stockInput').value = tokens;
+  runSearch();
+}
+
+/* =========================================================================
    交互绑定与初始化
    ========================================================================= */
 function init() {
@@ -3523,6 +4186,10 @@ function init() {
       var v = b.getAttribute('data-view');
       el('view-board').classList.toggle('on', v === 'board');
       el('view-single').classList.toggle('on', v === 'single');
+      el('view-watch').classList.toggle('on', v === 'watch');
+      el('view-ding').classList.toggle('on', v === 'ding');
+      if (v === 'watch') { if (!WATCH.loaded && !WATCH.running) runWatchSearch(); else renderWatch(); }
+      if (v === 'ding') { renderDingForm(); renderDing(); }
       if (v === 'board' && !ST.boards.length) loadBoardList(false);
     });
   });
@@ -3613,6 +4280,64 @@ function init() {
     SINGLE.open = {};
     if (isOpen) SINGLE.open[token] = true;
     renderSingle();
+  });
+
+  // 自选列表
+  el('wlQueryAll').addEventListener('click', function () {
+    if (!wlGet().length) return;
+    runWatchSearch();
+  });
+  el('wlClear').addEventListener('click', function () {
+    if (!wlGet().length) return;
+    if (window.confirm('确定清空全部自选股票？此操作不可恢复。')) {
+      lsSet(WL_KEY, []); WATCH.loaded = false; WATCH.results = []; WATCH.open = {}; renderWatch();
+    }
+  });
+  el('wlList').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-act]');
+    if (b) {
+      var code = b.getAttribute('data-code'); var act = b.getAttribute('data-act');
+      if (act === 'del') {
+        wlRemove(code);
+        if (WATCH.loaded) WATCH.results = WATCH.results.filter(function (r) { return (r.code || r.token) !== code; });
+        renderWatch();
+      } else if (act === 'q') { switchToSingle(code); }
+      return;
+    }
+    var tr = e.target.closest('tr.batch-row');
+    if (tr) {
+      var tk = tr.getAttribute('data-idx'); if (!tk) return;
+      var isOpen = !WATCH.open[tk];
+      WATCH.open = {};
+      if (isOpen) WATCH.open[tk] = true;
+      renderWatch();
+    }
+  });
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('.wl-btn'); if (!b) return;
+    var code = b.getAttribute('data-code'); var nm = b.getAttribute('data-name') || code;
+    wlToggle(code, nm);
+    var on = wlHas(code);
+    b.classList.toggle('on', on);
+    b.textContent = on ? '★ 已自选' : '☆ 加自选';
+    if (el('view-watch').classList.contains('on')) renderWatch();
+  });
+
+  // 钉钉提醒
+  renderDingForm(); renderDing(); dingSetupAuto();
+  el('dingSave').addEventListener('click', function () {
+    dingSaveCfg(readDingForm());
+    dingSetupAuto();
+    var c = dingGet();
+    dingStatus('配置已保存' + (c.url ? (c.interval ? '（盘中每 ' + c.interval + ' 分钟自动检测）' : '（仅手动检测）') : '：还没填 Webhook，无法推送'), !c.url);
+  });
+  el('dingTest').addEventListener('click', dingTest);
+  el('dingScan').addEventListener('click', function () { dingScan(false); });
+  el('dingClearLog').addEventListener('click', function () {
+    if (window.confirm('确定清空钉钉推送记录？')) {
+      dingLogSet([]); DING.lastHits = []; DING.lastFresh = []; DING.lastMsg = ''; renderDing();
+      dingStatus('已清空推送记录', false);
+    }
   });
 
   // 首屏加载板块列表
