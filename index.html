@@ -172,12 +172,32 @@
   .stage-top { display:flex; align-items:center; gap: 14px; flex-wrap: wrap; }
   .stage-badge { font-size: 22px; font-weight: 800; padding: 6px 18px; border-radius: 10px; letter-spacing: 1px; }
   .stage-badge.buy { background:#26c28122; color: var(--good); border:1px solid #26c28155; }
+  .stage-badge.setup { background:#64b5f622; color:#64b5f6; border:1px solid #64b5f655; }
   .stage-badge.hold { background:#5b8cff22; color: var(--accent); border:1px solid #5b8cff55; }
   .stage-badge.warn { background:#ffb74d22; color: var(--warn); border:1px solid #ffb74d55; }
   .stage-badge.sell { background:#ff525222; color: var(--danger); border:1px solid #ff525255; }
   .conf { font-size: 12px; color: var(--muted); border:1px solid var(--line); padding: 3px 10px; border-radius: 20px; display:inline-block; margin-top:4px; }
   .stage-desc { color: #b9c2de; font-size: 13px; line-height: 1.8; margin-top: 12px; }
   .position-line { margin-top: 10px; font-size: 13px; color: var(--gold); }
+
+  /* 阶段路线图（4 大阶段 × 每阶段 3 子阶段） */
+  .stage-road { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:16px; }
+  @media (max-width: 720px) { .stage-road { grid-template-columns:repeat(2,1fr); } }
+  .sr-block { border:1px solid var(--line); border-radius:9px; padding:8px 10px; background:var(--card2); }
+  .sr-block.on { border-color:#5b8cff; }
+  .sr-head { font-size:12px; font-weight:700; color:#9fb4ff; margin-bottom:6px; }
+  .sr-sub { font-size:11.5px; color:var(--dim); padding:3px 7px; border-radius:6px; margin-bottom:3px; }
+  .sr-sub.on { color:#0b0f18; font-weight:700; }
+  /* 今昨强弱（表格列） */
+  .pow-cell .p1 { font-size:11.5px; font-weight:700; line-height:1.5; }
+  .pow-cell .p2 { font-size:10px; color:#5d6788; margin-top:2px; line-height:1.4; }
+  /* 阶段转折确认清单 */
+  .st-trans { list-style:none; padding:0; margin:0; }
+  .st-trans li { font-size:12.5px; padding:4px 0 4px 18px; position:relative; line-height:1.7; color:#cdd6f4; }
+  .st-trans li:before { content:'✓'; position:absolute; left:0; color:#26c281; }
+  .st-trans li.no:before { content:'✕'; color:#ff6b6b; }
+  .st-trans li.na:before { content:'?'; color:#ffb74d; font-weight:700; }
+  .st-trans li em { color:#5d6788; font-style:normal; font-size:11.5px; }
 
   .flow { display:flex; align-items:center; flex-wrap: wrap; gap: 2px; margin-top: 16px; }
   .flow-node { font-size: 11px; padding: 4px 9px; border-radius: 6px; border: 1px solid var(--line); color: var(--muted); background: #ffffff06; }
@@ -439,6 +459,18 @@
   .mid-acts .btn { padding:6px 12px; font-size:12.5px; }
   .mid-empty { font-size:13px; color:#5d6788; padding:14px 0; }
 
+  /* ===== 今昨强弱 ===== */
+  .pow-h { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:9px; }
+  .pow-h .nm { font-size:14.5px; font-weight:700; color:#e8edff; }
+  .pow-h .cd { font-family:Consolas,Menlo,monospace; font-size:12px; color:#5d6788; }
+  .pow-act { font-size:12.5px; border-radius:8px; padding:7px 11px; margin:9px 0 4px; line-height:1.7; }
+  .pow-act.buy { background:#12251c; border:1px solid #1f4433; color:#7fd1a0; }
+  .pow-act.hold { background:#101c2e; border:1px solid #3a5a8a; color:#7fb8ff; }
+  .pow-act.watch { background:#1a1a12; border:1px solid #4a4a1f; color:#ffe08a; }
+  .pow-act.cut { background:#1f1a10; border:1px solid #4a3a1f; color:#ffb74d; }
+  .pow-act.out { background:#1e1212; border:1px solid #4a2a2a; color:#ff9b9b; }
+  .pow-grp { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:14px 0 6px; }
+
   /* ===== 集合竞价全景 ===== */
   .call-toolbar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:14px; }
   .call-clock { margin-left:auto; font-size:13px; font-weight:700; }
@@ -566,6 +598,7 @@
     <button class="tab" data-view="ding">🔔 钉钉提醒</button>
     <button class="tab" data-view="call">🔥 集合竞价</button>
     <button class="tab" data-view="mid">🎯 候选中军</button>
+    <button class="tab" data-view="pow">⚖️ 今昨强弱</button>
   </div>
 
   <!-- ======================= 视图一：板块全景 ======================= -->
@@ -781,6 +814,39 @@
         <b>止损：</b>中军有效跌破 MA10 离场；核心标的有效跌破 MA5 离场；通用单笔 −5% 无条件止损。<br>
         <b>数据源：</b>东方财富涨停池（首次封板时间 / 连板数 / 炸板次数 / 换手率 / 流通市值 / 成交额 / 封板资金 / 所属行业）+ 个股日 K（MA5/10/20、近 6 个月连板记录）。<br>
         <b class="mid-todo">未接入、需你自己确认的项：</b>题材正宗度（核心业务占比）、机构是否参与、近 6 个月减持公告、ST/退市风险（ST 已在数据源侧剔除）。这几项本工具<b>不做判定、不猜</b>，请在入选后人工核对。
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================= 视图七：今昨强弱 ======================= -->
+  <div class="view" id="view-pow">
+    <div class="card">
+      <div class="card-title">⚖️ 今昨强弱 · 昨日K线 × 今日路径（逐只判定）</div>
+      <div class="mid-toolbar">
+        <select class="ctl" id="powScope">
+          <option value="watch">⭐ 自选列表</option>
+          <option value="board">当前打开的板块成分股</option>
+        </select>
+        <button class="btn" id="powRun">开始逐只判定</button>
+        <button class="btn ghost" id="powAddBuy">把「可低吸」全部加入观察池</button>
+        <span class="mid-status" id="powStatus"></span>
+      </div>
+      <label class="mid-envchk"><input type="checkbox" id="powCold"> 大盘处于 <b>退潮 / 冰点期</b>（勾上 = 按策略「大周期过滤优先」，所有买点降级为观察）</label>
+      <div id="powEnv" class="mid-env"></div>
+    </div>
+
+    <div id="powResult"></div>
+
+    <div class="card">
+      <div class="card-title">判定口径（对齐两份策略文档 · 已标注修正项与数据缺口）</div>
+      <div class="mid-note">
+        <b>档位口径（已修正）：</b>文档给的「小阳 +1.5~4% / 中阳 +3~7% / 大阳 &gt;7%」是<b>主板涨跌幅</b>口径，直接套到 20cm（创业板/科创板）会把 +8% 误判成「大阳」。本工具改为<b>按该股涨停幅度归一化</b>：<code>r = 涨跌幅 ÷ 涨停幅度</code>，再用 <b>0.15 / 0.40 / 0.70</b> 分档（对主板即还原成 1.5% / 4% / 7%），并补上文档缺失的 <b>|r|&lt;0.10 → 十字星</b>档。<br>
+        <b>涨停判定：</b>10cm 主板 9.8% · 20cm 创业/科创 19.8% · 30cm 北交所 29.7% · ST 4.8%（距阈值 0.3% 内即算）。<br>
+        <b>今日路径：</b>按「昨日档位 → 今日路径」矩阵判定，<b>风险路径优先</b>（先判放量下跌/破位/长上影，再判机会路径），每张卡片标注命中的矩阵编号（S/M/L/Y/Z/D）。<br>
+        <b>量能倍数：</b><code>今日成交量 ÷ 昨日成交量</code>（<b>量口径</b>，不是额口径；价差大时两者会有偏差，此处如实标注）。文档的「1.1~1.6 倍」等阈值为经验值，直接采用。<br>
+        <b>位置过滤（补充项）：</b>文档的多处买点（两阳缩量、两阳夹一阴、弱转强）都要求「必须在低位/上升趋势中途，不在高位」——本工具用 <b>60 日区间位置</b>补上这一条：位置 &gt;80% 时判为高位，机会信号一律降级并提示「高位陷阱」。<br>
+        <b>分时维度：</b>用当日 5 分钟 K 线算<b>均价线（VWAP）</b>——收盘价在均价线上方/下方、均价线方向、在均价线下方的时间占比。数据源不可用时<b>该维度不参与判定</b>并在卡片上写明（不猜）。<br>
+        <b class="mid-todo">数据缺口（不判定、需你人工确认）：</b>大盘情绪周期的六个阶段、板块 SABCD 分级（工作台的竞价分级口径是 9:25 竞价涨停家数，与全天口径不同）、连板晋级池与晋级率、竞价量比（历史竞价数据未存）。这几项本工具<b>不做判定</b>，只用「退潮/冰点」手动闸门代替大周期过滤的第一层。
       </div>
     </div>
   </div>
@@ -1457,7 +1523,134 @@ function computeIndicators(rawKlines, quote, code) {
   var swing20 = lo20r > 0 ? (hi20r / lo20r - 1) : 0;
   var hadRally = (ztCount20 >= 1) || (swing20 > 0.25) || (gain20 > 20);
 
+  /* ===== 阶段分析（Stage Analysis）所需的长期结构要素 =====
+     用于 4 阶段 × A/B 共 12 子阶段的判定（阶段1积累 / 2上升 / 3分配 / 4下跌）
+     纯函数、只依赖已有 K线，便于单测。 */
+  var gain60 = (i >= 60 && closes[i - 60]) ? (closes[i] - closes[i - 60]) / closes[i - 60] * 100 : null;
+
+  // 长期均线：30 周线 ≈ 150 日线；K线不足时降级，并如实记录实际周期（不假装是 150 日）
+  var ltPeriod = n >= 150 ? 150 : (n >= 120 ? 120 : (n >= 60 ? 60 : null));
+  var ltMA = ltPeriod ? calcMA(closes, ltPeriod) : null;
+  var ltv = (ltMA && ltMA[i] != null) ? ltMA[i] : null;
+  var ltv5 = (ltMA && ltMA[i - 5] != null) ? ltMA[i - 5] : null;
+  var ltSlopePct = (ltv != null && ltv5) ? (ltv - ltv5) / ltv5 * 100 : null;
+  var ltUp = (ltSlopePct != null && ltSlopePct > 0.35);
+  var ltDown = (ltSlopePct != null && ltSlopePct < -0.35);
+  var ltFlat = (ltSlopePct != null && !ltUp && !ltDown);
+
+  var ma50 = calcMA(closes, 50);
+  var cMA50 = ma50[i];
+  var ma50Slope5 = (cMA50 != null && ma50[i - 5]) ? (cMA50 - ma50[i - 5]) / ma50[i - 5] * 100 : null;
+  var ma20Slope5 = (cMA20 != null && ma20[i - 5]) ? (cMA20 - ma20[i - 5]) / ma20[i - 5] * 100 : null;
+
+  function winHL(from, to) {
+    var hh = -Infinity, ll = Infinity;
+    for (var t = Math.max(0, from); t <= Math.min(i, to); t++) {
+      if (klines[t].high > hh) hh = klines[t].high;
+      if (klines[t].low < ll) ll = klines[t].low;
+    }
+    return { h: hh, l: ll };
+  }
+  function avgVolA(from, to) {
+    var s = 0, c = 0;
+    for (var t = Math.max(0, from); t <= Math.min(i, to); t++) { s += (klines[t].volume || 0); c++; }
+    return c ? s / c : 0;
+  }
+  function avgAmpA(from, to) {
+    var s = 0, c = 0;
+    for (var t = Math.max(1, from); t <= Math.min(i, to); t++) {
+      var pc0 = closes[t - 1];
+      if (pc0) { s += (klines[t].high - klines[t].low) / pc0 * 100; c++; }
+    }
+    return c ? s / c : 0;
+  }
+
+  var w20 = winHL(i - 19, i), w20p = winHL(i - 39, i - 20), w40 = winHL(i - 39, i), w60 = winHL(i - 59, i);
+  var range20 = w20.l > 0 ? (w20.h / w20.l - 1) * 100 : 0;
+  var range40 = w40.l > 0 ? (w40.h / w40.l - 1) * 100 : 0;
+  var range60 = w60.l > 0 ? (w60.h / w60.l - 1) * 100 : 0;
+  var higherLow = w20.l > w20p.l, higherHigh = w20.h > w20p.h;
+  var lowerHigh = w20.h < w20p.h, lowerLow = w20.l < w20p.l;
+
+  // 前期主腿：近 250 日内的最高/最低点「谁先谁后」→ 下跌腿 / 上涨腿 / 区间
+  // 这是整套体系最关键的前提：形态相同、背景决定性质
+  var lookback = Math.min(n, 250);
+  var legHi = -Infinity, legLo = Infinity, legHiIdx = -1, legLoIdx = -1;
+  for (var tA = n - lookback; tA <= i; tA++) {
+    if (klines[tA].high > legHi) { legHi = klines[tA].high; legHiIdx = tA; }
+    if (klines[tA].low < legLo) { legLo = klines[tA].low; legLoIdx = tA; }
+  }
+  var legRise = legLo > 0 ? (legHi / legLo - 1) : 0;
+  var legMode = 'range';
+  if (legHiIdx < legLoIdx && legRise >= 0.25) legMode = 'down';
+  else if (legLoIdx < legHiIdx && legRise >= 0.30) legMode = 'up';
+  var legEndIdx = legMode === 'down' ? legLoIdx : (legMode === 'up' ? legHiIdx : i);
+  var legEndPrice = legMode === 'down' ? legLo : (legMode === 'up' ? legHi : null);
+  var legEndBarsAgo = i - legEndIdx;
+  var legOffNow = (legEndPrice && legEndPrice > 0) ? (closes[i] / legEndPrice - 1) * 100 : null;
+
+  // 突破阻力：收盘站上「前 60 日（不含当日）最高」；并记录突破发生在几个交易日前
+  var prevHi60 = -Infinity;
+  for (var tB = Math.max(0, i - 60); tB < i; tB++) prevHi60 = Math.max(prevHi60, klines[tB].high);
+  var breakoutResist = isFinite(prevHi60) && closes[i] > prevHi60;
+  var barsSinceBreakout = null;
+  for (var tC = i; tC >= Math.max(0, i - 40); tC--) {
+    var ph60 = -Infinity;
+    for (var uA = Math.max(0, tC - 60); uA < tC; uA++) ph60 = Math.max(ph60, klines[uA].high);
+    if (isFinite(ph60) && closes[tC] > ph60) barsSinceBreakout = i - tC;
+    else break;                       /* 只统计「连续突破」这一段的天数 */
+  }
+  // 跌破支撑：收盘跌破「前 60 日（不含当日）最低」
+  var barsSinceBreakdown = null;
+  for (var tD = i; tD >= Math.max(0, i - 60); tD--) {
+    var pl60 = Infinity;
+    for (var uB = Math.max(0, tD - 60); uB < tD; uB++) pl60 = Math.min(pl60, klines[uB].low);
+    if (isFinite(pl60) && closes[tD] < pl60) barsSinceBreakdown = i - tD;
+    else break;                       /* 只统计「连续破位」这一段的天数 */
+  }
+
+  // 波动 / 量能趋势（阶段1「波动性降温、量能枯竭」、阶段2B/3「波动加剧」的判据）
+  var amp10 = avgAmpA(i - 9, i), ampPrev20 = avgAmpA(i - 29, i - 10);
+  var amp20i = avgAmpA(i - 19, i);
+  var ampExpand = ampPrev20 > 0 ? amp10 / ampPrev20 : 1;
+  var vol10 = avgVolA(i - 9, i), volPrev10 = avgVolA(i - 19, i - 10);
+  var volTrend = volPrev10 > 0 ? vol10 / volPrev10 : 1;
+  var vol20i = avgVolA(i - 19, i), vol60i = avgVolA(i - 59, i);
+  var volDim = vol60i > 0 ? vol20i / vol60i : 1;
+
+  // 近 30 日测试区间上沿 / 下沿的次数（1B「测试阻力」、3「反复测试高区 / 支撑」）
+  var testsHi = 0, testsLo = 0;
+  for (var tE = Math.max(0, i - 29); tE <= i; tE++) {
+    if (klines[tE].high >= w60.h * 0.97) testsHi++;
+    if (klines[tE].low <= w60.l * 1.03) testsLo++;
+  }
+
+  // 横盘（区间整理）：40 日区间收窄 + 均线纠缠
+  var ma60cur = ma60[i];
+  var maEntangle = (cMA20 && ma60cur) ? Math.abs(cMA20 / ma60cur - 1) * 100 : null;
+  var sideways = (range40 <= 22) && (maEntangle == null || maEntangle <= 5);
+
+  var devLT = (ltv && ltv > 0) ? (closes[i] / ltv - 1) * 100 : null;
+  var devMT = (cMA50 && cMA50 > 0) ? (closes[i] / cMA50 - 1) * 100 : null;
+  var slopeFast = gain20 / 20;
+  var slopeSlow = (gain60 != null) ? gain60 / 60 : null;
+  var accel = !!(slopeSlow != null && slopeSlow > 0 && slopeFast > slopeSlow * 2 && gain20 > 8);
+  var extended = (devLT != null && devLT >= 45) || (gain60 != null && gain60 >= 90) ||
+                 (accel && dev > 10) || (ampExpand >= 1.6 && gain20 > 15);
+
   return {
+    gain60: gain60, ma50: ma50, ma50v: cMA50, ma50Slope5: ma50Slope5, ma20Slope5: ma20Slope5,
+    ltv: ltv, ltPeriod: ltPeriod, ltSlopePct: ltSlopePct, ltUp: ltUp, ltDown: ltDown, ltFlat: ltFlat,
+    devLT: devLT, devMT: devMT, maEntangle: maEntangle,
+    legMode: legMode, legRisePct: legRise * 100, legEndBarsAgo: legEndBarsAgo, legOffNow: legOffNow,
+    range20: range20, range40: range40, range60: range60,
+    higherLow: higherLow, higherHigh: higherHigh, lowerHigh: lowerHigh, lowerLow: lowerLow,
+    breakoutResist: breakoutResist, prevHi60: isFinite(prevHi60) ? prevHi60 : null, barsSinceBreakout: barsSinceBreakout,
+    barsSinceBreakdown: barsSinceBreakdown,
+    amp10: amp10, amp20i: amp20i, ampExpand: ampExpand,
+    volTrend: volTrend, volDim: volDim, testsHi: testsHi, testsLo: testsLo,
+    sideways: sideways, accel: accel, extended: extended,
+    w60h: isFinite(w60.h) ? w60.h : null, w60l: isFinite(w60.l) ? w60.l : null,
     klines: klines, closes: closes, ma5: ma5, ma10: ma10, ma20: ma20, i: i,
     price: price, ma5v: cMA5, ma10v: cMA10, ma20v: cMA20,
     dev: dev, ma5Slope: ma5Slope, ma5SlopePct: ma5SlopePct, breakDays: breakDays,
@@ -1474,239 +1667,448 @@ function computeIndicators(rawKlines, quote, code) {
   };
 }
 
-/* ---------------------------- 阶段定义 ---------------------------- */
-var STAGE_FLOW = ['启动', '爆发', '主升', '加速', '分歧', '修复', '退潮', '新一轮'];
-var STAGE_KEYS = ['start', 'burst', 'main', 'accel', 'diverge', 'repair', 'ebb', 'new'];
-var STAGE_COLOR = ['#7986cb', '#4db6ac', '#26c281', '#ffb74d', '#ffd54f', '#ce93d8', '#ff5252', '#90a4ae'];
-
-var STAGES = {
-  start: {
-    name: '启动', subtitle: '试探期', cls: 'buy', position: '2-3成（试探仓，不重仓）',
-    desc: '个股生命周期起点：资金开始介入、趋势由跌转涨的第一信号。',
-    buy: ['回踩确认（最优）：启动阳线后缩量回踩不破，低吸', '弱转强：前日烂板/炸板，次日竞价高开2-5% + 竞价量达昨日5-10%', '首板突破：放量突破当日打板/半路', '竞价抢筹：板块集体高开 + 龙头竞价放量'],
-    sell: ['启动失败（放量跌破启动平台）→ 立即止损', '回调不破位可继续持有'],
-    discipline: '真启动 = 量持续 + 站稳均线 + 板块共振 + 回调不破位；假反弹 = 一日量 + 站不稳均线 + 无板块配合。',
-    risk: '最大风险是假突破——一日游行情，放量突破后迅速回落。必须设止损、不恋战。'
-  },
-  burst: {
-    name: '爆发', subtitle: '主升前奏', cls: 'buy', position: '5-7成（重仓窗口，利润主要来源）',
-    desc: '启动确认后资金加速涌入：批量涨停、梯队成型，赚钱效应最强的阶段之一。',
-    buy: ['分歧低吸（最优）：板块首次分歧时低吸核心标的', '弱转强：龙头/中军分歧次日竞价高开2-5% + 放量', '竞价抢筹：板块集体高开，选最强标的'],
-    sell: ['站稳MA5持有，不轻易下车', '见顶预警（放量滞涨 / 炸板增多 / dev>10%）→ 开始准备止盈'],
-    discipline: '核心是「拿住」——最大敌人是拿不住（怕高卖飞）。见顶信号出现才止盈。',
-    risk: '最大风险是提前下车卖飞，以及在爆发末期追高。需区分真爆发与末端加速。'
-  },
-  main: {
-    name: '主升', subtitle: '持有吃波段', cls: 'hold', position: '持有为主，回踩可加仓',
-    desc: '趋势最健康的主升段：缩量上涨、筹码锁定，利润最丰厚、持股体验最好。',
-    buy: ['仅两处买点：回踩MA5 / 回踩MA10（缩量回踩不破，低吸）'],
-    sell: ['dev>+8% → 分批止盈（锁利润）', '放量跌破MA5 → 减仓（趋势预警）', '连续破线≥3天 → 清仓（趋势终结）'],
-    discipline: '缩量上涨=主升（拿住）；天量换手=进入加速（准备止盈）。只做回踩低吸，不追高。',
-    risk: '最大风险是把加速当主升——dev>8% 后仍重仓持有。严格执行分批止盈。'
-  },
-  accel: {
-    name: '加速（高潮）', subtitle: '兑现区', cls: 'sell', position: '从重仓降至3成以下，加速末期→清仓',
-    desc: '主升末端的最后冲刺：情绪最狂热、涨速最快、量能最大——是兑现区，不是建仓区。',
-    buy: ['未持仓：坚决不追（追高=接最后一棒）', '三不做：不追高 / 不抄底 / 不恋战'],
-    sell: ['dev>+8% → 开始分批卖', 'dev>+10% → 减半', 'dev>+15% → 清仓', '见顶信号（天量长上影 / 放量滞涨 / 炸板不封）→ 立即走', '放量跌破MA5/MA10 → 无条件离场'],
-    discipline: '加速=兑现区不是建仓区。会卖比会买重要100倍。',
-    risk: '最大风险是贪婪——认为还能涨，结果在最高点接盘。天量 + 暴涨 + dev严重超涨 = 明确见顶信号。'
-  },
-  diverge: {
-    name: '分歧', subtitle: '方向重估', cls: 'warn', position: '降至2-3成（观察仓）；已持仓先减仓一半以上',
-    desc: '加速见顶后多空第一次激烈交锋：可能是二波起点，也可能是退潮开始。',
-    buy: ['仅限良性分歧：缩量回踩MA5/MA10不破，尾盘企稳时低吸', '次日确认买（更稳）：分歧次日确认修复再进', '龙头弱转强：分歧后龙头竞价高开2-5% + 放量'],
-    sell: ['恶性分歧：放量破位 → 无条件清仓', '龙头跌停 → 全板块离场', '连续2日分歧不修复 → 确认退潮'],
-    discipline: '分歧日只低吸不追高。先判性质（良性/恶性）再动手；恶化信号立即走。',
-    risk: '最大风险是判断错误——把恶性分歧当良性分歧抄底，结果套在退潮初期。'
-  },
-  repair: {
-    name: '修复（反包/二波）', subtitle: '最后一战', cls: 'warn', position: '2-3成（修复期不重仓，可能是退潮前诱多）',
-    desc: '分歧后的方向选择期：修复成功走二波，失败转入退潮。高风险高赔率，只适合最强者。',
-    buy: ['缩量止跌低吸（需龙头抗住的前提）', '修复确认买（最稳）：放量反包收复失地次日', '龙头弱转强：分歧后龙头竞价高开2-5% + 放量'],
-    sell: ['无量反抽 → 借反弹离场', '修复后再破位 → 无条件清仓', '修复 <2日夭折 → 确认退潮'],
-    discipline: '修复失败 = 最后逃命机会，错过 = 深度套牢。只做最强修复。',
-    risk: '最大风险是把弱修复当强修复，在无量反抽时加仓，结果退潮开始无法脱身。'
-  },
-  ebb: {
-    name: '退潮', subtitle: '利润保卫战', cls: 'sell', position: '0-1成（尽量空仓，保住利润）',
-    desc: '整轮行情的终点：资金彻底撤离、趋势破坏、人气消散。核心任务是保住前面赚到的钱。',
-    buy: ['唯一可做（超跌反弹）：仓位≤1-2成，选超跌最狠+资金异动，尾盘/急跌企稳买入', '次日必走（无论盈亏），反弹失败立即止损'],
-    sell: ['反弹即卖：任何无量反抽都是卖点', '破位即走：放量破位 → 无条件离场', '龙头崩即清：龙头跌停/补跌 → 全部清仓'],
-    discipline: '四不做：不抄底（半山腰）/ 不补仓 / 不做反弹（一日游）/ 不恋战。退潮期不亏钱就是胜利。',
-    risk: '最大风险是心存幻想——认为「跌这么多了该反弹了」，结果越套越深。'
-  },
-  new: {
-    name: '新一轮孕育', subtitle: '冰点期', cls: 'hold', position: '0-1成（观察为主，不急着买）',
-    desc: '退潮结束 → 新周期开始前的过渡期：市场冰点，资金试探新方向。任务是发现，不是买入。',
-    buy: ['必做三件事：建观察池 / 盯转折信号（指数企稳+首板回暖）/ 控仓位', '不接飞刀 / 不追反弹 / 不补仓'],
-    sell: ['新一轮启动确认：指数企稳 + 涨停家数回暖 + 新板块成梯队 → 按启动策略介入'],
-    discipline: '先锋 ≠ 龙头——试盘股可能不是最终龙头，萌芽期不要过早重仓押注单一标的。',
-    risk: '最大风险是过早介入——冰点期抄底，结果市场继续下跌。耐心等信号。'
-  }
+/* ==== STAGE-DEF-BEGIN ==== */
+/* ---------------------------- 阶段定义（阶段分析 · 4 阶段 × A/B = 12 子阶段） ----------------------------
+   依据《阶段分析：完整的股票生命周期》全套图谱：
+     阶段1 积累（1A 早期积累 / 1 积累·基础 / 1B 后期基础·突破观察）
+     阶段2 上升趋势（2A 新鲜突破 / 2 前进的上升趋势 / 2B 后期·成熟上涨）
+     阶段3 分配（3A 早期封顶 / 3 分配·顶部 / 3B 延迟分发）
+     阶段4 下跌（4A 新的下跌趋势 / 4 已确立的衰退 / 4B 后期下跌趋势）
+   分区：探索区(1A-1B) · 机会区(2A-2) · 风险区(2B-3B) · 避免区(4A-4B)
+   关键法则：下跌之后的横盘 = 阶段1；上涨之后的横盘 = 阶段3 —— 形态相同，背景决定性质。
+   -------------------------------------------------------------------------------------------- */
+var STAGE_KEYS = ['p1a', 'p1', 'p1b', 'p2a', 'p2', 'p2b', 'p3a', 'p3', 'p3b', 'p4a', 'p4', 'p4b'];
+var STAGE_TAGS = ['1A', '1', '1B', '2A', '2', '2B', '3A', '3', '3B', '4A', '4', '4B'];
+var STAGE_FLOW = ['1A 早期积累', '1 积累/基础', '1B 后期基础', '2A 新鲜突破', '2 前进上升', '2B 成熟上涨',
+                  '3A 早期封顶', '3 分配/顶部', '3B 延迟分发', '4A 新鲜破位', '4 确立衰退', '4B 后期下跌'];
+var STAGE_COLOR = ['#90a4ae', '#7986cb', '#64b5f6', '#26c281', '#1fb87a', '#a4d65e',
+                   '#ffd54f', '#ffb74d', '#ff8a65', '#ff7043', '#ff5252', '#c62828'];
+var STAGE_FAMILY = { p1a: 1, p1: 1, p1b: 1, p2a: 2, p2: 2, p2b: 2, p3a: 3, p3: 3, p3b: 3, p4a: 4, p4: 4, p4b: 4 };
+var FAMILY_NAME = { 1: '阶段1 · 积累 Accumulation', 2: '阶段2 · 上升趋势 Uptrend',
+                    3: '阶段3 · 分配 Distribution', 4: '阶段4 · 下跌 Decline' };
+var ZONE_OF_FAMILY = { 1: '探索区', 2: '机会区', 3: '风险区', 4: '避免/修复区' };
+var ZONE_TIP = {
+  1: '阶段1A–1B：新机会在此建立的基础点 —— 研究、观察、等突破，不急于买',
+  2: '阶段2A–2：波动最大的上行阶段 —— 最佳参与窗口，可建仓 / 加仓',
+  3: '阶段2B–3B：谨慎是必要的地方 —— 保护利润，只减不加',
+  4: '阶段4A–4B：风险最高、资本保值最关键的区 —— 空仓等待'
 };
 
+var STAGES = {
+  p1a: {
+    tag: '1A', short: '早期积累', fam: 1, cls: 'hold',
+    name: '阶段1A · 早期积累',
+    subtitle: '下跌放缓 · 趋于稳定（探索区）',
+    position: '0-1成（只观察研究，不急于建仓）',
+    desc: '一轮下跌的末端：价格停止暴跌、波动性降温、下跌速度放缓，卖压开始减少。但长期均线仍向下、价格仍在其下方 —— 这是「左侧」，任务是研究不是交易。',
+    buy: ['本阶段不买入：趋势尚未转折，左侧抄底是最大的风险来源', '要做的事：放进观察清单、跟踪基本面是否改善、在图上标出阻力位（区间上沿）与突破触发价'],
+    sell: ['若再破前低 → 下跌腿延续，继续回避', '反弹到长期均线附近遇阻回落 → 确认仍是下跌趋势'],
+    discipline: '「跌不动」不等于「要涨」。阶段1A 的任务是发现，真正的机会在阶段2A。',
+    risk: '最大风险是抢跑：以为「跌这么多了该反弹了」，结果卖压还没释放完。',
+    inv: '观察与研究，先不假设底部',
+    trd: '通常回避，尚无干净的上升趋势'
+  },
+  p1: {
+    tag: '1', short: '积累/基础', fam: 1, cls: 'hold',
+    name: '阶段1 · 积累/基础',
+    subtitle: '横向基座 · 长期均线走平（探索区）',
+    position: '0-2成（建观察池，研究基本面，不追）',
+    desc: '横向整理区间：30周均线走平、波动性收缩、价格在区间内上下震荡，卖盘枯竭、坏消息的影响减弱，新的底部可能正在形成 —— 但突破尚未发生。',
+    buy: ['仍不主动买（区间内买 = 猜方向）', '可在区间下沿附近小仓试探（≤2成），跌破区间立即止损', '核心动作：把突破条件写进盯盘（放量站上区间上沿 / 长期均线）'],
+    sell: ['跌破区间下沿 → 结构破坏，退出观察', '无量假突破 → 不参与'],
+    discipline: '阶段1 的价值在于「准备」，不在于「参与」。基座越扎实，阶段2 的涨幅越大。',
+    risk: '最大风险是把「缓跌途中的横盘」当成积累 —— 关键看长期均线是否走平、是否出现更高的低点。',
+    inv: '建立观察清单，研究基本面',
+    trd: '监控区间，等待突破确认'
+  },
+  p1b: {
+    tag: '1B', short: '后期基础', fam: 1, cls: 'setup',
+    name: '阶段1B · 后期基础 / 突破观察',
+    subtitle: '更高的低点 · 反复测试阻力（探索区）',
+    position: '0-2成（预备仓；突破确认后再加）',
+    desc: '积累的右侧：出现更高的低点、反复测试阻力、价格结构更紧凑，量能在枯竭后开始回升。这是「1B → 2A」最有价值的转变窗口。',
+    buy: ['预备动作：把突破触发价设为「区间上沿 + 放量」（成交量 ≥1.5 倍均量）', '突破当日可试仓 1-2 成，站稳后再加', '已在区间内低吸的：等突破确认后把仓位补到计划水平'],
+    sell: ['突破失败（放量冲高后收回区间内）→ 预备仓止损', '更高的低点被跌破 → 结构失效，退回阶段1'],
+    discipline: '最有价值的转变是「1B → 2A」：早期突破 + 盈利改善 + 量能确认 + 行业强度共同作用，才催生未来的领涨股。',
+    risk: '最大风险是「假突破」—— 没有成交量的突破通常是诱多，务必等放量确认。',
+    inv: '优先研究区域，定义好突破水平',
+    trd: '定义突破水平与触发点'
+  },
+  p2a: {
+    tag: '2A', short: '新鲜突破', fam: 2, cls: 'buy',
+    name: '阶段2A · 新鲜突破',
+    subtitle: '放量突破阻力 · 首要机会（机会区）',
+    position: '3-5成（首要机会窗口，可建仓）',
+    desc: '价格放量突破阻力位、站上上升的移动平均线，成交量明显放大且延续 —— 这是第 2 阶段最有价值的建仓窗口。',
+    buy: ['突破买入：放量突破区间上沿 / 长期均线，收盘确认', '回踩买入（更稳）：突破后缩量回踩突破位或 MA20 不破', '分两笔：突破日 3 成，回踩确认再加'],
+    sell: ['跌回突破位下方（假突破）→ 无条件止损，不补仓', '放量长阴吞掉突破阳线 → 结构破坏，先减仓'],
+    discipline: '突破必须「带量」。量能不跟随的突破按假突破处理 —— 宁可错过，不可做错。',
+    risk: '最大风险是把「反弹的第一次冲高」当突破 —— 要看它是否创出区间以外的新高、是否站上长期均线。',
+    inv: '优质的首期机会',
+    trd: '若成交量确认，则形成突破形态'
+  },
+  p2: {
+    tag: '2', short: '前进上升', fam: 2, cls: 'buy',
+    name: '阶段2 · 前进的上升趋势',
+    subtitle: '更高的高点 + 更高的低点（机会区）',
+    position: '5-7成（持有为主，建设性回调加仓）',
+    desc: '趋势最健康的阶段：更高的高点 + 更高的低点，长期均线持续上行，回调是建设性的（缩量、不破关键均线），收益持续、指引稳定。',
+    buy: ['只在建设性回调加仓：缩量回踩 MA20（或 MA50）不破', '不在放量大阳日追高 —— 追高的成本就是被震出去'],
+    sell: ['放量跌破 MA50 / 前期低点 → 趋势预警，减仓', '跌破长期均线（30周线）→ 阶段2 结束，清仓离场', 'dev > +8% 出现加速 → 转按 2B 处理，分批止盈'],
+    discipline: '阶段2 的任务是「拿住」。破坏性下跌（放量）与建设性回调（缩量）必须分清。',
+    risk: '最大风险是拿不住 + 在延伸段追高。趋势中每一次放量下跌都要当真。',
+    inv: '持有优质领涨股，有选择地加仓',
+    trd: '趋势延续 / 突破机会'
+  },
+  p2b: {
+    tag: '2B', short: '成熟上涨', fam: 2, cls: 'warn',
+    name: '阶段2B · 后期 / 成熟上涨趋势',
+    subtitle: '趋势仍在但已延伸 · 波动加剧（风险区）',
+    position: '降至 3-4 成（保护利润，不新开仓）',
+    desc: '上涨仍在延续但已明显「走得太远」：偏离长期均线过大、波动更剧烈、摆动更大、期望值很高 —— 这是风险管理阶段，不是建仓阶段。',
+    buy: ['不新开仓：盈亏比已明显变差', '已持仓：只做持有 + 分批止盈，任何放量长阴先减'],
+    sell: ['分批止盈：每上涨一档减一档（参考 dev > +10% / +15%）', '出现放量滞涨、长上影、连续冲高失败 → 加速减仓', '跌破 MA50 → 视为进入阶段3'],
+    discipline: '阶段2B 与阶段3A 的分界往往只有一次「反复冲高失败」—— 先减仓，再让它证明自己。',
+    risk: '最大风险是「趋势没破就不走」—— 顶部区域的利润回吐速度远快于积累速度。',
+    inv: '继续持有但要管理风险',
+    trd: '有选择性，避免盲目追涨'
+  },
+  p3a: {
+    tag: '3A', short: '早期封顶', fam: 3, cls: 'warn',
+    name: '阶段3A · 早期封顶',
+    subtitle: '涨幅放缓 · 反复测试高区（风险区）',
+    position: '降至 3 成以下（只减不加）',
+    desc: '上涨动能开始减弱：涨幅放缓、在高位反复测试、波动性上升，价格还在高位但每一次上攻都比上一次费力。',
+    buy: ['不做多（此时买入 = 接最后一棒）', '已持仓：把仓位降到可承受水平，设好止盈线'],
+    sell: ['冲高失败、放量长上影 → 减仓', '跌破 MA20 / MA50 → 加速离场', '反弹到前高不过 → 二次减仓'],
+    discipline: '阶段3A 的特征是「对好消息反应变差」—— 利好出来不涨，就是供应开始占上风的信号。',
+    risk: '最大风险是把它当「上涨中继」继续加仓 —— 高位横盘与低位横盘看起来一样，背景完全不同。',
+    inv: '保护利润并密切关注',
+    trd: '停止追逐强势'
+  },
+  p3: {
+    tag: '3', short: '分配/顶部', fam: 3, cls: 'sell',
+    name: '阶段3 · 分配 / 顶部',
+    subtitle: '大幅上涨后横盘 · 支撑与阻力并重（风险区）',
+    position: '0-2成（兑现区，逢反弹减）',
+    desc: '大幅上涨之后的横向整理：长期均线开始走平，支撑与阻力同样重要，机构在这个区间把筹码派发给后来者。',
+    buy: ['不买（这是分配区，不是积累区）', '唯一例外：若之后出现「支撑保持 + 更高的低点 + 放量突破」，可按 3→2 重新参与'],
+    sell: ['每次反弹到区间上沿 → 减仓', '放量跌破区间下沿 / 长期均线 → 清仓', '出现更低的高点 → 视为进入 3B'],
+    discipline: '关键法则：下跌后的横盘是阶段1（积累），上涨后的横盘是阶段3（分配）—— 形态相同，背景决定性质。',
+    risk: '最大风险是「以为在筑底」—— 高位横盘期间买入，等于在别人派发时接货。',
+    inv: '减少盲目乐观，评估支撑质量',
+    trd: '趋势跟随，优势减弱'
+  },
+  p3b: {
+    tag: '3B', short: '延迟分发', fam: 3, cls: 'sell',
+    name: '阶段3B · 延迟分发',
+    subtitle: '更低的高点 · 支撑反复被测试（风险区）',
+    position: '0-1成（离场为主）',
+    desc: '分配的后段：出现更低的高点、支撑被反复测试、开始出现放量下跌周、价格跌破关键均线，结构已经明显走弱。',
+    buy: ['不买', '只有在「支撑保持 + 强劲业绩 / 正面催化 + 放量突破」同时出现时，才考虑按 3→2 重新参与'],
+    sell: ['破位即走（放量跌破支撑 → 无条件离场）', '任何反弹都是减仓机会', '跌破长期均线 → 视为进入阶段4'],
+    discipline: '阶段3 的两种结局：重新积累（3→2）或破位（→阶段4）。没有第三个选项，不能「再等等」。',
+    risk: '最大风险是期待「V 型反转」—— 机构派发完成后，价格通常向下运行很长一段。',
+    inv: '变得防御性',
+    trd: '为故障（破位）风险做好准备'
+  },
+  p4a: {
+    tag: '4A', short: '新鲜破位', fam: 4, cls: 'sell',
+    name: '阶段4A · 新的下跌趋势',
+    subtitle: '跌破主要支撑 / 关键均线（避免区）',
+    position: '0成（清仓，禁止抄底）',
+    desc: '价格跌破主要支撑位与关键移动平均线（MA50 / 长期均线），形态发生改变 —— 下跌趋势刚刚开始。',
+    buy: ['不买入：这是「避免区」，风险最高、保本最重要', '严禁「跌了很多了应该反弹」式的盲目抄底'],
+    sell: ['立即清仓：跌破关键均线 + 放量 → 无条件离场', '任何反弹到均线附近都是最后的减仓机会'],
+    discipline: '阶段4A 的第一原则是「保住本金」。不要在下跌趋势里谈估值。',
+    risk: '最大风险是「低吸摊平成本」—— 下跌趋势中的每一次低吸都会变成更深的套牢。',
+    inv: '避免盲目平均（摊平成本）',
+    trd: '破位就绪（准备离场）'
+  },
+  p4: {
+    tag: '4', short: '确立衰退', fam: 4, cls: 'sell',
+    name: '阶段4 · 已确立的衰退阶段',
+    subtitle: '更低的高点 + 更低的低点（避免区）',
+    position: '0成（空仓等待，不参与）',
+    desc: '趋势已确立向下：更低的高点 + 更低的低点，长期均线持续下行，反弹（反攻）接连失败。',
+    buy: ['不买', '唯一要做的事：等「4→1」的转折信号（停止创新低 + 均线走平 + 更高的低点）'],
+    sell: ['空仓 / 不参与', '若仍有持仓：反弹即卖，不设幻想价'],
+    discipline: '尊重下跌趋势。阶段4 里的反弹是「修复」，不是「反转」。',
+    risk: '最大风险是把短期反抽当成反转，在下降通道里反复被套。',
+    inv: '通常会做空 / 长期回避',
+    trd: '尊重下跌趋势'
+  },
+  p4b: {
+    tag: '4B', short: '后期下跌', fam: 4, cls: 'sell',
+    name: '阶段4B · 后期下跌趋势',
+    subtitle: '下跌已成熟 · 长期均线趋平（避免区，转机观察）',
+    position: '0成（观望，不假设底部）',
+    desc: '下跌已进入后段：跌幅已大、价格开始显得便宜，但趋势尚未反转；长期均线斜率趋于平缓，开始出现早期积累迹象（更高的低点、下跌不再创出新低）。',
+    buy: ['仍不主动买；把注意力转到「4→1」的确认清单：停止创新低 / 均线走平 / 卖压减少 / 更高的低点', '一旦确认转入 1A-1B，再按探索区流程建预备仓'],
+    sell: ['不参与', '若已空仓：耐心等基座形成（可能需要数月）'],
+    discipline: '「便宜」不是买入理由，「趋势转折」才是。阶段4B 到阶段1A 的过渡，通常以横盘代替反弹。',
+    risk: '最大风险是抢跑：以为跌得够多就是底 —— 底部通常需要时间构筑，而不是一个价格点位。',
+    inv: '关注未来基础，但非自动买入',
+    trd: '等待修复，不假设底部'
+  }
+};
+/* ==== STAGE-DEF-END ==== */
+
 /* ---------------------------- 阶段判定 ---------------------------- */
-function judgeStage(ind) {
-  var ev = [];
-  var hits = { start: 0, burst: 0, main: 0, accel: 0, diverge: 0, repair: 0, ebb: 0 };
-  function add(t, type) { ev.push({ text: t, type: type || 'hit' }); }
-
-  /* ---- 安全过滤（最高优先级，永远先看）---- */
-  var safety = [];
-  if (ind.breakDays >= 3) safety.push({ level: 'danger', text: '连续跌破MA5 ' + ind.breakDays + ' 天（≥3天 = 趋势终结，无条件清仓）' });
-  if (ind.weakRebound) safety.push({ level: 'warn', text: 'MA5斜率向下（' + fmtPct(ind.ma5SlopePct) + '）→ 一律视为弱势反弹，不重仓' });
-  if (ind.dev > 15) safety.push({ level: 'danger', text: 'dev ' + ind.dev.toFixed(1) + '%（>15% 极端超涨，禁止买入）' });
-  else if (ind.dev > 10) safety.push({ level: 'warn', text: 'dev ' + ind.dev.toFixed(1) + '%（>10% 严重超涨，分批减仓 / 半仓）' });
-  else if (ind.dev > 8) safety.push({ level: 'warn', text: 'dev ' + ind.dev.toFixed(1) + '%（>8% 超涨警戒，分批止盈）' });
-  if (ind.maBearish) safety.push({ level: 'warn', text: '均线空头排列（MA5 < MA10 < MA20）' });
-  safety.push({ level: 'info', text: '大盘情绪周期 / 板块分级需外部数据——本工具仅做「个股层面」判定' });
-
-  /* ---- 主升（4条全满足）---- */
-  var mainC = [
-    { ok: ind.ma5Slope > 0, t: 'MA5斜率向上（' + fmtPct(ind.ma5SlopePct) + '）' },
-    { ok: ind.price > ind.ma5v, t: '站稳MA5（现价 ' + ind.price.toFixed(2) + ' / MA5 ' + ind.ma5v.toFixed(2) + '）' },
-    { ok: ind.volRatio < 1.2, t: '缩量上涨（量能倍数 ' + ind.volRatio.toFixed(2) + '）' },
-    { ok: ind.dev < 8 && ind.dev > -1, t: 'dev ' + ind.dev.toFixed(1) + '%（<+8% 健康区间）' }
-  ];
-  mainC.forEach(function (c) { if (c.ok) hits.main++; });
-  var isMain = hits.main === mainC.length && !ind.weakRebound;
-
-  /* ---- 加速（≥3）---- */
-  var accelC = [
-    { ok: ind.volRatio >= 2, t: '天量（量能倍数 ' + ind.volRatio.toFixed(1) + ' ≥2倍）' },
-    { ok: ind.turnover !== null && ind.turnover > 15, t: '天量换手（换手率 ' + fmtN(ind.turnover) + '% >15%）' },
-    { ok: ind.dev > 10, t: 'dev 严重超涨（' + ind.dev.toFixed(1) + '% >10%）' },
-    { ok: ind.isBrokenBoard, t: '今日冲高回落 / 炸板（触及涨停未封住）' },
-    { ok: ind.gain5 > 25, t: '涨幅斜率陡峭（近5日 ' + ind.gain5.toFixed(1) + '% >25%）' },
-    { ok: ind.ztCount5 >= 2, t: '加速涨停（近5日涨停 ' + ind.ztCount5 + ' 次）' }
-  ];
-  accelC.forEach(function (c) { if (c.ok) hits.accel++; });
-
-  /* ---- 分歧（≥3）---- */
-  var divergeC = [
-    { ok: ind.isBrokenBoard, t: '今日炸板 / 高开低走（冲高回落、涨停打开）' },
-    { ok: ind.turnover !== null && ind.turnover > 15, t: '天量换手（' + fmtN(ind.turnover) + '%，多空充分交换）' },
-    { ok: ind.amplitude > 8, t: '剧烈震荡（振幅 ' + ind.amplitude.toFixed(1) + '% >8%）' },
-    { ok: ind.dev > 5 && ind.ztCount5 >= 1, t: '高位放量博弈（dev ' + ind.dev.toFixed(1) + '% + 近期有涨停）' }
-  ];
-  divergeC.forEach(function (c) { if (c.ok) hits.diverge++; });
-  var benign = ind.volRatio < 1.1 && ind.price > ind.ma10v * 0.99 && ind.ma5Slope >= 0;
-  var malign = ind.volRatio > 1.5 && ind.price < ind.ma10v;
-
-  /* ---- 退潮（≥3）---- */
-  var ebbC = [
-    { ok: ind.maBearish && ind.ma5Slope < 0, t: '均线空头排列且斜率向下' },
-    { ok: ind.volRatio < 0.8 && ind.gain5 < 0, t: '反弹无量（量能倍数 ' + ind.volRatio.toFixed(2) + '，近5日 ' + fmtPct(ind.gain5) + '）' },
-    { ok: ind.breakDays >= 1 && ind.volRatio > 1.5, t: '放量破位下行（破线 ' + ind.breakDays + ' 天 + 放量）' },
-    { ok: ind.gain5 < -8 && ind.ma5Slope < 0, t: '趋势破坏（近5日 ' + fmtPct(ind.gain5) + '，斜率向下）' }
-  ];
-  ebbC.forEach(function (c) { if (c.ok) hits.ebb++; });
-
-  /* ---- 爆发（≥4）---- */
-  var burstC = [
-    { ok: ind.ztCount5 >= 1, t: '近5日涨停 ' + ind.ztCount5 + ' 次' },
-    { ok: ind.ztCount20 >= 2, t: '近20日涨停 ' + ind.ztCount20 + ' 次（资金持续涌入）' },
-    { ok: ind.gain5 > 10, t: '近5日涨幅 ' + fmtPct(ind.gain5) + '（强度持续）' },
-    { ok: ind.maBullish, t: '均线多头排列（MA5 > MA10 > MA20）' },
-    { ok: ind.ma5Slope > 0, t: 'MA5斜率向上' },
-    { ok: ind.volRatio > 1.2, t: '量能倍数 ' + ind.volRatio.toFixed(2) + '（资金涌入）' }
-  ];
-  burstC.forEach(function (c) { if (c.ok) hits.burst++; });
-
-  /* ---- 启动（≥4）---- */
-  var startC = [
-    { ok: ind.breakout, t: '放量突破前20日高点（量能倍数 ' + ind.volRatio.toFixed(2) + '）' },
-    { ok: ind.ztCount20 >= 1 || ind.bigYangToday || ind.bigYang5 >= 1, t: '首板/大阳出现（近20日 ' + ind.ztCount20 + ' 次涨停' + (ind.bigYangToday ? '，今日大阳' : '') + '）' },
-    { ok: ind.maRepair || (ind.ma5Slope > 0 && ind.ma5v > ind.ma10v), t: '均线修复（MA5 拐头向上 / 上穿MA10）' },
-    { ok: ind.pos < 0.5, t: '位置相对低位（60日分位 ' + (ind.pos * 100).toFixed(0) + '%）' },
-    { ok: ind.shrinkRatio < 0.7, t: '缩量回调（缩量比 ' + ind.shrinkRatio.toFixed(2) + ' <0.7）' }
-  ];
-  startC.forEach(function (c) { if (c.ok) hits.start++; });
-
-  /* ---- 修复（≥3）---- */
-  var repairC = [
-    { ok: ind.shrinkRatio < 0.7, t: '缩量止跌（缩量比 ' + ind.shrinkRatio.toFixed(2) + ' <0.7）' },
-    { ok: ind.price > ind.ma10v || ind.price > ind.ma20v, t: '回踩企稳（站上 MA10 / MA20）' },
-    { ok: ind.engulf || ind.bigYangToday, t: '修复阳线（反包 / 大阳收复失地）' },
-    { ok: ind.volRatio > 1.2 && ind.gain5 > -3, t: '缩量后放量（资金二次进场）' }
-  ];
-  repairC.forEach(function (c) { if (c.ok) hits.repair++; });
-
-  /* ---- 新一轮（冰点特征）---- */
-  var newHits = 0;
-  if (ind.ztCount20 === 0) newHits++;
-  if (ind.gain10 < 5) newHits++;
-  if (ind.ma5Slope <= 0) newHits++;
-  if (ind.shrinkRatio < 0.8) newHits++;
-
-  /* ---- 判定（优先级：退潮 > 加速 > 分歧 > 主升 > 爆发 > 启动 > 修复 > 新一轮）---- */
-  var stage, confidence;
-  if (hits.ebb >= 3) {
-    stage = 'ebb'; confidence = hits.ebb >= 4 ? 'High' : 'Medium';
-    ebbC.forEach(function (c) { if (c.ok) add(c.t, 'danger'); });
-  } else if ((hits.accel >= 3 || (hits.accel >= 2 && ind.dev > 10)) && ind.ma5Slope > 0) {
-    stage = 'accel'; confidence = hits.accel >= 4 ? 'High' : 'Medium';
-    accelC.forEach(function (c) { if (c.ok) add(c.t, 'warn'); });
-    if (hits.accel < 3) add('超涨（dev ' + ind.dev.toFixed(1) + '% >10%）+ 放量 → 按兑现区处理', 'warn');
-  } else if (hits.diverge >= 3) {
-    stage = 'diverge'; confidence = hits.diverge >= 4 ? 'High' : 'Medium';
-    divergeC.forEach(function (c) { if (c.ok) add(c.t, 'warn'); });
-    if (benign) add('分歧性质：良性（缩量 + 不破MA10 + MA5未走坏）', 'hit');
-    else if (malign) add('分歧性质：恶性（放量 + 跌破MA10）→ 优先离场', 'danger');
-    else add('分歧性质：待确认（需板块/龙头数据辅助）', 'info');
-  } else if (isMain) {
-    stage = 'main'; confidence = 'High';
-    mainC.forEach(function (c) { add(c.t, 'hit'); });
-  } else if (hits.burst >= 4 && ind.ma5Slope > 0) {
-    stage = 'burst'; confidence = hits.burst >= 5 ? 'High' : 'Medium';
-    burstC.forEach(function (c) { if (c.ok) add(c.t, 'hit'); });
-  } else if (hits.start >= 4 && ind.ma5Slope > 0) {
-    stage = 'start'; confidence = hits.start >= 5 ? 'High' : 'Medium';
-    startC.forEach(function (c) { if (c.ok) add(c.t, 'hit'); });
-  } else if (hits.repair >= 3 && ind.ma5Slope >= 0 && ind.hadRally) {
-    stage = 'repair'; confidence = hits.repair >= 4 ? 'High' : 'Medium';
-    repairC.forEach(function (c) { if (c.ok) add(c.t, 'hit'); });
-    add('前期有过一轮拉升（近20日振幅 ' + (ind.swing20 * 100).toFixed(0) + '%，涨停 ' + ind.ztCount20 + ' 次）→ 属回调后的修复', 'hit');
-  } else if (ind.ma5Slope > 0 && ind.price > ind.ma5v) {
-    // 未命中任何精确形态，但趋势向上 → 按「趋势持有（主升）」归类，避免误判为冰点
-    stage = 'main'; confidence = 'Low';
-    add('未命中精确形态：MA5向上且站上MA5 → 按趋势持有（主升）归类', 'info');
-    add(ind.dev > 8
-      ? '但 dev ' + ind.dev.toFixed(1) + '% 已超涨，按分批止盈纪律执行'
-      : '趋势健康，按回踩MA5 / MA10 低吸的纪律执行', ind.dev > 8 ? 'warn' : 'info');
-  } else if (hits.ebb >= 2) {
-    stage = 'ebb'; confidence = 'Medium';
-    if (hits.ebb < 3) add('弱势特征命中 ' + hits.ebb + ' 条（均线空头 / 斜率向下 / 破位放量）→ 交易上按退潮对待', 'warn');
-  } else if (!ind.maBearish && ind.price >= ind.ma10v && ind.breakDays <= 1) {
-    // 仍在 MA10 之上、未有效破线 → 视为上行途中的回踩 / 震荡待定型，不按退潮处理
-    stage = 'new'; confidence = 'Low';
-    add('MA5走平或微降（' + fmtPct(ind.ma5SlopePct) + '），但股价仍在MA10之上且未有效破线 → 震荡待定型，先观察不介入', 'info');
-  } else {
-    stage = 'ebb'; confidence = 'Low';
-    var weakParts = [];
-    if (ind.maBearish) weakParts.push('均线空头排列');
-    weakParts.push('MA5斜率向下（' + fmtPct(ind.ma5SlopePct) + '）');
-    if (ind.breakDays >= 1) weakParts.push('已破线 ' + ind.breakDays + ' 天');
-    else if (ind.price < ind.ma10v) weakParts.push('跌破MA10');
-    add('弱势特征：' + weakParts.join(' + ') + ' → 交易上按退潮对待（不参与 / 减仓）', 'warn');
-  }
-
-  // 铁律双保险：做多阶段若 MA5 斜率向下 → 降级
-  if ((stage === 'main' || stage === 'burst' || stage === 'start' || stage === 'accel') && ind.ma5Slope <= 0) {
-    stage = 'ebb'; confidence = 'Low';
-    add('铁律：MA5斜率向下一律视为弱势反弹 → 做多阶段降级', 'warn');
-  }
-
-  return { stage: stage, hits: hits, evidence: ev, safety: safety, confidence: confidence, benign: benign, malign: malign };
+/* ==== STAGE-BEGIN ==== */
+/* ---------------------------- 阶段判定（阶段分析） ----------------------------
+   判定顺序严格按「背景 → 长期趋势方向 → 结构进步 / 衰退」三步走：
+     ① 背景（决定性前提）：前期是下跌腿还是上涨腿 —— 同样是横盘，跌后 = 阶段1、涨后 = 阶段3
+     ② 长期趋势：长期均线（30周线）方向 + 价格在其上方 / 下方
+     ③ 结构：更高高点 / 更高低点 / 更低高点 / 更低低点、突破与破位、波动与量能趋势、延伸度
+   数据缺口（不猜、明确标注）：大盘相对强度 RS（用板块内排名做代理）、机构持仓、盈利基本面、消息面反应、市场广度
+   ---------------------------------------------------------------------------- */
+function sPct(v, d) {
+  if (v == null || isNaN(v)) return '—';
+  return (v > 0 ? '+' : '') + (+v).toFixed(d == null ? 2 : d) + '%';
 }
+
+/* 每一阶段的「转折确认清单」—— 对齐图谱里「什么证实了这一转变 / 如何解决」面板 */
+function stageTransitionCheck(ind, fam, ctx) {
+  ctx = ctx || {};
+  var out = [];
+  function it(label, ok, note) { out.push({ label: label, ok: ok, note: note || '' }); }
+  var rankPct = null;
+  if (ctx.stockRankInBoard && ctx.boardSize > 1) rankPct = 1 - (ctx.stockRankInBoard - 1) / (ctx.boardSize - 1);
+  var rsNote = (rankPct == null)
+    ? '未接入（需板块成分股排名；单只查询时无法计算）'
+    : ('板块内涨幅排名 ' + ctx.stockRankInBoard + '/' + ctx.boardSize + '（前 ' + Math.round((1 - rankPct) * 100) + '%）做代理');
+  var rsOK = (rankPct == null) ? null : (rankPct >= 0.6);
+
+  if (fam === 1) {          /* 阶段1 → 期待 1B → 2A */
+    it('突破阻力位上方', !!(ind.breakoutResist || (ind.ltv != null && ind.price > ind.ltv)),
+      '前 60 日最高 ' + fmtN(ind.prevHi60) + '｜现价 ' + fmtN(ind.price));
+    it('强劲的成交量（放量确认）', ind.volRatio >= 1.4 || ind.volTrend > 1.1,
+      '量能倍数 ' + fmtN(ind.volRatio) + '｜近10日/前10日 ' + fmtN(ind.volTrend) + '×');
+    it('盈利改善 / 收益超预期', null, '本工具未接入基本面数据 → 需你人工核对');
+    it('行业领导地位 / 行业优势', null, '未接入行业强度数据');
+    it('相对强度（RS）提升', rsOK, rsNote);
+  } else if (fam === 2) {   /* 阶段2 → 警惕 2B → 3A */
+    it('进步失去动能（涨幅放缓）', ind.sideways || (ind.gain60 != null && ind.gain20 < ind.gain60 / 3),
+      '近20日 ' + sPct(ind.gain20) + '｜近60日 ' + sPct(ind.gain60));
+    it('反复未能突破的高点', ind.testsHi >= 2 && !ind.higherHigh, '近 30 日测试区间上沿 ' + ind.testsHi + ' 次');
+    it('从上升趋势过度延伸', !!ind.extended || (ind.devLT != null && ind.devLT > 30), '偏离长期均线 ' + sPct(ind.devLT));
+    it('对好消息的反应变差', null, '未接入消息面数据 → 需你人工观察');
+    it('市场广度开始减弱', null, '未接入（需全市场 / 板块广度）');
+  } else if (fam === 3) {   /* 阶段3 → 两种结局：3→2 重新积累 / 3→4 破位 */
+    it('支撑保持（没有更深的下跌）', ind.testsLo >= 1 && !ind.lowerLow,
+      '近 30 日测试下沿 ' + ind.testsLo + ' 次｜60 日最低 ' + fmtN(ind.w60l));
+    it('重新积累（更高低点 / 新近积累）', !!ind.higherLow, '');
+    it('突破时带成交量（3→2 的必要条件）', !!(ind.breakoutResist && ind.volRatio >= 1.4), '量能倍数 ' + fmtN(ind.volRatio));
+    it('相对强度（RS）改善', rsOK, rsNote);
+    it('放量跌破支撑 → 转入阶段4', !!(ind.barsSinceBreakdown != null && ind.barsSinceBreakdown <= 10),
+      ind.barsSinceBreakdown == null ? '尚未发生破位' : ('破位距今 ' + ind.barsSinceBreakdown + ' 个交易日'));
+  } else {                  /* 阶段4 → 期待 4 → 1 */
+    it('下跌停止创出新低', !ind.lowerLow, '近 20 日最低 ' + fmtN(ind.w60l));
+    it('移动平均线趋于平缓', !!(ind.ltFlat || (ind.ltSlopePct != null && ind.ltSlopePct > -0.9)),
+      '长期均线斜率 ' + sPct(ind.ltSlopePct) + '/5日');
+    it('卖压减少（缩量）', ind.volDim <= 0.9, '近20日均量 / 近60日均量 = ' + fmtN(ind.volDim));
+    it('出现更高的低点（积累初期迹象）', !!ind.higherLow, '');
+    it('业务企稳 / 盈利改善', null, '未接入基本面数据 → 需你人工核对');
+  }
+  return out;
+}
+
+function judgeStage(ind, ctx) {
+  ctx = ctx || {};
+  var ev = [], safety = [];
+  function add(t, type) { ev.push({ text: t, type: type || 'hit' }); }
+  var price = ind.price;
+
+  /* ---------- ① 背景（决定性前提） ---------- */
+  var legTxt = ind.legMode === 'down'
+    ? ('前期是一轮下跌：近 ' + Math.min(ind.klines.length, 250) + ' 个交易日内 高→低 幅度 ' + fmtN(ind.legRisePct) +
+       '%，最低点距今日 ' + ind.legEndBarsAgo + ' 个交易日')
+    : ind.legMode === 'up'
+      ? ('前期是一轮上涨：近 ' + Math.min(ind.klines.length, 250) + ' 个交易日内 低→高 幅度 ' + fmtN(ind.legRisePct) +
+         '%，最高点距今日 ' + ind.legEndBarsAgo + ' 个交易日')
+      : '前期为区间震荡（近 250 日内高低点的先后顺序不构成明确主腿）';
+  add('背景（决定性前提）：' + legTxt, 'info');
+
+  /* ---------- ② 长期趋势 ---------- */
+  var ltName = '长期均线' + (ind.ltPeriod
+    ? ('（' + ind.ltPeriod + ' 日' + (ind.ltPeriod === 150 ? ' ≈ 30周线' : '，K线不足 150 根已降级') + '）')
+    : '（数据不足）');
+  var aboveLT = (ind.ltv != null) ? (price > ind.ltv) : null;
+  add(ltName + '：' + fmtN(ind.ltv) + '，近 5 日斜率 ' + sPct(ind.ltSlopePct) +
+    (ind.ltUp ? '（上行）' : ind.ltDown ? '（下行）' : '（走平）') +
+    '｜现价' + (aboveLT === null ? '与均线关系未知' : (aboveLT ? '在其上方' : '在其下方')) +
+    (ind.devLT == null ? '' : '（偏离 ' + sPct(ind.devLT) + '）'), 'info');
+  add('结构：40 日区间幅度 ' + fmtN(ind.range40) + '%｜' + (ind.higherHigh ? '创更高的高点' : '未创新高') +
+    '｜' + (ind.higherLow ? '抬高了低点' : '未抬高低点') +
+    '｜' + (ind.lowerHigh ? '出现更低高点' : '无更低高点') +
+    '｜量能趋势 ' + fmtN(ind.volTrend) + '×｜波动 ' + fmtN(ind.ampExpand) + '×' +
+    '｜60 日区间位置 ' + fmtN((ind.pos == null ? 0 : ind.pos) * 100, 0) + '%', 'info');
+
+  var priorDown = ind.legMode === 'down';
+  var priorUp = ind.legMode === 'up';
+  var progress = ind.higherLow && (ind.higherHigh || ind.gain20 > 5) && !ind.sideways;
+  var topSignal = ind.sideways || ind.lowerHigh || (ind.testsHi >= 3 && !ind.higherHigh) ||
+                  (ind.gain20 < 3 && ind.ampExpand > 1.2);
+  var freshBO = (ind.breakoutResist === true) && ind.volRatio >= 1.4 && (ind.ltUp || ind.ltFlat);
+  var boRecent = (ind.barsSinceBreakout != null && ind.barsSinceBreakout <= 15);
+  var trendEstablished = ind.higherHigh && ind.higherLow && (ind.ma50Slope5 != null && ind.ma50Slope5 > 0);
+
+  var stage = null, confidence = 'Low';
+  function set(k, c) { stage = k; confidence = c; }
+
+  /* ---------- 阶段4：下跌趋势（长期均线下行 + 价格在其下方） ---------- */
+  if (aboveLT === false && ind.ltDown) {
+    /* 注意：长期均线仍在下行 ≠ 一定是阶段4 —— 若下跌已停止推进，就是 4→1 的过渡（阶段1A） */
+    var stalled = !ind.lowerLow && ind.legEndBarsAgo >= 10 &&
+                  (ind.higherLow || ind.ampExpand <= 0.9 || ind.volDim <= 0.85);
+    if (stalled) {
+      set('p1a', ind.higherLow ? 'Medium' : 'Low');
+      add('长期均线仍在下行，但下跌已停止推进：未再创出新低' +
+        (ind.higherLow ? '、已出现更高的低点' : '') +
+        '、波动 ' + fmtN(ind.ampExpand) + '×（卖压减少）→ 按 4→1 的过渡处理，归入阶段1A', 'hit');
+    } else if (ind.ltSlopePct != null && ind.ltSlopePct > -0.9 && ind.ampExpand <= 1.05) {
+      set('p4b', ind.higherLow ? 'Medium' : 'Low');
+      add('下跌已成熟：整段跌幅 ' + fmtN(ind.legRisePct) + '%，长期均线斜率趋缓（' + sPct(ind.ltSlopePct) +
+        '/5日），波动 ' + fmtN(ind.ampExpand) + '× → 后期下跌阶段', 'warn');
+      if (ind.higherLow) add('已出现更高的低点（早期积累迹象）→ 关注「4→1」，但趋势尚未反转，仍不买入', 'info');
+    } else if (ind.barsSinceBreakdown != null && ind.barsSinceBreakdown <= 25) {
+      set('p4a', 'High');
+      add('刚跌破 60 日支撑：' + ind.barsSinceBreakdown + ' 个交易日前收盘跌破前 60 日最低 ' + fmtN(ind.w60l) +
+        '，且已跌破长期均线 → 新的下跌趋势刚开始', 'danger');
+    } else {
+      set('p4', 'High');
+      add('下跌趋势已确立：' + (ind.lowerHigh ? '更低的高点' : '高点未创新高') + ' + ' +
+        (ind.lowerLow ? '更低的低点' : '低点仍在被打破') + '，长期均线下行（' + sPct(ind.ltSlopePct) +
+        '/5日），价格在其下方', 'danger');
+    }
+  }
+  /* ---------- 阶段3：分配（价格仍在长期均线上方，但上涨已失去动能） ---------- */
+  else if (aboveLT === true && priorUp && !progress && (topSignal || (ind.devLT != null && ind.devLT > 25))) {
+    if (ind.lowerHigh && (ind.ma50v != null && price < ind.ma50v)) {
+      set('p3b', 'High');
+      add('上涨之后的分配已进入后段：出现更低的高点，且已跌破 MA50（' + fmtN(ind.ma50v) + '）→ 结构走弱', 'danger');
+    } else if (ind.lowerHigh) {
+      set('p3b', 'Medium');
+      add('上涨之后出现更低的高点（近 20 日最高 ' + fmtN(ind.w60h) + ' 未能超越前一段）→ 供应开始占上风', 'warn');
+    } else if (ind.sideways && ind.ltFlat && ind.testsHi >= 3) {
+      set('p3', 'Medium');
+      add('大幅上涨后横盘：40 日区间幅度 ' + fmtN(ind.range40) + '%，长期均线已走平（' + sPct(ind.ltSlopePct) +
+        '/5日），近 30 日 ' + ind.testsHi + ' 次测试区间上沿 ' + fmtN(ind.w60h) + ' → 分配 / 顶部', 'warn');
+    } else if (ind.testsHi >= 2 && ind.gain20 < 8) {
+      set('p3a', 'Medium');
+      add('早期封顶：近 20 日仅 ' + sPct(ind.gain20) + '（近 60 日 ' + sPct(ind.gain60) + '），近 30 日 ' +
+        ind.testsHi + ' 次测试高区但未创新高 → 动能减弱', 'warn');
+    } else {
+      set('p3a', 'Low');
+      add('上涨之后动能减弱：' + (ind.sideways ? ('40 日区间收窄至 ' + fmtN(ind.range40) + '%') : '高点未能继续突破') +
+        ' → 按早期封顶对待', 'warn');
+    }
+  }
+  /* ---------- 阶段2：上升趋势（长期均线上行，或刚发生带量突破） ---------- */
+  else if ((ind.ltUp && aboveLT === true) || freshBO) {
+    if (ind.extended) {
+      set('p2b', (ind.dev != null && ind.dev > 12) ? 'High' : 'Medium');
+      add('趋势仍在延续但已明显延伸：' + (ind.devLT != null ? ('偏离长期均线 ' + sPct(ind.devLT)) : '') +
+        (ind.gain60 != null ? ('、60 日涨幅 ' + sPct(ind.gain60)) : '') +
+        '，波动 ' + fmtN(ind.ampExpand) + '×' + (ind.accel ? '，且近期斜率在加速' : '') +
+        ' → 风险管理阶段，不是建仓阶段', 'warn');
+    } else if (freshBO && boRecent && (ind.barsSinceBreakout <= 3 || !trendEstablished)) {
+      set('p2a', 'High');
+      add('新鲜突破：收盘 ' + fmtN(price) + ' 站上前 60 日最高 ' + fmtN(ind.prevHi60) + '（' +
+        (ind.barsSinceBreakout === 0 ? '今日' : (ind.barsSinceBreakout + ' 个交易日前')) +
+        '），量能倍数 ' + fmtN(ind.volRatio) + '（带量确认）', 'hit');
+    } else {
+      set('p2', progress ? 'High' : 'Medium');
+      add('前进的上升趋势：' + (ind.higherHigh ? '更高的高点' : '高点在推进') + ' + ' +
+        (ind.higherLow ? '更高的低点' : '低点在抬高') + '，长期均线上行（' + sPct(ind.ltSlopePct) +
+        '/5日），MA50 斜率 ' + sPct(ind.ma50Slope5) + '/5日，回调' +
+        (ind.volDim <= 0.95 ? '缩量（建设性）' : '量能偏大（需警惕）'), 'hit');
+    }
+  }
+  /* ---------- 阶段1：积累（跌完之后，长期均线不再下行） ---------- */
+  else if (aboveLT === true && priorDown) {
+    if (ind.higherLow && ind.pos >= 0.5 && (ind.testsHi >= 2 || ind.volTrend > 1.05)) {
+      set('p1b', 'Medium');
+      add('后期基础（突破观察）：下跌之后已站上走平的长期均线，出现更高的低点，60 日区间位置 ' +
+        fmtN(ind.pos * 100, 0) + '%，近 30 日 ' + ind.testsHi + ' 次测试阻力 → 最有价值的 1B→2A 转变窗口', 'hit');
+    } else {
+      set('p1', 'Medium');
+      add('积累 / 基础：下跌之后长期均线走平（' + sPct(ind.ltSlopePct) + '/5日），价格在其上方运行，40 日区间幅度 ' +
+        fmtN(ind.range40) + '%', 'info');
+    }
+  }
+  else if (aboveLT === false && !ind.ltDown) {
+    if (priorDown) {
+      if (ind.higherLow && !ind.sideways && ind.pos >= 0.5) {
+        set('p1b', 'Low');
+        add('下跌之后结构转强（更高的低点 + 60 日区间位置 ' + fmtN(ind.pos * 100, 0) +
+          '%），长期均线走平 → 按后期基础（突破观察）对待', 'hit');
+      } else if (ind.sideways) {
+        set('p1', 'Medium');
+        add('典型阶段1：长期均线走平（' + sPct(ind.ltSlopePct) + '/5日），40 日区间幅度收窄至 ' + fmtN(ind.range40) +
+          '%（MA20 与 MA60 相距 ' + fmtN(ind.maEntangle) + '%），价格围绕长期均线震荡 → 横向基座', 'hit');
+      } else {
+        set('p1a', 'Low');
+        add('下跌之后长期均线转为走平，但尚未筑出横盘区间（40 日 ' + fmtN(ind.range40) + '%）→ 先按早期积累对待', 'info');
+      }
+    } else if (priorUp) {
+      set('p3b', 'Medium');
+      add('关键法则命中：上涨之后的横盘，且已跌破走平的长期均线' +
+        (ind.lowerHigh ? '、出现更低的高点' : '') + ' → 这是分配的后段，不是积累', 'danger');
+    } else {
+      set('p1', 'Low');
+      add('长期均线走平、无明确的前期主腿 → 按积累 / 基础（低置信度）对待', 'info');
+    }
+  }
+
+  /* ---------- 兜底 ---------- */
+  if (!stage) {
+    if (aboveLT === true) {
+      set('p2', 'Low');
+      add('兜底：价格在长期均线上方，但结构特征不足 → 按阶段2（低置信度）对待', 'info');
+    } else {
+      set('p4', 'Low');
+      add('兜底：价格在长期均线下方，但长期均线未明确下行 → 按阶段4（低置信度）对待，以回避为原则', 'warn');
+    }
+  }
+
+  /* ---------- 关键法则提示（图 1/3/5/8） ---------- */
+  var keyRule = '';
+  if (ind.sideways) {
+    if (priorUp) keyRule = '关键法则命中：上涨之后的横盘 = 阶段3（分配）—— 看起来像筑底，实际是派发区';
+    else if (priorDown) keyRule = '关键法则命中：下跌之后的横盘 = 阶段1（积累）—— 看起来像滞涨，实际是基座';
+  }
+  if (keyRule) add(keyRule, 'info');
+
+  /* ---------- 安全过滤（永远先看） ---------- */
+  if (ind.breakDays >= 3) safety.push({ level: 'danger', text: '连续跌破 MA5 ' + ind.breakDays + ' 天（≥3 天 = 短线趋势终结，无条件清仓）' });
+  if (ind.ma5Slope <= 0) safety.push({ level: 'warn', text: 'MA5 斜率向下（' + sPct(ind.ma5SlopePct) + '）→ 一律视为弱势反弹，不重仓' });
+  if (ind.dev > 15) safety.push({ level: 'danger', text: 'dev ' + fmtN(ind.dev, 1) + '%（>15% 极端超涨，禁止买入）' });
+  else if (ind.dev > 10) safety.push({ level: 'warn', text: 'dev ' + fmtN(ind.dev, 1) + '%（>10% 严重超涨，分批减仓）' });
+  else if (ind.dev > 8) safety.push({ level: 'warn', text: 'dev ' + fmtN(ind.dev, 1) + '%（>8% 超涨警戒，分批止盈）' });
+  if (ind.maBearish) safety.push({ level: 'warn', text: '均线空头排列（MA5 < MA10 < MA20）' });
+  if (ind.volDim <= 0.7) safety.push({ level: 'info', text: '量能枯竭（近 20 日均量仅为近 60 日的 ' + fmtN(ind.volDim) + ' 倍）—— 阶段1 的典型特征，但也要留意流动性' });
+  safety.push({ level: 'info', text: '大盘 RS / 市场广度 / 机构持仓 / 盈利基本面 未接入 —— 本工具只做个股技术面（阶段）判定，不猜这些维度' });
+
+  var fam = STAGE_FAMILY[stage] || 0;
+  return {
+    stage: stage, family: fam, zone: ZONE_OF_FAMILY[fam] || '—',
+    evidence: ev, safety: safety, confidence: confidence,
+    transitions: stageTransitionCheck(ind, fam, ctx),
+    keyRule: keyRule
+  };
+}
+/* ==== STAGE-END ==== */
 
 function stageClsOf(stage) { return (STAGES[stage] || {}).cls || 'hold'; }
 function stageColorOf(key) {
   var i = STAGE_KEYS.indexOf(key);
   return i >= 0 ? STAGE_COLOR[i] : '#90a4ae';
 }
-function stageNameOf(key) { return (STAGES[key] || {}).name || key; }
+function stageNameOf(key) { var st = STAGES[key]; return st ? (st.tag + ' ' + st.short) : (key || '—'); }
+function stageFamilyOf(key) { return STAGE_FAMILY[key] || 0; }
+function stageZoneOf(key) { return ZONE_OF_FAMILY[STAGE_FAMILY[key]] || '—'; }
 
 /* ---------------------------- 个股结果渲染 ---------------------------- */
 function renderLoading() {
@@ -2055,7 +2457,7 @@ function renderMA5StrategyCard(ms) {
 }
 
 function buildResultHTML(quote, ind, sr, compact, source, gene, cap, rec, open8) {
-  var st = STAGES[sr.stage] || STAGES.new;
+  var st = STAGES[sr.stage] || STAGES.p1;
   var chgCls = ind.chgToday >= 0 ? 'up' : 'down';
   var name = (quote && quote.name) ? quote.name : (quote && quote.code ? quote.code : '');
   var upd = (quote && quote.time)
@@ -2078,14 +2480,24 @@ function buildResultHTML(quote, ind, sr, compact, source, gene, cap, rec, open8)
     ' · 量能倍数 ' + ind.volRatio.toFixed(2) + '</div>' +
     '</div></div>';
 
-  // 生命周期阶段条
-  var flow = '';
-  STAGE_FLOW.forEach(function (s, i) {
-    var active = STAGE_KEYS[i] === sr.stage;
-    flow += '<div class="flow-node' + (active ? ' active' : '') + '" style="' +
-      (active ? 'color:' + STAGE_COLOR[i] + ';border-color:' + STAGE_COLOR[i] : '') + '">' + s + '</div>';
-    if (i < STAGE_FLOW.length - 1) flow += '<div class="flow-arrow">→</div>';
+  // 阶段路线图：4 大阶段 × 每阶段 3 个子阶段，高亮当前所处子阶段
+  var fam = sr.family || stageFamilyOf(sr.stage);
+  var flow = '<div class="stage-road">';
+  [1, 2, 3, 4].forEach(function (f) {
+    var on = (fam === f);
+    flow += '<div class="sr-block' + (on ? ' on' : '') + '">' +
+      '<div class="sr-head">' + FAMILY_NAME[f] + (on ? ' ← 当前' : '') + '</div>';
+    STAGE_KEYS.forEach(function (k) {
+      if (STAGE_FAMILY[k] !== f) return;
+      var act = (k === sr.stage);
+      var ci = STAGE_KEYS.indexOf(k);
+      flow += '<div class="sr-sub' + (act ? ' on' : '') + '"' +
+        (act ? ' style="background:' + STAGE_COLOR[ci] + '"' : '') + '>' +
+        STAGES[k].tag + ' ' + STAGES[k].short + '</div>';
+    });
+    flow += '</div>';
   });
+  flow += '</div>';
   var safetyHtml = sr.safety.map(function (s) {
     var k = s.level === 'danger' ? '✕' : (s.level === 'warn' ? '!' : 'i');
     return '<div class="safety-item ' + s.level + '"><span class="k">' + k + '</span><span>' + escapeHtml(s.text) + '</span></div>';
@@ -2094,15 +2506,25 @@ function buildResultHTML(quote, ind, sr, compact, source, gene, cap, rec, open8)
   html += '<div class="card">' +
     '<div class="stage-top"><div class="stage-badge ' + st.cls + '">' + st.name + '</div>' +
     '<div><div style="font-size:13px;color:#9fb4ff;">' + st.subtitle + '</div>' +
+    '<div style="font-size:12px;color:var(--dim);margin-top:4px">所属分区：<b style="color:' + stageColorOf(sr.stage) + '">' +
+    escapeHtml(sr.zone || stageZoneOf(sr.stage)) + '</b>' +
+    (st.inv ? '　投资者（长期）视角：' + escapeHtml(st.inv) : '') +
+    (st.trd ? '　交易员（短期）视角：' + escapeHtml(st.trd) : '') + '</div>' +
     '</div></div>' +
     '<div class="stage-desc">' + st.desc + '</div>' +
     (function(){
       var p = ma5PositionInfo(ind, st.position);
       return '<div class="position-line" style="color:' + p.color + '">建议仓位：' + p.text + '</div>';
     })() +
-    '<div class="flow">' + flow + '</div>' +
+    (sr.keyRule ? '<div class="stage-desc" style="margin-top:6px;color:#ffb74d">⚠ ' + escapeHtml(sr.keyRule) + '</div>' : '') +
+    flow +
     '<div class="safety">' + safetyHtml + '</div>' +
     '</div>';
+
+  // 阶段转折确认清单（对齐图谱「什么证实了这一转变」）+ 今昨强弱（日线口径）
+  html += renderStageTransitionCard(sr, st);
+  var pwq = powQuick(ind, quote.code, name);
+  if (pwq) html += renderPowQuickCard(pwq, sr);
 
   // MA5 终极策略提示（清仓 / 减仓 / 持有 / 观察 + 超涨止盈）
   html += renderMA5StrategyCard(computeMA5Strategy(ind));
@@ -2175,7 +2597,7 @@ async function analyzeStock(stock, ctx) {
   if (!quote.name) quote.name = stock.name;
   var ind = computeIndicators(data.klines, quote, stock.code);
   if (!ind) throw new Error('K线数据不足（需 ≥22 个交易日）');
-  var sr = judgeStage(ind);
+  var sr = judgeStage(ind, ctx);          // 传入板块上下文：相对强度 RS 用板块内涨幅排名做代理
   var gctx = {};
   for (var kk in (ctx || {})) gctx[kk] = ctx[kk];
   if (stock.floatCap) gctx.floatCap = stock.floatCap / 1e8;   // 元 → 亿元
@@ -3126,12 +3548,12 @@ var ST = {
   callMin: 3               // 行业列表「最小竞价涨停家数」过滤
 };
 
-// 分类显示：按「交易价值组」聚合，组内再按生命周期阶段细分
+// 分类显示：按「阶段分区」聚合，组内再按 4 阶段 × A/B 子阶段细分
 var TRADE_GROUPS = [
-  { key: 'long',  label: '🟢 可做多组', tip: '启动 / 爆发 / 主升 —— 最佳参与窗口，可建仓/加仓', stages: ['start', 'burst', 'main'] },
-  { key: 'watch', label: '🟡 需观察组', tip: '分歧 / 修复 —— 先判性质再动手，只低吸不追高', stages: ['diverge', 'repair'] },
-  { key: 'risk',  label: '🔴 高风险组', tip: '加速 / 退潮 —— 兑现区不是建仓区，以减仓/离场为主', stages: ['accel', 'ebb'] },
-  { key: 'idle',  label: '⚪ 冰点中性组', tip: '新一轮孕育 —— 建观察池，不急着买', stages: ['new'] }
+  { key: 'chance',  label: '🟢 机会区', tip: '阶段2A–2 —— 波动最大的上行阶段，最佳参与窗口，可建仓 / 加仓', stages: ['p2a', 'p2'] },
+  { key: 'explore', label: '🔍 探索区', tip: '阶段1A–1B —— 新机会在此建立的基础点，研究、观察、等突破，不急于买', stages: ['p1a', 'p1', 'p1b'] },
+  { key: 'risk',    label: '🟡 风险区', tip: '阶段2B–3B —— 谨慎是必要的地方，保护利润、只减不加', stages: ['p2b', 'p3a', 'p3', 'p3b'] },
+  { key: 'avoid',   label: '🔴 避免/修复区', tip: '阶段4A–4B —— 风险最高、资本保值最关键，空仓等待', stages: ['p4a', 'p4', 'p4b'] }
 ];
 
 /* =========================================================================
@@ -3674,11 +4096,11 @@ function rowCells(s) {
   cells += '<td class="' + chgCls + '">' + (s.chg === null ? '—' : fmtPct(s.chg)) + '</td>';
 
   if (!r) {
-    cells += '<td colspan="15"><span class="pending">' + (ST.running ? '分析中' : '待分析') + '</span></td>';
+    cells += '<td colspan="16"><span class="pending">' + (ST.running ? '分析中' : '待分析') + '</span></td>';
     return cells;
   }
   if (!r.ok) {
-    cells += '<td colspan="15" class="fail">数据获取失败：' + escapeHtml(r.error || '') + '</td>';
+    cells += '<td colspan="16" class="fail">数据获取失败：' + escapeHtml(r.error || '') + '</td>';
     return cells;
   }
   var ind = r.ind, sr = r.sr, stg = sr.stage;
@@ -3690,6 +4112,7 @@ function rowCells(s) {
   // 建议仓位（与MA5策略一致）
   var pInfo = ma5PositionInfo(ind, STAGES[sr.stage].position);
   cells += '<td style="color:' + pInfo.color + ';font-size:11.5px">' + pInfo.text + '</td>';
+  cells += powCellHtml(ind, s.code, s.name);        // 今昨强弱（实时，排在辨识度前）
   if (r.rec) {
     cells += '<td class="rec-cell" style="color:' + r.rec.tier.color + '" title="' + escapeHtml(r.rec.tier.name + '：' + r.rec.reason) + '">' +
       r.rec.tier.short + ' <em>' + r.rec.score + '</em></td>';
@@ -3731,7 +4154,7 @@ function detailRowHTML(code) {
   if (!r) inner = '<div class="card"><div class="card-title">' + escapeHtml(s ? s.name : code) + '</div><div class="stage-desc">该股票尚未完成分析，请点击「开始分析」。</div></div>';
   else if (!r.ok) inner = '<div class="card"><div class="err-box">数据获取失败：' + escapeHtml(r.error || '') + '<br>可稍后重试（点击「清空重算」）。</div></div>';
   else inner = buildResultHTML(r.quote, r.ind, r.sr, true, r.source, r.gene, r.cap, r.rec, r.open8);
-  return '<tr class="batch-detail" data-detail="' + code + '" style="display:none"><td colspan="15">' + inner + '</td></tr>';
+  return '<tr class="batch-detail" data-detail="' + code + '" style="display:none"><td colspan="16">' + inner + '</td></tr>';
 }
 
 function stockRowHTML(s) {
@@ -3739,7 +4162,7 @@ function stockRowHTML(s) {
     (ST.rowOpen[s.code] ? detailRowHTML(s.code) : '');
 }
 
-var TABLE_HEAD = '<thead><tr><th>股票</th><th>现价</th><th>涨跌幅</th><th>阶段</th><th>建议仓位</th><th>辨识度</th><th>涨停基因</th>' +
+var TABLE_HEAD = '<thead><tr><th>股票</th><th>现价</th><th>涨跌幅</th><th>阶段</th><th>建议仓位</th><th>今昨强弱</th><th>辨识度</th><th>涨停基因</th>' +
   '<th>dev</th><th>MA5斜率</th><th>破线</th><th>换手</th><th>主力参与</th><th>主力净流入</th><th>60日涨幅</th><th>开盘强弱</th></tr></thead>';
 
 function renderDetailBody() {
@@ -3830,10 +4253,10 @@ function renderDetailBody() {
     var idx = STAGE_KEYS.indexOf(filter);
     var stg = STAGES[filter];
     body += '<tr class="group-head" style="background:' + STAGE_COLOR[idx] + '18">' +
-      '<td colspan="15"><span style="color:' + STAGE_COLOR[idx] + '">● ' + STAGE_FLOW[idx] + '</span>' +
+      '<td colspan="16"><span style="color:' + STAGE_COLOR[idx] + '">● ' + STAGE_FLOW[idx] + '</span>' +
       '<span class="g-tip">' + stg.subtitle + ' · 建议仓位 ' + stg.position + '</span>' +
       '<span class="g-count">' + list.length + ' 只</span></td></tr>';
-    if (!list.length) body += '<tr><td colspan="15" style="color:var(--dim);text-align:center;padding:26px">当前没有处于「' + STAGE_FLOW[idx] + '」阶段的股票</td></tr>';
+    if (!list.length) body += '<tr><td colspan="16" style="color:var(--dim);text-align:center;padding:26px">当前没有处于「' + STAGE_FLOW[idx] + '」阶段的股票</td></tr>';
     list.forEach(function (s) { body += stockRowHTML(s); });
   } else {
     // 分类视图：交易价值组 → 生命周期阶段
@@ -3842,7 +4265,7 @@ function renderDetailBody() {
       g.stages.forEach(function (k) { inGroup = inGroup.concat(stat.counts[k] || 0 ? [k] : []); });
       if (!inGroup.length) return;
       var gTotal = inGroup.reduce(function (a, k) { return a + (stat.counts[k] || 0); }, 0);
-      body += '<tr class="group-head"><td colspan="15">' + g.label +
+      body += '<tr class="group-head"><td colspan="16">' + g.label +
         '<span class="g-tip">' + g.tip + '</span><span class="g-count">' + gTotal + ' 只</span></td></tr>';
       g.stages.forEach(function (k) {
         var list = sorted(d.stocks.filter(function (s) {
@@ -3852,7 +4275,7 @@ function renderDetailBody() {
         if (!list.length) return;
         var idx = STAGE_KEYS.indexOf(k);
         body += '<tr class="group-head" style="background:' + STAGE_COLOR[idx] + '18">' +
-          '<td colspan="15"><span style="color:' + STAGE_COLOR[idx] + '">● ' + STAGE_FLOW[idx] + '</span>' +
+          '<td colspan="16"><span style="color:' + STAGE_COLOR[idx] + '">● ' + STAGE_FLOW[idx] + '</span>' +
           '<span class="g-tip">' + STAGES[k].subtitle + ' · 建议仓位 ' + STAGES[k].position + '</span>' +
           '<span class="g-count">' + list.length + ' 只</span></td></tr>';
         list.forEach(function (s) { body += stockRowHTML(s); });
@@ -3862,17 +4285,17 @@ function renderDetailBody() {
     var pending = d.stocks.filter(function (s) { return !ST.results[s.code]; });
     var failed = d.stocks.filter(function (s) { var r = ST.results[s.code]; return r && !r.ok; });
     if (pending.length) {
-      body += '<tr class="group-head"><td colspan="15">⏳ 待分析 / 分析中' +
+      body += '<tr class="group-head"><td colspan="16">⏳ 待分析 / 分析中' +
         '<span class="g-tip">点击「开始分析」继续（当前范围内尚未判定的股票）</span>' +
         '<span class="g-count">' + pending.length + ' 只</span></td></tr>';
       pending.slice(0, 300).forEach(function (s) { body += stockRowHTML(s); });
     }
     if (failed.length) {
-      body += '<tr class="group-head"><td colspan="15">⚠️ 数据获取失败<span class="g-count">' + failed.length + ' 只</span></td></tr>';
+      body += '<tr class="group-head"><td colspan="16">⚠️ 数据获取失败<span class="g-count">' + failed.length + ' 只</span></td></tr>';
       failed.forEach(function (s) { body += stockRowHTML(s); });
     }
     if (!stat.done && !pending.length) {
-      body += '<tr><td colspan="15" style="color:var(--dim);text-align:center;padding:26px">暂无数据</td></tr>';
+      body += '<tr><td colspan="16" style="color:var(--dim);text-align:center;padding:26px">暂无数据</td></tr>';
     }
   }
 
@@ -4053,6 +4476,24 @@ async function geneCtxForSingle(r) {
 }
 
 // 板块热度百分位（可指定列表，供单只查询使用行业板块表）
+/* 统一的主视图切换（tab 点击、报告里点板块标签 等程序化跳转共用）
+   原先 openBoardDetail 调用了并不存在的 switchView → 点报告里的板块标签会直接抛错、打不开板块。 */
+function switchView(v) {
+  document.querySelectorAll('.tabs .tab').forEach(function (x) {
+    x.classList.toggle('on', x.getAttribute('data-view') === v);
+  });
+  ['view-board', 'view-single', 'view-watch', 'view-ding', 'view-call', 'view-mid', 'view-pow'].forEach(function (id) {
+    var e = el(id);
+    if (e) e.classList.toggle('on', id === 'view-' + v);
+  });
+  if (v === 'watch') { if (!WATCH.loaded && !WATCH.running) runWatchSearch(); else renderWatch(); }
+  if (v === 'ding') { renderDingForm(); renderDing(); }
+  if (v === 'board' && !ST.boards.length) loadBoardList(false);
+  if (v === 'call') { if (!ST.callScan) loadCallBoards(); else renderCallView(); }
+  if (v === 'mid' && !MID.pool.length && !MID.scanning) midScan();
+  if (v === 'pow' && !POW.rows.length) powStatus('选好范围后点「开始逐只判定」（每只要抓日K + 5分钟分时，10 只约 20~40 秒）', false);
+}
+
 function openBoardDetail(bkCode, bkName) {
   // 切换到板块全景视图，打开指定板块
   switchView('board');
@@ -4074,12 +4515,14 @@ function renderSingle() {
   var arr = SINGLE.results.slice();
   if (!arr.length) return;
   var okList = arr.filter(function (r) { return r.ok; });
-  var order = { main: 0, burst: 1, start: 2, accel: 3, diverge: 4, repair: 5, ebb: 6, new: 7 };
+  // 排序优先级：机会区 → 探索区 → 风险区 → 避免区（同区按当日涨幅降序）
+  var order = { p2: 0, p2a: 1, p1b: 2, p1: 3, p1a: 4, p2b: 5, p3a: 6, p3: 7, p3b: 8, p4b: 9, p4a: 10, p4: 11 };
+  function stageOrder(k) { var v = order[k]; return (v == null) ? 99 : v; }
   arr.sort(function (a, b) {
     if (!a.ok && !b.ok) return 0;
     if (!a.ok) return 1;
     if (!b.ok) return -1;
-    var d = (order[a.sr.stage] || 9) - (order[b.sr.stage] || 9);
+    var d = stageOrder(a.sr.stage) - stageOrder(b.sr.stage);
     if (d) return d;
     return b.ind.chgToday - a.ind.chgToday;
   });
@@ -4088,7 +4531,7 @@ function renderSingle() {
     var open = SINGLE.open[r.token];
     if (!r.ok) {
       return '<tr class="batch-row" data-idx="' + escapeHtml(r.token) + '"><td><span class="caret">▶</span>' + escapeHtml(r.token) + '</td>' +
-        '<td colspan="15" class="fail">数据获取失败：' + escapeHtml(r.error || '') + '</td></tr>';
+        '<td colspan="16" class="fail">数据获取失败：' + escapeHtml(r.error || '') + '</td></tr>';
     }
     var ind = r.ind, sr = r.sr;
     var col = stageColorOf(sr.stage);
@@ -4103,6 +4546,8 @@ function renderSingle() {
       '<td>' + ind.price.toFixed(2) + '</td>' +
       '<td class="' + chgCls + '">' + fmtPct(ind.chgToday) + '</td>' +
       '<td><span class="st-chip" style="background:' + col + '22;color:' + col + ';border:1px solid ' + col + '55">' + stageNameOf(sr.stage) + '</span></td>' +
+      ma5PositionCell(ind, STAGES[sr.stage].position) +
+      powCellHtml(ind, r.code, r.quote.name || r.code) +
       (r.rec ? '<td style="color:' + r.rec.tier.color + '">' + r.rec.tier.short + ' <em>' + r.rec.score + '</em></td>' : '<td style="color:var(--dim)">—</td>') +
       geneCell +
       '<td>' + ind.dev.toFixed(1) + '%</td>' +
@@ -4111,16 +4556,15 @@ function renderSingle() {
       '<td>' + fmtN(ind.turnover) + '%</td>' +
       (r.cap ? '<td style="color:' + r.cap.verdict.color + '">' + r.cap.verdict.name.split(' ')[0].split('（')[0] + ' <em>' + r.cap.volRatio.toFixed(2) + '</em></td>' : '<td style="color:var(--dim)">—</td>') +
       '<td style="color:var(--dim)">—</td>' +
-      ma5PositionCell(ind, STAGES[sr.stage].position) +
       '<td style="color:var(--dim)">—</td>' +
       open8Cell(r) +
       '</tr>' +
-      (open ? '<tr class="batch-detail"><td colspan="15">' + buildResultHTML(r.quote, r.ind, r.sr, false, r.source, r.gene, r.cap, r.rec, r.open8) + '</td></tr>' : '');
+      (open ? '<tr class="batch-detail"><td colspan="16">' + buildResultHTML(r.quote, r.ind, r.sr, false, r.source, r.gene, r.cap, r.rec, r.open8) + '</td></tr>' : '');
   }).join('');
 
   var summary = '<div class="batch-toolbar"><span class="count">共 ' + arr.length + ' 只，成功 ' + okList.length + ' 只</span><span style="margin-left:auto"></span></div>';
   el('resultArea').innerHTML = '<div class="card">' + summary +
-    '<div style="overflow-x:auto"><table class="batch-table"><thead><tr><th>股票</th><th>现价</th><th>涨跌幅</th><th>阶段</th><th>建议仓位</th><th>辨识度</th><th>涨停基因</th>' +
+    '<div style="overflow-x:auto"><table class="batch-table"><thead><tr><th>股票</th><th>现价</th><th>涨跌幅</th><th>阶段</th><th>建议仓位</th><th>今昨强弱</th><th>辨识度</th><th>涨停基因</th>' +
     '<th>dev</th><th>MA5斜率</th><th>破线</th><th>换手</th><th>主力参与</th><th>主力净流入</th><th>60日涨幅</th><th>开盘强弱</th></tr></thead><tbody>' + body + '</tbody></table></div></div>';
 }
 
@@ -4222,12 +4666,14 @@ function watchBatchBody() {
       return ms.state === WATCH.ma5Filter;
     });
   }
-  var order = { main: 0, burst: 1, start: 2, accel: 3, diverge: 4, repair: 5, ebb: 6, new: 7 };
+  // 排序优先级：机会区 → 探索区 → 风险区 → 避免区（同区按当日涨幅降序）
+  var order = { p2: 0, p2a: 1, p1b: 2, p1: 3, p1a: 4, p2b: 5, p3a: 6, p3: 7, p3b: 8, p4b: 9, p4a: 10, p4: 11 };
+  function stageOrder(k) { var v = order[k]; return (v == null) ? 99 : v; }
   arr.sort(function (a, b) {
     if (!a.ok && !b.ok) return 0;
     if (!a.ok) return 1;
     if (!b.ok) return -1;
-    var d = (order[a.sr.stage] || 9) - (order[b.sr.stage] || 9);
+    var d = stageOrder(a.sr.stage) - stageOrder(b.sr.stage);
     if (d) return d;
     return b.ind.chgToday - a.ind.chgToday;
   });
@@ -4235,7 +4681,7 @@ function watchBatchBody() {
     var tk = r.code || r.token;
     var open = WATCH.open[tk];
     if (!r.ok) {
-      return '<tr class="batch-row" data-idx="' + escapeHtml(tk) + '"><td colspan="15" class="fail">⚠ ' + escapeHtml(tk) +
+      return '<tr class="batch-row" data-idx="' + escapeHtml(tk) + '"><td colspan="16" class="fail">⚠ ' + escapeHtml(tk) +
         ' 数据获取失败：' + escapeHtml(r.error || '') + '</td></tr>';
     }
     var ind = r.ind, sr = r.sr;
@@ -4253,6 +4699,8 @@ function watchBatchBody() {
       '<td>' + ind.price.toFixed(2) + '</td>' +
       '<td class="' + chgCls + '">' + fmtPct(ind.chgToday) + '</td>' +
       '<td><span class="st-chip" style="background:' + col + '22;color:' + col + ';border:1px solid ' + col + '55">' + stageNameOf(sr.stage) + '</span></td>' +
+      ma5PositionCell(ind, STAGES[sr.stage].position) +
+      powCellHtml(ind, r.code, r.quote.name || r.code) +
       (r.rec ? '<td style="color:' + r.rec.tier.color + '">' + r.rec.tier.short + ' <em>' + r.rec.score + '</em></td>' : '<td style="color:var(--dim)">—</td>') +
       geneCell +
       '<td>' + ind.dev.toFixed(1) + '%</td>' +
@@ -4261,11 +4709,10 @@ function watchBatchBody() {
       '<td>' + fmtN(ind.turnover) + '%</td>' +
       (r.cap ? '<td style="color:' + r.cap.verdict.color + '">' + r.cap.verdict.name.split(' ')[0].split('（')[0] + ' <em>' + r.cap.volRatio.toFixed(2) + '</em></td>' : '<td style="color:var(--dim)">—</td>') +
       '<td style="color:var(--dim)">—</td>' +
-      ma5PositionCell(ind, STAGES[sr.stage].position) +
       '<td style="color:var(--dim)">—</td>' +
       open8Cell(r) +
       '</tr>' +
-      (open ? '<tr class="batch-detail"><td colspan="15">' + buildResultHTML(r.quote, r.ind, r.sr, false, r.source, r.gene, r.cap, r.rec, r.open8) + '</td></tr>' : '');
+      (open ? '<tr class="batch-detail"><td colspan="16">' + buildResultHTML(r.quote, r.ind, r.sr, false, r.source, r.gene, r.cap, r.rec, r.open8) + '</td></tr>' : '');
   }).join('');
 }
 
@@ -4340,7 +4787,7 @@ function renderWatch() {
 
   var body = watchBatchBody();
   list.innerHTML = stageChips + ma5Chips +
-    '<div class="card"><div style="overflow-x:auto"><table class="batch-table"><thead><tr><th>股票</th><th>现价</th><th>涨跌幅</th><th>阶段</th><th>建议仓位</th><th>辨识度</th><th>涨停基因</th>' +
+    '<div class="card"><div style="overflow-x:auto"><table class="batch-table"><thead><tr><th>股票</th><th>现价</th><th>涨跌幅</th><th>阶段</th><th>建议仓位</th><th>今昨强弱</th><th>辨识度</th><th>涨停基因</th>' +
     '<th>dev</th><th>MA5斜率</th><th>破线</th><th>换手</th><th>主力参与</th><th>主力净流入</th><th>60日涨幅</th><th>开盘强弱</th></tr></thead><tbody>' + body + '</tbody></table></div></div>';
 }
 
@@ -4927,13 +5374,13 @@ async function dingScanPositions(silent) {
       dingLogSet(log);
       dingPosStatus('✅ 已推送 ' + fresh.length + ' 只触发信号（' + nowHM() + '）· 请到群里确认', false);
     }
-    renderDing();
   } catch (e) {
     dingPosStatus('检测失败：' + ((e && e.message) || e), true);
   } finally {
     DING.posRunning = false;
     if (btn) btn.disabled = false;
   }
+  renderDing();   // 放在 try 之外：推送抛异常（如代理没开）时也要把命中结果渲染出来
 }
 
 /* 持仓清单的盘中定时器（间隔 0 = 只手动） */
@@ -5358,6 +5805,7 @@ function switchToSingle(tokens) {
   el('view-ding').classList.remove('on');
   if (el('view-call')) el('view-call').classList.remove('on');
   if (el('view-mid')) el('view-mid').classList.remove('on');
+  if (el('view-pow')) el('view-pow').classList.remove('on');
   el('view-single').classList.add('on');
   el('stockInput').value = tokens;
   runSearch();
@@ -6376,7 +6824,7 @@ async function loadCallBoards() {
 function callGotStock(code) {
   document.querySelectorAll('.tabs .tab').forEach(function (x) { x.classList.remove('on'); });
   var tb = document.querySelector('.tabs .tab[data-view="single"]'); if (tb) tb.classList.add('on');
-  ['view-board', 'view-watch', 'view-ding', 'view-call', 'view-mid'].forEach(function (id) { el(id).classList.remove('on'); });
+  ['view-board', 'view-watch', 'view-ding', 'view-call', 'view-mid', 'view-pow'].forEach(function (id) { el(id).classList.remove('on'); });
   el('view-single').classList.add('on');
   el('stockInput').value = code;
   runSearch();
@@ -6405,7 +6853,7 @@ async function callOpenIndustry(name, chg) {
   // 切到「板块全景」tab，再打开该板块详情（显示全部成分股）
   document.querySelectorAll('.tabs .tab').forEach(function (x) { x.classList.remove('on'); });
   var tb = document.querySelector('.tabs .tab[data-view="board"]'); if (tb) tb.classList.add('on');
-  ['view-single', 'view-watch', 'view-ding', 'view-call', 'view-mid'].forEach(function (id) { el(id).classList.remove('on'); });
+  ['view-single', 'view-watch', 'view-ding', 'view-call', 'view-mid', 'view-pow'].forEach(function (id) { el(id).classList.remove('on'); });
   el('view-board').classList.add('on');
   if (!ST.boards.length) loadBoardList(false);   // 后台补板块列表，返回时不留空白
   if (el('boardListWrap')) el('boardListWrap').style.display = 'none';
@@ -8341,26 +8789,677 @@ function midRefreshWatchView() {
   try { if (WATCH.loaded) WATCH.results = []; } catch (e) {}   // 让「刷新查询」重新跑诊断
 }
 
+/* =========================================================================
+   ⚖️ 今昨强弱 · 昨日K线 × 今日路径 逐只判定
+   对齐《强弱转换全模式实战策略》+《昨日K线×今日路径全组合矩阵》
+   —— 已修正项：① 档位改为「按涨跌幅限制归一化」；② 补十字星档；
+      ③ 补「位置过滤」（高位机会信号降级）；④ 量能倍数明确为量口径。
+   ========================================================================= */
+/* ==== POW-BEGIN ==== */
+var POW_RULE = {
+  klineBars: 130,
+  /* 文档给的是主板绝对百分数（1.5 / 4 / 7），这里换算成「占涨停幅度的比例」，
+     这样 20cm/30cm/ST 板也能用同一套逻辑（修正项①） */
+  bands: { small: 0.15, mid: 0.40, big: 0.70 },
+  flat: 0.10,          // |r| < 0.10 → 十字星（文档缺此档，修正项②）
+  ztTol: 0.3,          // 距涨停幅度 0.3% 以内视为涨停
+  overheat: 1.8,       // 量能倍数 >1.8 = 爆量
+  hiPos: 0.80          // 60日区间位置 >0.80 = 高位（修正项③：位置过滤）
+};
+
+var POW = { rows: [], cold: false, running: false };
+
+function powZtPct(code, name) {  var t = ztLimitOf(code, name);
+  return t === '20cm' ? 19.8 : t === '30cm' ? 29.7 : t === '5cm' ? 4.8 : 9.8;
+}
+
+/* 昨日K线档位（按涨跌幅限制归一化） */
+function powBand(chg, ztPct) {
+  if (chg == null || !ztPct) return { key: 'flat', label: '十字星', r: 0 };
+  var r = chg / ztPct, B = POW_RULE.bands;
+  if (chg >= ztPct - POW_RULE.ztTol) return { key: 'zt', label: '涨停', r: r };
+  if (Math.abs(r) < POW_RULE.flat) return { key: 'flat', label: '十字星', r: r };
+  if (r >= B.big) return { key: 'by', label: '大阳', r: r };
+  if (r >= B.mid) return { key: 'zy', label: '中阳', r: r };
+  if (r >= B.small) return { key: 'xy', label: '小阳', r: r };
+  if (r <= -B.big) return { key: 'bd', label: '大阴', r: r };
+  if (r <= -B.mid) return { key: 'zd', label: '中阴', r: r };
+  if (r <= -B.small) return { key: 'xd', label: '小阴', r: r };
+  return { key: 'flat', label: '十字星', r: r };
+}
+
+/* 用 5 分钟 K 线算当日均价线（VWAP）与分时强弱 */
+function powM5Stats(bars, price) {
+  if (!bars || !bars.length) return null;
+  var d = bars[bars.length - 1].date;
+  var today = bars.filter(function (b) { return b.date === d; });
+  if (today.length < 3) return null;
+  var pv = 0, vv = 0, below = 0, cumPv = 0, cumV = 0, firstVwap = null, lastVwap = null;
+  today.forEach(function (b) {
+    var tp = (b.high + b.low + b.close) / 3;
+    pv += tp * b.vol; vv += b.vol;
+    cumPv += tp * b.vol; cumV += b.vol;
+    var cum = cumV ? cumPv / cumV : null;
+    if (cum != null && b.close < cum) below++;
+  });
+  var vwap = vv ? pv / vv : null;
+  /* 均价线方向：前 1/3 段 vs 后 1/3 段的累计均价 */
+  var n = today.length, a1 = 0, v1 = 0, a2 = 0, v2 = 0, k;
+  for (k = 0; k < Math.max(1, Math.floor(n / 3)); k++) {
+    var t1 = (today[k].high + today[k].low + today[k].close) / 3; a1 += t1 * today[k].vol; v1 += today[k].vol;
+  }
+  for (k = Math.max(0, n - Math.max(1, Math.floor(n / 3))); k < n; k++) {
+    var t2 = (today[k].high + today[k].low + today[k].close) / 3; a2 += t2 * today[k].vol; v2 += today[k].vol;
+  }
+  firstVwap = v1 ? a1 / v1 : null; lastVwap = v2 ? a2 / v2 : null;
+  var slope = (firstVwap != null && lastVwap != null) ? (lastVwap > firstVwap ? 'up' : (lastVwap < firstVwap ? 'down' : 'flat')) : null;
+  /* 10:00 前后高低点 */
+  function hm(b) { return Number(String(b.time).slice(8, 12)); }
+  var hiBefore = -Infinity, hiAfter = -Infinity, loBefore = Infinity, loAfter = Infinity;
+  today.forEach(function (b) {
+    if (hm(b) <= 1000) { if (b.high > hiBefore) hiBefore = b.high; if (b.low < loBefore) loBefore = b.low; }
+    else { if (b.high > hiAfter) hiAfter = b.high; if (b.low < loAfter) loAfter = b.low; }
+  });
+  var cur = (price != null) ? price : today[n - 1].close;
+  return {
+    bars: n, vwap: vwap, price: cur,
+    above: (vwap == null || cur == null) ? null : (cur > vwap),
+    slope: slope,
+    belowRatio: n ? below / n : null,
+    hiFirst: (hiBefore > -Infinity) ? hiBefore : null,
+    hiAfter: (hiAfter > -Infinity) ? hiAfter : null,
+    loFirst: (loBefore < Infinity) ? loBefore : null,
+    loAfter: (loAfter < Infinity) ? loAfter : null,
+    /* 高点是否出现在 10:00 前（强转弱的早期预警：高点前置） */
+    hiEarly: (hiBefore > -Infinity && hiAfter > -Infinity) ? (hiBefore >= hiAfter) : null,
+    /* 低点是否抬高（10:00 后最低 > 10:00 前最低） */
+    loRaise: (loBefore < Infinity && loAfter < Infinity) ? (loAfter >= loBefore) : null
+  };
+}
+
+/* 特征工程：把 K线 + 实时价 + 分时 → 判定输入 */
+function powFeatures(ind, quote, m5, code, name) {
+  var kl = ind.klines, n = kl.length, i = n - 1;
+  var t = kl[i], y = kl[i - 1], y2 = kl[i - 2];
+  var ztPct = powZtPct(code, name);
+  var f = { code: code, name: name, ztPct: ztPct, kl: kl, i: i };
+  f.chg0 = (t.close - y.close) / y.close * 100;
+  f.chg1 = (y.close - y2.close) / y2.close * 100;
+  f.volRatio = y.volume ? t.volume / y.volume : null;
+  f.openGap = (t.open - y.close) / y.close * 100;
+  f.isZt0 = f.chg0 >= ztPct - POW_RULE.ztTol;
+  f.isZt1 = f.chg1 >= ztPct - POW_RULE.ztTol;
+  f.body0 = t.open ? (t.close - t.open) / t.open * 100 : 0;
+  f.body1 = y.open ? (y.close - y.open) / y.open * 100 : 0;
+  f.rng0 = t.high - t.low;
+  f.upShRatio = f.rng0 > 0 ? (t.high - Math.max(t.open, t.close)) / f.rng0 : 0;
+  f.dnShRatio = f.rng0 > 0 ? (Math.min(t.open, t.close) - t.low) / f.rng0 : 0;
+  /* 位置关系（今日相对昨日） */
+  var bLo1 = Math.min(y.open, y.close), bHi1 = Math.max(y.open, y.close);
+  f.bodyLow1 = bLo1; f.bodyHigh1 = bHi1;
+  f.prevLow = y.low; f.prevHigh = y.high; f.prevClose = y.close;
+  f.holdPrevLow = t.low >= y.low;
+  f.closeBreakPrevLow = t.close < y.low;        /* 有效跌破 = 收盘跌破（盘中新低但收回不算破位） */
+  f.holdPrevBodyLow = t.low >= bLo1;
+  f.abovePrevBodyHigh = t.close >= bHi1;
+  f.abovePrevClose = t.close >= y.close;
+  /* 收复昨日阴线实体一半 */
+  f.recoverHalf = (f.chg1 < 0) ? (t.close >= (y.open + y.close) / 2) : null;
+  /* 均线 / 位置 */
+  f.ma5v = ind.ma5v; f.ma10v = ind.ma10v; f.ma20v = ind.ma20v;
+  f.ma5Slope = ind.ma5Slope; f.dev = ind.dev; f.breakDays = ind.breakDays;
+  f.ma5Prev = (ind.ma5 && ind.ma5[i - 1] != null) ? ind.ma5[i - 1] : null;
+  f.aboveMA5 = (ind.ma5v != null) ? t.close > ind.ma5v : null;
+  f.aboveMA10 = (ind.ma10v != null) ? t.close > ind.ma10v : null;
+  f.bullMA = (ind.ma5v != null && ind.ma10v != null) ? ind.ma5v > ind.ma10v : null;
+  f.pos = ind.pos;                 // 60日区间位置 0~1
+  f.gain20 = ind.gain20;
+  f.swing20 = ind.swing20;
+  f.hadRally = ind.hadRally;
+  f.low2 = (ind.closes && ind.closes[i - 1] != null) ? ind.closes[i - 1] : null;
+  if (quote) { f.price = quote.price; f.chgQ = quote.changePct; }
+  f.m5 = m5 || null;
+  f.prev = powBand(f.chg1, ztPct);
+  return f;
+}
+
+/* 今日路径判定（风险优先）。返回 {id,label,act,actCls,reasons,warns,matrix} */
+function powPath(f, quiet) {
+  var R = [], W = [], X = [];
+  var vr = f.volRatio, chg = f.chg0;
+  var P = f.prev.key;
+  var act = 'watch', cls = 'watch', id = '—', label = '未匹配到矩阵单元格';
+  var heavyDown = (vr != null && vr >= 1.2) && chg <= -2.5;
+  /* 风险分级（按矩阵的量能/幅度口径，避免把「放量中阴」误判成「加速大阴」）：
+     downBig = 大阴级 / 加速（跌幅 ≤ -5%，或放量 > 1.5 倍且跌 ≥ 2.5%）→ L6 / M5
+     downMid = 放量中阴（放量 > 1.2 倍且跌 ≥ 2%）→ L4 / M4 / S5 / Y5 / Z5 / D5 */
+  var downBig = (chg <= -5) || (vr != null && vr >= 1.5 && chg <= -2.5);
+  var downMid = (vr != null && vr >= 1.2 && chg <= -2);
+  var lightDown = (vr != null && vr < 0.9) && chg < 0;
+  var upBar = chg > 0.5;
+  var bigUp = f.body0 >= f.ztPct * 0.4;
+  var midUp = f.body0 >= f.ztPct * 0.15;
+  var longUpSh = f.upShRatio >= 0.5 && chg > 0;
+  var stall = (vr != null && vr >= 1.7) && Math.abs(chg) <= 1.5;
+  var brokeMA5 = (f.aboveMA5 === false);
+  var ma5TurnDown = (f.ma5Slope != null && f.ma5Slope < 0);
+  var hiPos = (f.pos != null && f.pos > POW_RULE.hiPos);
+  function z(txt) { return (vr == null ? '' : '量能 ' + vr.toFixed(2) + ' 倍'); }
+  function pct(v) { return (v == null ? '—' : ((v > 0 ? '+' : '') + v.toFixed(2) + '%')); }
+
+  /* ================= 昨日大阴 / 跌停（D1~D5） ================= */
+  if (P === 'bd') {
+    if (downMid || (f.closeBreakPrevLow && chg <= -2)) {
+      id = 'D5'; label = '继续下杀·再收大/中阴'; act = '回避不抄底'; cls = 'out';
+      R.push('今日 ' + pct(chg) + '、' + z() + '、跌破昨日低点 → 破位延续');
+      W.push('策略：「昨日大阴再收大阴」= 主力仍在出逃，不抢反弹');
+    } else if (f.body0 >= f.ztPct * 0.4 && chg > 3 && vr != null && vr >= 1.2) {
+      id = 'D2'; label = '弱转强·放量反包大阳'; act = '可低吸（须板块共振 + 次日确认）'; cls = 'buy';
+      R.push('今日实体 ' + pct(f.body0) + '、' + z() + '（放量反包）');
+      R.push(f.recoverHalf ? '已收复昨日阴线实体一半以上' : '尚未收复昨日阴线一半 → 只能算弱修复');
+      W.push('策略：大阴后抄底是高风险动作，只有放量反包值得动手，且必须次日确认');
+    } else if (f.dnShRatio >= 0.5 && f.rng0 > 0) {
+      id = 'D4'; label = '长下影·恐慌宣泄后企稳'; act = '进观察池（不急于买）'; cls = 'watch';
+      R.push('下影占振幅 ' + (f.dnShRatio * 100).toFixed(0) + '%，' + z());
+      W.push('策略：长下影只是第一信号，等次日确认再定');
+    } else if ((lightDown || chg <= 0.5) && (vr == null || vr < 1.0)) {
+      id = 'D1'; label = '止跌·缩量小阴/十字'; act = '进观察池（不急于买）'; cls = 'watch';
+      R.push('今日 ' + pct(chg) + '，' + z() + '（缩量止跌第一信号）' + (f.holdPrevLow ? '' : '，盘中已破昨日低点但收盘收回'));
+      W.push('策略：缩量止跌≠反转，D1/D4 只进观察池');
+    } else if (chg > 0) {
+      id = 'D3'; label = '弱修复·缩量小阳（大概率反抽）'; act = '观察仓，不重仓'; cls = 'watch';
+      R.push('今日 ' + pct(chg) + '，' + z() + (f.recoverHalf === false ? '，收复不足昨日阴线一半' : ''));
+      W.push('策略：大阴后的缩量小阳大概率是逃命反抽，不是反转');
+    }
+  }
+
+  /* ================= 昨日中阴（Z1~Z5） ================= */
+  if (id === '—' && P === 'zd') {
+    if (downMid || (f.closeBreakPrevLow && chg <= -2)) {
+      id = 'Z5'; label = '二次破位·继续中/大阴'; act = '离场，不做二波'; cls = 'out';
+      R.push('今日 ' + pct(chg) + '、' + z() + (f.holdPrevLow ? '' : '、跌破昨日低点'));
+      W.push('策略：破位 = 主力出逃，不做二波');
+    } else if (midUp && chg > 2 && vr != null && vr >= 1.0 && f.holdPrevLow) {
+      id = 'Z2'; label = '弱转强·放量反包中阳'; act = '低吸试错（次日确认升级）'; cls = 'buy';
+      R.push('今日实体 ' + pct(f.body0) + '、' + z() + '、低点未破昨日低点');
+      R.push(f.recoverHalf ? '收复昨日阴线一半以上' : '未收复一半 → 只能算弱修复');
+    } else if (f.dnShRatio >= 0.5) {
+      id = 'Z4'; label = '探底回升·长下影'; act = '进观察池（次日缩量企稳再低吸）'; cls = 'watch';
+      R.push('下影占振幅 ' + (f.dnShRatio * 100).toFixed(0) + '%，' + z());
+    } else if ((vr != null && vr < 0.9) && Math.abs(chg) < 2) {
+      id = 'Z1'; label = '动能下降·缩量小阴/十字'; act = '只观察，禁止抄底'; cls = 'watch';
+      R.push('今日 ' + pct(chg) + '，' + z() + '（抛压释放）');
+      W.push('策略：动能下降 ≠ 企稳，只是空方歇口气');
+    } else if (chg > 0) {
+      id = 'Z3'; label = '弱修复·缩量小阳'; act = '观察仓（提防二次下杀）'; cls = 'watch';
+      R.push('今日 ' + pct(chg) + '，' + z());
+      W.push('策略：中阴后的缩量小阳是最危险的"弱反弹"');
+    }
+  }
+
+  /* ================= 昨日小阴（Y1~Y5） ================= */
+  if (id === '—' && P === 'xd') {
+    if (downMid || (f.closeBreakPrevLow && chg <= -2)) {
+      id = 'Y5'; label = '加速下跌·放量中阴'; act = '离场/回避'; cls = 'out';
+      R.push('今日 ' + pct(chg) + '、' + z() + (f.holdPrevLow ? '' : '、跌破昨日低点'));
+    } else if (midUp && chg > 2 && vr != null && vr >= 1.05) {
+      id = 'Y2'; label = '弱转强·放量中阳（修复）'; act = '低吸买点（需板块≥A级 + 大盘修复/发酵）'; cls = 'buy';
+      R.push('今日实体 ' + pct(f.body0) + '、' + z() + '（必须放量的修复）');
+      R.push(f.aboveMA5 ? '已站回 MA5' : ('尚未站回 MA5（现价 ' + (f.price != null ? f.price.toFixed(2) : '—') + '）'));
+      if (hiPos) W.push('位置过滤：60日区间位置 ' + (f.pos * 100).toFixed(0) + '% 偏高 → 按补充规则降级为观察');
+    } else if (vr != null && vr < 0.9 && f.rng0 > 0 && Math.abs(f.body0) < POW_RULE.flat * f.ztPct) {
+      id = 'Y3'; label = '止跌信号·地量十字星'; act = '进观察池（等两阳缩量后低吸）'; cls = 'watch';
+      R.push('今日 ' + pct(chg) + '、实体仅 ' + pct(f.body0) + '（十字星档）、' + z() + '（缩量止跌）');
+      W.push('策略：地量十字只进观察池，要等"两阳缩量"再动手');
+    } else if (chg > 0 && vr != null && vr < 1.0) {
+      id = 'Y1'; label = '修复企稳·缩量小阳'; act = '观察仓试错（≤15~20%）'; cls = 'watch';
+      R.push('今日 ' + pct(chg) + '、实体 ' + pct(f.body0) + '，' + z());
+      W.push('策略：观察仓要次日确认才升级，禁止直接跳变持仓');
+    } else if (chg < 0) {
+      id = 'Y4'; label = '弱势震荡·缩量小阴'; act = '只观察不抄底（方向不明）'; cls = 'watch';
+      R.push('今日 ' + pct(chg) + '，守昨日低点但无力反攻');
+    }
+  }
+
+  /* ================= 昨日涨停 / 大阳（L1~L6） ================= */
+  if (id === '—' && (P === 'zt' || P === 'by')) {
+    if (downBig) {
+      id = 'L6'; label = '强转弱·大阴'; act = '无条件减仓离场，不抄底'; cls = 'out';
+      R.push('今日 ' + pct(chg) + '、' + z() + '（放量下杀）');
+      if (!f.holdPrevLow) R.push('已跌破昨日低点');
+      W.push('策略：昨日强结构今日放量破位 = 资金出逃');
+    } else if (f.upShRatio >= 0.45 && chg < f.chg1 * 0.3 + 1 && vr != null && vr >= 1.1) {
+      id = 'L5'; label = '断板/烂板（长上影）'; act = '看断板低点：守住=可能二波，破位=放弃'; cls = 'cut';
+      R.push('上影占振幅 ' + (f.upShRatio * 100).toFixed(0) + '%，' + z());
+      R.push('断板低点（昨日实体下沿）参考 ' + f.bodyLow1.toFixed(2) + '，今日最低 ' + f.kl[f.i].low.toFixed(2));
+    } else if (f.isZt0 && f.openGap >= 2.5) {
+      id = 'L1'; label = '强更强·加速（涨停/一字）'; act = '禁止新开仓（持仓分批止盈）'; cls = 'cut';
+      R.push('昨日涨停 → 今日高开 ' + f.openGap.toFixed(2) + '% 并再次涨停');
+      W.push('策略：加速 = 高潮段，距分歧很近、盈亏比差，无舒适低吸点');
+    } else if (downMid) {
+      id = 'L4'; label = '分歧·高开低走阴线'; act = '减仓'; cls = 'cut';
+      R.push('开盘 ' + f.openGap.toFixed(2) + '%，收 ' + pct(chg) + '，' + z());
+      W.push('策略：放量分歧大 → 次日大概率低开');
+    } else if (vr != null && vr < 0.85 && Math.abs(chg) < 3) {
+      id = 'L3'; label = '强势整理·缩量小阳/十字'; act = '持有观察（等方向）'; cls = 'hold';
+      R.push('今日 ' + pct(chg) + '，' + z() + '（缩量 = 分歧小）');
+    } else if (chg >= 0 && f.abovePrevBodyHigh) {
+      id = 'L2'; label = '强延续·高开高走小阳'; act = '持有（回踩均价线不破可持）'; cls = 'hold';
+      R.push('今日收 ' + pct(chg) + '，站在昨日实体上沿之上');
+    }
+  }
+
+  /* ================= 昨日中阳（M1~M6） ================= */
+  if (id === '—' && P === 'zy') {
+    if (downBig) {
+      id = 'M5'; label = '强转弱·加速大阴'; act = '无条件减仓，不抄底'; cls = 'out';
+      R.push('今日 ' + pct(chg) + '、' + z() + '（放量杀跌）');
+    } else if (stall) {
+      id = 'M6'; label = '高位滞涨·巨量十字'; act = '减仓预警（放量滞涨=出货嫌疑）'; cls = 'cut';
+      R.push('今日 ' + pct(chg) + '、' + z() + '（爆量但股价涨不动）');
+      W.push('策略：放量滞涨是典型的见顶预警');
+    } else if (downMid) {
+      id = 'M4'; label = '强转弱·放量中阴'; act = '减仓/离场'; cls = 'cut';
+      R.push('今日 ' + pct(chg) + '、' + z() + (f.aboveMA5 === false ? '、已跌破 MA5' : ''));
+    } else if (chg >= 2 && f.abovePrevClose && vr != null && vr >= 1.0 && vr <= 1.6) {
+      id = 'M1'; label = '更强·加速上攻'; act = '持有；小仓可加（只在回踩加）'; cls = 'hold';
+      R.push('今日 ' + pct(chg) + '、' + z() + '（温和放量最佳区间 1.0~1.3）');
+      if (vr > 1.6) W.push('量能 ' + vr.toFixed(2) + ' 倍 > 1.6 → 有过热嫌疑');
+    } else if (lightDown && f.holdPrevBodyLow) {
+      id = 'M3'; label = '缩量洗盘·小阴回踩'; act = '持有；次日缩量企稳可低吸加仓'; cls = 'hold';
+      R.push('今日 ' + pct(chg) + '，' + z() + '，守住昨日实体下沿');
+    } else if (Math.abs(chg) <= 2 && vr != null && vr < 1.1) {
+      id = 'M2'; label = '维持强势·换手整理'; act = '只持有，不加仓'; cls = 'hold';
+      R.push('今日 ' + pct(chg) + '，' + z() + '（缩量换手消化获利盘）');
+    }
+  }
+
+  /* ================= 昨日小阳（S1~S5） ================= */
+  if (id === '—' && P === 'xy') {
+    if (downMid) {
+      id = 'S5'; label = '强转弱·放量中阴'; act = '减仓/离场'; cls = 'out';
+      R.push('今日 ' + pct(chg) + '、' + z() + (f.aboveMA5 === false ? '、跌破 MA5' : ''));
+    } else if (longUpSh && vr != null && vr >= 1.1) {
+      id = 'S3'; label = '冲高回落·长上影'; act = '减仓预警（高位滞涨）'; cls = 'cut';
+      R.push('上影占振幅 ' + (f.upShRatio * 100).toFixed(0) + '%，' + z());
+    } else if (f.body0 >= f.ztPct * 0.4 && chg > 2 && vr != null && vr >= 1.1) {
+      id = 'S1'; label = '更强·放量上攻'; act = '可持有，谨慎小加仓（回踩均价线低吸）'; cls = 'hold';
+      R.push('今日实体 ' + pct(f.body0) + '、' + z() + '（1.1~1.6 倍为增量资金）');
+      if (vr > POW_RULE.overheat) W.push('量能 ' + vr.toFixed(2) + ' 倍 > 1.8 → 爆量过热警惕');
+      if (hiPos) W.push('位置过滤：60日区间位置 ' + (f.pos * 100).toFixed(0) + '% 偏高 → 不追高');
+    } else if (lightDown && f.holdPrevLow) {
+      id = 'S4'; label = '正常回踩·缩量小阴'; act = '持有观察'; cls = 'hold';
+      R.push('今日 ' + pct(chg) + '，' + z() + '，守住昨日低点');
+    } else if (Math.abs(chg) <= 1.5 && vr != null && vr <= 1.1) {
+      id = 'S2'; label = '维持强势·缩量整理'; act = '只持有，不加仓'; cls = 'hold';
+      R.push('今日 ' + pct(chg) + '，' + z() + '（缩量锁仓）');
+    }
+  }
+
+  /* ================= 昨日十字星（文档未定义 → 补充档） ================= */
+  if (id === '—' && P === 'flat') {
+    R.push('昨日涨跌幅 ' + pct(f.chg1) + ' 属十字星档（|r| < 0.10；此档为两份文档未定义、本工具补充）');
+    if (chg >= 2 && vr != null && vr >= 1.1) {
+      id = 'X1'; label = '十字星后放量上攻'; act = '低位可试（需板块≥A + 大盘不弱）'; cls = 'watch';
+      R.push('今日 ' + pct(chg) + '，' + z());
+    } else if (chg <= -2 && vr != null && vr >= 1.2) {
+      id = 'X2'; label = '十字星后放量下杀'; act = '回避'; cls = 'out';
+      R.push('今日 ' + pct(chg) + '，' + z());
+    } else {
+      id = 'X0'; label = '十字星后继续震荡（方向未明）'; act = '只观察'; cls = 'watch';
+      R.push('今日 ' + pct(chg) + '，' + z() + '（未选方向）');
+    }
+  }
+
+  /* ================= 兜底 ================= */
+  if (id === '—') {
+    id = '—'; label = '未匹配到矩阵单元格'; act = '只观察（形态不在文档覆盖范围内）'; cls = 'watch';
+    R.push('昨日「' + f.prev.label + '」+ 今日 ' + pct(chg) + '、' + z() + ' 未落入文档任一单元格');
+    W.push('矩阵未覆盖该组合 → 按"看不准就不动"处理，不硬套');
+  }
+
+  /* ================= 分时维度（数据可得时才参与） ================= */
+  var m = f.m5;
+  if (m) {
+    R.push('分时：收盘' + (m.above === true ? '在均价线（VWAP ' + m.vwap.toFixed(2) + '）上方' :
+      (m.above === false ? '在均价线（VWAP ' + m.vwap.toFixed(2) + '）下方' : '与均价线关系未知')) +
+      '，均价线方向 ' + (m.slope === 'up' ? '向上（偏强）' : m.slope === 'down' ? '向下（偏弱）' : '走平（震荡）') +
+      '，全天在均价线下方时间占比 ' + (m.belowRatio == null ? '—' : (m.belowRatio * 100).toFixed(0) + '%'));
+    if (m.above === false && m.belowRatio != null && m.belowRatio > 0.6 && cls === 'buy') {
+      cls = 'watch'; act = '降级为观察：分时不支持 —— ' + act;
+      X.push('分时否决：收盘在均价线下方且下方时间占比 ' + (m.belowRatio * 100).toFixed(0) + '% > 60% → 按"跌破均价线收不回"判定，买点不成立');
+    }
+    if (m.above === true && m.slope === 'up' && cls === 'hold') {
+      R.push('分时确认：站稳均价线上方且均价线上行 → 日内强势（支撑持有）');
+    }
+    if (m.hiEarly === true && chg < 0 && (vr != null && vr >= 1.1)) {
+      W.push('分时预警：全天最高点出现在 10:00 前且放量收阴 → 符合"10:00 拐头向下"的强转弱早期预警');
+    }
+    if (m.loRaise === true) R.push('分时：10:00 后最低点高于 10:00 前最低点（低点抬高）');
+    if (m.loRaise === false && f.holdPrevLow) W.push('分时：10:00 后仍创出更低的低点（重心下移）');
+  } else if (!quiet) {
+    R.push('分时维度：5 分钟数据未取到 → 均价线/10:00 拐点未参与判定（不猜）' +
+      (POW.m5Err ? ('　失败原因：' + POW.m5Err) : ''));
+  }
+
+  /* ================= 大周期 + 位置（补充项） ================= */
+  if (hiPos) {
+    W.push('位置过滤（补充项）：60日区间位置 ' + (f.pos * 100).toFixed(0) + '% —— 处于高位，' +
+      '文档多处要求"两阳缩量/两阳夹一阴/弱转强必须在低位或上升趋势中途"，高位出现的机会信号多为诱多');
+    if (cls === 'buy') {
+      cls = 'watch';
+      act = '降级为观察：60日位置 ' + (f.pos * 100).toFixed(0) + '% 处高位，机会信号按补充规则降级 —— ' + act;
+    }
+  }
+  if (f.breakDays >= 3 && ma5TurnDown) {
+    if (cls === 'buy' || cls === 'hold') {
+      cls = 'cut'; act = '降级：连续破线 ' + f.breakDays + ' 天 + MA5 斜率向下 → ' + act;
+    }
+    X.push('MA5 体系否决：连续跌破 MA5 ' + f.breakDays + ' 天且斜率向下（策略一级：无条件清仓）');
+  }
+  if (f.dev != null && f.dev > 8) {
+    W.push('dev ' + f.dev.toFixed(1) + '% > +8%：超涨不追（策略禁止买入项）');
+    if (cls === 'buy') { cls = 'watch'; act = '降级为观察：dev>+8% 超涨，禁止买入 —— ' + act; }
+  }
+  if (f.cold) {
+    W.push('大周期过滤：当前勾选「大盘退潮/冰点」→ 按策略铁律所有买点降级为观察');
+    if (cls === 'buy') { cls = 'watch'; act = '降级为观察（大盘退潮/冰点）—— ' + act; }
+  }
+
+  return {
+    id: id, label: label, act: act, actCls: cls,
+    reasons: R, warns: W, vetos: X, matrix: f.prev.label + '×' + id
+  };
+}
+/* ---------- 今昨强弱 · 表格列用的轻量口径（只用日线，不额外请求分时） ----------
+   与「⚖️ 今昨强弱」工作区共用同一套判定（powFeatures + powPath），
+   差别只在：表格要一次渲染几十~上百行，不能为每只都去抓 5 分钟分时。 */
+var POW_ACT_COLOR = { buy: '#26c281', hold: '#5b8cff', watch: '#ffb74d', cut: '#ff9b9b', out: '#ff5252' };
+function powActShort(cls) {
+  return cls === 'buy' ? '可低吸' : cls === 'hold' ? '持有' : cls === 'watch' ? '观察' : cls === 'cut' ? '减仓' : '离场';
+}
+function powQuick(ind, code, name) {
+  if (!ind || !ind.klines || ind.klines.length < 4) return null;
+  try {
+    var f = powFeatures(ind, null, null, code, name);
+    f.cold = !!POW.cold;
+    var p = powPath(f, true);
+    p.prevLabel = f.prev.label;
+    p.chg0 = f.chg0;
+    p.chg1 = f.chg1;
+    p.volRatio = f.volRatio;
+    p.tip = '昨日 ' + f.prev.label + ' ' + implodePct(f.chg1) + '　今日 ' + implodePct(f.chg0) +
+      '（量能 ' + (f.volRatio == null ? '—' : f.volRatio.toFixed(2) + '×') + '）' +
+      '\n矩阵单元格 ' + p.matrix + '：' + p.label +
+      '\n操作：' + p.act +
+      '\n\n判定依据：\n· ' + p.reasons.join('\n· ') +
+      (p.vetos.length ? ('\n\n否决项：\n· ' + p.vetos.join('\n· ')) : '') +
+      (p.warns.length ? ('\n\n风险提示：\n· ' + p.warns.join('\n· ')) : '') +
+      '\n\n（表格列只用日线口径；含分时均价线的完整判定见「⚖️ 今昨强弱」工作区）';
+    return p;
+  } catch (e) { return null; }
+}
+function powCellHtml(ind, code, name) {
+  var p = powQuick(ind, code, name);
+  if (!p) return '<td class="pow-cell" style="color:var(--dim)">—</td>';
+  var col = POW_ACT_COLOR[p.actCls] || '#8892b0';
+  return '<td class="pow-cell" title="' + escapeHtml(p.tip) + '">' +
+    '<div class="p1" style="color:' + col + '">' + escapeHtml(p.id + ' ' + powActShort(p.actCls)) + '</div>' +
+    '<div class="p2">昨' + escapeHtml(p.prevLabel) + ' · 量' +
+    (p.volRatio == null ? '—' : p.volRatio.toFixed(2)) + '×</div></td>';
+}
+
+/* 报告卡片：阶段转折确认清单 */
+function renderStageTransitionCard(sr, st) {
+  var fam = sr.family || stageFamilyOf(sr.stage);
+  var titles = {
+    1: '临近转折确认清单 · 1B → 2A（最有价值的转变，需要什么才算成立）',
+    2: '顶部预警确认清单 · 2B → 3A（出现这些就开始减仓）',
+    3: '阶段3 的两种结局 · 3 → 2（重新积累）或 3 → 4（破位）',
+    4: '底部转折确认清单 · 4 → 1（需要什么才承认下跌结束）'
+  };
+  var arr = sr.transitions || [];
+  var h = '<div class="card"><div class="card-title">' + (titles[fam] || '阶段转折确认清单') + '</div><ul class="st-trans">';
+  arr.forEach(function (x) {
+    var cls = x.ok === true ? '' : (x.ok === false ? ' no' : ' na');
+    var mark = x.ok === true ? '已满足' : (x.ok === false ? '未满足' : '需人工确认');
+    h += '<li class="' + cls.trim() + '">' + escapeHtml(x.label) + '（' + mark + '）' +
+      (x.note ? '<em>　' + escapeHtml(x.note) + '</em>' : '') + '</li>';
+  });
+  h += '</ul><div class="stage-desc" style="margin-top:8px;font-size:12px;color:var(--dim)">' +
+    '标「需人工确认」的是本工具未接入的数据（基本面 / 消息面 / 市场广度）—— 不猜、不代替你判断。</div></div>';
+  return h;
+}
+
+/* 报告卡片：今昨强弱（日线口径） */
+function renderPowQuickCard(p, sr) {
+  var col = POW_ACT_COLOR[p.actCls] || '#8892b0';
+  var h = '<div class="card"><div class="card-title">今昨强弱 · 昨日K线 × 今日路径</div>';
+  h += '<div class="stage-desc"><b style="color:' + col + '">' + escapeHtml(p.id) + ' ' + escapeHtml(p.label) +
+    '</b>　→　操作：' + escapeHtml(p.act) + '</div>';
+  h += '<div class="stage-desc" style="font-size:12.5px">矩阵单元格 ' + escapeHtml(p.matrix) +
+    '｜昨日 ' + escapeHtml(p.prevLabel) + ' ' + implodePct(p.chg1) +
+    '｜今日 ' + implodePct(p.chg0) +
+    (p.volRatio == null ? '' : ('｜量能 ' + p.volRatio.toFixed(2) + '×')) + '</div>';
+  if (p.vetos && p.vetos.length) {
+    h += '<div class="mid-sub">否决项（优先级最高）</div><ul class="mid-reasons">' +
+      p.vetos.map(function (x) { return '<li class="no">' + escapeHtml(x) + '</li>'; }).join('') + '</ul>';
+  }
+  h += '<div class="mid-sub">判定依据</div><ul class="mid-reasons">' +
+    p.reasons.map(function (x) { return '<li class="yes">' + escapeHtml(x) + '</li>'; }).join('') + '</ul>';
+  if (p.warns && p.warns.length) {
+    h += '<div class="mid-sub">风险提示 / 策略原文约束</div><ul class="mid-reasons">' +
+      p.warns.map(function (x) { return '<li class="warn">' + escapeHtml(x) + '</li>'; }).join('') + '</ul>';
+  }
+  h += '</div>';
+  return h;
+}
+
+/* ==== POW-END ==== */
+
+function powStatus(msg, err) {
+  var s = el('powStatus');
+  if (s) { s.textContent = msg; s.className = 'mid-status' + (err ? ' err' : ''); }
+}
+
+/* 东财 5 分钟 K 线（腾讯 m5 不可用时的兜底） */
+async function powFetchM5EM(sym) {
+  var market = sym.slice(0, 2) === 'sh' ? 1 : 0;
+  var code = sym.slice(2);
+  var cb = 'pm5_' + Math.random().toString(36).slice(2);
+  var url = EM_KLINE_HOST + '/api/qt/stock/kline/get?ut=fa5fd1943c7b386f172d6893dbfba10b&cb=' + cb +
+    '&secid=' + market + '.' + code + '&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56' +
+    '&klt=5&fqt=1&end=20500101&lmt=80';
+  var res = null;
+  try { res = await fetchJson(url, 12000); }
+  catch (e) { res = await loadScriptVar(url, cb, null, 12000); }
+  var arr = res && res.data && res.data.klines;
+  if (!arr || !arr.length) throw new Error('东财5分钟为空');
+  return arr.map(function (line) {
+    var p = String(line).split(',');
+    var d = String(p[0]).replace(/[- :]/g, '');
+    return { time: d.slice(0, 12), date: d.slice(0, 8), open: +p[1], close: +p[2], high: +p[3], low: +p[4], vol: +p[5] };
+  }).filter(function (b) { return isFinite(b.close) && b.close > 0; });
+}
+
+async function powGetM5(sym) {
+  var errs = [];
+  try { return await fetchM5Parse(sym); } catch (e) { errs.push('腾讯m5: ' + ((e && e.message) || e)); }
+  try { return await powFetchM5EM(sym); } catch (e) { errs.push('东财5m: ' + ((e && e.message) || e)); }
+  POW.m5Err = errs.join(' ｜ ');
+  return null;
+}
+
+/* 单只判定 */
+async function powOne(code, name) {
+  var sym = marketOf(code) + code;
+  var data = await fetchAll(sym, POW_RULE.klineBars);
+  var ind = computeIndicators(data.klines, data.quote, code);
+  if (!ind) throw new Error('K线数据不足（需 ≥22 个交易日）');
+  var nm = quoteName(data.quote, name) || name || code;
+  var m5 = null;
+  try {
+    var bars = await powGetM5(sym);
+    if (bars) m5 = powM5Stats(bars, (data.quote && data.quote.price != null) ? data.quote.price : null);
+  } catch (e) {}
+  var f = powFeatures(ind, data.quote, m5, code, nm);
+  f.cold = !!POW.cold;
+  f.path = powPath(f);
+  f.source = data.source;
+  f.quote = data.quote;
+  return f;
+}
+
+function powActLabel(cls) {
+  return cls === 'buy' ? '可低吸' : cls === 'hold' ? '持有' : cls === 'watch' ? '观察仓' : cls === 'cut' ? '减仓' : '离场/回避';
+}
+
+function powCardHtml(f) {
+  var p = f.path;
+  var inPool = wlHas(f.code);
+  var h = '<div class="pow-card mid-card">';
+  h += '<div class="pow-h mid-card-h"><span class="nm">' + escapeHtml(f.name) + '</span>' +
+    '<span class="cd">' + escapeHtml(f.code) + '</span>' +
+    '<span class="mid-tag">昨日 ' + escapeHtml(f.prev.label) + ' ' + implodePct(f.chg1) + '</span>' +
+    '<span class="mid-tag ' + (f.prev.key === 'zt' || f.prev.key === 'by' ? 'mid' : 'core') + '">' + escapeHtml(p.id) + '</span>' +
+    '<span class="mid-tag ' + (p.actCls === 'buy' ? 'ok' : p.actCls === 'hold' ? 'mid' : p.actCls === 'watch' ? 'trend' : 'out') + '">' + powActLabel(p.actCls) + '</span>' +
+    '<button class="btn mid-star" data-code="' + escapeHtml(f.code) + '" data-name="' + escapeHtml(f.name) + '">' +
+    (inPool ? '★ 已在观察池' : '☆ 加入观察池') + '</button></div>';
+  h += '<div class="mid-grid">' +
+    '<div>今日 <b>' + implodePct(f.chg0) + '</b></div>' +
+    '<div>量能倍数 <b>' + (f.volRatio == null ? '—' : f.volRatio.toFixed(2) + ' 倍') + '</b></div>' +
+    '<div>开盘缺口 <b>' + implodePct(f.openGap) + '</b></div>' +
+    '<div>今日实体 <b>' + implodePct(f.body0) + '</b></div>' +
+    '<div>上/下影占比 <b>' + (f.upShRatio * 100).toFixed(0) + '% / ' + (f.dnShRatio * 100).toFixed(0) + '%</b></div>' +
+    '<div>MA5 <b>' + (f.ma5v ? f.ma5v.toFixed(2) : '—') + '</b>（' + (f.aboveMA5 === true ? '站上' : f.aboveMA5 === false ? '跌破' : '—') + '）</div>' +
+    '<div>MA5斜率 <b>' + (f.ma5Slope == null ? '—' : (f.ma5Slope > 0 ? '+' : '') + f.ma5Slope.toFixed(3)) + '</b> · 破线 <b>' + f.breakDays + ' 天</b></div>' +
+    '<div>偏离 MA5 <b>' + implodePct(f.dev) + '</b></div>' +
+    '<div>不破昨低 <b>' + (f.holdPrevLow ? '是' : '否') + '</b> · 昨实体下沿 <b>' + f.bodyLow1.toFixed(2) + '</b></div>' +
+    '<div>60日位置 <b>' + (f.pos == null ? '—' : (f.pos * 100).toFixed(0) + '%') + '</b> · 20日涨幅 <b>' + implodePct(f.gain20) + '</b></div>' +
+    '<div>分时均价线 <b>' + (f.m5 ? (f.m5.above === true ? '上方' : f.m5.above === false ? '下方' : '—') + '（VWAP ' + f.m5.vwap.toFixed(2) + '）' : '数据不可得') + '</b></div>' +
+    '<div>涨停幅度口径 <b>±' + f.ztPct + '%</b></div>' +
+    '</div>';
+  h += '<div class="pow-act ' + p.actCls + '"><b>矩阵单元格 ' + escapeHtml(p.matrix) + '：' + escapeHtml(p.label) + '</b><br>操作：' + escapeHtml(p.act) + '</div>';
+  if (p.vetos.length) {
+    h += '<div class="mid-sub">否决项（优先级最高）</div><ul class="mid-reasons">' +
+      p.vetos.map(function (x) { return '<li class="no">' + escapeHtml(x) + '</li>'; }).join('') + '</ul>';
+  }
+  h += '<div class="mid-sub">判定依据（引用具体数值）</div><ul class="mid-reasons">' +
+    p.reasons.map(function (x) { return '<li class="yes">' + escapeHtml(x) + '</li>'; }).join('') + '</ul>';
+  if (p.warns.length) {
+    h += '<div class="mid-sub">风险提示 / 策略原文约束</div><ul class="mid-reasons">' +
+      p.warns.map(function (x) { return '<li class="warn">' + escapeHtml(x) + '</li>'; }).join('') + '</ul>';
+  }
+  h += '</div>';
+  return h;
+}
+function implodePct(v) {
+  return (v == null || isNaN(v)) ? '—' : ((v > 0 ? '+' : '') + (+v).toFixed(2) + '%');
+}
+
+function powRender(rows) {
+  var out = el('powResult');
+  if (!out) return;
+  if (!rows.length) { setHtml(out, '<div class="card"><div class="mid-empty">没有可判定的标的。</div></div>'); return; }
+  var groups = [
+    ['buy', '可低吸（矩阵最佳路径 + 全部过滤通过）'],
+    ['hold', '持有（中性路径，跌破关键位才减）'],
+    ['watch', '观察仓（拿不准 → ≤15~20% 试错，次日确认）'],
+    ['cut', '减仓（危险路径预警）'],
+    ['out', '离场/回避（破位或强转弱确认）']
+  ];
+  var html = '';
+  groups.forEach(function (grp) {
+    var list = rows.filter(function (r) { return r.path.actCls === grp[0]; });
+    if (!list.length) return;
+    html += '<div class="card"><div class="pow-grp"><span class="pow-act ' + grp[0] + '" style="margin:0">' + escapeHtml(grp[1]) +
+      '</span><span>' + list.length + ' 只</span>' +
+      (grp[0] === 'buy' ? '<button class="btn" data-powadd="' + grp[0] + '">本组全部加入观察池</button>' : '') +
+      '</div>' + list.map(powCardHtml).join('') + '</div>';
+  });
+  var unmatched = rows.filter(function (r) { return !r.path; });
+  if (unmatched.length) html += '<div class="card"><div class="mid-empty">' + unmatched.length + ' 只未产出判定。</div></div>';
+  setHtml(out, html);
+}
+
+function powTargets() {
+  var mode = el('powScope') ? el('powScope').value : 'watch';
+  var out = [];
+  if (mode === 'board' && ST.detail && ST.detail.stocks) {
+    ST.detail.stocks.forEach(function (s) { out.push({ code: s.code, name: s.name }); });
+  } else {
+    wlGet().forEach(function (x) { out.push({ code: x.code, name: x.name }); });
+  }
+  var seen = {}, uniq = [];
+  out.forEach(function (x) { if (x.code && !seen[x.code]) { seen[x.code] = 1; uniq.push(x); } });
+  return uniq.slice(0, 60);
+}
+
+async function powRun() {
+  var targets = powTargets();
+  if (!targets.length) {
+    powStatus('没有可判定的标的：先到「⭐ 自选」加股票，或先打开一个板块详情再切「当前板块」', true);
+    return;
+  }
+  var btn = el('powRun'); if (btn) btn.disabled = true;
+  var rows = [], done = 0;
+  powStatus('正在逐只判定 ' + targets.length + ' 只…（0/' + targets.length + '）');
+  try {
+    var res = await mapPool(targets, 3, async function (x) {
+      var r = null;
+      try { r = await powOne(x.code, x.name); }
+      catch (e) { r = { code: x.code, name: x.name || x.code, err: (e && e.message) || '取数失败' }; }
+      done++;
+      if (done % 5 === 0 || done === targets.length) powStatus('正在逐只判定 ' + done + '/' + targets.length + '…');
+      return r;
+    });
+    var ok = res.filter(function (r) { return r && !r.err && r.path; });
+    var bad = res.filter(function (r) { return !r || r.err || !r.path; });
+    rows = ok;
+    POW.rows = rows;
+    var order = { buy: 0, hold: 1, watch: 2, cut: 3, out: 4 };
+    rows.sort(function (a, b) {
+      var d = order[a.path.actCls] - order[b.path.actCls];
+      if (d) return d;
+      return (a.chg0 || 0) - (b.chg0 || 0);
+    });
+    powRender(rows);
+    renderPowEnv(rows, bad);
+    var nb = rows.filter(function (r) { return r.path.actCls === 'buy'; }).length;
+    var nh = rows.filter(function (r) { return r.path.actCls === 'hold'; }).length;
+    var nw = rows.filter(function (r) { return r.path.actCls === 'watch'; }).length;
+    var nc = rows.filter(function (r) { return r.path.actCls === 'cut'; }).length;
+    var no = rows.filter(function (r) { return r.path.actCls === 'out'; }).length;
+    powStatus('判定完成 ' + rows.length + ' 只：可低吸 ' + nb + ' · 持有 ' + nh + ' · 观察 ' + nw + ' · 减仓 ' + nc + ' · 离场 ' + no +
+      (bad.length ? '（' + bad.length + ' 只取数失败：' + bad.map(function (b) { return b.code + '：' + (b.err || '无判定'); }).join('；') + '）' : ''), false);
+  } catch (e) {
+    powStatus('判定失败：' + ((e && e.message) || e), true);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+function renderPowEnv(rows, bad) {
+  var box = el('powEnv');
+  if (!box) return;
+  var withM5 = rows.filter(function (r) { return r.m5; }).length;
+  var items = [
+    ['判定标的', rows.length + ' 只'],
+    ['分时数据可用', withM5 + ' / ' + rows.length],
+    ['取数失败', bad.length + ' 只'],
+    ['环境闸门', POW.cold ? '退潮/冰点 · 买点已降级（全站生效）' : '未勾选 · 正常执行']
+  ];
+  setHtml(box, items.map(function (it, i) {
+    var cls = (i === 3 && POW.cold) ? ' cold' : '';
+    return '<div class="mid-env-item' + cls + '">' + escapeHtml(it[0]) + ' <b>' + escapeHtml(it[1]) + '</b></div>';
+  }).join(''));
+}
+
 function init() {
   try{ jjEnsure(true, function(){ var b = $('m7_33'); if(b) renderM733(); }); }catch(e){}
   // 主标签切换
   document.querySelectorAll('.tabs .tab').forEach(function (b) {
-    b.addEventListener('click', function () {
-      document.querySelectorAll('.tabs .tab').forEach(function (x) { x.classList.remove('on'); });
-      b.classList.add('on');
-      var v = b.getAttribute('data-view');
-      el('view-board').classList.toggle('on', v === 'board');
-      el('view-single').classList.toggle('on', v === 'single');
-      el('view-watch').classList.toggle('on', v === 'watch');
-      el('view-ding').classList.toggle('on', v === 'ding');
-      el('view-call').classList.toggle('on', v === 'call');
-      el('view-mid').classList.toggle('on', v === 'mid');
-      if (v === 'watch') { if (!WATCH.loaded && !WATCH.running) runWatchSearch(); else renderWatch(); }
-      if (v === 'ding') { renderDingForm(); renderDing(); }
-      if (v === 'board' && !ST.boards.length) loadBoardList(false);
-      if (v === 'call') { if (!ST.callScan) loadCallBoards(); else renderCallView(); }
-      if (v === 'mid' && !MID.pool.length && !MID.scanning) midScan();
-    });
+    b.addEventListener('click', function () { switchView(b.getAttribute('data-view')); });
   });
 
   // 板块类型切换
@@ -8610,6 +9709,60 @@ function init() {
     if (card) {
       var c2 = card.querySelector('.cd');
       if (c2) switchToSingle(c2.textContent);      // 点卡片 → 跳到个股诊断
+    }
+  });
+
+  // 今昨强弱（昨日K线 × 今日路径）
+  if (el('powRun')) el('powRun').addEventListener('click', function () { powRun(); });
+  if (el('powScope')) el('powScope').addEventListener('change', function () { powStatus('范围已切换，点「开始逐只判定」', false); });
+  POW.cold = !!lsGet('bwork_pow_cold');          // 大周期闸门全站生效（表格列 / 完整判定一致）
+  if (el('powCold')) el('powCold').checked = POW.cold;
+  if (el('powCold')) el('powCold').addEventListener('change', function () {
+    POW.cold = !!this.checked;
+    lsSet('bwork_pow_cold', POW.cold);
+    // 表格里的「今昨强弱」列跟着闸门变 → 重渲染当前已渲染的表格（不重新抓数）
+    try { if (ST.detail && ST.detail.stocks && !ST.running) renderBoardDetail(); } catch (e1) {}
+    try { if (WATCH.loaded) renderWatch(); } catch (e2) {}
+    try { if (SINGLE.results.length) renderSingle(); } catch (e3) {}
+    if (!POW.rows.length) { renderPowEnv([], []); return; }
+    POW.rows.forEach(function (r) { r.cold = POW.cold; r.path = powPath(r); });   // 已取过数，只重跑判定
+    var order = { buy: 0, hold: 1, watch: 2, cut: 3, out: 4 };
+    POW.rows.sort(function (a, b) {
+      var d = order[a.path.actCls] - order[b.path.actCls];
+      return d || ((a.chg0 || 0) - (b.chg0 || 0));
+    });
+    powRender(POW.rows);
+    renderPowEnv(POW.rows, []);
+    powStatus(POW.cold ? '已开启大周期过滤：大盘退潮/冰点 → 所有买点降级为观察' :
+      '已关闭大周期过滤：恢复正常买点判定', false);
+  });
+  if (el('powAddBuy')) el('powAddBuy').addEventListener('click', function () {
+    var list = POW.rows.filter(function (r) { return r.path.actCls === 'buy'; });
+    if (!list.length) { powStatus('当前没有「可低吸」标的（矩阵最佳路径为空）', true); return; }
+    list.forEach(function (r) { wlAdd(r.code, r.name); });
+    powRender(POW.rows);
+    powStatus('已把 ' + list.length + ' 只「可低吸」加入观察池（⭐自选）', false);
+  });
+  if (el('powResult')) el('powResult').addEventListener('click', function (e) {
+    var star = e.target.closest('.mid-star');
+    if (star) {
+      midAddWatch(star.getAttribute('data-code'), star.getAttribute('data-name'));
+      star.textContent = '★ 已在观察池';
+      powStatus('已加入观察池（⭐自选）：' + star.getAttribute('data-name'), false);
+      return;
+    }
+    var al = e.target.closest('[data-powadd]');
+    if (al) {
+      var l = POW.rows.filter(function (r) { return r.path.actCls === al.getAttribute('data-powadd'); });
+      l.forEach(function (r) { wlAdd(r.code, r.name); });
+      powRender(POW.rows);
+      powStatus('已把本组 ' + l.length + ' 只加入观察池', false);
+      return;
+    }
+    var card = e.target.closest('.pow-card');
+    if (card) {
+      var c2 = card.querySelector('.cd');
+      if (c2) switchToSingle(c2.textContent);
     }
   });
 
