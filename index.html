@@ -8344,6 +8344,64 @@ function powBand(chg, ztPct) {
   return { key: 'flat', label: '十字星', r: r };
 }
 
+/* 近 20 日（不含今日）涨停计数 + 此前是否连板（用于「强更强」分情形定性）
+   从 i-1 往前扫 20 根 K 线：cnt = 涨停根数；cont = 是否出现过连续 ≥2 根涨停（即此前已连板）。 */
+function powZtScan(kl, i, ztPct) {
+  var ztTol = POW_RULE.ztTol, cnt = 0, cont = false, run = 0;
+  for (var k = i - 1; k >= 0 && k >= i - 20; k--) {
+    var c = kl[k], p = kl[k - 1];
+    if (!p) { run = 0; continue; }
+    var chg = (c.close - p.close) / p.close * 100;
+    if (chg >= ztPct - ztTol) { cnt++; if (++run >= 2) cont = true; }
+    else run = 0;
+  }
+  return { ztCount20: cnt, contZt: cont };
+}
+
+/* 强更强（昨日已强：涨停/大阳/中阳 + 今日涨停）：分情形 A/B/C 定性 + 今日涨停量能性质。
+   解决「强更强就一刀切禁止买入」错误：同一「昨日+4%今日涨停」，
+   底部首板(A)=启动确认·等回踩低吸；连板(B)=爆发段·持有等分歧；高位(C)=高潮段·只卖不买。
+   关键补两信息：①近20日第几个涨停/是否此前连板 ②今日涨停缩量封死还是爆量烂板。
+   可见 label 仍只给「强更强·加速（涨停/一字）」（纯强弱结论，不带操作词）；操作/分情形只在 title 详情里。 */
+function powZtEscalate(f) {
+  var vr = f.volRatio;
+  var ztN = f.ztCount20, cont = f.contZt;
+  var hi = (f.dev != null && f.dev > 5) || (f.pos != null && f.pos > POW_RULE.hiPos);
+  var justStart = (f.hadRally === false) && (f.breakDays != null && f.breakDays <= 1) && (f.gain20 != null && f.gain20 < 8);
+  var yZt = f.yIsZt;                                   // 昨日涨停 → 今日为续板/连板
+  var cont = f.contZt || yZt;                          // 此前已连板 或 今日为续板
+  var firstBoard = !yZt && ztN <= 1;                   // 今日是窗口内第一根涨停（底部首板）
+  var hadRun = ztN >= 2 || yZt;                        // 此前已有涨停/连板 或 今日续板
+  /* 今日涨停量能性质：缩量封死(锁仓) / 爆量烂板(分歧大) / 温和放量（中性） */
+  var sealed = (vr != null && vr < 0.9) || f.openGap >= 9.5;
+  var rotten = (vr != null && vr >= 2.0);
+  var ztType = (vr == null) ? '涨停量能未知（未取到成交量，无法判缩量封死/爆量烂板）'
+    : (rotten ? ('爆量烂板（量能 ' + vr.toFixed(2) + '×，分歧大、次日易低开）')
+      : (sealed ? ('缩量封死/一字（量能 ' + vr.toFixed(2) + '×，锁仓强势）')
+        : ('温和放量涨停（量能 ' + vr.toFixed(2) + '×）')));
+  var R = [], W = [], scn, op, cls;
+  if (hi) {
+    scn = 'C 高位加速涨停'; cls = 'cut';
+    op = '高潮段强更强：只卖不买；持仓者涨停拿住看明日溢价，dev>5%/明日高开爆量滞涨→分批止盈；未持仓不参与（错过就错过）';
+    W.push('位置过滤：dev ' + (f.dev == null ? '—' : f.dev.toFixed(1) + '%') + ' / 区间位置 ' + (f.pos == null ? '—' : (f.pos * 100).toFixed(0) + '%') + ' 已处高位 → 再强也不追（你体系里 dev 是硬门槛）');
+  } else if (firstBoard && justStart) {
+    scn = 'A 底部首次涨停'; cls = 'watch';
+    op = '启动确认（不是"禁止追"那种强更强）：次日不追涨停；已持仓持有；未持仓列入自选，等 2~3 日内分歧回踩 MA5 / 首板涨停价附近低吸';
+  } else {
+    scn = 'B 连板加速'; cls = 'hold';
+    op = '爆发段/强更强：持仓者持有看溢价；未持仓禁止追高，等分歧日（错过就错过）';
+  }
+  if (rotten) W.push('爆量烂板 = 分歧极大，次日易低开；持仓者明日高开爆量滞涨优先止盈，不恋战');
+  else if (sealed) W.push('缩量封死/一字 = 锁仓强势，可继续持有观察明日溢价');
+  R.push('强更强定性：昨日「' + f.prev.label + '」+ 今日涨停 = 强度升级（路径没错），但"能不能做"看位置/连板/量能');
+  R.push('① 连板背景：近20日涨停 ' + ztN + ' 个' + (cont ? '，且此前已连板' : '，此前未连板') +
+    ' → ' + (firstBoard ? '首板启动（底部/横盘后第一根涨停）' : (yZt ? '昨日已涨停→今日续板（连板加速段）' : '此前已有涨停/连板（加速段）')));
+  R.push('② 今日涨停量能：' + ztType);
+  R.push('分情形 → ' + scn + '；' + op);
+  W.push('不能简单说"强更强就买/不买"：底部首板是启动确认（等回踩低吸），连板/高位加速才是你体系里"禁止追"的那种强更强');
+  return { id: 'L1', label: '强更强·加速（涨停/一字）', act: scn + '：' + op, cls: cls, R: R, W: W };
+}
+
 /* 用 5 分钟 K 线算当日均价线（VWAP）与分时强弱 */
 function powM5Stats(bars, price) {
   if (!bars || !bars.length) return null;
@@ -8436,7 +8494,269 @@ function powFeatures(ind, quote, m5, code, name) {
   if (quote) { f.price = quote.price; f.chgQ = quote.changePct; }
   f.m5 = m5 || null;
   f.prev = powBand(f.chg1, ztPct);
+  f.yIsZt = (f.chg1 >= f.ztPct - POW_RULE.ztTol);   // 昨日是否涨停（今日若续板则构成连板）
+  /* 近 20 日（不含今日）涨停计数 + 此前是否连板（用于「强更强」分情形定性） */
+  var _zs = powZtScan(kl, i, ztPct);
+  f.ztCount20 = _zs.ztCount20;
+  f.contZt = _zs.contZt;
   return f;
+}
+
+/* 昨日强（涨停/大阳/中阳）+ 今日温和下跌（-0.3%~-4.5%）：三维度交叉定性（强弱转换）
+   解决「单凭跌幅下结论」错误：同样的 -2.7%，缩量守位=洗盘，放量破位+高位=真强转弱。
+   设计原则：不改动已有矩阵单元格的 id/label（向下兼容，既有测试不动）；
+   只在「强前日 + 温和下跌」这一关键区间 (1) 填补原 matrix 漏判的兜底空白，
+   (2) 向判定依据补写「量能/关键位/位置」三维交叉结论 + 次日确认规则。 */
+function powStrengthConvert(f, p) {
+  var strongPrev = (f.prev.key === 'zt' || f.prev.key === 'by' || f.prev.key === 'zy');
+  if (!strongPrev) return;
+  var chg = f.chg0;
+  if (!(chg < -0.3 && chg > -4.6)) return;       // 仅温和下跌区间（小阴/中阴，非大阴）
+  var vr = f.volRatio;
+  var shrink = (vr != null && vr < 0.85);
+  var expand = (vr != null && vr >= 1.5);
+  var volTxt = (vr == null) ? '量能未知' :
+    (shrink ? '缩量' + vr.toFixed(2) + '×' : expand ? '放量' + vr.toFixed(2) + '×' : '中量' + vr.toFixed(2) + '×');
+  var breakMA5 = (f.aboveMA5 === false);
+  var breakPrevLow = !!f.closeBreakPrevLow;
+  var holdBodyLow = !!f.holdPrevBodyLow;
+  var holdSupport = (f.aboveMA5 === true) && holdBodyLow;
+  var supportTxt = breakMA5 ? '跌破MA5' : (breakPrevLow ? '收盘跌破昨日低点' :
+    (holdSupport ? '守住MA5+昨日实体下沿' : '关键位未明确失守'));
+  var hi = (f.pos != null && f.pos > POW_RULE.hiPos) || (f.dev != null && f.dev > 5);
+  var justStart = (f.hadRally === false) && (f.breakDays != null && f.breakDays <= 1) && (f.gain20 != null && f.gain20 < 8);
+  var posTxt = hi ? '高位(区间位置/乖离偏高)' : (justStart ? '低位刚启动' : '中位');
+  var verdict, sub;
+
+  /* 三维度结论（仅对「原 matrix 漏判的兜底」重新指派 id/label；其余只补 reasoning） */
+  if (shrink && holdSupport && justStart) {
+    verdict = '低位缩量回踩·假摔（正常整理）';
+    sub = '底仓持有；缩量企稳/小阳收复即确认洗盘，反而是低吸点';
+    if (p.id === '—') { p.id = 'M0'; p.label = verdict; p.act = sub; p.actCls = 'buy'; }
+  } else if (shrink && holdSupport) {
+    verdict = '缩量洗盘·守MA5（良性分歧）';
+    sub = '持有观察，不杀跌；次日缩量企稳/小阳收复→确认洗盘';
+  } else if (shrink && breakPrevLow) {
+    verdict = '缩量但收盘破位·需谨慎';
+    sub = '减仓预警；次日不收复昨日低点则减仓';
+    if (p.id === '—') { p.id = 'M3x'; p.label = verdict; p.act = sub; p.actCls = 'cut'; }
+  } else if (expand && (breakMA5 || breakPrevLow) && hi) {
+    verdict = '高位放量破位·真强转弱';
+    sub = '减仓/止盈；次日不收复继续走';
+    if (p.id === '—') { p.id = 'M4x'; p.label = verdict; p.act = sub; p.actCls = 'cut'; }
+  } else if (expand && (breakMA5 || breakPrevLow)) {
+    verdict = '放量破位·强分歧';
+    sub = '减仓；次日不收复则离场';
+    if (p.id === '—') { p.id = 'L4x'; p.label = verdict; p.act = sub; p.actCls = 'cut'; }
+  } else if (expand && holdSupport) {
+    verdict = '放量守位·强分歧待确认';
+    sub = '减仓预警；次日缩量守位/反包→良性分歧收回，破位→减仓';
+    if (p.id === '—') { p.id = 'L4b'; p.label = verdict; p.act = sub; p.actCls = 'cut'; }
+  } else if (breakMA5 || breakPrevLow) {
+    verdict = '中量破位·强转弱预警';
+    sub = '减仓预警；次日不收复则减仓';
+    if (p.id === '—') { p.id = 'M4x'; p.label = verdict; p.act = sub; p.actCls = 'cut'; }
+  } else {
+    verdict = '换手回踩·未破位（良性）';
+    sub = '持有，不加仓，看次日';
+    if (p.id === '—') { p.id = 'M2x'; p.label = verdict; p.act = sub; p.actCls = 'hold'; }
+  }
+
+  /* 把三维度交叉分析写进「判定依据」 */
+  p.reasons.push('三维度交叉（强前日+温和下跌必看）：量能【' + volTxt + '】· 关键位【' + supportTxt +
+    '】· 位置【' + posTxt + '】→ ' + verdict);
+  p.reasons.push('结论：' + verdict + '；操作基调：' + sub);
+  p.reasons.push('次日确认：缩量止跌/小阳收复今日失地→确认洗盘继续持有；继续放量下跌/低开低走→确认强转弱执行减仓');
+  if (justStart && (shrink || !expand)) {
+    p.warns.push('低位刚启动后的缩量回踩多为假摔，缩量企稳/小阳收复即确认洗盘，反而是低吸点（非转弱）');
+  }
+  p.warns.push('单凭「-2.7%」这类温和跌幅不能定性：缩量守位=洗盘拿住；放量破位+高位=才是真强转弱（量价位三者交叉确认）');
+}
+
+/* 小阳/中阳试盘 → 今日放量大阳（确认）：分情形 A/B/C 定性 + 量能/位置硬门槛。
+   纠正「昨日小阳+今日大阳 = 弱转强」的误读：昨日小阳是中性偏强（资金试盘/犹豫），
+   今日大阳是放量确认——这是「小阳试盘→次日大阳确认」的启动/强势跟进信号（矩阵绿色买入/持有路径），
+   不是从弱转过来的「弱转强」（真弱转强 = 昨日阴线/烂板今日反包，见 Y2/Z2/D2）。
+   关键补两信息：①今日放量了吗（≥1.5× 才算真金白银确认，缩量/中量大阳=缺增量、高位更是诱多）
+   ②前期横盘刚启动 还是 已涨一段（位置 dev<5% 才安全，高位=赶顶）。
+   可见 label 仍只给强弱结论（小阳试盘→大阳确认），操作/分情形只在 title 详情里。 */
+function powYangConfirm(f) {
+  var vr = f.volRatio;
+  var prevLabel = f.prev.label;             // 小阳 / 中阳
+  var hi = (f.dev != null && f.dev > 5) || (f.pos != null && f.pos > POW_RULE.hiPos);
+  var justStart = (f.hadRally === false) && (f.breakDays != null && f.breakDays <= 1) && (f.gain20 != null && f.gain20 < 8);
+  var confirm = (vr != null && vr >= 1.5);  // 放量确认（真金白银）
+  var shrink = (vr != null && vr < 0.9);    // 缩量（高位=诱多，低位=惜售）
+  /* 分时：收盘接近日高 = 日内强势；长上影 = 分歧 */
+  var upSh = f.upShRatio;
+  var highWalk = (upSh != null && upSh < 0.3);
+  var longUpSh = (upSh != null && upSh >= 0.45);
+  var volTxt = (vr == null) ? '量能未知（未取到成交量，无法判缩量/放量）'
+    : (confirm ? ('放量 ' + vr.toFixed(2) + '× · 真金白银进场确认')
+      : (shrink ? ('缩量 ' + vr.toFixed(2) + '×（高位=诱多，低位=惜售锁仓）')
+        : ('温和放量 ' + vr.toFixed(2) + '×（增量偏弱，需次日续攻确认）')));
+  var R = [], W = [], scn, op, cls, verdict;
+  if (hi) {
+    scn = 'C 高位小阳/中阳→大阳（加速赶顶）'; cls = 'cut';
+    verdict = '高位大阳=加速赶顶（只卖不买）';
+    op = '只卖不买；持仓者明日看溢价，dev>5%/明日高开爆量滞涨→分批止盈；未持仓不参与（错过就错过）';
+    W.push('位置过滤：dev ' + (f.dev == null ? '—' : f.dev.toFixed(1) + '%') + ' / 区间位置 ' + (f.pos == null ? '—' : (f.pos * 100).toFixed(0) + '%') + ' 已处高位 → 再强也不追（你体系里 dev 是硬门槛）');
+  } else if (justStart && confirm) {
+    scn = 'A 底部小阳/中阳→放量大阳（启动确认）'; cls = 'watch';
+    verdict = '底部试盘后放量大阳=启动确认';
+    op = '次日不追；已持仓持有；未持仓列入自选，等 2~3 日内分歧回踩大阳实体一半 / MA5 低吸（不追当日）';
+  } else {
+    scn = 'B 趋势中小阳/中阳→大阳（主升/爆发延续）'; cls = 'hold';
+    verdict = '沿 MA5 上行途中放量大阳=主升延续';
+    op = '持仓持有看溢价；未持仓等回踩（不追高，错过就错过）';
+  }
+  /* 量能性质警示 */
+  if (shrink && hi) W.push('缩量 + 高位大阳 = 典型诱多虚涨，不参与');
+  else if (shrink && !hi) W.push('缩量大阳：低位可能是惜售锁仓（偏良性），但缺增量确认，次日需放量续攻才确认');
+  else if (confirm) W.push('放量大阳 = 真金白银进场确认，是矩阵里绿色买入 / 持有路径');
+  else W.push('中量大阳：增量偏弱，按「持有观察、等次日放量续攻」处理，不急于加仓');
+  if (longUpSh) W.push('分时：冲高回落长上影（上影占振幅 ' + (upSh * 100).toFixed(0) + '%）→ 分歧大，警惕次日低开');
+  else if (highWalk) W.push('分时：高开高走 / 收盘接近日高 → 日内强势，支撑持有');
+  /* 判定依据 */
+  R.push('强势确认（非弱转强）：昨日「' + prevLabel + '」+ 今日放量大阳 = 强度升级延续，不是从弱转过来（真弱转强 = 昨日阴线 / 烂板今日反包）');
+  R.push('① 今日量能：' + volTxt);
+  R.push('② 位置 / 趋势：' + (hi ? '高位（加速赶顶）' : (justStart ? '低位刚启动（横盘后首根放量长阳）' : '沿 MA5 上行途中 / 中位')) + ' → ' + scn);
+  R.push('分情形 → ' + scn + '；' + op);
+  W.push('不能叫「弱转强」：昨日小阳是中性偏强（资金试盘 / 犹豫），今日大阳是放量确认——这是「小阳试盘→次日大阳确认」的启动 / 强势跟进信号，前提是放量（≥1.5×）+ 位置不高（dev<5%）。缩量大阳或高位大阳按假突破 / 赶顶处理');
+  if (vr != null && vr > POW_RULE.overheat) W.push('量能 ' + vr.toFixed(2) + ' 倍 > ' + POW_RULE.overheat + ' → 爆量过热警惕');
+  /* id 沿用矩阵 S1(小阳)/M1(中阳) 以兼容既有结构；label 为纯强弱结论 */
+  var id = (f.prev.key === 'zy') ? 'M1' : 'S1';
+  var base = (f.prev.key === 'zy') ? '中阳加速→大阳确认' : '小阳试盘→大阳确认';
+  var tag = confirm ? '（放量确认）' : (shrink ? '（缩量·虚涨警惕）' : '（量能偏弱）');
+  return { id: id, label: base + tag, act: scn + '：' + op, cls: cls, R: R, W: W };
+}
+
+/* 弱减速：昨日中阴/大阴 + 今日跌幅收窄（跌幅≤昨日一半）但仍收阴。
+   跌势动能下降是真的，但"缓和"≠企稳，现在还不能买。区分：
+   - 真缓和（接近止跌）：缩量小阴/地量(<0.9) + 守住支撑 + 长下影/十字 → 列入观察池，等右侧缩量小阳/放量反包
+   - 下跌中继（继续弱）：放量小阴(≥0.9) + 破支撑/光头光脚 → 边跌边出，继续回避
+   补两信息：①今日缩量还是放量（真缓和需缩量<0.9；放量=边跌边出）②前期高位刚跌还是已跌一大段
+   可见 label 只给纯强弱结论；操作/分情形在 title 详情里。 */
+function powWeakDecel(f) {
+  var vr = f.volRatio;
+  var prevLabel = f.prev.label;                 // 中阴 / 大阴
+  var hi = (f.pos != null && f.pos > POW_RULE.hiPos) || (f.dev != null && f.dev > 5);
+  var deepDecline = (f.hadRally === false) && (f.breakDays != null && f.breakDays >= 3);
+  var earlyDecline = !deepDecline && (hi || (f.dev != null && f.dev > 3));
+  var shrink = (vr != null && vr < 0.9);        // 缩量（真缓和必要项）
+  var expand = (vr != null && vr >= 0.9);        // 放量/中量（下跌中继侧）
+  var breakSup = !!f.closeBreakPrevLow || (f.aboveMA5 === false);
+  var longLowSh = (f.dnShRatio != null && f.dnShRatio >= 0.5);  // 长下影/下探收回
+  var R = [], W = [], scn, op, cls, verdict, id;
+  var idPrefix = (f.prev.key === 'bd') ? 'D' : 'Z';
+  /* 量能性质文案（补信息①） */
+  var volTxt = (vr == null) ? '量能未知（未取到成交量，无法判缩量/放量）'
+    : (shrink ? ('缩量 ' + vr.toFixed(2) + '×（抛压衰竭，接近地量）')
+      : ('放量/中量 ' + vr.toFixed(2) + '×（边跌边出，出货未完）'));
+  /* 位置文案（补信息②） */
+  var posTxt = deepDecline ? '已跌一大段（破MA5≥3日、无近期反弹，接近尾声）'
+    : (earlyDecline ? '高位刚跌（区间位置/乖离偏高，才刚跌，远未到缓和）' : '中位回落');
+
+  if (vr == null) {
+    /* 量能未知：无法区分真缓和/下跌中继 → 保守观察，不覆盖既有 Z1/Z4 */
+    id = idPrefix + '0';
+    verdict = '下跌减速·量能未知（观察）';
+    cls = 'watch';
+    op = '量能未取到无法区分真缓和/下跌中继 → 按"只观察不抄底"处理；等次日缩量小阳/放量反包才确认';
+    R.push('昨日「' + prevLabel + '」→ 今日跌幅收窄但仍收阴（跌势减速），量能未知 → 无法判缩量止跌/放量出货，保守观察');
+    R.push('补信息：今日缩量还是放量？前期高位刚跌还是已跌一大段？两者决定真缓和 vs 下跌中继');
+    W.push('量能缺失：无法确认止跌，禁止凭"跌幅收窄"抄底');
+  } else if (expand) {
+    /* 下跌中继（放量/中量小阴）：本函数要显式定性的新情形 */
+    id = idPrefix + '6';
+    verdict = '下跌减速·放量中继';
+    cls = 'out';
+    scn = '下跌中继（放量小阴）';
+    op = '继续回避，不抄底；跌幅收窄只是空头累了不是多头进场，放量小阴=边跌边出/出货未完；' +
+         '补仓/低吸必须等右侧：次日出现缩量小阳或放量阳线收复今日失地才算缓和确认，否则继续阴跌破位就是下跌途中停顿';
+    if (breakSup) W.push('关键位：收盘跌破昨日低点/MA5（破支撑）→ 下跌中继确认，无支撑可守');
+    else if (!longLowSh) W.push('形态：光头光脚小阴、一路阴跌（无下影收回）→ 下跌中继典型形态');
+    if (earlyDecline) W.push('位置：' + posTxt + ' → 才刚跌两根阴线，远没到"缓和"，下跌中继延续');
+    R.push('① 今日量能：' + volTxt + ' → 放量减速=边跌边出，不是止跌');
+    R.push('② 前期位置：' + posTxt);
+    R.push('分情形 → ' + scn + '；' + op);
+    W.push('不能把"跌幅收窄"当企稳：下跌途中常有"大跌一天小跌两天"的台阶式阴跌，小阴只是减速不是反转；你体系企稳是右侧确认（缩量小阳/长下影/放量反包阳线），今天还是阴线，左侧信号都没出现');
+  } else {
+    /* 缩量：真缓和方向，交回既有 Z1/Z4（不覆盖），只补 reasoning */
+    id = '—';
+    R.push('昨日「' + prevLabel + '」→ 今日缩量小阴（跌势减速）：属真缓和方向（缩量+守位=接近止跌）');
+    R.push('但仍非企稳——企稳要右侧确认：次日缩量小阳/长下影/放量反包阳线才算；今天还是阴线，只观察不抄底');
+    R.push('补信息②：前期' + posTxt + ' → 高位刚跌则远未缓和，已跌一大段才接近尾声');
+    W.push('缩量小阴=抛压衰竭接近止跌，但"跌得慢了"≠"跌完了"；列入观察池等右侧阳线，现在不抄底');
+  }
+  return { id: id, label: (id === '—' ? null : verdict), act: (id === '—' ? null : scn + '：' + op), cls: cls, R: R, W: W };
+}
+
+/* 涨势减速（强势整理）：昨日中阳/大阳 + 今日仍涨但涨幅收窄（今日涨幅 < 昨日 70%）。
+   昨日大阳后今日不继续冲、而是收个小阳 = 上涨途中换手歇脚（不是转弱）。分情形 A/B/C：
+   A 缩量小阳(<0.8)：筹码锁定、健康整理 → 持有；未持仓等回踩 MA5 / 昨日大阳半分位低吸
+   B 平量/放量小阳：获利盘涌出、分歧 → 持有观察不追，看次日能否再放量上攻
+   C 放量长上影/冲高回落：冲高遇阻 → 警惕转弱，dev 大则减仓
+   关键看三点：①守住昨日大阳实体（跌回一半以下=走弱）②量能（缩量=好，放量滞涨=警惕）③dev（<5% 安全，>5% 不加仓）
+   可见 label 只给纯强弱结论；操作/分情形在 title 详情里。 */
+function powStrongRest(f) {
+  var vr = f.volRatio;
+  var prevLabel = f.prev.label;                 // 中阳 / 大阳
+  var hi = (f.dev != null && f.dev > 5) || (f.pos != null && f.pos > POW_RULE.hiPos);
+  var mid1 = (f.bodyLow1 + f.bodyHigh1) / 2;    // 昨日大阳实体半分位
+  var holdBody = !!f.holdPrevBodyLow;           // 守住昨日实体下沿
+  var holdHalf = (f.kl[f.i].close >= mid1);     // 收盘在昨日实体半分位之上
+  var shrink = (vr != null && vr < 0.8);        // 缩量（A：明显萎缩）
+  var upSh = f.upShRatio;
+  var longUpSh = (upSh != null && upSh >= 0.45);// 长上影（C：冲高回落）
+  var R = [], W = [], scn, op, cls, verdict, id;
+  var idPrefix = (f.prev.key === 'by') ? 'L' : 'M';   // 大阳→L 系 / 中阳→M 系
+  /* 量能性质文案 */
+  var volTxt = (vr == null) ? '量能未知（未取到成交量，无法判缩量/放量）'
+    : (shrink ? ('缩量 ' + vr.toFixed(2) + '×（明显萎缩，筹码锁定）')
+      : ('平量/放量 ' + vr.toFixed(2) + '×（获利盘涌出，分歧）'));
+  var posTxt = hi ? 'dev>5% / 区间位置偏高 → 小阳也不加仓' : 'dev<5%（安全区）';
+  var supTxt = holdHalf ? (holdBody ? '守住昨日实体下沿且收盘在半分位之上' : '收盘在半分位之上（盘中曾破实体下沿但收回）')
+    : '收盘跌回昨日大阳实体一半以下 → 走弱';
+
+  if (longUpSh) {
+    id = idPrefix + '9';
+    verdict = '冲高遇阻·长上影';
+    cls = 'cut';
+    scn = 'C 冲高回落（放量上影）';
+    op = '警惕转弱：盘中冲高回落、上影占振幅 ' + (upSh * 100).toFixed(0) + '% → 冲高遇阻；' +
+      (hi ? 'dev 已 >5% 高位 → 减仓' : 'dev 不高 → 减仓预警，次日不反包上影高点则减仓/离场');
+  } else if (shrink) {
+    id = idPrefix + '7';
+    verdict = '强势整理·缩量换手';
+    cls = 'hold';
+    scn = 'A 缩量小阳（筹码锁定）';
+    op = '持有不动（缩量小阳=筹码锁定，主升途中健康换手，别卖飞）；未持仓这不是买点——今日小阳没给回踩，等回踩 MA5 / 昨日大阳半分位再低吸';
+  } else {
+    id = idPrefix + '8';
+    verdict = '强势整理·放量分歧';
+    cls = 'watch';
+    scn = 'B 平量/放量小阳（分歧）';
+    op = '持有观察、不追高（获利盘涌出/分歧）；看次日能否再放量上攻，若明日放量跌回昨日大阳 → 整理变分歧，减仓';
+  }
+  if (hi) {
+    W.push('dev 位置：' + posTxt + '（你体系 dev 是硬门槛：>5% 则小阳也不加仓）');
+    if (cls === 'hold') cls = 'watch';
+  }
+  if (!holdHalf) {
+    W.push('关键位失守：' + supTxt + ' → 整理变走弱，按分歧/减仓处理（不再按健康整理算）');
+    if (cls === 'hold' || cls === 'watch') cls = 'cut';
+  }
+  R.push('涨势减速（非转弱）：昨日「' + prevLabel + '」+ 今日仍涨但涨幅收窄（今日 ' + f.chg0.toFixed(2) +
+    '% < 昨日 ' + f.chg1.toFixed(2) + '%）→ 上涨途中换手歇脚，性质看量能');
+  R.push('① 量能：' + volTxt);
+  R.push('② 守住昨日实体：' + supTxt);
+  R.push('③ dev 位置：' + posTxt);
+  R.push('分情形 → ' + scn + '；' + op);
+  R.push('次日确认：明日放量再上攻 → 确认延续；明日放量跌回昨日大阳 → 整理变分歧，减仓');
+  W.push('真正要警惕的是反过来：昨日大阳今日直接大阴（转弱），或今日爆量长上影（出货）；缩量小阳才是健康整理');
+  if (vr != null && vr > POW_RULE.overheat) W.push('量能 ' + vr.toFixed(2) + ' 倍 > ' + POW_RULE.overheat + ' → 爆量过热警惕');
+  return { id: id, label: verdict, act: scn + '：' + op, cls: cls, R: R, W: W };
 }
 
 /* 今日路径判定（风险优先）。返回 {id,label,act,actCls,reasons,warns,matrix} */
@@ -8462,6 +8782,33 @@ function powPath(f, quiet) {
   var hiPos = (f.pos != null && f.pos > POW_RULE.hiPos);
   function z(txt) { return (vr == null ? '' : '量能 ' + vr.toFixed(2) + ' 倍'); }
   function pct(v) { return (v == null ? '—' : ((v > 0 ? '+' : '') + v.toFixed(2) + '%')); }
+
+  /* ================= 强更强：昨日已强（涨停/大阳/中阳）+ 今日涨停 = 强度升级 ================= */
+  /* 旧的「L1 = 禁止新开仓」一刀切已废弃：同一「昨日+4%今日涨停」，底部首板是启动确认（等回踩低吸），
+     连板/高位加速才是「禁止追」那种强更强。分情形 A/B/C + 今日涨停量能性质见 powZtEscalate。
+     此处优先于下方矩阵块判定（矩阵块全以 id==='—' 守卫，命中后自然跳过）。 */
+  var _strongPrev = (P === 'zt' || P === 'by' || P === 'zy');
+  var _esc = (f.isZt0 && _strongPrev) ? powZtEscalate(f) : null;
+  if (_esc) { id = _esc.id; label = _esc.label; act = _esc.act; cls = _esc.cls; R = _esc.R; W = _esc.W; }
+
+  /* ================= 小阳/中阳试盘 → 今日放量大阳（确认）：分情形 A/B/C（见 powYangConfirm） =================
+     纠正「昨日小阳+今日大阳 = 弱转强」误读：这是强势确认/启动跟进（矩阵绿色路径），不是从弱转的弱转强。
+     仅当昨日小阳/中阳 且 今日是放量大阳级（实体≥0.4×涨停、涨幅明显）时命中（含缩量大阳——缩量高位大阳=诱多虚涨也在此分支判定）；
+     下方 S/M 块全以 id==='—' 守卫，命中后自然跳过。 */
+  if (id === '—' && (P === 'xy' || P === 'zy') && f.body0 >= f.ztPct * 0.4 && chg > 4 && vr != null && vr >= 0.4) {
+    var _yc = powYangConfirm(f);
+    if (_yc) { id = _yc.id; label = _yc.label; act = _yc.act; cls = _yc.cls; R = _yc.R; W = _yc.W; }
+  }
+
+  /* ================= 涨势减速（强势整理）：昨日中阳/大阳 + 今日仍涨但涨幅收窄 =================
+     昨日大阳后今日不继续冲、而是收小阳 = 换手歇脚（不是转弱）。分情形 A/B/C + 量能/守住实体/dev 三点见 powStrongRest。
+     仅当今日涨幅 < 昨日 70%（减速）时命中；今日仍加速（涨幅≥昨日）走 yc/M1，下方矩阵块全以 id==='—' 守卫。 */
+  var _upPrev = (P === 'zy' || P === 'by');
+  var _upDecel = _upPrev && chg > 0.3 && chg < f.chg1 * 0.7;
+  if (id === '—' && _upDecel) {
+    var _sr = powStrongRest(f);
+    if (_sr) { id = _sr.id; label = _sr.label; act = _sr.act; cls = _sr.cls; R = _sr.R; W = _sr.W; }
+  }
 
   /* ================= 昨日大阴 / 跌停（D1~D5） ================= */
   if (P === 'bd') {
@@ -8548,10 +8895,6 @@ function powPath(f, quiet) {
       id = 'L5'; label = '断板/烂板（长上影）'; act = '看断板低点：守住=可能二波，破位=放弃'; cls = 'cut';
       R.push('上影占振幅 ' + (f.upShRatio * 100).toFixed(0) + '%，' + z());
       R.push('断板低点（昨日实体下沿）参考 ' + f.bodyLow1.toFixed(2) + '，今日最低 ' + f.kl[f.i].low.toFixed(2));
-    } else if (f.isZt0 && f.openGap >= 2.5) {
-      id = 'L1'; label = '强更强·加速（涨停/一字）'; act = '禁止新开仓（持仓分批止盈）'; cls = 'cut';
-      R.push('昨日涨停 → 今日高开 ' + f.openGap.toFixed(2) + '% 并再次涨停');
-      W.push('策略：加速 = 高潮段，距分歧很近、盈亏比差，无舒适低吸点');
     } else if (downMid) {
       id = 'L4'; label = '分歧·高开低走阴线'; act = '减仓'; cls = 'cut';
       R.push('开盘 ' + f.openGap.toFixed(2) + '%，收 ' + pct(chg) + '，' + z());
@@ -8627,6 +8970,21 @@ function powPath(f, quiet) {
     }
   }
 
+  /* ================= 弱减速：昨日中阴/大阴 + 今日跌幅收窄（跌幅≤昨日一半）但仍收阴 =================
+     跌势动能下降是真的，但"缓和"≠企稳，现在不能买。分 真缓和（缩量·观察）vs 下跌中继（放量·回避）见 powWeakDecel。
+     放量/中量小阴（≥0.9）此前会漏到兜底，这里显式定性为「下跌减速·放量中继」；
+     缩量小阴仍走既有 Z1/Z4（向下兼容，既有测试不动）。仅当 id==='—' 时命中。 */
+  var _weakPrev = (P === 'zd' || P === 'bd');
+  var _decel = _weakPrev && chg < 0 && chg > f.chg1 * 0.5 && chg > -3;
+  if (id === '—' && _decel) {
+    var _wd = powWeakDecel(f);
+    if (_wd && _wd.id !== '—') { id = _wd.id; label = _wd.label; act = _wd.act; cls = _wd.cls; R = _wd.R; W = _wd.W; }
+    else if (_wd && _wd.R) {
+      _wd.R.forEach(function (x) { R.push(x); });
+      if (_wd.W) _wd.W.forEach(function (x) { W.push(x); });
+    }
+  }
+
   /* ================= 兜底 ================= */
   if (id === '—') {
     id = '—'; label = '未匹配到矩阵单元格'; act = '只观察（形态不在文档覆盖范围内）'; cls = 'watch';
@@ -8682,10 +9040,12 @@ function powPath(f, quiet) {
     if (cls === 'buy') { cls = 'watch'; act = '降级为观察（大盘退潮/冰点）—— ' + act; }
   }
 
-  return {
+  var p = {
     id: id, label: label, act: act, actCls: cls,
     reasons: R, warns: W, vetos: X, matrix: f.prev.label + '×' + id
   };
+  powStrengthConvert(f, p);
+  return p;
 }
 /* ---------- 今昨强弱 · 表格列用的轻量口径（只用日线，不额外请求分时） ----------
    与「⚖️ 今昨强弱」工作区共用同一套判定（powFeatures + powPath），
