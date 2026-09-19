@@ -180,6 +180,17 @@
   .stage-desc { color: #b9c2de; font-size: 13px; line-height: 1.8; margin-top: 12px; }
   .position-line { margin-top: 10px; font-size: 13px; color: var(--gold); }
 
+  /* 双视角（投资者长期 / 交易员短期）—— 醒目加大 */
+  .stage-views { display:flex; flex-wrap:wrap; gap:10px; margin-top:12px; }
+  .stage-views .sv { display:inline-flex; align-items:baseline; gap:9px; flex-wrap:wrap;
+    padding:9px 16px; border-radius:11px; font-size:16px; font-weight:800; line-height:1.5;
+    letter-spacing:.4px; text-shadow:0 0 12px currentColor; }
+  .stage-views .sv .k { font-size:13.5px; font-weight:700; opacity:.92; letter-spacing:0; text-shadow:none; }
+  .stage-views .sv-inv { background:linear-gradient(135deg,#0a2b3d,#0e1728); border:1px solid #2b7fa8; color:#7fe3ff; }
+  .stage-views .sv-inv .k { color:#4fc3f7; }
+  .stage-views .sv-trd { background:linear-gradient(135deg,#3d2c08,#231a0d); border:1px solid #9a7520; color:#ffd35c; }
+  .stage-views .sv-trd .k { color:#ffb347; }
+
   /* 阶段路线图（4 大阶段 × 每阶段 3 子阶段） */
   .stage-road { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:16px; }
   @media (max-width: 720px) { .stage-road { grid-template-columns:repeat(2,1fr); } }
@@ -383,7 +394,14 @@
   .open8-head { display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:12px; }
   .open8-form { font-size:16px; font-weight:700; padding:5px 14px; border:1.5px solid; border-radius:10px; }
   .open8-pat { font-size:13px; color:#9fb4ff; }
-  .open8-forecast { margin-left:auto; font-size:13px; font-weight:600; }
+  /* 全天预判 —— 醒目加大（原为 13px 小字，几乎看不见） */
+  .open8-forecast { margin-left:auto; display:inline-flex; align-items:baseline; gap:8px;
+    font-size:19px; font-weight:800; letter-spacing:.6px; line-height:1.45;
+    padding:7px 16px; border:1.5px solid currentColor; border-radius:11px;
+    background:linear-gradient(135deg,#221a0d,#141c2c);
+    box-shadow:0 0 0 3px rgba(255,255,255,.03), 0 0 18px -4px currentColor;
+    text-shadow:0 0 14px currentColor; }
+  .open8-forecast .k { font-size:13px; font-weight:700; opacity:.9; letter-spacing:0; text-shadow:none; }
   .open8-bars { display:flex; gap:10px; margin:6px 0 14px; }
   .ob { flex:1; min-width:0; border:1px solid #283047; border-radius:10px; padding:8px 6px; text-align:center; background:#121724; }
   .ob.up { border-color:#26c28155; background:rgba(38,194,129,.07); }
@@ -399,6 +417,11 @@
   .open8-item { display:flex; justify-content:space-between; gap:10px; padding:7px 10px; background:#121724; border:1px solid #20283b; border-radius:8px; font-size:12.5px; }
   .open8-item .k { color:#7a85a3; white-space:nowrap; }
   .open8-item .v { color:#cdd6f4; text-align:right; }
+  /* 网格里的「全天预判」也要醒目：跨 2 列 + 加大加色 */
+  .open8-item.o8-fc-hi { grid-column:span 2; align-items:center;
+    background:linear-gradient(135deg,#1b2740,#121a29); border-color:#3b5a8c; padding:8px 13px; }
+  .open8-item.o8-fc-hi .k { font-size:14px; font-weight:800; color:#9fc4ff; letter-spacing:.4px; }
+  .open8-item.o8-fc-hi .v { font-size:19px; font-weight:800; letter-spacing:.6px; text-shadow:0 0 12px currentColor; }
   .open8-advice { margin-top:12px; border-top:1px solid #20283b; padding-top:10px; }
   .oa-title { font-size:13px; color:#9fb4ff; margin-bottom:6px; }
   .oa-row { display:flex; gap:12px; font-size:12.5px; padding:3px 0; }
@@ -835,14 +858,15 @@
     <div class="card">
       <div class="card-title">判定口径（对齐两份策略文档 · 已标注修正项与数据缺口）</div>
       <div class="mid-note">
-        <b>档位口径（已修正）：</b>文档给的「小阳 +1.5~4% / 中阳 +3~7% / 大阳 &gt;7%」是<b>主板涨跌幅</b>口径，直接套到 20cm（创业板/科创板）会把 +8% 误判成「大阳」。本工具改为<b>按该股涨停幅度归一化</b>：<code>r = 涨跌幅 ÷ 涨停幅度</code>，再用 <b>0.15 / 0.40 / 0.70</b> 分档（对主板即还原成 1.5% / 4% / 7%），并补上文档缺失的 <b>|r|&lt;0.10 → 十字星</b>档。<br>
-        <b>涨停判定：</b>10cm 主板 9.8% · 20cm 创业/科创 19.8% · 30cm 北交所 29.7% · ST 4.8%（距阈值 0.3% 内即算）。<br>
+        <b>档位口径（2026-09-19 已按市场通用标准修正）：</b>大/中/小阳（阴）线按<b>绝对涨跌幅</b>分档 —— <b>星线 |chg|&lt;1% · 小阳(阴) 1%~3% · 中阳(阴) 3%~6% · 大阳(阴) ≥6%</b>；<b>涨停 / 跌停</b>按该股所在板块的<b>实际涨跌幅限制</b>单独判定，优先于以上档位。三处来源一致（《买在起涨》《炒股揭秘图》幅度法、头条《A股市场交易铁则》）。<br>
+        <i>旧版曾按「占涨停幅度的比例」归一化（0.15 / 0.40 / 0.70），会把 ST 股 +1.97% 放大成「中阳」、把涨停的新股判成「大阳」，已废弃。</i><br>
+        <b>涨停判定：</b>10cm 主板 9.8% · 20cm 创业/科创 19.8% · 30cm 北交所 29.7%（距阈值 0.3% 内即算）。<b>ST 自 2026-07-06 起沪深主板已由 ±5% 放宽为 ±10%</b>（《交易规则(2026 年修订)》），与主板同档、不再单列。<br>
         <b>今日路径：</b>按「昨日档位 → 今日路径」矩阵判定，<b>风险路径优先</b>（先判放量下跌/破位/长上影，再判机会路径），每张卡片标注命中的矩阵编号（S/M/L/Y/Z/D）。<br>
         <b>「小阴洗盘→小阳收复」三分情形（补充项）：</b>昨日<b>浅阴</b>（跌幅 &lt; 0.25×涨停，如 -1.8%，属上涨途中的小喘气）+ 今日<b>小阳完全收复</b>（涨幅 ≥ 昨日跌幅）→ 强势整理（Y9/Y10/Y11），按「量能 × 位置」分：<b>A 缩量·非高位 = 洗盘结束（持有，回踩 MA5 低吸）</b> · <b>A′ 放量（既非低位也非高位）= 分歧/抢筹，<u>不等同</u> A 的"缩量健康换手"（持有观察，冲高先减、等缩量回踩）</b> · <b>B 低位 + 放量≥1.5 = 企稳修复确认（小仓低吸 ≤2成）</b> · <b>C 高位 = 滞涨（缩量=萎缩不涨 / 放量=放量滞涨，均不加仓、准备止盈）</b>。对照：昨日<b>深阴</b>（≥0.25×涨停，如 -3%）今日只是打平 → 属「阴阳对冲·弱修复」（Y6~Y8），修复质量低于本条。<br>
         <b>量能倍数：</b><code>今日成交量 ÷ 昨日成交量</code>（<b>量口径</b>，不是额口径；价差大时两者会有偏差，此处如实标注）。文档的「1.1~1.6 倍」等阈值为经验值，直接采用。<br>
         <b>位置过滤（补充项）：</b>文档的多处买点（两阳缩量、两阳夹一阴、弱转强）都要求「必须在低位/上升趋势中途，不在高位」——本工具用 <b>60 日区间位置</b>补上这一条：位置 &gt;80% 时判为高位，机会信号一律降级并提示「高位陷阱」。<br>
         <b>分时维度：</b>用当日 5 分钟 K 线算<b>均价线（VWAP）</b>——收盘价在均价线上方/下方、均价线方向、在均价线下方的时间占比。数据源不可用时<b>该维度不参与判定</b>并在卡片上写明（不猜）。<br>
-        <b>矩阵补全（2026-09-19 修正）：</b>部分单元格原用<b>绝对涨跌幅</b>做阈值（如"今日 >2%""|涨幅| ≤1.5%"），对 <b>ST（±4.8%）、20cm（±19.8%）</b> 这类涨跌幅限制不同的标的会产生空档，导致个别股票显示「未匹配到矩阵单元格」。现已全部改为<b>按该股涨停幅度归一化的档位</b>判定，并补齐 <b>S6–S10 / M10–M12 / L10–L11 / Y13 / Z7</b> 等缺失单元格：<b>全组合矩阵（8 个昨日档 × 8 个今日档 × 量能档）已无空档</b>。<br>
+        <b>矩阵补全（2026-09-19 修正）：</b>部分单元格原用<b>绝对涨跌幅</b>做阈值（如"今日 &gt;2%""|涨幅| ≤1.5%"），对 <b>20cm / 30cm</b> 这类涨跌幅限制不同的标的会产生空档，个别股票显示「未匹配到矩阵单元格」。现已统一按<b>市场通用绝对口径</b>判档，并补齐 <b>S6–S10 / M10–M12 / L10–L11 / M13 / L12 / Y13 / Y14 / X3 / Z7</b> 等缺失单元格：<b>全组合矩阵（10cm / 20cm / 30cm × 8 个昨日档 × 8 个今日档 × 量能档）已无空档</b>，且<b>涨停日一律按「涨停」定性</b>（不再被"实体够大"降级成「大阳确认」）。<br>
         <b class="mid-todo">数据缺口（不判定、需你人工确认）：</b>大盘情绪周期的六个阶段、板块 SABCD 分级（工作台的竞价分级口径是 9:25 竞价涨停家数，与全天口径不同）、连板晋级池与晋级率、竞价量比（历史竞价数据未存）。这几项本工具<b>不做判定</b>，只用「退潮/冰点」手动闸门代替大周期过滤的第一层。
       </div>
     </div>
@@ -2566,10 +2590,16 @@ function buildResultHTML(quote, ind, sr, compact, source, gene, cap, rec, open8)
     '<div class="stage-top"><div class="stage-badge ' + st.cls + '">' + st.name + '</div>' +
     '<div><div style="font-size:13px;color:#9fb4ff;">' + st.subtitle + '</div>' +
     '<div style="font-size:12px;color:var(--dim);margin-top:4px">所属分区：<b style="color:' + stageColorOf(sr.stage) + '">' +
-    escapeHtml(sr.zone || stageZoneOf(sr.stage)) + '</b>' +
-    (st.inv ? '　投资者（长期）视角：' + escapeHtml(st.inv) : '') +
-    (st.trd ? '　交易员（短期）视角：' + escapeHtml(st.trd) : '') + '</div>' +
+    escapeHtml(sr.zone || stageZoneOf(sr.stage)) + '</b></div>' +
     '</div></div>' +
+    /* 双视角独立成行、加大加色（投资者长期=青蓝 / 交易员短期=琥珀） */
+    (function () {
+      if (!st.inv && !st.trd) return '';
+      return '<div class="stage-views">' +
+        (st.inv ? '<div class="sv sv-inv"><span class="k">📈 投资者（长期）视角</span><span>' + escapeHtml(st.inv) + '</span></div>' : '') +
+        (st.trd ? '<div class="sv sv-trd"><span class="k">⚡ 交易员（短期）视角</span><span>' + escapeHtml(st.trd) + '</span></div>' : '') +
+        '</div>';
+    })() +
     '<div class="stage-desc">' + st.desc + '</div>' +
     (function(){
       var p = ma5PositionInfo(ind, st.position);
@@ -2582,12 +2612,14 @@ function buildResultHTML(quote, ind, sr, compact, source, gene, cap, rec, open8)
 
   // 阶段转折确认清单（对齐图谱「什么证实了这一转变」）+ 今昨强弱（日线口径）
   html += renderStageTransitionCard(sr, st);
+
+  // MA5 终极策略提示（清仓 / 减仓 / 持有 / 观察 + 超涨止盈）—— 前置到「今昨强弱」之前
+  html += renderMA5StrategyCard(computeMA5Strategy(ind));
+
+  // 今昨强弱（日线口径：昨日K线 × 今日路径）
   var pwq = powQuick(ind, quote.code, name);
   if (pwq) html += renderPowQuickCard(pwq, sr);
   html += renderMainCard(ind, quote.code, name);     // 🚀 主升浪（启动特征 + 当前状态）
-
-  // MA5 终极策略提示（清仓 / 减仓 / 持有 / 观察 + 超涨止盈）
-  html += renderMA5StrategyCard(computeMA5Strategy(ind));
 
   // 早盘5分钟K线诊断（开盘八法）— 实时基于当日前3根5分钟K线
   if (open8) html += renderOpen8Card(open8);
@@ -2730,12 +2762,13 @@ function geneGrade(score) {
   return GENE_GRADE[GENE_GRADE.length - 1];
 }
 
-// 涨停幅度阈值（ST 主板按 5% 处理）
+// 涨停幅度阈值（按板别；不再对 ST 单独降档）
+/* ⚠️ 2026-07-06 起：沪深交易所主板风险警示股票（主板 ST/*ST）涨跌幅限制由 ±5% 放宽为 ±10%，
+   与主板普通股一致（科创板/创业板 ST 本就 ±20%、北交所 ST ±30%）。
+   来源：上交所/深交所《交易规则(2026 年修订)》，证券时报、经济日报、中国投资者网均有报道。
+   因此 ST 不再特殊处理 —— 否则 +9.89% 的主板 ST（如 *ST高科 2026-09-18）会被误判为「未涨停」。 */
 function ztThreshold(code, name) {
-  var b = boardOf(code);
-  var nm = String(name || '').replace(/\s/g, '');
-  if (/^\*?ST/i.test(nm) && b.key === 'main') return 4.9;
-  return b.zt;
+  return boardOf(code).zt;
 }
 
 // 筹码集中度近似：取近 N 日成交量价分布中「包含 90% 成交量的最小价格区间」宽度占比
@@ -6453,7 +6486,8 @@ if(typeof setHtml!=="function"){ function setHtml(el, h){ if(!el) return false; 
       并由全局 1 秒 tick 驱动、按 JJ_RULE.sampleMs 节流，**不依赖 refreshAll**，也不改全局刷新节奏。
    仅为交易体系梳理与数据可视化，不构成任何投资建议。 */
 var JJ_RULE = {
-  ztp: { '10cm': 9.7, '20cm': 19.5, '30cm': 29.5, '5cm': 4.8 },
+  /* 板别涨停阈值（%）—— ST 自 2026-07-06 起与主板同档（±10%），故不再有 '5cm' 档 */
+  ztp: { '10cm': 9.7, '20cm': 19.5, '30cm': 29.5 },
   hosts: ['push2.eastmoney.com', 'push2delay.eastmoney.com'],
   /* §2 涨跌停 */
   ztExtreme: 10, ztNormal: 3, dtPanic: 5, ztBandSoft: 0.3,
@@ -6504,7 +6538,7 @@ function jjLimitGap(code, name){
      实测同一样本（涨幅榜+跌幅榜各 500）：旧口径 64 只 vs 新口径 5 只，误判 59 只。 */
 function jjLimitPct(code, name){
   var l = ztLimitOf(code, name);
-  return l === '20cm' ? 20 : l === '30cm' ? 30 : l === '5cm' ? 5 : 10;
+  return l === '20cm' ? 20 : l === '30cm' ? 30 : 10;   // ST 自 2026-07-06 起并入主板 ±10%
 }
 function jjZtPrice(pre, pct){ if(pre == null || !(pre > 0)) return null; return Math.round(pre * (1 + pct / 100) * 100) / 100; }
 function jjDtPrice(pre, pct){ if(pre == null || !(pre > 0)) return null; return Math.round(pre * (1 - pct / 100) * 100) / 100; }
@@ -7641,7 +7675,7 @@ function jjRulesHtml(){
   var t6 = tbl(['读数', '本平台取数口径（自带取数 · 不依赖 refreshAll · 无额外域名）'], [
     ['为什么本卡自带取数', '平台 <code>isTradingHours()</code> 自 9:30 起算 → <b>竞价时段（9:15-9:30）refreshAll 不会运行</b>。故本卡自行拉取：昨日涨停池 / 昨日炸板池 / 指数行情 / 昨日涨停股行情 / 全市场涨跌幅榜，并由全局 1 秒 tick 驱动、按 <b>' + (JJ_RULE.sampleMs / 1000) + ' 秒</b>节流（非竞价时段 2 分钟）。'],
     ['竞价方向 / 开盘溢价率', '腾讯行情 <code>a[5]</code>(今开=竞价匹配价) ÷ <code>a[4]</code>(昨收) − 1；缺失才回退最新价口径。与平台既有 <code>D.prevQ.openPrem</code> 同口径，只是本卡用独立拉取以保证竞价时段新鲜。'],
-    ['竞价涨停 / 跌停', '东财全市场涨跌幅榜 <code>clist fs=m:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23,m:0+t:81+s:2048</code>，按 f3 降序/升序各取 ' + JJ_RULE.scanPz + ' 条，再按 <code>ztLimitOf</code> 的板别阈值（10cm 9.7 / 20cm 19.5 / 30cm 29.5 / ST 4.8）判定。<b>涨停集在降序榜上是连续前缀</b>，故取样收敛准确；触及取样上限时界面标注「为下限值」。'],
+    ['竞价涨停 / 跌停', '东财全市场涨跌幅榜 <code>clist fs=m:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23,m:0+t:81+s:2048</code>，按 f3 降序/升序各取 ' + JJ_RULE.scanPz + ' 条，再按 <code>ztLimitOf</code> 的板别阈值（10cm 9.7 / 20cm 19.5 / 30cm 29.5；ST 自 2026-07-06 起已并入主板 ±10%）判定。<b>涨停集在降序榜上是连续前缀</b>，故取样收敛准确；触及取样上限时界面标注「为下限值」。'],
     ['竞价涨停封单比', '<b>无稳定免费源（需盘口封单）→ 本卡不臆造，界面标人工核对</b>。'],
     ['行业 / 梯队', '东财榜单 <code>f100</code>(行业)；板数 = 若该股在昨日涨停池则 <code>lbc+1</code>，否则视为首板。<b>「行业催化」无量化源 → 人工核对。</b>'],
     ['竞价轨迹五形态', '只能由本机在 <b>9:15-9:30 在线</b>按每 ' + (JJ_RULE.sampleMs / 1000) + ' 秒采样（东财分时首根只给 09:30，拿不到 9:15-9:25 逐笔轨迹）。聚合轨迹（平均溢价率 / 上证涨跌幅）+ 重点个股轨迹（最高标 / 竞价涨停前 6 / 大面前 3）落盘 <code>' + JJ_RULE.traceKey + '_&lt;日期&gt;</code>，当日重开页面不丢。'],
@@ -8068,8 +8102,7 @@ async function midEnrich(st, ztDate8) {
     if (data.quote) st.price = (data.quote.price != null) ? data.quote.price : st.price;
     var kd = ind.klines || kl;
     var ztPct = (ztLimitOf(st.code, st.name) === '20cm') ? 19.8
-              : (ztLimitOf(st.code, st.name) === '30cm') ? 29.7
-              : (ztLimitOf(st.code, st.name) === '5cm') ? 4.8 : 9.8;
+              : (ztLimitOf(st.code, st.name) === '30cm') ? 29.7 : 9.8;   // ST 已并入主板 10cm
     var ss = midStreakStat(kd, ztPct);
     st.maxStreakHist = ss.maxStreak; st.ztCountHist = ss.ztCount; st.kdays = ss.days;
     var sh = midShrink(kd, ztDate8);
@@ -8337,7 +8370,7 @@ var POW_RULE = {
 var POW = { rows: [], cold: false, running: false };
 
 function powZtPct(code, name) {  var t = ztLimitOf(code, name);
-  return t === '20cm' ? 19.8 : t === '30cm' ? 29.7 : t === '5cm' ? 4.8 : 9.8;
+  return t === '20cm' ? 19.8 : t === '30cm' ? 29.7 : 9.8;   // ST 自 2026-07-06 起并入主板 ±10%
 }
 
 /* 昨日/今日 K线档位（市场通用标准：绝对涨跌幅 1/3/6 分档；涨停跌停按板别实际限制优先）
@@ -9182,14 +9215,20 @@ function powPath(f, quiet) {
 
   /* ================= 矩阵补漏（2026-09-19）：补齐各「昨日档位」块未覆盖的档位组合 =================
      背景：L/M/S/Y/Z 各块是若干条 ad-hoc 分支且无兜底，且部分分支用了「绝对涨跌幅」
-     （Y2 的 chg>2、S2 的 |chg|<=1.5、M1 的 chg>=2…）→ 对 ST(涨幅 4.8%)/20cm 板必然出现
-     「未匹配到矩阵单元格」。这里统一改用「归一化档位 _TB」，把缺口补成明确单元格，保证矩阵无空档。
+     （Y2 的 chg>2、S2 的 |chg|<=1.5、M1 的 chg>=2…）→ 对 20cm/30cm 板必然出现
+     「未匹配到矩阵单元格」。这里统一改用「今日档位 _TB（市场通用 1/3/6 绝对口径）」，
+     把缺口补成明确单元格，保证矩阵无空档。
      放在所有既有块之后、兜底之前 → 既有分支优先级不变（既有测试不受影响），只补未命中的组合。 */
   if (id === '—' && P !== 'flat') {
     var _vTxt = (vr == null ? '量能未知' : '量能 ' + vr.toFixed(2) + ' 倍');
     var _over = (vr != null && vr > POW_RULE.overheat);
     var _shrink = (vr != null && vr < 0.9);
     var _tName = _TB.label;
+    /* 与 powStrengthConvert（「强前日 + 温和下跌」三维度分析，区间 -0.3% ~ -4.6%）分工：
+       该区间交回它处理（产出更丰富的「量能/关键位/位置」三维度结论 + 次日确认），
+       本块只补它覆盖不到的（更深的阴线，以及 20cm/30cm 板上的深档）。 */
+    var _scHandles = (f.prev.key === 'zt' || f.prev.key === 'by' || f.prev.key === 'zy') &&
+      chg < -0.3 && chg > -4.6;
 
     if (P === 'xy') {                       /* 昨日小阳的剩余组合 */
       if (_tUp) {
@@ -9245,10 +9284,10 @@ function powPath(f, quiet) {
           : '持有；放量上攻注意过热，冲高可先减一部分';
         R.push('昨日中阳 → 今日' + _tName + '（' + pct(chg) + '），' + _vTxt + ' → 强度升级');
         if (_over) W.push('量能 ' + vr.toFixed(2) + ' 倍 > ' + POW_RULE.overheat + ' 爆量 → 过热警惕');
-      } else if (_tDn) {                    /* 昨日中阳 + 今日中/小阴（量能未放大到 M4/M5） */
-        var _mbrk = (!f.holdPrevBodyLow && !f.holdPrevLow) || chg <= -5;
+      } else if (_tDn && !_scHandles) {     /* 昨日中阳 + 今日深阴（超出 powStrengthConvert 的温和下跌区间） */
+        var _mbrk = (!f.holdPrevBodyLow && !f.holdPrevLow) || _TB.key === 'bd';
         id = 'M13'; cls = _mbrk ? 'cut' : 'hold';
-        label = _mbrk ? '中阳后中阴·破位回踩' : '中阳后中阴·缩量回踩（守位）';
+        label = _mbrk ? ('中阳后' + _tName + '·破位回踩') : ('中阳后' + _tName + '·缩量回踩（守位）');
         act = _mbrk ? '减仓：已跌破昨日实体下沿/低点，强势结构走坏，反抽再减'
           : '持有观察：缩量回踩不破昨日实体下沿 = 良性换手；跌破才减';
         R.push('昨日中阳 → 今日' + _tName + '（' + pct(chg) + '），' + _vTxt + ' → 回踩（量能未放大）');
@@ -9280,10 +9319,10 @@ function powPath(f, quiet) {
           R.push('昨日' + f.prev.label + ' → 今日十字星（实体 ' + pct(f.body0) + '），' + _vTxt);
           W.push('放量滞涨：强势结构后放量而不涨 → 典型见顶预警');
         }
-      } else if (_tDn) {                      /* 昨日强（涨停/大阳）+ 今日中/小阴（量能未放大） */
-        var _lbrk = (!f.holdPrevBodyLow && !f.holdPrevLow) || chg <= -5;
+      } else if (_tDn && !_scHandles) {       /* 昨日强（涨停/大阳）+ 今日深阴（超出温和下跌区间） */
+        var _lbrk = (!f.holdPrevBodyLow && !f.holdPrevLow) || _TB.key === 'bd';
         id = 'L12'; cls = _lbrk ? 'cut' : 'hold';
-        label = _lbrk ? '强势后中阴·破位' : '强势后中阴·缩量回踩（守位）';
+        label = _lbrk ? ('强势后' + _tName + '·破位') : ('强势后' + _tName + '·缩量回踩（守位）');
         act = _lbrk ? '减仓/离场：强势结构后跌破昨日实体下沿 → 结构走坏，反抽是减仓机会'
           : '持有观察：守住昨日实体下沿/低点视为回踩，破了才减';
         R.push('昨日' + f.prev.label + ' → 今日' + _tName + '（' + pct(chg) + '），' + _vTxt);
