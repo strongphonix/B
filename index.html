@@ -482,116 +482,99 @@
   .pow-act.out { background:#1e1212; border:1px solid #4a2a2a; color:#ff9b9b; }
   .pow-grp { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:14px 0 6px; }
 
-  /* ===== 集合竞价全景 ===== */
-  .call-toolbar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:14px; }
-  .call-clock { margin-left:auto; font-size:13px; font-weight:700; }
+  /* ===== 集合竞价全景（视图壳：工具条 + 折叠口径说明；模块样式见下方 7.33 块） ===== */
+  .call-toolbar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:12px; }
+  .call-clock { font-size:13px; font-weight:700; }
+  .call-toolbar .call-clock { margin-left:auto; }
   .call-clock.live { color:#16c784; }
   .call-clock.off { color:#ffb74d; }
-  .call-mood { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-bottom:14px; }
-  .call-mood .mcell { background:#121724; border:1px solid #20283b; border-radius:11px; padding:11px 14px; }
-  .call-mood .mcell .k { font-size:12px; color:#7a8aa8; }
-  .call-mood .mcell .v { font-size:21px; font-weight:800; margin-top:3px; }
-  .lv-up { color:#16c784; } .lv-warn { color:#ffb74d; } .lv-down { color:#ff5b5b; }
-  .call-recap { background:linear-gradient(135deg,#13251c,#101824); border:1px solid #1f3a2c; border-radius:13px; padding:13px 16px; margin-bottom:14px; }
-  .call-recap h3 { margin:0 0 10px; font-size:15px; color:#16c784; }
-  .call-recap .chips { display:flex; flex-wrap:wrap; gap:8px; }
-  .call-recap .chip { display:inline-flex; align-items:center; gap:6px; background:#0f1b16; border:1px solid #234a37; color:#cfeede; border-radius:20px; padding:5px 11px; font-size:13px; cursor:pointer; }
-  .call-recap .chip:hover { background:#16301f; }
-  .call-recap .chip .g { font-weight:800; }
-  .call-recap .empty { color:#7a8aa8; font-size:13px; }
-  .call-op { font-size:13px; color:#dfe6ff; line-height:1.75; padding:6px 0; border-bottom:1px dashed #1c2333; }
-  .call-op:last-child { border-bottom:none; }
-  .call-op b { color:#7fe3ff; }
-  .stk-chip { display:inline-block; background:#131a29; border:1px solid #26304a; color:#cdd6f4; border-radius:6px; padding:2px 7px; margin:2px 3px 2px 0; font-size:12px; cursor:pointer; }
-  .stk-chip:hover { background:#1b2540; border-color:#3b4a70; color:#fff; }
-  .ind-link { cursor:pointer; color:#7fe3ff; font-weight:700; border-bottom:1px dashed #3b6a80; }
-  .ind-link:hover { color:#fff; border-bottom-color:#7fe3ff; }
-  .call-table { width:100%; border-collapse:collapse; font-size:13px; }
-  .call-table th, .call-table td { padding:8px 10px; text-align:left; border-bottom:1px solid #1c2333; white-space:nowrap; }
-  .call-table th { color:#7a8aa8; font-weight:600; position:sticky; top:0; background:#0e1320; z-index:1; }
-  .call-table tr:hover { background:#141b2b; cursor:pointer; }
-  .gbadge { display:inline-block; min-width:22px; text-align:center; font-weight:800; border-radius:6px; padding:2px 7px; font-size:12px; color:#fff; }
-  .g-S { background:#e8453c; } .g-A { background:#ff8f1f; } .g-B { background:#8a93a6; } .g-C { background:#3a7afe; }
-  .tag-pill { display:inline-block; border-radius:20px; padding:2px 9px; font-size:11.5px; font-weight:700; }
-  .tag-rec { background:#103a26; color:#3fe39a; border:1px solid #1f6b46; }
-  .tag-watch { background:#3a330f; color:#ffd35c; border:1px solid #6b5a1f; }
-  .tag-avoid { background:#3a1414; color:#ff7a7a; border:1px solid #6b1f1f; }
-  .call-note { font-size:12px; color:#7a8aa8; line-height:1.85; margin-top:14px; background:#0e1320; border:1px solid #20283b; border-radius:11px; padding:12px 14px; }
+  .call-status { font-size:12px; color:#7a8aa8; }
+  .call-note-box { margin-top:16px; }
+  .call-note-box > summary { cursor:pointer; list-style:none; font-size:12.5px; font-weight:700; color:#9fb4ff;
+    padding:10px 14px; background:#0e1320; border:1px solid #20283b; border-radius:11px; }
+  .call-note-box > summary::-webkit-details-marker { display:none; }
+  .call-note-box > summary:hover { color:#fff; border-color:#2c3a56; }
+  .call-note-box[open] > summary { border-radius:11px 11px 0 0; border-bottom-color:transparent; }
+  .call-note { font-size:12px; color:#8d99b8; line-height:1.9; background:#0e1320; border:1px solid #20283b;
+    border-top:none; border-radius:0 0 11px 11px; padding:12px 14px; }
   .call-note b { color:#9fb4ff; }
+  .call-note u { color:#cfd8f0; text-decoration-color:#5b8cff; }
 
-/* ===== 7.33 集合竞价移植样式 ===== */
-{background:#0f172a;border:1px solid var(--bd);border-radius:8px;padding:10px 12px;}
-{font-size:12px;color:var(--muted);margin-bottom:4px;}
-{font-size:20px;font-weight:700;font-family:ui-monospace,Consolas,monospace;}
-{font-size:11px;color:var(--muted);margin-top:3px;}
-{color:var(--dn);}
-{color:#fbbf24;}
-{color:#60a5fa;}
-{font-family:ui-monospace,Consolas,monospace;}
-{overflow-x:auto;border:1px solid var(--bd);border-radius:8px;}
-{font-size:11.5px;color:var(--muted);margin-top:8px;}
-{padding:4px 12px 12px;}
-{font-size:20px;font-weight:700;font-family:ui-monospace,monospace;color:var(--up);}
-{font-size:11.5px;color:var(--muted);}
-{padding:5px 8px;font-size:12.3px;}
-{padding:10px 12px;border-radius:8px;margin:8px 0;font-size:13px;line-height:1.8;}
-{background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.35);}
-{background:rgba(96,165,250,.07);border:1px solid rgba(96,165,250,.3);}
-{background:rgba(240,69,58,.15);color:var(--up);}
-{background:rgba(251,191,36,.14);color:#fbbf24;}
-{background:rgba(16,185,129,.13);color:var(--dn);}
-{display:flex;flex-wrap:wrap;gap:10px;background:linear-gradient(90deg,rgba(240,69,58,.10),rgba(15,23,42,.35));border:1px solid rgba(240,69,58,.35);border-radius:10px;padding:11px 14px;margin:8px 0;}
-{background:linear-gradient(90deg,rgba(251,191,36,.10),rgba(15,23,42,.35));border-color:rgba(251,191,36,.4);}
-{background:linear-gradient(90deg,rgba(16,185,129,.10),rgba(15,23,42,.35));border-color:rgba(16,185,129,.4);}
-{background:linear-gradient(90deg,rgba(96,165,250,.10),rgba(15,23,42,.35));border-color:rgba(96,165,250,.4);}
-{flex:1;min-width:118px;}
-{font-size:11.5px;color:var(--muted);}
-{font-size:19px;font-weight:800;font-family:ui-monospace,Consolas,monospace;margin-top:2px;}
-{font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.55;white-space:normal;}
-{display:inline-block;padding:1px 7px;border-radius:4px;font-size:11px;font-weight:700;background:rgba(96,165,250,.15);color:#60a5fa;border:1px solid rgba(96,165,250,.45);white-space:nowrap;}
-{background:rgba(240,69,58,.16);color:var(--up);border-color:rgba(240,69,58,.45);}
-{background:rgba(251,191,36,.14);color:#fbbf24;border-color:rgba(251,191,36,.45);}
-{background:rgba(16,185,129,.14);color:var(--dn);border-color:rgba(16,185,129,.45);}
-{background:rgba(245,158,11,.14);color:#f59e0b;border-color:rgba(245,158,11,.45);}
-{background:rgba(148,163,184,.14);color:#94a3b8;border-color:rgba(148,163,184,.5);}
-{font-family:monospace}
-{padding:8px 10px}
-{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:8px 0}
-{display:inline-block;font-size:12px;padding:3px 10px;border-radius:999px;border:1px solid #334155;color:#cbd5e1;background:#0b1222}
-{border-color:#3fb950;color:#4ade80}
-{border-color:#f0453a;color:#f87171}
-{margin-top:8px;border:1px solid #233;border-radius:8px;padding:8px 12px;background:#0c1320}
-{cursor:pointer;font-size:12.5px;color:#cfe3ff}
-{display:none}
-{font-size:11px;color:#94a3b8}
-{font-size:13.5px;font-weight:700;margin-top:3px}
-{font-size:11px;color:#94a3b8;margin-top:3px;line-height:1.55}
-{margin:8px 0;padding:10px 12px;border-radius:8px;font-size:13px;line-height:1.95}
-{display:block;font-size:14.5px;font-weight:800;letter-spacing:1.5px;margin-bottom:4px}
-{background:linear-gradient(90deg,rgba(240,69,58,.20),rgba(240,69,58,.03));border:2px solid var(--up);box-shadow:0 0 14px rgba(240,69,58,.28)}
-{color:var(--up)}
-{background:linear-gradient(90deg,rgba(16,185,129,.18),rgba(16,185,129,.03));border:2px solid var(--dn);box-shadow:0 0 14px rgba(16,185,129,.24)}
-{color:var(--dn)}
-{color:var(--muted);font-weight:400}
-{display:inline-block;margin:2px 6px 3px 0;padding:3px 10px;border-radius:6px;font-size:12.5px;font-weight:700;white-space:nowrap}
-{background:rgba(240,69,58,.22);color:#ff9f97;border:1px solid rgba(240,69,58,.6)}
-{color:#fff;font-size:13.5px}
-{background:rgba(16,185,129,.20);color:#6ee7b7;border:1px solid rgba(16,185,129,.55)}
-{background:rgba(251,191,36,.10);color:#fcd34d;border:1px solid rgba(251,191,36,.45)}
-{color:#fff}
-{opacity:.7}
-{color:#fff;font-size:13.5px}
-{color:#cbd5e1;font-weight:400;font-size:11.5px;margin-left:4px}
-{cursor:pointer;-webkit-user-select:none;user-select:none;transition:filter .12s,box-shadow .12s}
-{filter:brightness(1.4);box-shadow:0 0 10px rgba(148,163,184,.35)}
-{font-size:10px;opacity:.8;margin-left:4px}
-{outline:2px solid #fbbf24;outline-offset:1px}
-{margin:6px 0 4px;padding:9px 11px;border-radius:8px;background:rgba(2,8,20,.6);border:1px dashed #475569;overflow:auto}
-{font-size:12px;color:#cbd5e1;font-weight:700;margin-bottom:6px}
-{color:#fff}
-{min-width:560px}
-{font-size:12px;color:#94a3b8}
-{color:#fbbf24;font-weight:700}
+  /* ===== 7.33 集合竞价移植样式 =====
+     2026-09-19 修复：原块在移植时选择器被整体丢失（只剩一串裸 {…} 规则），
+     导致整个 #m7_33 模块无任何样式。此处逐条还原，并做两件适配：
+       ① 源项目变量 → 本工作台变量映射（--bd → --line、--dn → --down）；
+       ② 模块专属类统一挂在 #m7_33 作用域下，不会影响其它工作区。 */
+  #m7_33 table { width:100%;border-collapse:collapse;font-size:12.8px;white-space:nowrap; }
+  #m7_33 th { background:#0b1222;color:var(--muted);padding:7px 9px;text-align:left;position:sticky;top:0;font-weight:600;border-bottom:1px solid var(--line); }
+  #m7_33 td { padding:6px 9px;border-bottom:1px solid rgba(51,65,85,.45); }
+  #m7_33 tbody tr:hover { background:rgba(91,140,255,.06); }
+  #m7_33 .mini-tbl td, #m7_33 .mini-tbl th { padding:5px 8px;font-size:12.3px; }
+  #m7_33 .kpi { background:#0f172a;border:1px solid var(--line);border-radius:8px;padding:10px 12px; }
+  #m7_33 .kpi .t { font-size:12px;color:var(--muted);margin-bottom:4px; }
+  #m7_33 .kpi .v { font-size:20px;font-weight:700;font-family:ui-monospace,Consolas,monospace; }
+  #m7_33 .kpi .s { font-size:11px;color:var(--muted);margin-top:3px; }
+  #m7_33 .dn { color:var(--down); }
+  #m7_33 .yel { color:#fbbf24; }
+  #m7_33 .blu { color:#60a5fa; }
+  #m7_33 .ora { color:#f59e0b; }
+  #m7_33 .grn { color:#34d399; }
+  #m7_33 .mono { font-family:ui-monospace,Consolas,monospace; }
+  #m7_33 .twrap { overflow-x:auto;border:1px solid var(--line);border-radius:8px; }
+  #m7_33 .note { font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.7; }
+  #m7_33 .dbody { padding:4px 12px 12px; }
+  #m7_33 .concl { padding:10px 12px;border-radius:8px;margin:8px 0;font-size:13px;line-height:1.8; }
+  #m7_33 .c-red { background:rgba(240,69,58,.08);border:1px solid rgba(240,69,58,.3); }
+  #m7_33 .c-ora { background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.35); }
+  #m7_33 .c-blu { background:rgba(96,165,250,.07);border:1px solid rgba(96,165,250,.3); }
+  #m7_33 .c-grn { background:rgba(16,185,129,.07);border:1px solid rgba(16,185,129,.3); }
+  #m7_33 .stgbar { display:flex;flex-wrap:wrap;gap:10px;background:linear-gradient(90deg,rgba(240,69,58,.10),rgba(15,23,42,.35));border:1px solid rgba(240,69,58,.35);border-radius:10px;padding:11px 14px;margin:8px 0; }
+  #m7_33 .stgbar.warn { background:linear-gradient(90deg,rgba(251,191,36,.10),rgba(15,23,42,.35));border-color:rgba(251,191,36,.4); }
+  #m7_33 .stgbar.safe { background:linear-gradient(90deg,rgba(16,185,129,.10),rgba(15,23,42,.35));border-color:rgba(16,185,129,.4); }
+  #m7_33 .stgbar.cold { background:linear-gradient(90deg,rgba(96,165,250,.10),rgba(15,23,42,.35));border-color:rgba(96,165,250,.4); }
+  #m7_33 .stgbar .sg { flex:1;min-width:118px; }
+  #m7_33 .stgbar .sg .l { font-size:11.5px;color:var(--muted); }
+  #m7_33 .stgbar .sg .v { font-size:19px;font-weight:800;font-family:ui-monospace,Consolas,monospace;margin-top:2px; }
+  #m7_33 .stgbar .sg .d { font-size:11.5px;color:var(--muted);margin-top:3px;line-height:1.55;white-space:normal; }
+  #m7_33 .badge { display:inline-block;padding:1px 7px;border-radius:4px;font-size:11px;font-weight:700;background:rgba(96,165,250,.15);color:#60a5fa;border:1px solid rgba(96,165,250,.45);white-space:nowrap; }
+  #m7_33 .badge.b-r { background:rgba(240,69,58,.16);color:#ff9f97;border-color:rgba(240,69,58,.45); }
+  #m7_33 .badge.b-y { background:rgba(251,191,36,.14);color:#fbbf24;border-color:rgba(251,191,36,.45); }
+  #m7_33 .badge.b-g { background:rgba(16,185,129,.14);color:#6ee7b7;border-color:rgba(16,185,129,.45); }
+  #m7_33 .badge.b-o { background:rgba(245,158,11,.14);color:#f59e0b;border-color:rgba(245,158,11,.45); }
+  #m7_33 .badge.b-b { background:rgba(148,163,184,.14);color:#94a3b8;border-color:rgba(148,163,184,.5); }
+  #m7_33 .m730-gate { display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0 6px; }
+  #m7_33 .m730-tag { display:inline-block;font-size:12px;padding:3px 10px;border-radius:999px;border:1px solid #334155;color:#cbd5e1;background:#0b1222; }
+  #m7_33 .m730-tag.on { border-color:#3fb950;color:#4ade80; }
+  #m7_33 .m730-tag.off { border-color:#f0453a;color:#f87171; }
+  #m7_33 .m730-det { margin-top:8px;border:1px solid #22303f;border-radius:8px;padding:8px 12px;background:#0c1320; }
+  #m7_33 .m730-det>summary { cursor:pointer;font-size:12.5px;color:#cfe3ff; }
+  #m7_33 .m730-det>summary::-webkit-details-marker { display:none; }
+  #m7_33 .jj-pick { margin:8px 0;padding:10px 12px;border-radius:8px;font-size:13px;line-height:1.95; }
+  #m7_33 .jj-pick .ttl { display:block;font-size:14.5px;font-weight:800;letter-spacing:1.5px;margin-bottom:4px; }
+  #m7_33 .jj-pick.rec { background:linear-gradient(90deg,rgba(240,69,58,.20),rgba(240,69,58,.03));border:2px solid var(--up);box-shadow:0 0 14px rgba(240,69,58,.28); }
+  #m7_33 .jj-pick.rec .ttl { color:var(--up); }
+  #m7_33 .jj-pick.avo { background:linear-gradient(90deg,rgba(16,185,129,.18),rgba(16,185,129,.03));border:2px solid var(--down);box-shadow:0 0 14px rgba(16,185,129,.24); }
+  #m7_33 .jj-pick.avo .ttl { color:var(--down); }
+  #m7_33 .jj-pick .none { color:var(--muted);font-weight:400; }
+  #m7_33 .jj-sec { display:inline-block;margin:2px 6px 3px 0;padding:3px 10px;border-radius:6px;font-size:12.5px;font-weight:700;white-space:nowrap;cursor:pointer;-webkit-user-select:none;user-select:none;transition:filter .12s,box-shadow .12s; }
+  #m7_33 .jj-sec.rec { background:rgba(240,69,58,.22);color:#ff9f97;border:1px solid rgba(240,69,58,.6); }
+  #m7_33 .jj-sec.rec b { color:#fff;font-size:13.5px; }
+  #m7_33 .jj-sec.avo { background:rgba(16,185,129,.20);color:#6ee7b7;border:1px solid rgba(16,185,129,.55); }
+  #m7_33 .jj-sec.avo b { color:#fff;font-size:13.5px; }
+  #m7_33 .jj-sec.yel-s { background:rgba(251,191,36,.10);color:#fcd34d;border:1px solid rgba(251,191,36,.45); }
+  #m7_33 .jj-sec.yel-s b { color:#fff; }
+  #m7_33 .jj-sec.yel-s .car { opacity:.7; }
+  #m7_33 .jj-sec .m { color:#cbd5e1;font-weight:400;font-size:11.5px;margin-left:4px; }
+  #m7_33 .jj-sec:hover { filter:brightness(1.4);box-shadow:0 0 10px rgba(148,163,184,.35); }
+  #m7_33 .jj-sec .car { font-size:10px;opacity:.8;margin-left:4px; }
+  #m7_33 .jj-sec.on { outline:2px solid #fbbf24;outline-offset:1px; }
+  #m7_33 .jj-secbox { margin:6px 0 4px;padding:9px 11px;border-radius:8px;background:rgba(2,8,20,.6);border:1px dashed #475569;overflow:auto; }
+  #m7_33 .jj-secbox .hd { font-size:12px;color:#cbd5e1;font-weight:700;margin-bottom:6px; }
+  #m7_33 .jj-secbox .hd b { color:#fff; }
+  #m7_33 .jj-secbox table { min-width:560px; }
+  #m7_33 .jj-secbox .none2 { font-size:12px;color:#94a3b8; }
+  #m7_33 .jj-hint { color:#fbbf24;font-weight:700; }
+  #m7_33 h3 { line-height:1.5; }
 </style>
 </head>
 <body>
@@ -762,34 +745,33 @@
   <div class="view" id="view-call">
     <div class="card">
       <div class="card-title">🔥 集合竞价全景 · 每日可参与板块实时筛选</div>
+
       <div class="call-toolbar">
-        <select class="ctl" id="callMin">
-          <option value="3" selected>推荐区间（≥3只 = A级以上）</option>
-          <option value="5">仅 S 级（≥5只 = 爆发）</option>
-          <option value="1">全部行业（≥1只，含脉冲）</option>
-        </select>
-        <button class="btn" id="callRefresh">刷新竞价</button>
-        <span id="callClock" class="call-clock"></span>
-      </div>
-      <div id="callMood" class="call-mood"></div>
-      <div id="callRecap" class="call-recap"></div>
-      <div id="callAvoid" class="call-recap" style="background:linear-gradient(135deg,#2a1414,#101824);border-color:#3a1f1f"></div>
-      <div id="callTableWrap"></div>
-
-      <!-- 集合竞价全景分析模块 -->
-      <div id="m7_33" style="margin-top:16px;"><div class="loading">数据加载中…</div></div>
-
-      <div class="call-note">
-        <b>判断逻辑（对齐《集合竞价全景分析系统》第五章）：</b>先全市场扫描<b>竞价涨停股</b>，再按<b>行业聚类</b>、以「该行业竞价涨停家数」定级——<br>
-        · <b>S级（爆发）</b>：该行业竞价涨停≥5只，梯队完整 → 主线确认，可重仓龙头/中军<br>
-        · <b>A级（强势）</b>：该行业竞价涨停3–4只，龙头强 → 可参与，选最强标的<br>
-        · <b>B级（脉冲）</b>：该行业竞价涨停1–2只，无梯队 → 只看不做<br>
-        · <b>C级（弱势）</b>：无竞价涨停 → 回避<br>
-        <b>✅ 推荐参与 = S级 / A级（即该行业竞价涨停≥3只）</b>——不是「涨得多就算」，避免把一堆 +1% 的板块都标成可参与；无主线（前3行业占比&lt;40%）时按铁律⑦轻仓。<br>
-        <b>数据说明：</b>读取东方财富实时行情。集合竞价时段（9:15–9:25）的涨跌幅即真实竞价价；其余时段为最新实时行情，仅供验证逻辑。<b>铁律：</b>9:20 前可撤单为「演戏」，竞价强≠全天强，9:30 后须第一笔成交验证。
+        <button class="btn" id="callRefresh">⟳ 刷新竞价数据</button>
+        <span class="call-status" id="callStatus"></span>
+        <span class="call-clock off" id="callClock"></span>
       </div>
 
-          </div>
+      <!-- 集合竞价全景分析（唯一模块 · 结论前置：推荐 / 回避板块 → 逐段推导 → 规则速查） -->
+      <div id="m7_33"><div class="loading"><div class="spinner"></div><p>正在取数（昨日涨停池 / 板块行情 / 全市场涨跌榜）…</p></div></div>
+
+      <details class="call-note-box">
+        <summary>📖 判定逻辑与数据口径（点击展开）</summary>
+        <div class="call-note">
+          <b>一句话：</b>9:20 前可撤单 = 演戏，9:20–9:25 不可撤单 = 真金白银 —— 只信 9:20 之后的委托。<br>
+          <b>✅ 推荐板块怎么来的：</b>先全市场扫描<b>竞价涨停股</b> → 按<b>行业聚类</b> → 用「该行业竞价涨停家数」定级
+          （<b>S 级 ≥5 只</b>爆发 / <b>A 级 3–4 只</b>强势 / <b>B 级 1–2 只</b>脉冲 / <b>C 级 0 只</b>弱势），
+          <b>推荐参与 = S 级 / A 级</b>。<u>不是「涨得多就算」</u>，避免把一堆 +1% 的板块都标成可参与；
+          前 3 行业占比 &lt;40% 视为无主线，按铁律⑦轻仓、不重仓。<br>
+          <b>🚫 回避板块怎么来的：</b>该行业出现「昨日涨停、今日竞价低开超板别阈值或跌停」的大面股，或出现竞价跌停股；
+          <b>同时命中推荐与回避 → 按更严者处理（进回避、不进推荐）</b>。<br>
+          <b>数据源：</b>东方财富行情 / 涨停池。竞价时段（9:15–9:25）的涨跌幅即真实竞价价；其余时段为最新实时行情，仅供逻辑验证。
+          「竞价轨迹五形态」只能在本机 9:15–9:30 在线时逐点采样，未在该时段打开过页面就显示「样本不足」。
+          封单比、行业催化等无稳定免费源的项，界面一律标「需人工确认」，<b>不臆造</b>。<br>
+          <b>铁律：</b>竞价强 ≠ 全天强，9:30 后须用第一笔成交验证；本工具只做数据与规则可视化，<b>不构成投资建议</b>。
+        </div>
+      </details>
+    </div>
   </div>
 
   <!-- ======================= 视图六：候选中军（板块爆发后低吸选股） ======================= -->
@@ -1140,7 +1122,14 @@ async function emListAll(fs, fields, opt) {
 }
 
 /* 本地缓存：主站被限流时用于兜底，避免整页不可用 */
-function lsGet(k) { try { var s = localStorage.getItem(k); return s ? JSON.parse(s) : null; } catch (e) { return null; } }
+/* 2026-09-19 修复：lsGet 原先只支持一个参数（没有 key 时恒返回 null），
+   但 7.33 模块里的 k10PrevRanks 是 lsGet(K10R_KEY, {}) —— 首次打开页面时这个 key 不存在，
+   拿到 null 后 Object.keys(null) 直接抛 TypeError，整个集合竞价全景模块渲染不出来。
+   现在支持第二个「默认值」参数（不传时行为不变，仍返回 null）。 */
+function lsGet(k, def) {
+  var d = (def === undefined) ? null : def;
+  try { var s = localStorage.getItem(k); return s ? JSON.parse(s) : d; } catch (e) { return d; }
+}
 function lsSet(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 
 /* 自选列表（持久化到 localStorage，跨会话保留） */
@@ -3592,9 +3581,8 @@ var ST = {
   running: false, stopFlag: false, runId: 0,
   progress: { done: 0, total: 0 },
   truncated: false,
-  // 集合竞价全景
-  callScan: null,          // 全市场竞价扫描结果 { zt, dt, industries, avoid, mood, recs }
-  callMin: 3               // 行业列表「最小竞价涨停家数」过滤
+  // 集合竞价全景（数据层 · 供钉钉推送的「集合竞价推荐前5板块」使用；视图渲染走 #m7_33 / 7.33 模块）
+  callScan: null           // 全市场竞价扫描结果 { zt, dt, industries, avoid, mood, recs }
 };
 
 // 分类显示：按「阶段分区」聚合，组内再按 4 阶段 × A/B 子阶段细分
@@ -4539,7 +4527,7 @@ function switchView(v) {
   if (v === 'watch') { if (!WATCH.loaded && !WATCH.running) runWatchSearch(); else renderWatch(); }
   if (v === 'ding') { renderDingForm(); renderDing(); }
   if (v === 'board' && !ST.boards.length) loadBoardList(false);
-  if (v === 'call') { if (!ST.callScan) loadCallBoards(); else renderCallView(); }
+  if (v === 'call') { renderM733(); updateCallClock(); }
   if (v === 'mid' && !MID.pool.length && !MID.scanning) midScan();
   if (v === 'pow' && !POW.rows.length) powStatus('选好范围后点「开始逐只判定」（每只要抓日K + 5分钟分时，10 只约 20~40 秒）', false);
   if (v === 'main' && !MAIN.rows.length) mainStatus('选好范围后点「开始逐只判定」（每只抓 260 根日线做纯计算，10 只约 20~40 秒）', false);
@@ -5518,6 +5506,8 @@ async function dingSectorData(scopes) {
   var sec = {}, boards = [], list = null;
   if (scopes.indexOf('callTop') >= 0) {
     if (!ST.callScan) { try { ST.callScan = await callScanAll(); } catch (e) {} }
+    // 补连板/梯队（enrichCallStreaks 会写 recs[].maxStreak / highStock，下面推送文案的「最高 X 板」要用）
+    if (ST.callScan) { try { await enrichCallStreaks(ST.callScan); } catch (e) {} }
     if (ST.callScan && ST.callScan.recs && ST.callScan.recs.length) {
       var recs = ST.callScan.recs.slice(0, 5);
       sec.callTop = recs.map(function (x) {
@@ -6065,7 +6055,10 @@ async function callScanAll() {
   var topStock = yestPerfList.sort(function(a,b) { return b.lbc - a.lbc; })[0] || null;
 
   // 计算完整12项核心指标
-  var metrics12 = calcMetrics12(yestPerfList, idxData, ztStocks, dtStocks, concPct);
+  // 原此处调用 calcMetrics12()，但该函数在本工程从未定义 —— 它必抛 ReferenceError，
+  // 导致 callScanAll() 永远失败：老竞价模块从未渲染成功，
+  // 钉钉推送的「集合竞价推荐前5板块」也一直静默为空（被 catch 吞掉）。
+  // 其返回值 metrics12 并未被使用（下方 return 里没有它），故直接删除该调用。
 
   var mood = callMoodScore(ztStocks.length, dtStocks.length, concPct);
   return {
@@ -6165,461 +6158,8 @@ function callMoodScore(ztN, dtN, concPct) {
   return { s1: s1, s2: s2, s3: s3, score: score, max: max, level: level, cap: cap, ztN: ztN, dtN: dtN, concPct: concPct };
 }
 
-// ============================================================
-// 7.33 集合竞价全景分析（完整实现）
-// ============================================================
-
-// 相位判断（三窗口）
-function callPhase() {
-  var now = new Date();
-  var h = now.getHours(), m = now.getMinutes();
-  var hm = h * 100 + m;
-  if (hm < 915) return { k: 'before', name: '竞价前（未到9:15）', cls: 'off' };
-  if (hm < 920) return { k: 'fake', name: '9:15-9:20 演戏区（可撤单）', cls: 'ora' };
-  if (hm < 925) return { k: 'real', name: '9:20-9:25 真金白银（不可撤单）', cls: 'grn' };
-  if (hm < 930) return { k: 'final', name: '9:25-9:30 撮合定型', cls: 'blu' };
-  return { k: 'after', name: '已开盘（按竞价结果复盘）', cls: 'off' };
-}
-
-// 大盘指数竞价五档
-function callIdxLevel(gap) {
-  if (gap == null) return { name: '无数据', band: '—', act: '—', cls: 'flat' };
-  if (gap > 0.5) return { name: '强势', band: '高开>0.5%', act: '可积极参与主线', cls: 'up' };
-  if (gap > 0.1) return { name: '偏强', band: '高开0.1%-0.5%', act: '精选个股参与', cls: 'up' };
-  if (gap > -0.1) return { name: '中性', band: '平开±0.1%', act: '观望等10点定性', cls: 'flat' };
-  if (gap > -0.5) return { name: '偏弱', band: '低开0.1%-0.5%', act: '控制仓位不追高', cls: 'dn' };
-  return { name: '弱势', band: '低开>0.5%', act: '防守为主不新开仓', cls: 'dn' };
-}
-
-// 六类分类（昨日涨停股今日竞价表现）
-function callClass6(prem, threshold) {
-  if (prem == null) return { name: '无数据', cls: 'flat' };
-  if (prem >= threshold - 0.3) return { name: '继续涨停', cls: 'up' };
-  if (prem > 7) return { name: '超预期高开', cls: 'up' };
-  if (prem >= 3) return { name: '符合预期', cls: 'up' };
-  if (prem >= 0) return { name: '不及预期', cls: 'yel' };
-  if (prem >= -5) return { name: '严重不及预期', cls: 'dn' };
-  return { name: '核按钮/跌停', cls: 'dn' };
-}
-
-// 七维情绪打分（完整7.33标准）
-function callFullMoodScore(ztN, dtN, concPct, hiOpenRate, avgPrem, topGap, nukeRate) {
-  // 指标1：竞价涨停数
-  var s1 = ztN > 10 ? 3 : ztN >= 6 ? 2 : ztN >= 3 ? 1 : 0;
-  // 指标2：竞价跌停数（反向）
-  var s2 = dtN === 0 ? 3 : dtN <= 2 ? 2 : dtN <= 5 ? 1 : 0;
-  // 指标3：昨日涨停高开率
-  var s3 = hiOpenRate == null ? 1 : (hiOpenRate > 60 ? 3 : hiOpenRate > 40 ? 2 : hiOpenRate > 20 ? 1 : 0);
-  // 指标4：平均溢价率
-  var s4 = avgPrem == null ? 1 : (avgPrem > 2 ? 3 : avgPrem > 0 ? 2 : avgPrem > -2 ? 1 : 0);
-  // 指标5：最高标竞价
-  var s5 = topGap == null ? 1 : (topGap > 5 ? 3 : topGap > 2 ? 2 : topGap > 0 ? 1 : 0);
-  // 指标6：行业集中度
-  var s6 = concPct >= 60 ? 3 : concPct >= 40 ? 2 : concPct >= 20 ? 1 : 0;
-  // 指标7：核按钮率（反向）
-  var s7 = nukeRate == null ? 1 : (nukeRate < 5 ? 3 : nukeRate < 15 ? 2 : nukeRate < 25 ? 1 : 0);
-
-  var total = s1 + s2 + s3 + s4 + s5 + s6 + s7;
-  var max = 21;
-  var pct = total / max;
-
-  var level, cap, cls;
-  if (pct >= 0.8) { level = '进攻日'; cap = '60%-80%'; cls = 'up'; }
-  else if (pct >= 0.6) { level = '偏强日'; cap = '40%-60%'; cls = 'up'; }
-  else if (pct >= 0.4) { level = '平衡日'; cap = '20%-40%'; cls = 'yel'; }
-  else if (pct >= 0.2) { level = '防守日'; cap = '0%-20%'; cls = 'dn'; }
-  else { level = '空仓日'; cap = '0%'; cls = 'dn'; }
-
-  return {
-    s1: s1, s2: s2, s3: s3, s4: s4, s5: s5, s6: s6, s7: s7,
-    total: total, max: max, level: level, cap: cap, cls: cls
-  };
-}
-
-// 计算昨日涨停股今日竞价表现（简化版：从涨停股中识别昨日涨停）
-function calcYesterdayZtPerformance(ztStocks, allStocks) {
-  // 简化：用今日涨停股中，昨日也涨停的（连板股）作为昨日涨停样本
-  // 实际需要昨日涨停历史数据，这里用当前涨幅近似估算
-  var total = allStocks.length;
-  if (!total) return null;
-
-  var continueZt = ztStocks.length;
-  var overOpen = 0, okOpen = 0, weakOpen = 0, badOpen = 0, nuke = 0;
-  var hiCount = 0, redCount = 0, sumPrem = 0, validCount = 0;
-
-  allStocks.forEach(function (s) {
-    var prem = s.chg; // 简化：用今日涨跌幅近似溢价率
-    if (prem == null) return;
-    validCount++;
-    sumPrem += prem;
-    if (prem > 0) redCount++;
-    if (prem > 0) hiCount++;
-
-    // 六类分类
-    if (prem >= 9.7) continueZt++;
-    else if (prem > 7) overOpen++;
-    else if (prem >= 3) okOpen++;
-    else if (prem >= 0) weakOpen++;
-    else if (prem >= -5) badOpen++;
-    else nuke++;
-  });
-
-  var hiOpenRate = validCount ? hiCount / validCount * 100 : null;
-  var redRate = validCount ? redCount / validCount * 100 : null;
-  var avgPrem = validCount ? sumPrem / validCount : null;
-  var nukeRate = validCount ? nuke / validCount * 100 : null;
-  var promoRate = total ? continueZt / total * 100 : null;
-
-  return {
-    total: total,
-    continueZt: continueZt,
-    overOpen: overOpen,
-    okOpen: okOpen,
-    weakOpen: weakOpen,
-    badOpen: badOpen,
-    nuke: nuke,
-    hiOpenRate: hiOpenRate,
-    redRate: redRate,
-    avgPrem: avgPrem,
-    nukeRate: nukeRate,
-    promoRate: promoRate
-  };
-}
-
-// 大面股行业分析
-function calcBigFaceIndustries(dtStocks, weakStocks) {
-  var faceByInd = {};
-  var allBigFace = [];
-
-  // 跌停股（大面最严重）
-  dtStocks.forEach(function (s) {
-    if (s.chg <= -5) {
-      (faceByInd[s.industry] = faceByInd[s.industry] || []).push(s);
-      allBigFace.push(s);
-    }
-  });
-
-  // 大幅低开股（-5%以下）
-  weakStocks.forEach(function (s) {
-    if (s.chg <= -5 && s.chg > -9.7) {
-      (faceByInd[s.industry] = faceByInd[s.industry] || []).push(s);
-      allBigFace.push(s);
-    }
-  });
-
-  var industries = Object.keys(faceByInd).map(function (k) {
-    return { name: k, count: faceByInd[k].length, stocks: faceByInd[k] };
-  }).sort(function (a, b) { return b.count - a.count; });
-
-  var totalFace = allBigFace.length;
-  var level = totalFace > 10 ? '扩散' : totalFace > 5 ? '局部' : '轻微';
-
-  return {
-    total: totalFace,
-    level: level,
-    industries: industries.slice(0, 8),
-    stocks: allBigFace
-  };
-}
-
-// ============================================================
-// 7.33 全景分析HTML渲染
-// ============================================================
-function callPanoramaFullHtml(scan) {
-  var phase = callPhase();
-  var html = '';
-
-  // ===== 相位提示 =====
-  html += '<div style="background:#0e1320;border:1px solid #20283b;border-radius:11px;padding:11px 14px;margin-bottom:14px;">';
-  html += '<div style="font-size:13px;color:#7a8aa8;margin-bottom:6px;"><b>核心原则：</b>9:20前可撤单=演戏，9:20后不可撤单=真金白银</div>';
-  html += '<div style="display:flex;gap:8px;flex-wrap:wrap;">';
-  html += '<span class="tag-pill" style="background:' + (phase.cls === 'grn' ? '#16c78422' : phase.cls === 'ora' ? '#ffb74d22' : '#20283b') + ';color:' + (phase.cls === 'grn' ? '#16c784' : phase.cls === 'ora' ? '#ffb74d' : '#7a8aa8') + ';">当前相位：' + phase.name + '</span>';
-  html += '<span class="tag-pill" style="background:#20283b;color:#7a8aa8;">数据时刻：' + new Date().toLocaleTimeString('zh-CN', { hour12: false }) + '</span>';
-  html += '</div>';
-  if (phase.k === 'fake') html += '<div style="margin-top:8px;padding:8px;background:#ffb74d15;border-radius:8px;color:#ffb74d;font-size:12.5px;">⚠️ 现在处于演戏区，价格可撤单、会变脸，本段读数不作为决策依据，请等9:20后再看</div>';
-  if (phase.k === 'before') html += '<div style="margin-top:8px;padding:8px;background:#20283b;border-radius:8px;color:#7a8aa8;font-size:12.5px;">竞价未开始，显示的是最近一个交易日的行情，可作复盘参考</div>';
-  html += '</div>';
-
-  // ===== ① 大盘指数竞价方向 =====
-  html += '<h3 style="font-size:14px;margin:16px 0 8px;color:#7fe3ff;">① 大盘指数竞价方向</h3>';
-  var idxList = scan.idxData || [];
-  var mainIdx = idxList[0] || { name: '上证指数', chg: 0 };
-  var idxLv = callIdxLevel(mainIdx.chg);
-  html += '<div style="background:#0e1320;border:1px solid #20283b;border-radius:11px;padding:11px 14px;margin-bottom:14px;">';
-  
-  // 四个指数横向排列
-  if (idxList.length > 0) {
-    html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:10px;">';
-    idxList.forEach(function (idx) {
-      var color = idx.chg > 0 ? '#ff5252' : idx.chg < 0 ? '#26c281' : '#8892b0';
-      html += '<div style="text-align:center;padding:8px;background:#121724;border-radius:8px;">';
-      html += '<div style="font-size:11px;color:#7a8aa8;">' + idx.name + '</div>';
-      html += '<div style="font-size:16px;font-weight:800;color:' + color + ';">' + (idx.chg > 0 ? '+' : '') + idx.chg.toFixed(2) + '%</div>';
-      html += '</div>';
-    });
-    html += '</div>';
-  }
-  
-  html += '<div style="font-size:15px;font-weight:700;color:' + (idxLv.cls === 'up' ? '#26c281' : idxLv.cls === 'dn' ? '#ff5252' : '#ffb74d') + ';">';
-  html += '大环境判断：' + idxLv.name + '（' + idxLv.band + '）→ ' + idxLv.act;
-  html += '</div>';
-  html += '</div>';
-
-  // ===== ② 竞价涨跌停分析 =====
-  html += '<h3 style="font-size:14px;margin:16px 0 8px;color:#7fe3ff;">② 竞价涨跌停（市场情绪温度计）</h3>';
-  html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px;">';
-
-  var ztN = scan.zt.length;
-  var dtN = scan.dt.length;
-  var ratio = dtN > 0 ? (ztN / dtN).toFixed(1) : '∞';
-  var nukeN = scan.nukeList ? scan.nukeList.length : dtN; // 真实核按钮：昨日涨停今天低开>5%
-
-  html += '<div style="background:#0e1320;border:1px solid #20283b;border-radius:11px;padding:11px 14px;">';
-  html += '<div style="font-size:12px;color:#7a8aa8;">竞价涨停</div>';
-  html += '<div style="font-size:22px;font-weight:800;color:' + (ztN > 10 ? '#ff5252' : ztN >= 3 ? '#ffb74d' : '#8892b0') + ';">' + ztN + ' 只</div>';
-  html += '<div style="font-size:11px;color:#7a8aa8;">>10极强 / 3-10正常 / <3偏弱</div>';
-  html += '</div>';
-
-  html += '<div style="background:#0e1320;border:1px solid #20283b;border-radius:11px;padding:11px 14px;">';
-  html += '<div style="font-size:12px;color:#7a8aa8;">竞价跌停</div>';
-  html += '<div style="font-size:22px;font-weight:800;color:' + (dtN === 0 ? '#26c281' : dtN <= 2 ? '#ffb74d' : '#ff5252') + ';">' + dtN + ' 只</div>';
-  html += '<div style="font-size:11px;color:#7a8aa8;">0稳定 / 1-5局部 / >5恐慌</div>';
-  html += '</div>';
-
-  html += '<div style="background:#0e1320;border:1px solid #20283b;border-radius:11px;padding:11px 14px;">';
-  html += '<div style="font-size:12px;color:#7a8aa8;">涨跌停比</div>';
-  html += '<div style="font-size:22px;font-weight:800;color:' + (ratio > 5 ? '#26c281' : ratio > 1 ? '#ffb74d' : '#ff5252') + ';">' + ratio + ':1</div>';
-  html += '<div style="font-size:11px;color:#7a8aa8;">>5:1极强 / 1:1~5:1正常</div>';
-  html += '</div>';
-
-  html += '<div style="background:#0e1320;border:1px solid #20283b;border-radius:11px;padding:11px 14px;">';
-  html += '<div style="font-size:12px;color:#7a8aa8;">核按钮</div>';
-  html += '<div style="font-size:22px;font-weight:800;color:' + (nukeN > 3 ? '#ff5252' : '#8892b0') + ';">' + nukeN + ' 只</div>';
-  html += '<div style="font-size:11px;color:#7a8aa8;">>3只=亏钱效应扩散</div>';
-  html += '</div>';
-
-  html += '</div>';
-
-  // 涨停行业分布
-  if (scan.industries && scan.industries.length) {
-    html += '<div style="background:#0e1320;border:1px solid #20283b;border-radius:11px;padding:11px 14px;margin-bottom:14px;">';
-    html += '<div style="font-size:13px;font-weight:700;margin-bottom:8px;">竞价涨停行业分布</div>';
-    html += '<div style="display:flex;flex-wrap:wrap;gap:6px;">';
-    scan.industries.slice(0, 8).forEach(function (ind) {
-      html += '<span style="display:inline-flex;align-items:center;gap:4px;background:#121724;border:1px solid #20283b;border-radius:20px;padding:4px 10px;font-size:12.5px;">';
-      html += '<span style="color:#ffb74d;">' + ind.name + '</span>';
-      html += '<span style="font-weight:800;color:#ff5252;">' + ind.count + '</span>只';
-      html += '</span>';
-    });
-    html += '</div>';
-    html += '<div style="font-size:11.5px;color:#7a8aa8;margin-top:6px;">集中1-2个行业=有主线，分散=无主线轮动</div>';
-    html += '</div>';
-  }
-
-  // ===== ③ 昨日涨停股今日竞价表现 =====
-  html += '<h3 style="font-size:14px;margin:16px 0 8px;color:#7fe3ff;">③ 昨日涨停股今日竞价表现（短线的"工资单"）</h3>';
-
-  // 用真实的昨日涨停数据
-  var prevPerf = scan.prevPerf;
-  if (prevPerf) {
-    html += '<div style="background:#0e1320;border:1px solid #20283b;border-radius:11px;padding:11px 14px;margin-bottom:14px;">';
-
-    // 六类分类
-    var classes = [
-      { name: '继续涨停', count: prevPerf.continueZt, cls: 'up' },
-      { name: '超预期高开>7%', count: prevPerf.overOpen, cls: 'up' },
-      { name: '符合预期3-7%', count: prevPerf.okOpen, cls: 'up' },
-      { name: '不及预期0-3%', count: prevPerf.weakOpen, cls: 'yel' },
-      { name: '严重不及预期', count: prevPerf.badOpen, cls: 'dn' },
-      { name: '核按钮/跌停', count: prevPerf.nuke, cls: 'dn' }
-    ];
-
-    html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-bottom:12px;">';
-    classes.forEach(function (c) {
-      var color = c.cls === 'up' ? '#26c281' : c.cls === 'yel' ? '#ffb74d' : '#ff5252';
-      html += '<div style="text-align:center;padding:8px;background:#121724;border-radius:8px;">';
-      html += '<div style="font-size:11px;color:#7a8aa8;">' + c.name + '</div>';
-      html += '<div style="font-size:18px;font-weight:800;color:' + color + ';">' + c.count + '</div>';
-      html += '<div style="font-size:10.5px;color:#7a8aa8;">占' + (prevPerf.total ? (c.count / prevPerf.total * 100).toFixed(0) : 0) + '%</div>';
-      html += '</div>';
-    });
-    html += '</div>';
-
-    // 五项关键统计
-    html += '<div style="font-size:13px;font-weight:700;margin-bottom:8px;">五项关键统计指标</div>';
-    html += '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12.5px;">';
-    html += '<thead><tr style="color:#7a8aa8;"><th style="padding:6px 8px;text-align:left;">指标</th><th style="padding:6px 8px;text-align:right;">读数</th><th style="padding:6px 8px;text-align:left;">健康/预警</th><th style="padding:6px 8px;text-align:left;">判定</th></tr></thead><tbody>';
-
-    function statRow(label, val, good, bad, goodTxt, badTxt) {
-      var cls = val >= good ? '健康' : val <= bad ? '预警' : '中性';
-      var color = cls === '健康' ? '#26c281' : cls === '预警' ? '#ff5252' : '#ffb74d';
-      return '<tr style="border-bottom:1px solid #1c2333;">' +
-        '<td style="padding:6px 8px;">' + label + '</td>' +
-        '<td style="padding:6px 8px;text-align:right;font-weight:700;">' + (val == null ? '—' : val.toFixed(1) + '%') + '</td>' +
-        '<td style="padding:6px 8px;color:#7a8aa8;">>' + good + '% / <' + bad + '%</td>' +
-        '<td style="padding:6px 8px;color:' + color + ';font-weight:600;">' + cls + '</td>' +
-        '</tr>';
-    }
-
-    html += statRow('高开率', prevPerf.hiOpenRate, 60, 40, '赚钱扩散', '普遍吃面');
-    html += statRow('红盘率', prevPerf.redRate, 50, 30, '承接良好', '亏钱发酵');
-    html += statRow('平均溢价率', prevPerf.avgPrem, 2, 0, '打板赚钱', '打板亏钱');
-    html += statRow('核按钮率', prevPerf.nukeRate, 5, 15, '健康', '恐慌扩散');
-    html += statRow('晋级率', prevPerf.promoRate, 30, 15, '情绪主升', '退潮');
-
-    html += '</tbody></table></div>';
-
-    // 情绪判断
-    var moodText, moodColor;
-    if (prevPerf.hiOpenRate > 60 && prevPerf.avgPrem > 2) {
-      moodText = '赚钱效应扩散（打板的人今天赚钱）';
-      moodColor = '#26c281';
-    } else if (prevPerf.hiOpenRate < 30 || prevPerf.avgPrem < 0) {
-      moodText = '亏钱效应发酵（普遍吃面）';
-      moodColor = '#ff5252';
-    } else {
-      moodText = '多空平衡（看开盘后承接）';
-      moodColor = '#ffb74d';
-    }
-    html += '<div style="margin-top:10px;padding:10px;background:#121724;border-radius:8px;font-size:13.5px;">';
-    html += '<b style="color:' + moodColor + ';">情绪判断：' + moodText + '</b>';
-    html += '</div>';
-
-    html += '</div>';
-  }
-
-  // ===== ④ 今日方向：行业强度 =====
-  html += '<h3 style="font-size:14px;margin:16px 0 8px;color:#7fe3ff;">④ 今日方向：行业强度 + 梯队 + 新方向</h3>';
-  html += '<div style="background:#0e1320;border:1px solid #20283b;border-radius:11px;padding:11px 14px;margin-bottom:14px;">';
-  html += '<div style="font-size:13.5px;margin-bottom:10px;">';
-  html += '<b>行业集中度：</b>前3行业占 ' + scan.concPct + '%（' +
-    (scan.concPct > 60 ? '有明确主线' : scan.concPct > 40 ? '方向偏多' : scan.concPct > 20 ? '分散' : '无方向') + '）';
-  html += '</div>';
-
-  if (scan.industries && scan.industries.length) {
-    html += '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12.5px;">';
-    html += '<thead><tr style="color:#7a8aa8;"><th style="padding:6px 8px;text-align:left;">行业</th><th style="padding:6px 8px;text-align:right;">竞价涨停</th><th style="padding:6px 8px;text-align:left;">强度</th><th style="padding:6px 8px;text-align:left;">操作策略</th></tr></thead><tbody>';
-    scan.industries.slice(0, 10).forEach(function (ind) {
-      var gradeColor = ind.grade === 'S' ? '#ff5252' : ind.grade === 'A' ? '#ffb74d' : '#8892b0';
-      var actText = ind.grade === 'S' ? '主线确认，可重仓龙头/中军' : ind.grade === 'A' ? '可参与，选最强标的' : '只看不做';
-      html += '<tr style="border-bottom:1px solid #1c2333;">';
-      html += '<td style="padding:6px 8px;font-weight:600;">' + ind.name + '</td>';
-      html += '<td style="padding:6px 8px;text-align:right;font-weight:800;color:#ff5252;">' + ind.count + ' 只</td>';
-      html += '<td style="padding:6px 8px;"><span style="display:inline-block;padding:2px 8px;border-radius:4px;background:' + gradeColor + '22;color:' + gradeColor + ';font-weight:700;">' + ind.grade + '级</span></td>';
-      html += '<td style="padding:6px 8px;color:#7a8aa8;">' + actText + '</td>';
-      html += '</tr>';
-    });
-    html += '</tbody></table></div>';
-  }
-  html += '</div>';
-
-  // ===== ⑤ 风险：大面股行业 =====
-  html += '<h3 style="font-size:14px;margin:16px 0 8px;color:#ff5252;">⑤ 风险：大面股行业 + 亏钱效应扩散</h3>';
-
-  var bigFace = calcBigFaceIndustries(scan.dt, []);
-  html += '<div style="background:linear-gradient(135deg,#2a1414,#101824);border:1px solid #3a1f1f;border-radius:11px;padding:11px 14px;margin-bottom:14px;">';
-  html += '<div style="font-size:14px;font-weight:700;color:#ff5252;margin-bottom:8px;">竞价大面 ' + bigFace.total + ' 只（' + bigFace.level + '）</div>';
-
-  if (bigFace.industries.length) {
-    html += '<div style="font-size:13px;font-weight:600;margin-bottom:6px;">大面集中行业（坚决回避）：</div>';
-    bigFace.industries.slice(0, 6).forEach(function (ind) {
-      html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #3a1f1f;">';
-      html += '<span style="color:#ffb74d;font-weight:600;">' + ind.name + '</span>';
-      html += '<span style="color:#ff5252;font-weight:800;">大面 ' + ind.count + ' 只</span>';
-      html += '</div>';
-    });
-  } else {
-    html += '<div style="font-size:13px;color:#7a8aa8;">无明显大面行业</div>';
-  }
-
-  html += '<div style="font-size:11.5px;color:#7a8aa8;margin-top:8px;">大面定义：昨日涨停今日竞价低开>5%或跌停。扩散路径：龙头→连板→首板→全市场跌停</div>';
-  html += '</div>';
-
-  // ===== ⑥ 综合情绪定级 =====
-  html += '<h3 style="font-size:14px;margin:16px 0 8px;color:#7fe3ff;">⑥ 综合情绪定级（七维打分→仓位上限）</h3>';
-
-  var fullScore = callFullMoodScore(
-    scan.zt.length,
-    scan.dt.length,
-    scan.concPct,
-    prevPerf ? prevPerf.hiOpenRate : null,
-    prevPerf ? prevPerf.avgPrem : null,
-    mainGap,
-    prevPerf ? prevPerf.nukeRate : null
-  );
-
-  html += '<div style="background:linear-gradient(135deg,#1a1a2e,#101824);border:1px solid #2a2a4a;border-radius:11px;padding:14px;margin-bottom:14px;">';
-  html += '<div style="text-align:center;margin-bottom:12px;">';
-  html += '<div style="font-size:13px;color:#7a8aa8;">总分</div>';
-  html += '<div style="font-size:32px;font-weight:900;color:' + (fullScore.cls === 'up' ? '#26c281' : fullScore.cls === 'dn' ? '#ff5252' : '#ffb74d') + ';">' + fullScore.total + '<span style="font-size:16px;color:#7a8aa8;">/' + fullScore.max + '</span></div>';
-  html += '<div style="font-size:18px;font-weight:800;color:' + (fullScore.cls === 'up' ? '#26c281' : fullScore.cls === 'dn' ? '#ff5252' : '#ffb74d') + ';">' + fullScore.level + '</div>';
-  html += '</div>';
-
-  // 七维打分明细
-  var scoreItems = [
-    { name: '竞价涨停数', s: fullScore.s1 },
-    { name: '竞价跌停数', s: fullScore.s2 },
-    { name: '高开率', s: fullScore.s3 },
-    { name: '平均溢价率', s: fullScore.s4 },
-    { name: '最高标竞价', s: fullScore.s5 },
-    { name: '行业集中度', s: fullScore.s6 },
-    { name: '核按钮率', s: fullScore.s7 }
-  ];
-  html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:6px;margin-bottom:12px;">';
-  scoreItems.forEach(function (item) {
-    var color = item.s === 3 ? '#26c281' : item.s === 2 ? '#ffb74d' : item.s === 1 ? '#8892b0' : '#ff5252';
-    html += '<div style="text-align:center;padding:6px;background:#0e1320;border-radius:6px;">';
-    html += '<div style="font-size:10.5px;color:#7a8aa8;">' + item.name + '</div>';
-    html += '<div style="font-size:16px;font-weight:800;color:' + color + ';">' + item.s + '/3</div>';
-    html += '</div>';
-  });
-  html += '</div>';
-
-  html += '<div style="text-align:center;font-size:14px;">';
-  html += '当日策略：<b style="color:' + (fullScore.cls === 'up' ? '#26c281' : fullScore.cls === 'dn' ? '#ff5252' : '#ffb74d') + ';">' + fullScore.level + '</b>';
-  html += '｜仓位上限：<b>' + fullScore.cap + '</b>';
-  html += '</div>';
-  html += '</div>';
-
-  // ===== 操作提示 =====
-  html += '<h3 style="font-size:14px;margin:16px 0 8px;color:#7fe3ff;">⑦ 操作提示</h3>';
-  html += '<div style="background:#0e1320;border:1px solid #20283b;border-radius:11px;padding:11px 14px;margin-bottom:14px;">';
-
-  if (fullScore.level === '进攻日') {
-    html += '<div style="font-size:13.5px;line-height:1.8;">';
-    html += '✅ <b>可积极参与</b>主线龙头/中军，分歧低吸为主<br>';
-    html += '🎯 <b>重点关注</b>：竞价涨停集中的S/A级行业龙头<br>';
-    html += '⚠️ 不追高潮，等分歧低吸机会<br>';
-    html += '</div>';
-  } else if (fullScore.level === '偏强日') {
-    html += '<div style="font-size:13.5px;line-height:1.8;">';
-    html += '✅ <b>精选个股</b>，只做最强主线，轻仓试错<br>';
-    html += '⚠️ 不追高，等分歧低吸机会<br>';
-    html += '🎯 关注竞价涨停集中的行业龙头<br>';
-    html += '</div>';
-  } else if (fullScore.level === '平衡日') {
-    html += '<div style="font-size:13.5px;line-height:1.8;">';
-    html += '⏸️ <b>观望为主</b>，小仓试错，不追涨<br>';
-    html += '🔍 等10点后确认主线方向再行动<br>';
-    html += '⚠️ 无明确主线时轻仓或空仓<br>';
-    html += '</div>';
-  } else {
-    html += '<div style="font-size:13.5px;line-height:1.8;">';
-    html += '❌ <b>防守为主</b>，只卖不买，控制仓位<br>';
-    html += '🚫 不抄底，不追高，等新周期<br>';
-    html += '⚠️ 大面行业坚决回避<br>';
-    html += '</div>';
-  }
-
-  html += '<div style="font-size:11.5px;color:#7a8aa8;margin-top:8px;">9:30后第一笔成交验证竞价强弱 · 10:00-10:30最终定性全天方向</div>';
-  html += '</div>';
-
-  
-
-return html;
-}
-
-// 推荐行业的 连板/梯队 enrichment（限流保护：仅推荐行业、最多 36 只）
+/* 推荐行业的连板/梯队 enrichment（钉钉推送的「集合竞价推荐前5板块」在用 · 纯数据、不渲染 UI）
+   限流保护：仅推荐行业、最多 36 只 */
 async function enrichCallStreaks(scan) {
   var rec = scan.recs || [];
   if (!rec.length) return;
@@ -6632,7 +6172,6 @@ async function enrichCallStreaks(scan) {
       var s = queue.shift();
       try { var kl = await fetchTencentKline(s.sym, 30); s.streak = boardStreak(kl, s.code, s.name); }
       catch (e) { s.streak = null; }
-      if (ST.callScan === scan) renderCallView();
     }
   }
   var runners = []; for (var c = 0; c < 3; c++) runners.push(worker());
@@ -6646,273 +6185,28 @@ async function enrichCallStreaks(scan) {
     var hi = x.stocks.filter(function (s) { return (s.streak || 0) === x.maxStreak; })[0];
     x.highStock = (x.maxStreak >= 2 && hi) ? hi : null;
   });
-  if (ST.callScan === scan) renderCallView();
 }
 
-function moodCard(m) {
-  var lvCls = (m.level === '进攻日' || m.level === '偏强日') ? 'lv-up'
-    : (m.level === '平衡日') ? 'lv-warn' : 'lv-down';
-  return '<div class="mcell"><div class="k">情绪定级</div><div class="v ' + lvCls + '">' + m.level + '</div></div>' +
-    '<div class="mcell"><div class="k">建议仓位</div><div class="v ' + lvCls + '">' + m.cap + '</div></div>' +
-    '<div class="mcell"><div class="k">竞价涨停</div><div class="v lv-up">' + m.ztN + ' 只</div></div>' +
-    '<div class="mcell"><div class="k">竞价跌停</div><div class="v ' + (m.dtN > 0 ? 'lv-down' : '') + '">' + m.dtN + ' 只</div></div>' +
-    '<div class="mcell"><div class="k">行业集中度(前3)</div><div class="v">' + m.concPct + '%</div></div>' +
-    '<div class="mcell"><div class="k">指标得分</div><div class="v">' + m.score + ' / ' + m.max + '</div></div>';
-}
-
-function recapHtml(scan) {
-  var recs = scan.recs || [];
-  if (!recs.length) {
-    return '<h3>✅ 今日推荐参与板块（可参与行业）：无</h3>' +
-      '<div class="empty">当前没有「该行业竞价涨停≥3只」的板块（' + scan.mood.level + '，建议仓位 ' + scan.mood.cap +
-      '）。按铁律⑦：无主线不重仓。可点「刷新竞价」重试。</div>';
-  }
-  var rows = recs.map(function (x) {
-    var lv = x.count >= 5 ? 'S' : 'A';
-    var op = x.count >= 5 ? '主线确认，可重仓龙头/中军' : '可参与，选最强标的';
-    var hi = x.highStock ? ('，最高 ' + x.maxStreak + ' 板 ' + escapeHtml(x.highStock.name)) : '';
-    var ech = x.echelon ? ('；梯队：' + x.echelon) : '';
-    return '<div class="call-op">' +
-      '<span class="tag-pill tag-rec">✅ 可参与</span> ' +
-      '<span class="gbadge g-' + lv + '">' + lv + '</span> ' +
-      '<span class="ind-link" data-ind="' + escapeHtml(x.name) + '" title="点击查看该行业全部成分股">' + escapeHtml(x.name) + '</span>' +
-      ' · 竞价涨停 ' + x.count + ' 只' + hi + ' → ' + op + ech + '</div>';
-  }).join('');
-  return '<h3>✅ 今日推荐参与板块（' + recs.length + ' 个行业，按竞价涨停家数排序）</h3>' + rows;
-}
-
-function avoidHtml(scan) {
-  if (!scan.avoid.length) return '';
-  var rows = scan.avoid.slice(0, 12).map(function (x) {
-    var why = x.dt > 0 ? ('竞价跌停 ' + x.dt + ' 只') : ('弱势低开 ' + x.weak + ' 只');
-    return '<div class="call-op"><span class="tag-pill tag-avoid">❌ ' + x.tag + '</span> ' +
-      '<span class="ind-link" data-ind="' + escapeHtml(x.name) + '" title="点击查看该行业全部成分股">' + escapeHtml(x.name) + '</span>' +
-      ' · ' + why + ' → 该行业退潮/利空，回避、不抄底</div>';
-  }).join('');
-  return '<h3>❌ 回避板块（大面/跌停集中）</h3>' + rows;
-}
-
-// 集合竞价全景分析HTML
-// 旧版全景分析（保留兼容，实际使用callPanoramaFullHtml）
-function callPanoramaHtml(scan) {
-  return callPanoramaFullHtml(scan);
-}
-
-function callPanoramaOldHtml(scan) {
-  var html = '';
-
-  // ===== 一、昨日涨停股表现分析 =====
-  html += '<div class="call-recap" style="background:linear-gradient(135deg,#1a2332,#101824);border-color:#2a3a52;margin-top:14px;">';
-  html += '<h3 style="color:#7fe3ff;">📊 昨日涨停股今日竞价表现</h3>';
-
-  // 从涨停股中推断昨日涨停表现（简化版：用今日涨停数+跌停数+整体涨跌幅）
-  var ztCount = scan.zt.length;
-  var dtCount = scan.dt.length;
-  var total = ztCount + dtCount;
-  var ztRatio = total ? (ztCount / total * 100).toFixed(1) : 0;
-
-  // 分类统计（基于现有数据简化推断）
-  var continueZt = ztCount; // 今日继续涨停
-  var expected = Math.round(ztCount * 0.6); // 符合预期（估算）
-  var less = Math.round(ztCount * 0.25); // 不及预期（估算）
-  var bad = dtCount; // 严重不及预期/核按钮
-
-  html += '<div class="chips">';
-  html += '<span class="chip" style="background:#0f2a1a;border-color:#234a37;color:#cfeede;">继续涨停 <b style="color:#26c281;">' + continueZt + '</b> 只</span>';
-  html += '<span class="chip" style="background:#0f1b2a;border-color:#233a4a;color:#cdeede;">符合预期 <b style="color:#5b8cff;">' + expected + '</b> 只</span>';
-  html += '<span class="chip" style="background:#2a2010;border-color:#4a3a23;color:#eedecf;">不及预期 <b style="color:#ffb74d;">' + less + '</b> 只</span>';
-  html += '<span class="chip" style="background:#2a1010;border-color:#4a2323;color:#eecfcf;">核按钮 <b style="color:#ff5252;">' + bad + '</b> 只</span>';
-  html += '</div>';
-
-  // 情绪判断
-  var moodText, moodColor;
-  if (ztRatio > 60) { moodText = '赚钱效应强 · 昨日打板资金普遍获利'; moodColor = '#26c281'; }
-  else if (ztRatio > 40) { moodText = '情绪健康 · 赚钱效应一般'; moodColor = '#5b8cff'; }
-  else if (ztRatio > 20) { moodText = '情绪偏弱 · 亏钱效应显现'; moodColor = '#ffb74d'; }
-  else { moodText = '亏钱效应扩散 · 退潮风险'; moodColor = '#ff5252'; }
-
-  html += '<div class="call-op" style="margin-top:10px;">情绪判断：<b style="color:' + moodColor + '">' + moodText + '</b></div>';
-  html += '<div class="call-op">晋级率：<b>' + ztRatio + '%</b>（' + continueZt + ' / ' + total + '）</div>';
-  html += '</div>';
-
-  // ===== 二、今日涨停行业方向 =====
-  html += '<div class="call-recap" style="background:linear-gradient(135deg,#13251c,#101824);border-color:#1f3a2c;margin-top:14px;">';
-  html += '<h3 style="color:#16c784;">🎯 今日涨停行业方向</h3>';
-
-  if (scan.industries && scan.industries.length) {
-    html += '<div class="chips">';
-    scan.industries.slice(0, 5).forEach(function (ind, i) {
-      var gradeColor = ind.grade === 'S' ? '#ff5252' : ind.grade === 'A' ? '#ffb74d' : '#8892b0';
-      html += '<span class="chip" style="border-color:' + gradeColor + '55;color:' + gradeColor + ';">' +
-        ind.name + ' <b>' + ind.count + '</b>只 · ' + ind.grade + '级</span>';
-    });
-    html += '</div>';
-
-    var top3Pct = scan.concPct;
-    var concText = top3Pct > 60 ? '有明确主线 · 集中度高' : top3Pct > 40 ? '主线初步成型' : top3Pct > 20 ? '方向分散 · 轮动行情' : '无主线 · 快速轮动';
-    var concColor = top3Pct > 60 ? '#26c281' : top3Pct > 40 ? '#5b8cff' : '#ffb74d';
-
-    html += '<div class="call-op" style="margin-top:10px;">行业集中度：<b style="color:' + concColor + '">' + concText + '</b>（前3行业占比 ' + top3Pct + '%）</div>';
-  } else {
-    html += '<div class="empty">暂无竞价涨停行业数据</div>';
-  }
-  html += '</div>';
-
-  // ===== 三、昨日大面行业（回避方向） =====
-  html += '<div class="call-recap" style="background:linear-gradient(135deg,#2a1414,#101824);border-color:#3a1f1f;margin-top:14px;">';
-  html += '<h3 style="color:#ff5252;">⚠️ 大面/弱势行业（回避方向）</h3>';
-
-  if (scan.avoid && scan.avoid.length) {
-    html += '<div class="chips">';
-    scan.avoid.slice(0, 5).forEach(function (a) {
-      html += '<span class="chip" style="background:#2a1414;border-color:#4a2323;color:#eecfcf;">' +
-        a.name + ' <b>' + (a.dt > 0 ? '跌停' + a.dt + '只' : '弱势' + a.weak + '只') + '</b></span>';
-    });
-    html += '</div>';
-    html += '<div class="call-op" style="margin-top:10px;">以上行业今日竞价表现弱，<b style="color:#ff5252;">坚决回避，不抄底</b></div>';
-  } else {
-    html += '<div class="empty">暂无大面/弱势行业数据</div>';
-  }
-  html += '</div>';
-
-  // ===== 四、综合操作提示 =====
-  html += '<div class="call-recap" style="background:linear-gradient(135deg,#1a1a2e,#101824);border-color:#2a2a4a;margin-top:14px;">';
-  html += '<h3 style="color:#7fe3ff;">📋 综合操作提示</h3>';
-
-  var m = scan.mood;
-  html += '<div class="call-op">情绪定级：<b style="color:' + (m.level === '进攻日' ? '#26c281' : m.level === '偏强日' ? '#5b8cff' : m.level === '平衡日' ? '#ffb74d' : '#ff5252') + '">' + m.level + '</b>（' + m.score + '/' + m.max + '分）</div>';
-  html += '<div class="call-op">建议仓位上限：<b>' + m.cap + '</b></div>';
-
-  // 操作建议
-  if (m.level === '进攻日') {
-    html += '<div class="call-op">✅ 可积极参与主线龙头/中军，分歧低吸为主</div>';
-    html += '<div class="call-op">🎯 重点关注：竞价涨停集中的S/A级行业龙头</div>';
-  } else if (m.level === '偏强日') {
-    html += '<div class="call-op">✅ 精选个股，只做最强主线，轻仓试错</div>';
-    html += '<div class="call-op">⚠️ 不追高，等分歧低吸机会</div>';
-  } else if (m.level === '平衡日') {
-    html += '<div class="call-op">⏸️ 观望为主，小仓试错，不追涨</div>';
-    html += '<div class="call-op">🔍 等10点后确认主线方向再行动</div>';
-  } else {
-    html += '<div class="call-op">❌ 防守为主，只卖不买，控制仓位</div>';
-    html += '<div class="call-op">🚫 不抄底，不追高，等新周期</div>';
-  }
-
-  html += '<div class="call-op" style="margin-top:8px;color:#7a8aa8;font-size:12px;">9:30后第一笔成交验证竞价强弱 · 10:00-10:30最终定性全天方向</div>';
-  html += '</div>';
-
-  return html;
-}
-
-function callTableHtml(scan) {
-  var inds = scan.industries.slice();
-  var min = (el('callMin') ? +(el('callMin').value || 3) : 3);
-  if (min > 0) inds = inds.filter(function (x) { return x.count >= min; });
-  if (!inds.length) return '<div class="empty-state"><div class="icon">🔍</div><p>没有符合条件的行业</p></div>';
-  var body = inds.map(function (x) {
-    var lv = x.count >= 5 ? 'S' : x.count >= 3 ? 'A' : 'B';
-    var tagCls = x.count >= 3 ? 'tag-rec' : 'tag-watch';
-    var tagTxt = x.count >= 5 ? '推荐参与(S)' : x.count >= 3 ? '推荐参与(A)' : '观望';
-    var chips = x.stocks.slice(0, 8).map(function (s) {
-      var st = (s.streak != null && s.streak >= 2) ? ('<' + s.streak + '板>') : '';
-      return '<span class="stk-chip" data-code="' + s.code + '">' + escapeHtml(s.name) + st + ' ' + fmtPct(s.chg) + '</span>';
-    }).join(' ');
-    return '<tr>' +
-      '<td style="font-weight:600"><span class="ind-link" data-ind="' + escapeHtml(x.name) + '" title="点击查看该行业全部成分股">' + escapeHtml(x.name) + '</span></td>' +
-      '<td class="up">' + x.count + ' 只</td>' +
-      '<td><span class="gbadge g-' + lv + '">' + lv + '</span></td>' +
-      '<td><span class="tag-pill ' + tagCls + '">' + tagTxt + '</span></td>' +
-      '<td>' + (x.maxStreak != null ? (x.maxStreak >= 2 ? x.maxStreak + ' 板' : '首板') : '—') + '</td>' +
-      '<td style="white-space:normal;max-width:440px">' + chips + '</td>' +
-      '</tr>';
-  }).join('');
-  return '<div style="overflow-x:auto"><table class="call-table">' +
-    '<thead><tr><th>行业</th><th>竞价涨停</th><th>等级</th><th>操作建议</th><th>最高板</th><th>竞价涨停股（点击看个股诊断）</th></tr></thead>' +
-    '<tbody>' + body + '</tbody></table></div>';
-}
-
-function renderCallView() {
-  var scan = ST.callScan;
-  if (!scan) { el('callTableWrap').innerHTML = '<div class="loading"><div class="spinner"></div><p>正在扫描全市场竞价涨停…</p></div>'; return; }
-  el('callMood').innerHTML = moodCard(scan.mood);
-  el('callRecap').innerHTML = recapHtml(scan);
-  var av = el('callAvoid');
-  if (av) av.innerHTML = avoidHtml(scan);
-  el('callTableWrap').innerHTML = callTableHtml(scan);
-  var pn = el('callPanorama');
-  if (pn) pn.innerHTML = callPanoramaHtml(scan);
-  updateCallClock();
-}
-
+/* 集合竞价视图的相位时钟 + 数据时刻（1 秒 tick，仅在集合竞价视图可见时跑） */
 function updateCallClock() {
   var now = new Date();
-  var hm = now.getHours() * 60 + now.getMinutes();
+  var ph = (typeof jjPhase === 'function') ? jjPhase() : { name: '非竞价时段', live: false };
   var span = el('callClock');
-  if (hm >= 555 && hm <= 565) { // 9:15-9:25
-    span.className = 'call-clock live';
-    span.textContent = '⏱ 集合竞价进行中 ' + now.toLocaleTimeString('zh-CN', { hour12: false });
-  } else {
-    span.className = 'call-clock off';
-    span.textContent = '⚠️ 非竞价时段（' + now.toLocaleTimeString('zh-CN', { hour12: false }) + '）· 显示最新实时行情';
+  if (span) {
+    if (ph.live) {
+      span.className = 'call-clock live';
+      span.textContent = '⏱ ' + ph.name + ' · ' + now.toLocaleTimeString('zh-CN', { hour12: false });
+    } else {
+      span.className = 'call-clock off';
+      span.textContent = '⚠️ ' + ph.name + '（' + now.toLocaleTimeString('zh-CN', { hour12: false }) + '）· 显示最新实时行情';
+    }
   }
-}
-
-// 保留函数名（tab 切换处调用）：全市场扫描竞价涨停
-async function loadCallBoards() {
-  var wrap = el('callTableWrap');
-  wrap.innerHTML = '<div class="loading"><div class="spinner"></div><p>正在扫描全市场竞价涨停…</p></div>';
-  el('callMood').innerHTML = ''; el('callRecap').innerHTML = '';
-  if (el('callAvoid')) el('callAvoid').innerHTML = '';
-  try {
-    var scan = await callScanAll();
-    ST.callScan = scan;
-    renderCallView();
-    enrichCallStreaks(scan);              // 异步补连板/梯队，边算边刷新
-  } catch (e) {
-    wrap.innerHTML = '<div class="err-box"><b>竞价扫描失败</b><br>' + escapeHtml(e.message || e) +
-      '<br><br>已尝试 push2 / push2delay / 82.push2（fetch + JSONP 双通道）。行情站临时限流时请稍后点「刷新竞价」重试。</div>';
-  }
-}
-
-// 点击竞价涨停股 → 跳到「个股诊断」
-function callGotStock(code) {
-  document.querySelectorAll('.tabs .tab').forEach(function (x) { x.classList.remove('on'); });
-  var tb = document.querySelector('.tabs .tab[data-view="single"]'); if (tb) tb.classList.add('on');
-  ['view-board', 'view-watch', 'view-ding', 'view-call', 'view-mid', 'view-pow', 'view-main'].forEach(function (id) { el(id).classList.remove('on'); });
-  el('view-single').classList.add('on');
-  el('stockInput').value = code;
-  runSearch();
+  var st = el('callStatus');
+  if (st) st.textContent = JJ.running ? '取数中…' : (JJ.t ? ('数据时刻 ' + new Date(JJ.t).toTimeString().slice(0, 8)) : '');
 }
 
 // 行业名归一化（去掉「行业/Ⅰ/Ⅱ/Ⅲ/空格」等，便于与东财板块名匹配）
 function callNormName(s) { return String(s || '').replace(/[行业ⅠⅡⅢ\s·]/g, ''); }
-
-// 点击行业名 → 打开该行业板块的全部成分股（复用板块详情视图）
-async function callOpenIndustry(name, chg) {
-  var target = callNormName(name);
-  var hit = null;
-  try {
-    var boards = await getBoards('industry');
-    hit = boards.filter(function (x) { return x.name === name; })[0] ||
-      boards.filter(function (x) { return callNormName(x.name) === target; })[0] ||
-      boards.filter(function (x) { return callNormName(x.name).indexOf(target) >= 0 || target.indexOf(callNormName(x.name)) >= 0; })[0];
-  } catch (e) {}
-  if (!hit) {
-    try {
-      var cbs = await getBoards('concept');
-      hit = cbs.filter(function (x) { return x.name === name || callNormName(x.name) === target; })[0];
-    } catch (e) {}
-  }
-  if (!hit) { alert('未找到行业「' + name + '」对应的成分股列表（该行业名与东财行业板块名不一致）'); return; }
-  // 切到「板块全景」tab，再打开该板块详情（显示全部成分股）
-  document.querySelectorAll('.tabs .tab').forEach(function (x) { x.classList.remove('on'); });
-  var tb = document.querySelector('.tabs .tab[data-view="board"]'); if (tb) tb.classList.add('on');
-  ['view-single', 'view-watch', 'view-ding', 'view-call', 'view-mid', 'view-pow', 'view-main'].forEach(function (id) { el(id).classList.remove('on'); });
-  el('view-board').classList.add('on');
-  if (!ST.boards.length) loadBoardList(false);   // 后台补板块列表，返回时不留空白
-  if (el('boardListWrap')) el('boardListWrap').style.display = 'none';
-  openBoard(hit.code, hit.name, hit.chg);
-}
 
 /* =========================================================================
    交互绑定与初始化
@@ -8277,8 +7571,9 @@ function rankIndexBuild(){
 
 function k10PrevRanks(){
   var st = lsGet(K10R_KEY, {}), today = D.date, prev = null;
+  if (!st || typeof st !== 'object' || Array.isArray(st)) return {};   /* 脏数据 / 首次使用 → 当作无历史 */
   Object.keys(st).forEach(function(d){ if(d < today && (!prev || d > prev)) prev = d; });
-  return prev ? st[prev] : {};
+  return prev ? (st[prev] || {}) : {};
 }
 
 function rankDeltaTag(rank, prevRank){
@@ -10504,23 +9799,14 @@ function init() {
     if (e.target.closest('[data-act="retry-boards"]')) loadBoardList(true);
   });
 
-  // 集合竞价全景视图
-  el('callMin').addEventListener('change', function () { ST.callMin = +this.value; if (ST.callScan) renderCallView(); });
-  el('callRefresh').addEventListener('click', function () { loadCallBoards(); });
-  var callIndClick = function (e) {
-    var a = e.target.closest('.ind-link[data-ind]');
-    if (!a) return;
-    callOpenIndustry(a.getAttribute('data-ind'));
-  };
-  el('callRecap').addEventListener('click', callIndClick);
-  el('callAvoid').addEventListener('click', callIndClick);
-  el('callTableWrap').addEventListener('click', function (e) {
-    var a = e.target.closest('.ind-link[data-ind]');
-    if (a) { callOpenIndustry(a.getAttribute('data-ind')); return; }
-    var c = e.target.closest('.stk-chip[data-code]');
-    if (!c) return;
-    callGotStock(c.getAttribute('data-code'));
-  });
+  // 集合竞价全景视图（唯一模块 · 7.33 全景分析）
+  el('callRefresh').addEventListener('click', function () { jjEnsure(true, function () { renderM733(); updateCallClock(); }); });
+  if (!window.__callClockTimer) {
+    window.__callClockTimer = setInterval(function () {
+      var v = el('view-call');
+      if (v && v.classList.contains('on')) updateCallClock();
+    }, 1000);
+  }
 
   el('boardDetailWrap').addEventListener('change', function (e) {
     var s = e.target.closest('[data-act="range"]');
