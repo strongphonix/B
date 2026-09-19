@@ -189,7 +189,8 @@
   .sr-sub { font-size:11.5px; color:var(--dim); padding:3px 7px; border-radius:6px; margin-bottom:3px; }
   .sr-sub.on { color:#0b0f18; font-weight:700; }
   /* 今昨强弱（表格列） */
-  .pow-cell .p1 { font-size:11.5px; font-weight:700; line-height:1.5; }
+  .pow-cell { max-width: 150px; }
+  .pow-cell .p1 { font-size:11.5px; font-weight:700; line-height:1.5; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .pow-cell .p2 { font-size:10px; color:#5d6788; margin-top:2px; line-height:1.4; }
   /* 阶段转折确认清单 */
   .st-trans, .main-next { list-style:none; padding:0; margin:0; }
@@ -8719,7 +8720,7 @@ function powCellHtml(ind, code, name) {
   if (!p) return '<td class="pow-cell" style="color:var(--dim)">—</td>';
   var col = POW_ACT_COLOR[p.actCls] || '#8892b0';
   return '<td class="pow-cell" title="' + escapeHtml(p.tip) + '">' +
-    '<div class="p1" style="color:' + col + '">' + escapeHtml(p.id + ' ' + powActShort(p.actCls)) + '</div>' +
+    '<div class="p1" style="color:' + col + '">' + escapeHtml(p.label) + '</div>' +
     '<div class="p2">昨' + escapeHtml(p.prevLabel) + ' · 量' +
     (p.volRatio == null ? '—' : p.volRatio.toFixed(2)) + '×</div></td>';
 }
@@ -9649,12 +9650,51 @@ function mainJudge(ind, extra, ctx) {
   next.push({ label: 'Level2 大单占比 / 主力净流入方向', ok: null, note: '本工具未接入逐笔与 Level2 数据' });
 
   /* ---------- 一句话结论 ---------- */
-  var brief = STATE_NAME[state] + '：' + plan.when;
+  var stateName = STATE_NAME[state], stateShort = STATE_SHORT[state], color = STATE_COLOR[state];
+
+  /* ---------- ★ 阶段背景闸门（2026-09-19）----------
+     生命周期判为「阶段3（派发）/ 阶段4（下跌）」时，主升浪模型里的「上涨信号」其实是
+     下跌中的修复反弹，不能按主升浪做。这里把多头方向的状态（main/launch/prep）一律降级为
+     「未启动」，并显式标注 —— 从机制上落实「生命周期（管方向）> 主升浪（管节奏）」的裁决。 */
+  var BG_LABEL = '⚠ 下跌/派发背景下的上涨信号，按修复反弹对待，不按主升浪';
+  var bgFamily = (ctx.stageFamily != null) ? ctx.stageFamily
+               : (ctx.stageKey ? stageFamilyOf(ctx.stageKey) : null);
+  if (bgFamily == null) {
+    /* 兜底：调用方没传阶段时，就地跑一次生命周期判定（纯计算、无网络）。用 try/catch 保护，
+       避免在「只加载了主升浪模块」的环境（如离线单测）里因 judgeStage 不存在而崩。 */
+    try { bgFamily = (judgeStage(ind, ctx.stageCtx || {}).family) || 0; } catch (e) { bgFamily = 0; }
+  }
+  var bgGate = (bgFamily === 3 || bgFamily === 4);
+  var origState = state;
+  if (bgGate && (state === 'main' || state === 'launch' || state === 'prep')) {
+    state = 'none';
+    conf = 'Low';
+    vetoes.unshift(BG_LABEL + '（生命周期阶段' + bgFamily + '）');
+    stateName = '修复反弹（阶段' + bgFamily + ' · 不按主升浪）';
+    stateShort = '修复反弹';
+    color = '#8892b0';
+    plan = {
+      when: '生命周期判为阶段' + bgFamily + '（' + (bgFamily === 3 ? '派发' : '下跌') + '）→ 主升浪信号作废，按修复反弹对待',
+      entry: '不新开仓；已有仓位逢反弹减仓',
+      stop: '反弹到 MA10 / MA20 附近减仓；跌破前低无条件离场',
+      pos: '0 成（修复反弹不参与）'
+    };
+    next = [
+      { label: '生命周期回到阶段1/2（筑底 / 上升）', ok: false, note: '当前阶段' + bgFamily + '，主升浪闸门关闭' },
+      { label: '重新站上 MA50 且长期均线走平/上行', ok: null, note: '背景解除前不按主升浪做' },
+      { label: '基本面 / 赛道拐点', ok: null, note: '本工具未接入财报与政策数据 → 需你人工核对' }
+    ];
+  }
+  var brief = stateName + '：' + plan.when;
+  if (bgGate && origState !== state) {
+    brief = BG_LABEL + '；原「' + STATE_NAME[origState] + '」信号作废';
+  }
 
   return {
-    state: state, stateName: STATE_NAME[state], stateShort: STATE_SHORT[state], color: STATE_COLOR[state],
+    state: state, stateName: stateName, stateShort: stateShort, color: color,
     score: score, dims: dims, items: items, conf: conf,
     vetoes: vetoes, warns: warns, next: next, plan: plan, brief: brief,
+    bgGate: bgGate,
     metrics: {
       gainFromLow: ex.gainFromLow, yearHigh: ex.yearHigh, yearHighNear: ex.yearHighNear,
       vmaRatio: ex.vmaRatio, volRatio: ind.volRatio, turnover: turn, rsi14: rsi14,
@@ -9778,8 +9818,9 @@ async function mainRun() {
         var ind = computeIndicators(data.klines, data.quote, x.code);
         if (!ind) throw new Error('K线数据不足（需 ≥60 个交易日）');
         var nm = quoteName(data.quote, x.name) || x.name || x.code;
-        var f = mainJudge(ind, null, {});
-        r = { code: x.code, name: nm, ind: ind, f: f, quote: data.quote, source: data.source };
+        var sr = null; try { sr = judgeStage(ind, {}); } catch (e) {}
+        var f = mainJudge(ind, null, sr ? { stageFamily: sr.family, stageKey: sr.stage } : {});
+        r = { code: x.code, name: nm, ind: ind, f: f, quote: data.quote, source: data.source, stage: sr };
       } catch (e) { r = { code: x.code, name: x.name || x.code, err: (e && e.message) || '取数失败' }; }
       done++;
       if (done % 5 === 0 || done === targets.length) mainStatus('正在逐只判定 ' + done + '/' + targets.length + '…');
@@ -9813,6 +9854,9 @@ function mainRender(rows, bad) {
   }
   var order = { main: 0, launch: 1, prep: 2, weak: 3, fade: 4, none: 5 };
   rows = rows.slice().sort(function (a, b) {
+    var ga = (a.f.bgGate && a.f.bgGate.on) ? 1 : 0;
+    var gb = (b.f.bgGate && b.f.bgGate.on) ? 1 : 0;
+    if (ga !== gb) return ga - gb;                    /* 被阶段背景闸门拦下的排最后 */
     var d = (order[a.f.state] == null ? 9 : order[a.f.state]) - (order[b.f.state] == null ? 9 : order[b.f.state]);
     return d || (b.f.score - a.f.score);
   });
@@ -9826,7 +9870,7 @@ function mainRender(rows, bad) {
   ];
   var html = '';
   groups.forEach(function (g) {
-    var list = rows.filter(function (r) { return r.f.state === g[0]; });
+    var list = rows.filter(function (r) { return r.f.state === g[0] && !(r.f.bgGate && r.f.bgGate.on); });
     if (!list.length) return;
     html += '<div class="card"><div class="pow-grp"><span class="main-gchip" style="background:' +
       (list[0].f.color) + '22;color:' + list[0].f.color + ';border:1px solid ' + list[0].f.color + '55">' +
@@ -9834,6 +9878,12 @@ function mainRender(rows, bad) {
       '<button class="btn" data-mainadd="' + g[0] + '">本组加入观察池</button></div>' +
       list.map(function (r) { return mainCardHtml(r); }).join('') + '</div>';
   });
+  var gated = rows.filter(function (r) { return r.f.bgGate && r.f.bgGate.on; });
+  if (gated.length) {
+    html += '<div class="card"><div class="pow-grp"><span class="main-gchip" style="background:#8892b022;color:#8892b0;border:1px solid #8892b055">' +
+      '⚠️ 下跌/派发背景 · 修复反弹（不按主升浪）</span><span>' + gated.length + ' 只</span></div>' +
+      gated.map(function (r) { return mainCardHtml(r); }).join('') + '</div>';
+  }
   if (bad && bad.length) {
     html += '<div class="card"><div class="mid-sub">取数失败（' + bad.length + ' 只）</div><ul class="mid-reasons">' +
       bad.map(function (b) { return '<li class="no">' + escapeHtml(b.code + ' ' + (b.name || '')) + '：' + escapeHtml(b.err || '无判定') + '</li>'; }).join('') +
