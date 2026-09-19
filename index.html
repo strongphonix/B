@@ -167,6 +167,16 @@
   .stock-head .o8-top-form { font-size:14px; font-weight:800; padding:2px 10px; border:1.5px solid; border-radius:8px; letter-spacing:.5px; }
   .stock-head .o8-top-fc { font-size:16px; font-weight:800; letter-spacing:.5px; text-shadow:0 0 12px currentColor; white-space:nowrap; }
   .stock-head .o8-top-fc .k { font-size:11.5px; font-weight:700; opacity:.85; letter-spacing:0; margin-right:5px; text-shadow:none; }
+  /* 取不到 5 分钟数据时的占位（灰、非信号色，明确区分于「有结论」） */
+  .stock-head .o8-top-na { font-size:13px; font-weight:700; color:#7a8aa8; }
+  .stock-head .o8-top-na .k { font-size:11px; font-weight:700; opacity:.75; letter-spacing:0; margin-right:5px; }
+  /* 顶部「dev 偏离度」实时数值：颜色与字号由档位决定（内联覆盖），此处只给基准 */
+  .stock-head .dev-top { display:inline-flex; align-items:baseline; gap:5px; margin-left:12px; vertical-align:2px;
+    font-size:15.5px; font-weight:800; letter-spacing:.4px; white-space:nowrap;
+    text-shadow:0 0 12px currentColor; }
+  .stock-head .dev-top .k { font-size:11px; font-weight:700; opacity:.8; letter-spacing:0; text-shadow:none; }
+  .stock-head .dev-top .tag { font-size:11px; font-weight:700; padding:1px 7px; border:1px solid currentColor;
+    border-radius:7px; letter-spacing:0; text-shadow:none; }
   .stock-head .px { text-align: right; }
   .stock-head .px .now { font-size: 26px; font-weight: 700; }
   .stock-head .px .chg { font-size: 14px; font-weight: 600; }
@@ -433,6 +443,27 @@
   .oa-row .oa-k { color:#7a85a3; min-width:42px; flex-shrink:0; }
   .oa-row span:last-child { color:#cdd6f4; }
   .open8-cell { font-size:12px; }
+
+  /* ===== dev 偏离度 · 分档操作规则（方框 + 醒目配色） ===== */
+  .dev-rule { border:1.5px solid #2b3a5c; border-radius:12px; padding:11px 13px;
+    background:linear-gradient(135deg,#141c2c,#0f1626); }
+  .dev-rule .dr-row { display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    padding:9px 12px; border-radius:9px; margin-bottom:7px; border-left:5px solid; }
+  .dev-rule .dr-row:last-child { margin-bottom:0; }
+  .dev-rule .dr-rng { font-family: ui-monospace, Consolas, "Courier New", monospace;
+    font-weight:800; font-size:15.5px; min-width:128px; letter-spacing:.3px; }
+  .dev-rule .dr-txt { font-size:13.5px; font-weight:700; color:#e2e8ff; }
+  .dev-rule .dr-cur { margin-left:auto; font-size:12.5px; font-weight:800; padding:2px 10px;
+    border-radius:20px; border:1px solid currentColor; white-space:nowrap; }
+  /* 每档一行：row 自身带 color → 边框/内环/徽章边框都用 currentColor */
+  .dev-rule .dr-healthy { border-left-color:#26c281; background:rgba(38,194,129,.09); color:#3fe39a; }
+  .dev-rule .dr-over    { border-left-color:#ff8f1f; background:rgba(255,143,31,.09); color:#ffb45c; }
+  .dev-rule .dr-halve   { border-left-color:#ff5252; background:rgba(255,82,82,.12);  color:#ff8a8a; }
+  .dev-rule .dr-extreme { border-left-color:#ff3b3b; background:rgba(255,59,59,.17);  color:#ff6b6b; }
+  .dev-rule .dr-row.on { box-shadow:inset 0 0 0 1.5px currentColor; }
+  .dev-rule .dr-row.on .dr-txt { color:#fff; }
+  .dev-rule-note { font-size:12px; color:#7a8aa8; line-height:1.8; margin-top:10px; }
+  .dev-rule-note b { color:#9fb4ff; }
 
   /* ===== 钉钉提醒 ===== */
   .ding-form { display:flex; flex-direction:column; gap:6px; }
@@ -1356,30 +1387,73 @@ async function fetchTencentRealtime(sym) {
   return parseTencentQuote(String(raw), sym);
 }
 
-// 腾讯 5 分钟分时 K 线（当日「开盘八法」用）：主路径 web.ifzq 会 301 跳转到 ifzq，fetchJson 自动跟随
+/* 腾讯 5 分钟分时 K 线（当日「开盘八法」用）
+   ⚠️ 2026-09-19 实测与修复（用户报「部分个股头部没有开盘八法」）：
+   ① 原来的熔断是「整场会话永久跳过」——`if (src.fail >= 3) continue;` 且 fail 只在成功时清零。
+      批量分析几十只时，一旦被限流连续失败 3 次，**后面所有股票都取不到 5 分钟数据** →
+      头部没有开盘八法、下方卡片变成「未取到当日5分钟K线」。现改为**按时间冷却**（M5_COOL）。
+   ② 原来固定按 [0,1] 顺序试，主源挂了每次都白等一次超时。现改为**优先上次成功的源**（m5SrcIdx），
+      与日 K 通道（KLINE_SRC + klineSrcIdx）保持同一套自愈策略。
+   ③ 实测 `web.ifzq.gtimg.cn` 在部分网络下直接 fetch failed（301/域名不可达），
+      但 `ifzq.gtimg.cn` 与 `proxy.finance.qq.com/ifzqgtimg/...` 均正常返回 482 根 5 分钟 K 线；
+      故把这两个可用源前置，web.ifzq 保留为最后的兜底（有些网络下它才是通的）。 */
 var M5_SRC = [
-  { host: 'https://web.ifzq.gtimg.cn/appstock/app/kline/mkline', fail: 0 },
-  { host: 'https://ifzq.gtimg.cn/appstock/app/kline/mkline', fail: 0 }
+  { host: 'https://ifzq.gtimg.cn/appstock/app/kline/mkline', fail: 0, failAt: 0 },
+  { host: 'https://proxy.finance.qq.com/ifzqgtimg/appstock/app/kline/mkline', fail: 0, failAt: 0 },
+  { host: 'https://web.ifzq.gtimg.cn/appstock/app/kline/mkline', fail: 0, failAt: 0 }
 ];
+var m5SrcIdx = 0;          // 上次成功的源，下次优先用它
+var M5_COOL = 20000;       // 熔断冷却（ms）：连续失败 3 次只停用这么久，之后自动重试
+var m5ProbeAt = 0;         // 「全部冷却」时的探活节流时间戳（至少间隔 5s）
+/* 从 mkline 载荷里取出该标的的 5 分钟 K 线（fetch 与 JSONP 两个通道共用） */
+function m5BarsFromObj(obj, sym) {
+  var node = obj && obj.data && obj.data[sym];
+  var arr = node && node.m5;
+  if (!Array.isArray(arr) || !arr.length) return null;
+  var bars = arr.map(function (r) {
+    return { time: String(r[0]), date: String(r[0]).slice(0, 8),
+      open: +r[1], close: +r[2], high: +r[3], low: +r[4], vol: +r[5] };
+  }).filter(function (b) { return isFinite(b.close) && b.close > 0; });
+  return bars.length ? bars : null;
+}
 async function fetchM5Parse(sym) {
-  var order = [0, 1], lastErr = null;
+  var order = [], lastErr = null, now = Date.now(), cooling = 0;
+  for (var i = 0; i < M5_SRC.length; i++) order.push((m5SrcIdx + i) % M5_SRC.length);
   for (var k = 0; k < order.length; k++) {
-    var src = M5_SRC[order[k]];
-    if (src.fail >= 3) continue;
+    var idx = order[k], src = M5_SRC[idx];
+    if (src.fail >= 3 && (now - src.failAt) < M5_COOL) { cooling++; continue; }   // 冷却中，先跳过
+    var tail = '&param=' + sym + ',m5&_=' + Date.now();
+    // ① fetch 通道
     try {
-      var url = src.host + '?param=' + sym + ',m5&_=' + Date.now();
-      var obj = await fetchJson(url, 12000);
-      var node = obj && obj.data && obj.data[sym];
-      var arr = node && node.m5;
-      if (!Array.isArray(arr) || !arr.length) throw new Error('无5分钟数据');
-      var bars = arr.map(function (r) {
-        return { time: String(r[0]), date: String(r[0]).slice(0, 8),
-          open: +r[1], close: +r[2], high: +r[3], low: +r[4], vol: +r[5] };
-      }).filter(function (b) { return isFinite(b.close) && b.close > 0; });
-      if (!bars.length) throw new Error('5分钟解析为空');
-      src.fail = 0;
+      var bars = m5BarsFromObj(await fetchJson(src.host + '?' + tail.slice(1), 12000), sym);
+      if (!bars) throw new Error('无5分钟数据');
+      src.fail = 0; m5SrcIdx = idx;
       return bars;
-    } catch (e) { src.fail++; lastErr = e; }
+    } catch (e) { lastErr = e; }
+    // ② JSONP 兜底通道（file:// 打开时 fetch 可能被拦，与日K通道同策略）
+    try {
+      var vn = 'm5cb_' + Math.random().toString(36).slice(2);
+      var bars2 = m5BarsFromObj(await loadScriptVar(src.host + '?_var=' + vn + tail, vn, null, 12000), sym);
+      if (!bars2) throw new Error('JSONP 无5分钟数据');
+      src.fail = 0; m5SrcIdx = idx;
+      return bars2;
+    } catch (e2) { lastErr = e2; }
+    src.fail++; if (src.fail >= 3) src.failAt = Date.now();
+  }
+  // 全部冷却中：不回退到「什么都不做」，仍用上次成功的源探一次，避免整段批量都没数据；
+  // 但用 m5ProbeAt 限流（至少间隔 5s 才探一次），否则冷却形同虚设
+  if (cooling === order.length && (Date.now() - m5ProbeAt) >= 5000) {
+    m5ProbeAt = Date.now();
+    var src2 = M5_SRC[m5SrcIdx], tail2 = '&param=' + sym + ',m5&_=' + Date.now();
+    try {
+      var b3 = m5BarsFromObj(await fetchJson(src2.host + '?' + tail2.slice(1), 8000), sym);
+      if (b3) { src2.fail = 0; return b3; }
+    } catch (e4) { lastErr = e4; }
+    try {
+      var vn2 = 'm5cb_' + Math.random().toString(36).slice(2);
+      var b4 = m5BarsFromObj(await loadScriptVar(src2.host + '?_var=' + vn2 + tail2, vn2, null, 8000), sym);
+      if (b4) { src2.fail = 0; return b4; }
+    } catch (e5) { lastErr = e5; }
   }
   throw (lastErr || new Error('5分钟接口不可用'));
 }
@@ -2262,6 +2336,64 @@ function indItem(label, value, desc, status) {
 }
 
 /* =========================================================================
+   dev 偏离度分档（现价相对 MA5）：数值 → 档位 / 配色 / 字号 / 操作口径
+   用户给定规则（界面「dev 偏离度 · 分档操作规则」卡里逐条原样列出）：
+     · < +6%      健康区买入
+     · +8% ~ +12% 超涨，大幅止盈，卖至半仓以下（卖 1/2 ~ 2/3）
+     · dev > +10% 减半
+     · dev > +15% 极端超涨，清仓 / 无条件离场，全部清仓；尤其伴随爆量长上影 / 炸板
+   ⚠️ 这几条区间**互相重叠**（8~12 与 >10 都成立），所以实现时按「越极端越优先」排成互斥阶梯：
+      >15 → >10 → ≥8 → ≥6 → ≥0 → 负偏离（见 DEV_BANDS 顺序，命中即返回）。
+   ========================================================================= */
+var DEV_BANDS = [
+  { k: 'extreme', min: 15,        label: '极端超涨', act: '清仓 / 无条件离场（全部清仓）；尤其伴随爆量长上影 / 炸板', color: '#ff3b3b', size: 21.5 },
+  { k: 'halve',   min: 10,        label: '减半',     act: '减半（卖至半仓以下）',                                  color: '#ff5252', size: 19 },
+  { k: 'over',    min: 8,         label: '超涨',     act: '大幅止盈，卖至半仓以下（卖 1/2 ~ 2/3）',                  color: '#ff8f1f', size: 17.5 },
+  { k: 'warn',    min: 6,         label: '偏高',     act: '停止加仓、准备止盈（舒适区上沿）',                        color: '#ffb74d', size: 16.5 },
+  { k: 'healthy', min: 0,         label: '健康区',   act: '健康区买入',                                           color: '#26c281', size: 15.5 },
+  { k: 'neg',     min: -Infinity, label: '负偏离',   act: '跌破 / 贴近均线，趋势走坏则离场',                         color: '#64b5f6', size: 14 }
+];
+function devBand(dev) {
+  if (dev == null || isNaN(dev)) return null;
+  for (var i = 0; i < DEV_BANDS.length; i++) { if (dev >= DEV_BANDS[i].min) return DEV_BANDS[i]; }
+  return DEV_BANDS[DEV_BANDS.length - 1];
+}
+/* 头部「所属行业」后面的 dev 实时数值：颜色与字号都随档位变化 */
+function renderDevTop(ind) {
+  if (!ind || ind.dev == null || isNaN(ind.dev)) return '';
+  var b = devBand(ind.dev);
+  if (!b) return '';
+  var v = (ind.dev >= 0 ? '+' : '') + ind.dev.toFixed(2) + '%';
+  return '<span class="dev-top" style="color:' + b.color + ';font-size:' + b.size + 'px" title="dev 偏离度 ' +
+    v + '（现价相对 MA5）· ' + b.label + '：' + b.act + '">' +
+    '<span class="k">dev</span>' + v + '<span class="tag">' + b.label + '</span></span>';
+}
+/* dev 分档规则卡：方框 + 醒目配色，命中当前档位的那一行高亮并标「当前」 */
+function renderDevRuleCard(ind) {
+  var cur = (ind && ind.dev != null) ? devBand(ind.dev) : null;
+  var rows = [
+    { key: 'healthy', rng: '&lt; +6%',       txt: '健康区买入' },
+    { key: 'over',    rng: '+8% ~ +12%',     txt: '超涨，大幅止盈，卖至半仓以下（卖 1/2 ~ 2/3）' },
+    { key: 'halve',   rng: 'dev &gt; +10%',  txt: '减半' },
+    { key: 'extreme', rng: 'dev &gt; +15%',  txt: '极端超涨，清仓 / 无条件离场，全部清仓；尤其伴随爆量长上影 / 炸板' }
+  ];
+  var body = rows.map(function (r) {
+    var b = DEV_BANDS.filter(function (x) { return x.k === r.key; })[0];
+    var on = !!(cur && cur.k === r.key);
+    return '<div class="dr-row dr-' + r.key + (on ? ' on' : '') + '">' +
+      '<span class="dr-rng">' + r.rng + '</span>' +
+      '<span class="dr-txt">' + r.txt + '</span>' +
+      (on ? '<span class="dr-cur">当前 ' + (ind.dev >= 0 ? '+' : '') + ind.dev.toFixed(2) + '%</span>' : '') +
+      '</div>';
+  }).join('');
+  return '<div class="card"><div class="card-title">dev 偏离度 · 分档操作规则（现价相对 MA5）</div>' +
+    '<div class="dev-rule">' + body + '</div>' +
+    '<div class="dev-rule-note">说明：规则原文的区间相互重叠（8%~12% 与 &gt;10% 同时成立），' +
+    '本工具按「<b>越极端越优先</b>」排成互斥阶梯判定 —— <b>&gt;15% → &gt;10% → ≥8% → ≥6% → ≥0% → 负偏离</b>；' +
+    '当前命中档位在上表中已高亮标注。</div></div>';
+}
+
+/* =========================================================================
    MA5 终极系统化交易策略（四态：清仓 / 减仓 / 持有 / 观察 + 超涨止盈）
    铁律优先级：MA5斜率 ＞ 连续破线天数 ＞ 是否站线 ＞ 偏离度
    ========================================================================= */
@@ -2473,7 +2605,19 @@ function o8SideColor(o8) {
 /* 顶部（个股名旁边，板块名之后）的「开盘八法」摘要：形态徽章 + 全天预判
    —— 与下方「早盘5分钟K线诊断」卡片共用同一份 open8 数据，只是把结论前置到最显眼处 */
 function renderOpen8Top(o8) {
-  if (!o8 || !o8.ok || !o8.form) return '';
+  /* ⚠️ 这里**不再返回空串**：用户要求「每个股票」的头部都要有这一格。
+     取不到数据时给一个灰色占位（并写明原因），而不是整格消失 ——
+     否则一旦 5 分钟接口限流，整屏股票的头部都会少一块，看不出是"没这功能"还是"数据没拿到"。 */
+  if (!o8 || !o8.ok) {
+    var why = (o8 && o8.reason) ? o8.reason : '未取到当日5分钟K线';
+    return '<span class="o8-top o8-top-na" title="开盘八法暂不可用：' + escapeHtml(why) +
+      '。它基于当日 09:30-09:45 的 5 分钟 K 线 —— 非交易时段 / 休市取不到；接口限流时重新分析即可（板块页「清空重算」、自选页「刷新查询」）">' +
+      '<span class="k">开盘八法</span>数据未取到</span>';
+  }
+  if (!o8.form) {
+    return '<span class="o8-top o8-top-na" title="开盘八法：当日 5 分钟 K 线不足 3 根或涨跌组合未在表内，形态待定">' +
+      '<span class="k">开盘八法</span>形态待定 · 全天预判 ' + escapeHtml(o8.forecast || '—') + '</span>';
+  }
   var c = o8SideColor(o8);
   return '<span class="o8-top" title="开盘八法：' + escapeHtml(o8.form.name) + ' · ' + escapeHtml(o8.pat || '') +
     ' · 全天预判 ' + escapeHtml(o8.forecast || '') + '（下方「早盘5分钟K线诊断」有完整依据）">' +
@@ -2486,7 +2630,8 @@ function renderOpen8Card(o8) {
   if (!o8 || !o8.ok) {
     return '<div class="card"><div class="card-title">早盘5分钟K线诊断（开盘八法）</div>' +
       '<div class="stage-desc">' + ((o8 && o8.reason) ? escapeHtml(o8.reason) : '未取到当日5分钟K线（休市或接口异常）') + '</div>' +
-      '<div class="stage-desc" style="font-size:12px;color:#5d6788">开盘八法基于当日前3根5分钟K线（09:30-09:45），仅在交易时段及之后可用；点击「刷新查询」可更新当日实时走势。</div></div>';
+      '<div class="stage-desc" style="font-size:12px;color:#5d6788">开盘八法基于当日前3根5分钟K线（09:30-09:45），仅在交易时段及之后可用；' +
+      '若因接口限流没取到，重新分析即可（板块页「清空重算」/ 自选页「刷新查询」）。</div></div>';
   }
   var form = o8.form;
   var sideColor = form ? o8SideColor(o8) : '#8892b0';
@@ -2578,7 +2723,9 @@ function buildResultHTML(quote, ind, sr, compact, source, gene, cap, rec, open8)
     '<span class="code">' + escapeHtml(quote.code) + '</span>' +
     '<span class="board">' + ind.board.label + ' · 涨停' + ind.board.zt + '%</span>' +
     (gene && gene.boardName ? '<span class="board-link" data-bkcode="' + (gene.boardCode || '') + '" data-bkname="' + escapeHtml(gene.boardName) + '" title="点击查看板块成分股">🏷 ' + escapeHtml(gene.boardName) + '</span>' : '') +
-    /* 顶部同步显示「开盘八法」结论（形态 + 全天预判），位置紧跟板块名之后 */
+    /* 紧跟行业名之后：dev 偏离度实时数值（颜色 + 字号随档位变化） */
+    renderDevTop(ind) +
+    /* 顶部同步显示「开盘八法」结论（形态 + 全天预判） */
     renderOpen8Top(open8) +
     '</div>' +
     (quote.code ? '<button type="button" class="wl-btn' + (wlHas(quote.code) ? ' on' : '') + '" data-code="' + escapeHtml(quote.code) + '" data-name="' + escapeHtml(name) + '" title="加入 / 移出自选列表">' + (wlHas(quote.code) ? '★ 已自选' : '☆ 加自选') + '</button>' : '') +
@@ -2668,7 +2815,10 @@ function buildResultHTML(quote, ind, sr, compact, source, gene, cap, rec, open8)
   if (cap) html += renderCapitalCard(cap);      // 主力资金参与度（量比 × 换手）
   if (rec) html += renderRecognitionCard(rec);  // 股票辨识度评级（三梯队）
 
-  var devClass = ind.dev > 15 ? 'danger' : (ind.dev > 8 ? 'warn' : (ind.dev >= 0 ? 'good' : 'warn'));
+  /* dev 档位与指标卡的配色/文案统一走 devBand（与顶部徽章、规则卡同源） */
+  var devB = devBand(ind.dev) || { k: 'neg', label: '—' };
+  var devClass = (devB.k === 'extreme' || devB.k === 'halve') ? 'danger'
+    : (devB.k === 'healthy') ? 'good' : 'warn';
   var slopeClass = ind.ma5Slope > 0 ? 'good' : 'danger';
   var breakClass = ind.breakDays >= 3 ? 'danger' : (ind.breakDays >= 1 ? 'warn' : 'good');
   var volClass = ind.volRatio >= 2 ? 'danger' : (ind.volRatio > 1.5 ? 'warn' : 'good');
@@ -2677,7 +2827,7 @@ function buildResultHTML(quote, ind, sr, compact, source, gene, cap, rec, open8)
   var ma5Break = ind.price < ind.ma5v, ma10Break = ind.price < ind.ma10v;
 
   html += '<div class="card"><div class="card-title">核心技术指标</div><div class="indicators">' +
-    indItem('dev 偏离度', ind.dev.toFixed(2) + '%', ind.dev > 15 ? '极端超涨' : (ind.dev > 8 ? '超涨警戒' : '健康区间'), devClass) +
+    indItem('dev 偏离度', (ind.dev >= 0 ? '+' : '') + ind.dev.toFixed(2) + '%', devB.label, devClass) +
     indItem('MA5斜率', fmtPct(ind.ma5SlopePct), ind.ma5Slope > 0 ? '向上 · 做多趋势' : '向下 · 弱势反弹', slopeClass) +
     indItem('连续破线', ind.breakDays + ' 天', ind.breakDays >= 3 ? '趋势终结' : (ind.breakDays >= 1 ? '减仓防守' : '未破线'), breakClass) +
     indItem('量能倍数', ind.volRatio.toFixed(2), ind.volRatio >= 2 ? '天量 · 见顶信号' : (ind.volRatio > 1.5 ? '放量' : '温和/缩量'), volClass) +
@@ -2689,6 +2839,10 @@ function buildResultHTML(quote, ind, sr, compact, source, gene, cap, rec, open8)
     indItem('近20日涨停', ind.ztCount20 + ' 次', '近5日 ' + ind.ztCount5 + ' 次' + (ind.closedZT ? ' · 今日涨停' : (ind.isBrokenBoard ? ' · 今日炸板' : '')), '') +
     indItem('近5日 / 10日涨幅', fmtPct(ind.gain5) + ' / ' + fmtPct(ind.gain10), '60日分位 ' + (ind.pos * 100).toFixed(0) + '%', '') +
     '</div></div>';
+
+  /* dev 分档操作规则卡（方框 + 醒目配色）—— 不设 compact 闸门：
+     板块成分股表的展开行走的是 compact=true（见 detailRowHTML），闸门会让最常用的那条路径看不到它 */
+  html += renderDevRuleCard(ind);
 
   html += '<div class="card"><div class="card-title">K线走势（近 ' + Math.min(70, ind.klines.length) + ' 日 · 前复权）</div>' + renderChart(ind) + '</div>';
 
