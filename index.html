@@ -1938,6 +1938,8 @@ function stageTransitionCheck(ind, fam, ctx) {
     it('重新积累（更高低点 / 新近积累）', !!ind.higherLow, '');
     it('突破时带成交量（3→2 的必要条件）', !!(ind.breakoutResist && ind.volRatio >= 1.4), '量能倍数 ' + fmtN(ind.volRatio));
     it('相对强度（RS）改善', rsOK, rsNote);
+    it('有效跌破 50 日均线 → 转入阶段4', !!(ind.ma50v != null && ind.price < ind.ma50v * 0.98 && ind.ma50Slope5 < -0.3),
+      ind.ma50v == null ? 'K线不足 50 根' : ('现价 ' + fmtN(ind.price) + '｜MA50 ' + fmtN(ind.ma50v) + '（低于 ' + sPct((ind.price / ind.ma50v - 1) * 100) + '）｜MA50 斜率 ' + sPct(ind.ma50Slope5) + '/5日'));
     it('放量跌破支撑 → 转入阶段4', !!(ind.barsSinceBreakdown != null && ind.barsSinceBreakdown <= 10),
       ind.barsSinceBreakdown == null ? '尚未发生破位' : ('破位距今 ' + ind.barsSinceBreakdown + ' 个交易日'));
   } else {                  /* 阶段4 → 期待 4 → 1 */
@@ -1946,6 +1948,8 @@ function stageTransitionCheck(ind, fam, ctx) {
       '长期均线斜率 ' + sPct(ind.ltSlopePct) + '/5日');
     it('卖压减少（缩量）', ind.volDim <= 0.9, '近20日均量 / 近60日均量 = ' + fmtN(ind.volDim));
     it('出现更高的低点（积累初期迹象）', !!ind.higherLow, '');
+    it('重新站上 50 日均线', !!(ind.ma50v != null && ind.price > ind.ma50v),
+      ind.ma50v == null ? 'K线不足 50 根' : ('现价 ' + fmtN(ind.price) + (ind.price > ind.ma50v ? ' > ' : ' ≤ ') + 'MA50 ' + fmtN(ind.ma50v)));
     it('业务企稳 / 盈利改善', null, '未接入基本面数据 → 需你人工核对');
   }
   return out;
@@ -1994,12 +1998,27 @@ function judgeStage(ind, ctx) {
   var stage = null, confidence = 'Low';
   function set(k, c) { stage = k; confidence = c; }
 
-  /* ---------- 阶段4：下跌趋势（长期均线下行 + 价格在其下方） ---------- */
-  if (aboveLT === false && ind.ltDown) {
+  /* ---------- 阶段4：下跌趋势 ----------
+     ★ 2026-09-19 补充判据：阶段4 除「长期均线（30周线）下行 + 价格在其下方」外，
+       更早的中期信号是「跌破 50 日均线」—— 上涨之后价格跌破 MA50（且 MA50 拐头向下）、
+       并已跌破长期均线、但长期均线尚未转下：这是「刚破位」的窗口期，领先于 30 周线明确转下。
+       （注意区分：若价格仍在长期均线上方，跌破 MA50 只是分配震荡，仍属阶段3，不能算阶段4。） */
+  var belowLT = (aboveLT === false && ind.ltDown);
+  /* ★ 有效跌破 50 日均线：价格低于 MA50 达 2% 以上，且 MA50 5 日斜率 < -0.3%（明显向下）。
+     —— 只有「明显、持续」的跌破才算数；高位横盘（分配）里价格贴着均线 ±0.3% 微幅穿越、MA50 斜率 ≈0，
+        绝不能算阶段4。 */
+  var belowMA50 = (ind.ma50v != null) ? (price < ind.ma50v * 0.98) : null;
+  var ma50Down = (ind.ma50Slope5 != null && ind.ma50Slope5 < -0.3);
+  var earlyDecline = priorUp && belowMA50 && ma50Down && (aboveLT === false) && !ind.ltDown;
+  if (belowLT || earlyDecline) {
     /* 注意：长期均线仍在下行 ≠ 一定是阶段4 —— 若下跌已停止推进，就是 4→1 的过渡（阶段1A） */
     var stalled = !ind.lowerLow && ind.legEndBarsAgo >= 10 &&
                   (ind.higherLow || ind.ampExpand <= 0.9 || ind.volDim <= 0.85);
-    if (stalled) {
+    if (earlyDecline) {
+      set('p4a', 'High');
+      add('★ 跌破 50 日均线：现价 ' + fmtN(price) + ' 已跌破 MA50（' + fmtN(ind.ma50v) + '）与长期均线（' + fmtN(ind.ltv) + '），MA50 近 5 日斜率 ' +
+        sPct(ind.ma50Slope5) + '（向下）→ 上涨之后的分配结束，进入新的下跌趋势（阶段4A）', 'danger');
+    } else if (stalled) {
       set('p1a', ind.higherLow ? 'Medium' : 'Low');
       add('长期均线仍在下行，但下跌已停止推进：未再创出新低' +
         (ind.higherLow ? '、已出现更高的低点' : '') +
@@ -5508,7 +5527,12 @@ async function dingSectorData(scopes) {
     if (!ST.callScan) { try { ST.callScan = await callScanAll(); } catch (e) {} }
     // 补连板/梯队（enrichCallStreaks 会写 recs[].maxStreak / highStock，下面推送文案的「最高 X 板」要用）
     if (ST.callScan) { try { await enrichCallStreaks(ST.callScan); } catch (e) {} }
-    if (ST.callScan && ST.callScan.recs && ST.callScan.recs.length) {
+    /* ★ 严格口径：非当日竞价数据 → 不产出「集合竞价推荐前5板块」，改为明确说明为什么不产出 */
+    if (ST.callScan && ST.callScan.auc && !ST.callScan.auc.ok) {
+      sec.callTopNote = '不产出 —— ' + (ST.callScan.auc.label || '当日竞价尚未产生')
+        + '（严格口径：竞价推荐只能用当日 9:25 竞价结果，不能用盘中涨停或上一交易日数据代替）';
+    }
+    if (ST.callScan && (!ST.callScan.auc || ST.callScan.auc.ok) && ST.callScan.recs && ST.callScan.recs.length) {
       var recs = ST.callScan.recs.slice(0, 5);
       sec.callTop = recs.map(function (x) {
         return { name: x.name, grade: x.count >= 5 ? 'S' : 'A', count: x.count,
@@ -5567,6 +5591,10 @@ function composeDingDigest(sec, hits) {
   var cfg = dingGet();
   var kw = cfg.keyword ? (cfg.keyword + ' ') : '';
   var out = ['【' + kw + '盯盘提醒】' + dateKey() + ' ' + nowHM()];
+  if (sec.callTopNote) {
+    out.push(''); out.push('🔥 集合竞价推荐 · 前5板块');
+    out.push(' ' + sec.callTopNote);
+  }
   if (sec.callTop && sec.callTop.length) {
     out.push(''); out.push('🔥 集合竞价推荐 · 前5板块');
     sec.callTop.forEach(function (x, i) {
@@ -5866,11 +5894,14 @@ function switchToSingle(tokens) {
    而是数真实的竞价涨停股数——避免把一堆 +1% 的概念板块都标成可参与。
    ========================================================================= */
 var MARKET_FS = 'm:0+t:6,m:0+t:80,m:1+t:2,m:1+t:23,m:0+t:81+s:2048';  // 沪深京 A 股
-var CALL_FIELDS = 'f12,f14,f2,f3,f8,f10,f20,f21,f62,f100';
+var CALL_FIELDS = 'f12,f14,f2,f3,f17,f18,f8,f10,f20,f21,f62,f100';   /* f17=今开 f18=昨收：竞价口径必需 */
 
-function callZtTh(code, name) { return ztThreshold(code, name) - 0.6; }
-function isCallZT(s) { return s && s.chg != null && s.chg >= callZtTh(s.code, s.name); }
-function isCallDT(s) { return s && s.chg != null && s.chg <= -callZtTh(s.code, s.name); }
+/* 竞价涨/跌停（严格口径 · 2026-09-19 修正）
+   ⚠️ 原实现用 s.chg（当前涨跌幅）判定 —— 那是「盘中任何时刻涨停」，不是「集合竞价涨停」。
+   实测同一样本：旧口径 64 只 vs 新口径 5 只，误判 59 只。
+   现在只认【今开 vs 涨跌停价】；今开缺失/为 0（未开盘、停牌、无竞价）→ 一律不算，不回退现价。 */
+function isCallZT(s) { return !!(s && jjIsAucZt(s.open, s.pre, s.code, s.name)); }
+function isCallDT(s) { return !!(s && jjIsAucDt(s.open, s.pre, s.code, s.name)); }
 
 // 拉取全市场快照：po=1 涨幅降序（涨停端）/ po=0 涨幅升序（跌停端）
 async function fetchMarketList(po, pages) {
@@ -5880,6 +5911,8 @@ async function fetchMarketList(po, pages) {
     return {
       code: code, sym: marketOf(code) + code, name: d.f14 || code,
       price: num(d.f2), chg: num(d.f3), turnover: num(d.f8), volRatio: num(d.f10),
+      /* ★ 竞价口径：open=今开(9:25 竞价匹配价) pre=昨收 prem=竞价涨幅 */
+      open: num(d.f17), pre: num(d.f18), prem: jjPrem(num(d.f17), num(d.f18)),
       mktCap: num(d.f20), floatCap: num(d.f21), flow: num(d.f62),
       industry: d.f100 || '其他', streak: null
     };
@@ -6019,9 +6052,9 @@ async function callScanAll() {
   var byInd = {};
   ztStocks.forEach(function (s) { (byInd[s.industry] = byInd[s.industry] || []).push(s); });
   var industries = Object.keys(byInd).map(function (k) {
-    var arr = byInd[k].slice().sort(function (a, b) { return b.chg - a.chg; });
+    var arr = byInd[k].slice().sort(function (a, b) { return (b.prem == null ? -999 : b.prem) - (a.prem == null ? -999 : a.prem); });
     return { name: k, count: arr.length, stocks: arr, top: arr[0] };
-  }).sort(function (a, b) { return b.count - a.count || b.top.chg - a.top.chg; });
+  }).sort(function (a, b) { return b.count - a.count || ((b.top.prem == null ? -999 : b.top.prem) - (a.top.prem == null ? -999 : a.top.prem)); });
   industries.forEach(function (x) {
     x.grade = x.count >= 5 ? 'S' : x.count >= 3 ? 'A' : 'B';
     x.recommend = x.count >= 3;
@@ -6061,7 +6094,13 @@ async function callScanAll() {
   // 其返回值 metrics12 并未被使用（下方 return 里没有它），故直接删除该调用。
 
   var mood = callMoodScore(ztStocks.length, dtStocks.length, concPct);
+  /* ★ 竞价严格口径：先确认这份数据到底是哪一天的竞价。
+     复用 7.33 的指数行情（腾讯 a[30] 带日期），与 jjAucState 完全是同一套判据。 */
+  var iq = {};
+  try { iq = await jjQsIdx(); } catch (e) {}
+  var auc = jjAucState(jjPhase(), iq, {});
   return {
+    auc: auc,
     zt: ztStocks, dt: dtStocks, industries: industries, avoid: avoid,
     concPct: concPct, mood: mood,
     recs: industries.filter(function (x) { return x.recommend; }),
@@ -6410,10 +6449,14 @@ if(typeof setHtml!=="function"){ function setHtml(el, h){ if(!el) return false; 
    仅为交易体系梳理与数据可视化，不构成任何投资建议。 */
 var JJ_RULE = {
   ztp: { '10cm': 9.7, '20cm': 19.5, '30cm': 29.5, '5cm': 4.8 },
-  scanPz: 200,                       /* 全市场涨跌幅榜取样条数（竞价涨跌停是降序前缀，200 覆盖到 4.8% 以下） */
   hosts: ['push2.eastmoney.com', 'push2delay.eastmoney.com'],
   /* §2 涨跌停 */
   ztExtreme: 10, ztNormal: 3, dtPanic: 5, ztBandSoft: 0.3,
+  /* 竞价涨/跌停判定容差（元）：只吃「四舍五入到分」的误差，不吃「接近涨跌停」 */
+  ztPriceEps: 0.011,
+  /* 全市场取样：★实测东财 clist 单页上限就是 100 条（pz 传 200/500/1000 都只返回 100），
+     所以要靠分页凑样本，否则「竞价涨停但盘中回落」的个股会掉出取样区间被漏掉 */
+  scanPz: 100, scanPages: 4,
   /* §3.1 指数五档 */
   idxHi: 0.5, idxFlat: 0.1,
   /* §4.1 / §4.2 六类分类 */
@@ -6448,14 +6491,78 @@ function jjLimitGap(code, name){
   var l = ztLimitOf(code, name);
   return (JJ_RULE.ztp[l] != null) ? JJ_RULE.ztp[l] : 9.7;
 }
-/* 腾讯行情数组 → 归一化（下标口径沿用平台既有约定：3=最新价 4=昨收 5=今开 32=涨跌幅 33=最高 37=成交额万元） */
+/* ===== 集合竞价严格口径（2026-09-19 新增，修复「盘中涨停 = 竞价涨停」的逻辑错误） =====
+   集合竞价的唯一结果就是 9:25 撮合出的【今开价】。因此：
+     · 竞价涨幅   = 今开 / 昨收 − 1          （不是「当前价 / 昨收 − 1」）
+     · 竞价涨停   = 今开 ≥ 涨停价 − 1 分钱    （不是「现在涨了 9.8%/19.8%」）
+   ⚠️ 原来的实现拿东财 f3（当前涨跌幅）判定，等于把「开盘后任何时刻冲上涨停」都算成竞价涨停。
+     实测同一样本（涨幅榜+跌幅榜各 500）：旧口径 64 只 vs 新口径 5 只，误判 59 只。 */
+function jjLimitPct(code, name){
+  var l = ztLimitOf(code, name);
+  return l === '20cm' ? 20 : l === '30cm' ? 30 : l === '5cm' ? 5 : 10;
+}
+function jjZtPrice(pre, pct){ if(pre == null || !(pre > 0)) return null; return Math.round(pre * (1 + pct / 100) * 100) / 100; }
+function jjDtPrice(pre, pct){ if(pre == null || !(pre > 0)) return null; return Math.round(pre * (1 - pct / 100) * 100) / 100; }
+/* 竞价涨幅（今开/昨收）。今开缺失/为 0（未开盘、停牌、无竞价）→ 返回 null，绝不回退到现价 */
+function jjPrem(open, pre){
+  if(open == null || pre == null || !(open > 0) || !(pre > 0)) return null;
+  return (open / pre - 1) * 100;
+}
+function jjIsAucZt(open, pre, code, name){
+  if(open == null || pre == null || !(open > 0) || !(pre > 0)) return false;
+  var zp = jjZtPrice(pre, jjLimitPct(code, name));
+  return zp != null && open >= zp - JJ_RULE.ztPriceEps;
+}
+function jjIsAucDt(open, pre, code, name){
+  if(open == null || pre == null || !(open > 0) || !(pre > 0)) return false;
+  var dp = jjDtPrice(pre, jjLimitPct(code, name));
+  return dp != null && open <= dp + JJ_RULE.ztPriceEps;
+}
+/* 竞价数据的有效性：只有「当日已经产生集合竞价」的那些读数才叫竞价数据。
+   判据优先用行情自带的日期（腾讯 a[30] 前 8 位 = YYYYMMDD）——比只看时钟可靠
+   （节假日、9:15 之前拿到的一定是上一交易日的数据）。 */
+function jjAucState(ph, iq, pq){
+  var day = '', k;
+  for(k in (iq || {})){ if(iq[k] && iq[k].day){ day = iq[k].day; break; } }
+  if(!day){ for(k in (pq || {})){ if(pq[k] && pq[k].day){ day = pq[k].day; break; } } }
+  var today = D.date, ok, kind, label;
+  if(ph.k === 'before'){                       /* 未到 9:15：当日竞价不可能已产生 */
+    ok = false; kind = 'pre';
+    label = day ? ('当日竞价尚未开始（9:15 起）—— 下面是 **' + day + '** 的竞价，只能复盘，不能用于今天决策')
+                : '当日竞价尚未开始（9:15 起）—— 未取到行情日期，无法确认数据归属';
+  } else if(!day){
+    ok = false; kind = 'none';
+    label = '未取到行情日期，无法确认这份竞价数据属于哪一天 → 不产出当日结论';
+  } else if(day !== today){
+    ok = false; kind = 'replay';
+    label = '当日竞价尚未产生（今天多半是非交易日）—— 下面是 **' + day + '** 的竞价，只能复盘，不能用于今天决策';
+  } else if(ph.live){
+    ok = true; kind = 'live';
+    label = '当日集合竞价进行中（' + day + '）';
+  } else {
+    ok = true; kind = 'snapshot';
+    label = '当日 9:25 竞价结果（' + day + '）—— 今开价已固定，以下全部按【今开/昨收】计算，不是盘中价';
+  }
+  return { day: day || '—', today: today, ok: ok, kind: kind, label: label };
+}
+/* 分节标题上挂的小标签：非当日竞价数据时，每个分节都要明示，避免当成"今天"看 */
+function jjAucTag(s){
+  if(!s || !s.auc || s.auc.ok) return '';
+  return '<span class="badge b-o" style="margin-right:6px">历史复盘 ' + esc(s.auc.day) + '</span>';
+}
+/* 腾讯行情数组 → 归一化（下标口径沿用平台既有约定：3=最新价 4=昨收 5=今开 30=日期时间 32=涨跌幅
+   33=最高 37=成交额万元 47=涨停价 48=跌停价） */
 function jjTxNorm(a){
   if(!a || !a.length) return null;
   var open = num(a[5]), pre = num(a[4]), price = num(a[3]);
   return { name: a[1], open: open, pre: pre, price: price, pct: num(a[32]),
     high: num(a[33]), low: num(a[34]), amt: num(a[37]),
-    /* 竞价方向以「今开(竞价匹配价)/昨收」为准；缺失才回退最新价口径 */
-    gap: (open != null && pre) ? (open / pre - 1) * 100 : ((price != null && pre) ? (price / pre - 1) * 100 : null) };
+    ztP: num(a[47]), dtP: num(a[48]),                      /* 交易所口径的涨跌停价（比按 % 算更准） */
+    day: (a[30] ? String(a[30]).slice(0, 8) : ''),         /* 数据归属日 YYYYMMDD */
+    /* ★ 竞价涨幅 = 今开(9:25 竞价匹配价) / 昨收 − 1。
+       2026-09-19 修正：原来今开缺失时会回退到「最新价/昨收」——那就是盘中价，不是竞价价，
+       会把「盘中涨停」混进竞价统计。今开拿不到就是没有竞价数据（gap = null），由下游显式处理。 */
+    gap: jjPrem(open, pre) };
 }
 /* A股代码 → 归一化行情（key = 6 位代码） */
 function jjQs(codes){
@@ -6480,32 +6587,55 @@ function jjQsIdx(){
     return out;
   }).catch(function(){ return {}; });
 }
-/* 全市场涨跌幅榜（竞价涨跌停扫描）· 与既有 fetchClist 同参，但带 host 回退（竞价要实时，优先 push2） */
-function jjClist(po, pz){
-  var fields = 'f12,f14,f2,f3,f18,f100,f20,f21,f6';
-  var hosts = JJ_RULE.hosts, i = 0;
-  return new Promise(function(res){
-    (function next(){
-      if(i >= hosts.length){ res([]); return; }
-      var host = hosts[i++];
-      var url = 'https://' + host + '/api/qt/clist/get?pn=1&pz=' + pz + '&po=' + po + '&np=1&fltt=2&invt=2&fid=f3' +
-        '&fs=' + encodeURIComponent(FS_STOCK) + '&fields=' + fields;
-      jsonp(url, 'cb', 9000).then(function(r){
-        var d = r && r.data && r.data.diff;
-        if(!d){ next(); return; }
-        res(Object.keys(d).map(function(k){ return d[k]; }).filter(function(x){ return x && x.f12; }));
-      }).catch(function(){ next(); });
-    })();
+/* 全市场涨跌幅榜（竞价涨跌停扫描）· 带 host 回退
+   ★ 2026-09-19 两个修正：
+     ① fields 必须带 f17(今开) —— 竞价涨跌停只能由「今开 vs 涨跌停价」判定，f3 是盘中涨跌幅；
+     ② 东财 clist 单页上限实测就是 100 条（pz=200/500/1000 全返回 100），
+        原来 scanPz:200 形同虚设 → 改为分页凑样本，降低「竞价涨停但盘中回落」的漏检。
+   ⚠️ 排序仍只能用 fid=f3：竞价时段(9:15-9:30) f3 就是竞价涨幅，排序正确；
+      开盘后 f3 是盘中涨幅，排序会失真 —— 这点在界面「取样口径」里如实写明，不掩盖。 */
+function jjClistPage(host, po, pz, pn){
+  var fields = 'f12,f14,f2,f3,f17,f18,f100,f20,f21,f6';
+  var url = 'https://' + host + '/api/qt/clist/get?pn=' + pn + '&pz=' + pz + '&po=' + po + '&np=1&fltt=2&invt=2&fid=f3' +
+    '&fs=' + encodeURIComponent(FS_STOCK) + '&fields=' + fields;
+  return jsonp(url, 'cb', 9000).then(function(r){
+    var d = r && r.data && r.data.diff;
+    if(!d) return [];
+    return Object.keys(d).map(function(k){ return d[k]; }).filter(function(x){ return x && x.f12; });
   });
 }
-/* 竞价涨 / 跌停判定（涨跌幅达到板别阈值；容差 0.3%） */
+function jjClist(po){
+  var pz = JJ_RULE.scanPz || 100, pages = JJ_RULE.scanPages || 1;
+  var hosts = JJ_RULE.hosts, i = 0;
+  function tryHost(){
+    if(i >= hosts.length) return Promise.resolve([]);
+    var host = hosts[i++];
+    var ps = [], pn;
+    for(pn = 1; pn <= pages; pn++) ps.push(jjClistPage(host, po, pz, pn));
+    return Promise.all(ps).then(function(rs){
+      var out = [], seen = {};
+      rs.forEach(function(arr){
+        (arr || []).forEach(function(x){
+          var c = String(x.f12);
+          if(c && !seen[c]){ seen[c] = 1; out.push(x); }
+        });
+      });
+      if(!out.length) return tryHost();          /* 该 host 一页都没取到 → 换下一个 */
+      return out;
+    }).catch(function(){ return tryHost(); });
+  }
+  return tryHost();
+}
+/* 竞价涨 / 跌停判定 —— 严格限定为「集合竞价（今开）就封在涨跌停价上」
+   ⚠️ 2026-09-19 修正：原实现用 f3（当前涨跌幅）判定，等于把「盘中任何时段涨停」都算成竞价涨停。
+     实测同一样本：旧口径 64 只 vs 新口径 5 只，误判 59 只（见 _probe_fields.js 实测输出）。
+     现在只认【今开 vs 涨跌停价】：今开 = 涨停价 才算竞价涨停；
+     今开缺失/为 0（未开盘、停牌、无竞价）→ 一律不算，★绝不回退到现价。 */
 function jjIsZtX(x){
-  var g = num(x.f3); if(g == null) return false;
-  return g >= jjLimitGap(x.f12, x.f14) - JJ_RULE.ztBandSoft;
+  return jjIsAucZt(num(x.f17), num(x.f18), String(x.f12), x.f14);
 }
 function jjIsDtX(x){
-  var g = num(x.f3); if(g == null) return false;
-  return g <= -(jjLimitGap(x.f12, x.f14) - JJ_RULE.ztBandSoft);
+  return jjIsAucDt(num(x.f17), num(x.f18), String(x.f12), x.f14);
 }
 /* 身份判定（原文 §2.2「高位龙头还是低位杂毛」）：用昨日连板数 + 流通市值分档 */
 function jjIdentity(code, prevMap){
@@ -6606,6 +6736,8 @@ function jjShape(series){
 function jjBuild(prev, zb, iq, pq, up, dn){
   var ph = jjPhase();
   var s = { ph: ph, allMap: {} };
+  /* ★ 竞价比然前提：先确认这份数据是不是「当日已产生集合竞价」的读数 */
+  s.auc = jjAucState(ph, iq, pq);
   var prevMap = {}, prevDaySec = {};
   (prev || []).forEach(function(x){
     prevMap[x.c] = x;
@@ -6627,12 +6759,17 @@ function jjBuild(prev, zb, iq, pq, up, dn){
   var ztList = (up || []).filter(jjIsZtX).map(function(x){
     var code = String(x.f12);
     var p = prevMap[code];
-    return { code: code, name: x.f14, sec: x.f100 || '—', gap: num(x.f3), lb: p ? ((p.lbc || 1) + 1) : 1,
+    return { code: code, name: x.f14, sec: x.f100 || '—',
+      gap: jjPrem(num(x.f17), num(x.f18)),      /* 竞价涨幅 = 今开/昨收（用于竞价分析） */
+      now: num(x.f3),                            /* 当前涨跌幅 —— 只作展示，不用于竞价判定 */
+      lb: p ? ((p.lbc || 1) + 1) : 1,
       isNew: !p, ltsz: num(x.f21), amt: num(x.f6) };
   });
   var dtList = (dn || []).filter(jjIsDtX).map(function(x){
     var code = String(x.f12);
-    return { code: code, name: x.f14, sec: x.f100 || '—', gap: num(x.f3), id: jjIdentity(code, prevMap), isNuke: !!prevMap[code] };
+    return { code: code, name: x.f14, sec: x.f100 || '—',
+      gap: jjPrem(num(x.f17), num(x.f18)), now: num(x.f3),
+      id: jjIdentity(code, prevMap), isNuke: !!prevMap[code] };
   });
   s.ztList = ztList; s.dtList = dtList;
   s.ztCnt = ztList.length; s.dtCnt = dtList.length;
@@ -6641,7 +6778,8 @@ function jjBuild(prev, zb, iq, pq, up, dn){
   s.dataOk = { zt: (up || []).length > 0, dt: (dn || []).length > 0, prev: (prev || []).length > 0 };
   /* 竞价涨停股的读数也登记进 allMap，供竞价轨迹采样使用 */
   ztList.forEach(function(x){ if(!s.allMap[x.code]) s.allMap[x.code] = { code: x.code, name: x.name, gap: x.gap }; });
-  s.ztUpCap = (up || []).length >= JJ_RULE.scanPz;          /* 触及取样上限：家数为下限 */
+  s.scanN = (up || []).length + (dn || []).length;         /* 实际取到的样本只数（分页后） */
+  s.ztUpCap = (up || []).length >= (JJ_RULE.scanPz * (JJ_RULE.scanPages || 1));  /* 触及取样上限：家数为下限 */
   var r = s.dtCnt > 0 ? (s.ztCnt / s.dtCnt) : (s.ztCnt > 0 ? Infinity : null);
   s.ratio = r;
   s.ratioTxt = (r == null) ? '—' : (s.dtCnt === 0 ? (s.ztCnt + ':0') : (s.ztCnt + ':' + s.dtCnt + '（' + r.toFixed(1) + ':1）'));
@@ -6804,6 +6942,12 @@ function jjBuild(prev, zb, iq, pq, up, dn){
   else if(s.dtCnt > JJ_RULE.dtPanic) gate = '竞价跌停 ' + s.dtCnt + ' 只（>' + JJ_RULE.dtPanic + '）—— 恐慌信号，仓位上限降一档';
   else if(s.bigFace.step >= 3) gate = '亏钱效应已扩散到首板（首板大面 ' + s.bigFace.firstFaces + ' 只，扩散第 ' + s.bigFace.step + ' 步）—— 当日空仓或极轻仓';
   else if(s.bigFace.n >= JJ_RULE.faceFlood) gate = '竞价大面 ' + s.bigFace.n + ' 只（>' + JJ_RULE.faceFlood + '）—— 亏钱效应扩散，仓位上限降一档';
+  /* ★ 严格口径：非当日竞价数据 → 不给情绪定级、不给仓位建议。
+     拿上一交易日（或盘中）的数据冒充当日竞价，会直接误导当日操作，宁可显示"不评级"。 */
+  if(!s.auc.ok){
+    lv = { k: 'replay', name: '非当日竞价（不评级）', act: s.auc.label + ' → 本卡不给出当日仓位建议', pos: '—', cls: 'flat' };
+    gate = null;
+  }
   s.score = { items: it, total: total, max: 18, level: lv, gate: gate };
 
   /* ⑥ 操作提示（可参与 / 谨慎 / 回避 / 关注 / 风险） */
@@ -6894,7 +7038,7 @@ function jjEnsure(force, cb){
     ]).then(function(){ JJ.poolKey = key; });
   pPool.then(function(){
     var codes = (JJ.prevPool || []).map(function(x){ return x.c; }).concat((JJ.zbPool || []).map(function(x){ return x.c; }));
-    return Promise.all([jjQsIdx(), jjQs(codes), jjClist(1, JJ_RULE.scanPz), jjClist(0, JJ_RULE.scanPz)]);
+    return Promise.all([jjQsIdx(), jjQs(codes), jjClist(1), jjClist(0)]);
   }).then(function(rs){
     try{
       JJ.snap = jjBuild(JJ.prevPool || [], JJ.zbPool || [], rs[0] || {}, rs[1] || {}, rs[2] || [], rs[3] || []);
@@ -6918,8 +7062,17 @@ function jjBadge(txt, cls){ return '<span class="badge ' + (cls || '') + '">' + 
 function jjPct(v){ return '<span class="' + pctCls(v) + ' mono">' + fpct(v) + '</span>'; }
 function jjHeadHtml(s){
   var ph = s.ph;
+  var au = s.auc || { ok: true, label: '', day: '—' };
+  var aucBanner = au.ok
+    ? '<div class="concl c-grn"><b>✅ ' + esc(au.label) + '</b>' +
+      '<br><span class="flat">口径：<b>竞价涨停 = 今开（9:25 竞价匹配价）≥ 涨停价</b>，不是「现在涨了多少」；' +
+      '竞价溢价率 = 今开 / 昨收 − 1。今开一开盘就固定，所以收盘后这里看到的仍是当日的竞价结果。</span></div>'
+    : '<div class="concl c-ora"><b>⚠️ ' + esc(au.label.replace(/\*\*/g, '')) + '</b>' +
+      '<br><span class="flat">严格口径：本卡<b>只在当日已产生集合竞价时才产出</b>推荐 / 回避板块、情绪定级与仓位建议。' +
+      '现在没有当日竞价数据，下面的分节仅供复盘，<b>不要拿它做今天的决策</b>。</span></div>';
   var h = '<div class="note"><b>核心原则：9:20 前可撤单＝演戏，9:20 后不可撤单＝真金白银 —— 只看 9:20-9:25 的真实委托。</b>' +
     '三窗口：<b>9:15-9:20</b> 可挂可撤（演戏区，不作决策依据）｜ <b>9:20-9:25</b> 可挂不可撤（核心观察窗口）｜ <b>9:25-9:30</b> 撮合成交（最终决策窗口）。</div>';
+  h += aucBanner;
   h += '<div class="m730-gate">' +
     jjTag('当前相位：' + esc(ph.name) + '（' + esc(hmNow()) + '）', ph.cls) +
     jjTag(esc(ph.txt), ph.cls) +
@@ -6936,7 +7089,7 @@ function jjHeadHtml(s){
   return h;
 }
 function jjIdxHtml(s){
-  var h = '<h3 style="font-size:13px;margin:12px 0 6px;color:#60a5fa">① 大盘指数竞价方向（原文 §3.1 五档）</h3>';
+  var h = '<h3 style="font-size:13px;margin:12px 0 6px;color:#60a5fa">' + jjAucTag(s) + '① 大盘指数竞价方向（原文 §3.1 五档）</h3>';
   var m = s.idxMain;
   h += '<div class="concl c-' + (m ? (m.lv.cls === 'up' ? 'grn' : (m.lv.cls === 'dn' ? 'ora' : 'blu')) : 'grn') + '"><b>大环境判断：' + (m ? (esc(m.name) + ' ' + fpct(m.gap) + ' → ' + m.lv.name + '（' + m.lv.band + '）｜' + m.lv.act) : '无指数数据') + '</b></div>';
   h += '<div class="twrap"><table class="mini-tbl"><thead><tr><th>指数</th><th>竞价高开/低开</th><th>竞价成交额</th><th>档位</th><th>当日策略（原文）</th></tr></thead><tbody>';
@@ -6950,7 +7103,7 @@ function jjIdxHtml(s){
   return h;
 }
 function jjZtDtHtml(s){
-  var h = '<h3 style="font-size:13px;margin:12px 0 6px;color:#60a5fa">② 竞价涨跌停（原文 §2：市场情绪温度计）</h3>';
+  var h = '<h3 style="font-size:13px;margin:12px 0 6px;color:#60a5fa">' + jjAucTag(s) + '② 竞价涨跌停（原文 §2：市场情绪温度计）</h3>';
   var zc = s.ztCnt, dc = s.dtCnt;
   var zLv = zc > JJ_RULE.ztExtreme ? '情绪极强' : (zc >= 6 ? '情绪偏强' : (zc >= JJ_RULE.ztNormal ? '情绪正常' : '情绪偏弱'));
   var dLv = dc === 0 ? '情绪稳定' : (dc <= 2 ? '局部风险' : (dc <= JJ_RULE.dtPanic ? '风险上升' : '恐慌'));
@@ -6963,22 +7116,26 @@ function jjZtDtHtml(s){
   var zsm = {};
   s.ztList.forEach(function(x){ zsm[x.sec] = (zsm[x.sec] || 0) + 1; });
   var zsa = Object.keys(zsm).map(function(k){ return { name: k, cnt: zsm[k] }; }).sort(function(a, b){ return b.cnt - a.cnt; });
-  h += '<div class="twrap" style="margin-top:6px"><table class="mini-tbl"><thead><tr><th>身份</th><th>名称</th><th>行业</th><th>竞价涨幅</th><th>板数</th><th>流通市值</th><th>备注</th></tr></thead><tbody>';
+  h += '<div class="twrap" style="margin-top:6px"><table class="mini-tbl"><thead><tr><th>身份</th><th>名称</th><th>行业</th><th>竞价涨幅<br><span style="font-weight:400;font-size:10px">今开/昨收</span></th><th>现价涨幅<br><span style="font-weight:400;font-size:10px">仅供参考</span></th><th>板数</th><th>流通市值</th><th>备注</th></tr></thead><tbody>';
   if(s.ztList.length){
     s.ztList.slice().sort(function(a, b){ return b.lb - a.lb || (b.gap == null ? -999 : b.gap) - (a.gap == null ? -999 : a.gap); }).slice(0, 20).forEach(function(x){
       h += '<tr><td>' + jjBadge('竞价涨停', 'b-r') + '</td><td><b>' + esc(x.name) + '</b>' + rankBadgeAny(x.code) + '</td><td class="yel">' + esc(x.sec) + '</td>' +
-        '<td>' + jjPct(x.gap) + '</td><td class="mono up">' + x.lb + ' 板</td><td class="mono">' + famt(x.ltsz == null ? null : x.ltsz / 1e8) + '</td>' +
+        '<td>' + jjPct(x.gap) + '</td><td style="opacity:.72">' + jjPct(x.now) + '</td><td class="mono up">' + x.lb + ' 板</td><td class="mono">' + famt(x.ltsz == null ? null : x.ltsz / 1e8) + '</td>' +
         '<td class="flat">' + (x.isNew ? '新面孔（非昨日涨停）' : '昨日涨停 → 连板') + '</td></tr>';
     });
-  } else h += '<tr><td colspan="7" class="flat">竞价无涨停股' + (s.ph.k === 'before' ? '（竞价未开始）' : '') + '</td></tr>';
+  } else h += '<tr><td colspan="8" class="flat">竞价无涨停股' + (s.ph.k === 'before' ? '（竞价未开始）' : '') + '</td></tr>';
   h += '</tbody></table></div>';
-  h += '<div class="note">竞价涨停行业分布：' + (zsa.length ? zsa.slice(0, 8).map(function(o){ return '<b>' + esc(o.name) + '</b> ' + o.cnt + ' 只'; }).join('｜') : '—') +
+  h += '<div class="note"><b>判定口径：</b>竞价涨停 = <b>今开（9:25 竞价匹配价）≥ 涨停价</b>；<b>不是</b>「现在涨了多少」——' +
+    '盘中冲上涨停的股票<b>不计入</b>竞价涨停（2026-09-19 修正：此前按当前涨跌幅判定，同一样本误判 59 只）。' +
+    '取样：涨幅榜 / 跌幅榜各 ' + (JJ_RULE.scanPages || 1) + ' 页（单页上限 100 只，共约 ' + (s.scanN || 0) + ' 只）；' +
+    '东财只支持按「当前涨跌幅」排序，所以<b>开盘后</b>若某只竞价涨停股盘中大幅回落，可能掉出取样区间被漏计（竞价时段 9:15-9:30 排序即竞价涨幅，不会漏）。' +
+    '「现价涨幅」列仅供参考，不参与任何判定。<br>竞价涨停行业分布：' + (zsa.length ? zsa.slice(0, 8).map(function(o){ return '<b>' + esc(o.name) + '</b> ' + o.cnt + ' 只'; }).join('｜') : '—') +
     '；集中 1-2 个行业=有主线，分散=无主线轮动。「竞价涨停封单比」（封单/流通市值 >5% 强封 / &lt;1% 弱封）需盘口数据，<b>本卡不臆造</b>，请人工核对。</div>';
   if(s.dtList.length){
     h += '<h3 style="font-size:12.5px;margin:10px 0 4px;color:#f87171">竞价跌停股（' + s.dtCnt + ' 只）· 身份决定性质</h3>' +
-      '<div class="twrap"><table class="mini-tbl"><thead><tr><th>名称</th><th>行业</th><th>竞价跌幅</th><th>身份</th><th>是否昨日涨停（核按钮）</th></tr></thead><tbody>' +
+      '<div class="twrap"><table class="mini-tbl"><thead><tr><th>名称</th><th>行业</th><th>竞价跌幅<br><span style="font-weight:400;font-size:10px">今开/昨收</span></th><th>现价涨幅</th><th>身份</th><th>是否昨日涨停（核按钮）</th></tr></thead><tbody>' +
       s.dtList.slice(0, 15).map(function(x){
-        return '<tr><td><b>' + esc(x.name) + '</b>' + rankBadgeAny(x.code) + '</td><td class="yel">' + esc(x.sec) + '</td><td>' + jjPct(x.gap) + '</td>' +
+        return '<tr><td><b>' + esc(x.name) + '</b>' + rankBadgeAny(x.code) + '</td><td class="yel">' + esc(x.sec) + '</td><td>' + jjPct(x.gap) + '</td><td style="opacity:.72">' + jjPct(x.now) + '</td>' +
           '<td class="' + (x.id.key === 'top' ? 'dn' : 'flat') + '">' + esc(x.id.name) + '</td>' +
           '<td>' + (x.isNuke ? jjBadge('核按钮', 'b-r') : '<span class="flat">否</span>') + '</td></tr>';
       }).join('') + '</tbody></table></div>' +
@@ -6988,7 +7145,7 @@ function jjZtDtHtml(s){
 }
 function jjPrevHtml(s){
   var p = s.prev, C = p.cls6;
-  var h = '<h3 style="font-size:13px;margin:12px 0 6px;color:#60a5fa">③ 昨日涨停股今日竞价表现（原文 §4：短线的「工资单」）</h3>';
+  var h = '<h3 style="font-size:13px;margin:12px 0 6px;color:#60a5fa">' + jjAucTag(s) + '③ 昨日涨停股今日竞价表现（原文 §4：短线的「工资单」）</h3>';
   var tot = p.n || 1;
   var items = [
     ['继续涨停', C.zt, 'up'], ['超预期高开 >7%', C.over, 'up'], ['符合预期 3-7%', C.ok, 'up'],
@@ -7041,7 +7198,7 @@ function jjShapeHtml(s){
   var agg = t.pts.map(function(x){ return x.avg; }).filter(function(v){ return v != null; });
   var idxs = t.pts.map(function(x){ return x.idx; }).filter(function(v){ return v != null; });
   var aSh = jjShape(agg), iSh = jjShape(idxs);
-  var h = '<h3 style="font-size:13px;margin:12px 0 6px;color:#60a5fa">③b 竞价轨迹五形态（原文 §3.3）· 采样 ' + t.pts.length + ' 点</h3>';
+  var h = '<h3 style="font-size:13px;margin:12px 0 6px;color:#60a5fa">' + jjAucTag(s) + '③b 竞价轨迹五形态（原文 §3.3）· 采样 ' + t.pts.length + ' 点</h3>';
   h += '<div class="twrap"><table class="mini-tbl"><thead><tr><th>对象</th><th>形态</th><th>轨迹解读</th></tr></thead><tbody>' +
     '<tr><td><b>大盘指数（上证）</b></td><td><b>' + esc(iSh.name) + '</b></td><td class="flat" style="white-space:normal">' + esc(iSh.txt) + '</td></tr>' +
     '<tr><td><b>昨日涨停股整体（平均溢价率）</b></td><td><b>' + esc(aSh.name) + '</b></td><td class="flat" style="white-space:normal">' + esc(aSh.txt) + '</td></tr>' +
@@ -7058,7 +7215,7 @@ function jjShapeHtml(s){
   return h;
 }
 function jjDirHtml(s){
-  var h = '<h3 style="font-size:13px;margin:12px 0 6px;color:#60a5fa">④ 今日方向：行业强度 + 梯队 + 新方向（原文 §5）</h3>';
+  var h = '<h3 style="font-size:13px;margin:12px 0 6px;color:#60a5fa">' + jjAucTag(s) + '④ 今日方向：行业强度 + 梯队 + 新方向（原文 §5）</h3>';
   h += '<div class="concl c-blu"><b>行业集中度：' + s.conc.txt + '</b>（前 ' + JJ_RULE.concTopN + ' 行业占竞价涨停的 ' + (s.conc.pct == null ? '—' : s.conc.pct.toFixed(0) + '%') + '；原文：>60% 有主线 / &lt;40% 无主线）' +
     '<span class="jj-hint" style="font-weight:700">　👆 点击行业名 → 展开该行业全部个股</span></div>';
   h += '<div class="twrap"><table class="mini-tbl"><thead><tr><th>行业</th><th>竞价涨停</th><th>强度</th><th>梯队完整性</th><th>最高板</th><th>领涨</th><th>新方向</th><th>操作策略（原文）</th></tr></thead><tbody>';
@@ -7108,7 +7265,7 @@ function jjFaceHtml(s){
 }
 function jjScoreHtml(s){
   var sc = s.score;
-  var h = '<h3 style="font-size:13px;margin:12px 0 6px;color:#60a5fa">⑥ 综合情绪定级（原文 §7：六大指标 18 分制 → 仓位上限）</h3>';
+  var h = '<h3 style="font-size:13px;margin:12px 0 6px;color:#60a5fa">' + jjAucTag(s) + '⑥ 综合情绪定级（原文 §7：六大指标 18 分制 → 仓位上限）</h3>';
   h += '<div class="concl c-' + (sc.level.cls === 'up' ? 'red' : (sc.level.cls === 'dn' ? 'ora' : 'blu')) + '"><b>总分 ' + sc.total + '/' + sc.max + ' → 情绪定级【' + sc.level.name + '】</b>｜' +
     '当日策略：' + sc.level.act + '｜<b>仓位上限：' + sc.level.pos + '</b></div>';
   if(sc.gate) h += '<div class="concl c-ora"><b>⚠️ 硬闸门生效：' + sc.gate + '</b></div>';
@@ -7125,7 +7282,7 @@ function jjScoreHtml(s){
   return h;
 }
 function jjStepHtml(s){
-  var h = '<h3 style="font-size:13px;margin:12px 0 6px;color:#60a5fa">⑦ 9:25-9:30 决策五步（原文 §8，已填当日读数）</h3>';
+  var h = '<h3 style="font-size:13px;margin:12px 0 6px;color:#60a5fa">' + jjAucTag(s) + '⑦ 9:25-9:30 决策五步（原文 §8，已填当日读数）</h3>';
   var L = s.score.level;
   var idx = s.idxMain;
   var steps = [
@@ -7148,7 +7305,7 @@ function jjActHtml(s){
     return '<div class="kpi" style="margin-top:6px;border-left:3px solid ' + cls + '"><div class="t">' + title + ' <span class="badge b-b">' + arr.length + '</span></div>' +
       arr.map(function(x){ return '<div class="note" style="margin:4px 0">' + x + '</div>'; }).join('') + '</div>';
   }
-  return '<h3 style="font-size:13px;margin:12px 0 6px;color:#60a5fa">⑧ 操作提示（可操作方向 + 风险）</h3>' +
+  return '<h3 style="font-size:13px;margin:12px 0 6px;color:#60a5fa">' + jjAucTag(s) + '⑧ 操作提示（可操作方向 + 风险）</h3>' +
     block('✅ 可参与', a.yes, '#e44') +
     block('⚠️ 谨慎 / 不追', a.careful, '#f5b300') +
     block('❌ 回避', a.avoid, '#f0453a') +
@@ -7160,6 +7317,8 @@ function jjReportText(s){
   L.push('═══════════════════════════════════════');
   L.push('  【9:25 集合竞价全景诊断】' + (D.date || ''));
   L.push('  相位：' + ph.name + '（数据时刻 ' + (JJ.t ? new Date(JJ.t).toTimeString().slice(0, 8) : '—') + '）');
+  L.push('  数据归属：' + ((s.auc && s.auc.ok) ? ('当日竞价（' + (s.auc.day || '—') + '）· 竞价涨停=今开≥涨停价') 
+    : ('⚠ 非当日竞价（' + ((s.auc && s.auc.day) || '—') + '）→ 以下仅供复盘，不做当日决策')));
   L.push('═══════════════════════════════════════');
   L.push('');
   /* 结论速览（9:25 一眼可见；纯文本用文字标签，不依赖颜色） */
@@ -7342,6 +7501,13 @@ function jjSecChip(name, kind, boxId, cls, inner){
     'onclick="jjSecToggle(this)" title="点击展开该板块个股清单">' + inner + '<span class="car">▸</span></span>';
 }
 function jjPickHtml(s){
+  /* ★ 严格限定：没有当日竞价数据 → 不产出推荐 / 回避板块 */
+  if(!s.auc || !s.auc.ok){
+    return '<div class="concl c-ora"><b>⚠️ 今日推荐 / 回避板块：不产出</b><br>' +
+      '<span class="flat">' + esc((s.auc && s.auc.label || '').replace(/\*\*/g, '')) +
+      '。集合竞价的推荐只能基于<b>当日 9:25 的竞价结果</b>；用盘中涨停或上一交易日的数据代替，' +
+      '等于把"全天涨停"当成"竞价涨停"，结论没有意义。请等到 9:15 之后再刷新本卡。</span></div>';
+  }
   var P = jjPickCalc(s), rec = P.rec, conflict = P.conflict, obs = P.obs, avo = P.avo, avoMap = P.avoMap;
   var ztMap = jjSecCntMap(s);
   /* ✅ 推荐板块（红）：竞价涨停 S/A 级 = 有资金、有梯队，当日可参与的主攻方向 */
@@ -7403,7 +7569,7 @@ function jjReportHtml(s){
 }
 /* 7.33 的“第一个工作区”（置于卡片最顶部、相位头之后）：结论前置 —— 推荐/回避板块 + 可复制诊断报告 */
 function jjTopHtml(s){
-  return '<h3 style="font-size:13px;margin:12px 0 6px;color:#60a5fa">🚩 第一工作区 · 9:25 诊断报告（原文 §9 模板 · 可直接复制 · <span style="color:#fbbf24">结论前置</span>）' +
+  return '<h3 style="font-size:13px;margin:12px 0 6px;color:#60a5fa">' + jjAucTag(s) + '🚩 第一工作区 · 9:25 诊断报告（原文 §9 模板 · 可直接复制 · <span style="color:#fbbf24">结论前置</span>）' +
     '<span class="flat" style="font-weight:400;font-size:11.5px"> —— 9:25 先看这里：<b style="color:#f0453a">红框＝推荐板块</b>、<b style="color:#10b981">绿框＝回避板块</b>，再看下方逐段推导</span></h3>' +
     jjPickHtml(s) + jjReportHtml(s);
 }
