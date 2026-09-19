@@ -162,6 +162,11 @@
   .stock-head .name { font-size: 20px; font-weight: 700; }
   .stock-head .code { color: var(--muted); font-size: 13px; margin-left: 8px; font-weight: 400; }
   .stock-head .board { font-size: 11px; color: #9fa8da; background: #1a237e; border-radius: 5px; padding: 2px 7px; margin-left: 8px; vertical-align: 2px; }
+  /* 顶部「开盘八法」摘要：形态徽章 + 全天预判（紧跟板块名之后，落在头部右侧空区） */
+  .stock-head .o8-top { display:inline-flex; align-items:baseline; gap:10px; margin-left:14px; vertical-align:2px; }
+  .stock-head .o8-top-form { font-size:14px; font-weight:800; padding:2px 10px; border:1.5px solid; border-radius:8px; letter-spacing:.5px; }
+  .stock-head .o8-top-fc { font-size:16px; font-weight:800; letter-spacing:.5px; text-shadow:0 0 12px currentColor; white-space:nowrap; }
+  .stock-head .o8-top-fc .k { font-size:11.5px; font-weight:700; opacity:.85; letter-spacing:0; margin-right:5px; text-shadow:none; }
   .stock-head .px { text-align: right; }
   .stock-head .px .now { font-size: 26px; font-weight: 700; }
   .stock-head .px .chg { font-size: 14px; font-weight: 600; }
@@ -2459,6 +2464,24 @@ function computeOpen8(ind, quote, m5) {
     buy: buy, stop: stop, watchCond: watchCond, risk: risk, incomplete: (first3.length < 3) };
 }
 
+/* 开盘八法：多空配色（多方=红 / 空方=绿 / 震荡=橙）
+   —— 卡片、顶部摘要、表格紧凑单元三处共用，避免配色口径分叉 */
+function o8SideColor(o8) {
+  var s = (o8 && o8.form) ? o8.form.side : null;
+  return s === 'bull' ? '#ff5b5b' : (s === 'bear' ? '#26c281' : '#ffb74d');
+}
+/* 顶部（个股名旁边，板块名之后）的「开盘八法」摘要：形态徽章 + 全天预判
+   —— 与下方「早盘5分钟K线诊断」卡片共用同一份 open8 数据，只是把结论前置到最显眼处 */
+function renderOpen8Top(o8) {
+  if (!o8 || !o8.ok || !o8.form) return '';
+  var c = o8SideColor(o8);
+  return '<span class="o8-top" title="开盘八法：' + escapeHtml(o8.form.name) + ' · ' + escapeHtml(o8.pat || '') +
+    ' · 全天预判 ' + escapeHtml(o8.forecast || '') + '（下方「早盘5分钟K线诊断」有完整依据）">' +
+    '<span class="o8-top-form" style="border-color:' + c + ';color:' + c + '">' + escapeHtml(o8.form.name) + '</span>' +
+    '<span class="o8-top-fc" style="color:' + c + '"><span class="k">全天预判</span>' + escapeHtml(o8.forecast || '—') + '</span>' +
+    '</span>';
+}
+
 function renderOpen8Card(o8) {
   if (!o8 || !o8.ok) {
     return '<div class="card"><div class="card-title">早盘5分钟K线诊断（开盘八法）</div>' +
@@ -2466,7 +2489,7 @@ function renderOpen8Card(o8) {
       '<div class="stage-desc" style="font-size:12px;color:#5d6788">开盘八法基于当日前3根5分钟K线（09:30-09:45），仅在交易时段及之后可用；点击「刷新查询」可更新当日实时走势。</div></div>';
   }
   var form = o8.form;
-  var sideColor = form ? (form.side === 'bull' ? '#ff5b5b' : form.side === 'bear' ? '#26c281' : '#ffb74d') : '#8892b0';
+  var sideColor = form ? o8SideColor(o8) : '#8892b0';
   var sideName = form ? (form.side === 'bull' ? '多方盘' : form.side === 'bear' ? '空方盘' : '震荡盘') : '—';
   var p2 = o8.pressure.toFixed(2), p3 = o8.support.toFixed(2);
   var vwn = o8.vwapNow != null ? o8.vwapNow.toFixed(2) : '—';
@@ -2485,7 +2508,7 @@ function renderOpen8Card(o8) {
   html += '<div class="card"><div class="card-title">早盘5分钟K线诊断（开盘八法）· ' + o8.date + (o8.incomplete ? ' · 早盘未走完(' + o8.first3.length + '根)' : '') + '</div>';
   html += '<div class="open8-head"><div class="open8-form" style="border-color:' + sideColor + ';color:' + sideColor + '">' + (form ? form.name : '形态不足') + '</div>' +
     '<div class="open8-pat">' + (o8.pat || '—') + ' · ' + sideName + ' · 力道' + (form ? form.strength : '—') + '</div>' +
-    '<div class="open8-forecast" style="color:' + sideColor + '">全天预判：' + o8.forecast + '</div></div>';
+    '<div class="open8-forecast" style="color:' + sideColor + '"><span class="k">全天预判</span>' + escapeHtml(o8.forecast) + '</div></div>';
   html += bars;
   html += '<div class="open8-grid">' +
     okv('量价配合', o8.vp) +
@@ -2495,7 +2518,9 @@ function renderOpen8Card(o8) {
     okv('前3根压力位', p2) +
     okv('前3根支撑位', p3) +
     okv('关键K线', keyState) +
-    okv('全天预判', o8.forecast) +
+    /* 全天预判：单独高亮项（跨 2 列 + 加大加色，颜色随多方/空方/震荡） */
+    '<div class="open8-item o8-fc-hi"><div class="k">全天预判</div>' +
+    '<div class="v" style="color:' + sideColor + '">' + escapeHtml(o8.forecast) + '</div></div>' +
     '</div>';
   html += '<div class="open8-advice"><div class="oa-title">操作建议</div>' +
     '<div class="oa-row"><span class="oa-k">买点</span><span>' + escapeHtml(o8.buy) + '</span></div>' +
@@ -2553,6 +2578,8 @@ function buildResultHTML(quote, ind, sr, compact, source, gene, cap, rec, open8)
     '<span class="code">' + escapeHtml(quote.code) + '</span>' +
     '<span class="board">' + ind.board.label + ' · 涨停' + ind.board.zt + '%</span>' +
     (gene && gene.boardName ? '<span class="board-link" data-bkcode="' + (gene.boardCode || '') + '" data-bkname="' + escapeHtml(gene.boardName) + '" title="点击查看板块成分股">🏷 ' + escapeHtml(gene.boardName) + '</span>' : '') +
+    /* 顶部同步显示「开盘八法」结论（形态 + 全天预判），位置紧跟板块名之后 */
+    renderOpen8Top(open8) +
     '</div>' +
     (quote.code ? '<button type="button" class="wl-btn' + (wlHas(quote.code) ? ' on' : '') + '" data-code="' + escapeHtml(quote.code) + '" data-name="' + escapeHtml(name) + '" title="加入 / 移出自选列表">' + (wlHas(quote.code) ? '★ 已自选' : '☆ 加自选') + '</button>' : '') +
     '</div>' +
@@ -4227,7 +4254,7 @@ function rowCells(s) {
   cells += '<td class="' + ((s.gain60 || 0) >= 0 ? 'up' : 'down') + '">' + (s.gain60 === null ? '—' : fmtPct(s.gain60)) + '</td>';
   // 开盘强弱（开盘八法）
   if (r.open8 && r.open8.ok && r.open8.form) {
-    var o8c = r.open8.form.side === 'bull' ? '#ff5b5b' : r.open8.form.side === 'bear' ? '#26c281' : '#ffb74d';
+    var o8c = o8SideColor(r.open8);
     cells += '<td><div style="font-size:12px;color:' + o8c + ';font-weight:700">' + (r.open8.forecast || '—') + '</div>' +
       '<div style="font-size:10px;color:#5d6788;margin-top:2px">' + (r.open8.vp || '') + '</div></td>';
   } else {
