@@ -1730,21 +1730,40 @@ function computeIndicators(rawKlines, quote, code) {
   // 突破阻力：收盘站上「前 60 日（不含当日）最高」；并记录突破发生在几个交易日前
   var prevHi60 = -Infinity;
   for (var tB = Math.max(0, i - 60); tB < i; tB++) prevHi60 = Math.max(prevHi60, klines[tB].high);
-  var breakoutResist = isFinite(prevHi60) && closes[i] > prevHi60;
+  var breakoutResist = isFinite(prevHi60) && closes[i] > prevHi60;   /* 今日：收盘站上前 60 日最高「价」（严格口径） */
   /* 突破前 60 日（不含当日）的区间幅度 —— 判断「突破之前是不是一个收敛的基座」
-     2A「新鲜突破」的本意是「带量突破基座上沿」，而不是「趋势里又创了个新高」。
-     原实现只要求「今日破 60 日最高 + 放量」，趋势中继的新高也被算成 freshBO
-     → 实测 84% 的 freshBO 被 extended 抢先判成 2B，2A 占比被压到 0.08%。 */
+     2A「新鲜突破」的本意是「带量突破基座上沿」，而不是「趋势里又创了个新高」。 */
   var preLo60 = Infinity;
   for (var tP = Math.max(0, i - 60); tP < i; tP++) preLo60 = Math.min(preLo60, klines[tP].low);
   var preRange60 = (isFinite(prevHi60) && isFinite(preLo60) && preLo60 > 0)
     ? (prevHi60 / preLo60 - 1) * 100 : null;
-  var barsSinceBreakout = null;
-  for (var tC = i; tC >= Math.max(0, i - 40); tC--) {
-    var ph60 = -Infinity;
-    for (var uA = Math.max(0, tC - 60); uA < tC; uA++) ph60 = Math.max(ph60, klines[uA].high);
-    if (isFinite(ph60) && closes[tC] > ph60) barsSinceBreakout = i - tC;
-    else break;                       /* 只统计「连续突破」这一段的天数 */
+
+  /* ★ 最近一次「收盘创 60 日新高」的完整信息 —— 2026-09-20 修正
+     ⚠️ 原实现从 tC=i 开始、一遇不满足就 break，算出来的是「连续突破段长度」，
+     却被当作「距最近一次突破的天数」使用 → **只有今天正好突破时该值才非空**，
+     于是 `boRecent（≤15 日）` 恒为真、而「近几日突破过且仍站在突破位上方」这种
+     正常形态完全无法表达 —— 2A 被压缩成「恰好今天突破」，出现率被压到 0.08%。
+     现在改为「向前扫 20 日、取最近一次突破」，并把突破当日的量比 / 突破前的基座幅度 /
+     突破后是否守住一并算出（只有突破当日的数据才能正确表达「新鲜突破」）。 */
+  var barsSinceBreakout = null, boVolRatio = null, boPreRange = null, boPrevHi = null, boHold = null;
+  for (var tC = i; tC >= Math.max(0, i - 20); tC--) {
+    var pcHi = -Infinity, pHiB = -Infinity, pLoB = Infinity, uA;
+    for (uA = Math.max(0, tC - 60); uA < tC; uA++) {
+      if (klines[uA].close > pcHi) pcHi = klines[uA].close;
+      if (klines[uA].high > pHiB) pHiB = klines[uA].high;
+      if (klines[uA].low < pLoB) pLoB = klines[uA].low;
+    }
+    if (isFinite(pcHi) && closes[tC] > pcHi) {          /* 收盘创 60 日新高（标准口径） */
+      barsSinceBreakout = i - tC;
+      var v5b = 0, c5b = 0, mb;
+      for (mb = tC - 5; mb < tC; mb++) { if (mb >= 0) { v5b += klines[mb].volume; c5b++; } }
+      var avb = c5b ? v5b / c5b : 0;
+      boVolRatio = avb > 0 ? klines[tC].volume / avb : null;         /* 突破当日的量能倍数 */
+      boPreRange = (isFinite(pHiB) && isFinite(pLoB) && pLoB > 0) ? (pHiB / pLoB - 1) * 100 : null;
+      boPrevHi = isFinite(pHiB) ? pHiB : null;                        /* 突破时被越过的那个「上沿」 */
+      boHold = (boPrevHi != null && boPrevHi > 0) ? (closes[i] >= boPrevHi * 0.95) : null;  /* 突破后未跌回（-5% 容差 = 允许回踩） */
+      break;
+    }
   }
   // 跌破支撑：收盘跌破「前 60 日（不含当日）最低」
   var barsSinceBreakdown = null;
@@ -1793,6 +1812,7 @@ function computeIndicators(rawKlines, quote, code) {
     range20: range20, range40: range40, range60: range60,
     higherLow: higherLow, higherHigh: higherHigh, lowerHigh: lowerHigh, lowerLow: lowerLow,
     breakoutResist: breakoutResist, prevHi60: isFinite(prevHi60) ? prevHi60 : null, barsSinceBreakout: barsSinceBreakout,
+    boVolRatio: boVolRatio, boPreRange: boPreRange, boPrevHi: boPrevHi, boHold: boHold,
     barsSinceBreakdown: barsSinceBreakdown,
     amp10: amp10, amp20i: amp20i, ampExpand: ampExpand,
     volTrend: volTrend, volDim: volDim, testsHi: testsHi, testsLo: testsLo,
@@ -2117,16 +2137,21 @@ function judgeStage(ind, ctx) {
   var progress = ind.higherLow && (ind.higherHigh || ind.gain20 > 5) && !ind.sideways;
   var topSignal = ind.sideways || ind.lowerHigh || (ind.testsHi >= 3 && !ind.higherHigh) ||
                   (ind.gain20 < 3 && ind.ampExpand > 1.2);
-  /* freshBO（新鲜突破）= 收盘带量站上前 60 日最高 + 长期均线走平/上行。
-     量比门槛 1.4 → 1.25：前 5 日均量常被其中一根巨量抬高，1.4 会把真实突破漏掉；
-     1.4 以上仍单独标记为「强确认」。 */
-  var freshBO = (ind.breakoutResist === true) && ind.volRatio >= 1.25 && (ind.ltUp || ind.ltFlat);
-  var freshBOStrong = freshBO && ind.volRatio >= 1.4;
-  /* 2A 的必要前提：突破之前必须是一个「收敛的基座」，且离长期均线不远
-     （否则只是趋势中继的新高，属 2B「后期/成熟上涨」） */
-  var baseOK = (ind.preRange60 != null && ind.preRange60 <= 35) &&
-               (ind.devLT == null || ind.devLT <= 30);
-  var boRecent = (ind.barsSinceBreakout != null && ind.barsSinceBreakout <= 15);
+  /* freshBO（新鲜突破）= 「近 5 个交易日内」收盘带量创出 60 日新高 + 长期均线走平/上行 + 突破后未跌回。
+     2026-09-20 三处修正（实测依据：原来 2A 只占 0.08%，看盘范围内等于不可见）：
+       ① 判据从「**恰好今天**突破」改为「**近 5 日内**突破过且仍站在突破位上方」——
+          突破后的几天仍属最佳参与窗口，把窗口卡死在当日是原 `barsSinceBreakout` 的实现 bug；
+       ② 量能用**突破当日**的量能倍数（今天的量代表不了突破那天）；
+       ③ 量比门槛 1.4 → 1.25（前 5 日均量常被其中一根巨量抬高，1.4 会漏掉真实突破）。 */
+  var freshBOWin = 5;
+  var brkFresh = (ind.barsSinceBreakout != null && ind.barsSinceBreakout <= freshBOWin);
+  var baseOK = (ind.boPreRange != null && ind.boPreRange <= 45);   /* 突破之前必须是一个收敛的基座 */
+  var freshBO = brkFresh &&
+                (ind.boVolRatio != null && ind.boVolRatio >= 1.25) &&
+                (ind.ltUp || ind.ltFlat) &&
+                (ind.boHold !== false) && baseOK;
+  var freshBOStrong = freshBO && ind.boVolRatio >= 1.4 && ind.barsSinceBreakout <= 3;
+  var boRecent = brkFresh;
   var trendEstablished = ind.higherHigh && ind.higherLow && (ind.ma50Slope5 != null && ind.ma50Slope5 > 0);
 
   var stage = null, confidence = 'Low';
@@ -2203,16 +2228,18 @@ function judgeStage(ind, ctx) {
   /* ---------- 阶段2：上升趋势（长期均线上行，或刚发生带量突破） ---------- */
   else if ((ind.ltUp && aboveLT === true) || freshBO) {
     /* ★ 判定顺序修正（2026-09-20）：先判「新鲜突破」，再判「已延伸」。
-       原来 extended 无条件优先，实测 freshBO 命中 90 次里有 84% 被 extended 抢去判成 2B，
+       原来 extended 无条件优先，实测 freshBO 命中里有 84% 被 extended 抢去判成 2B，
        2A 占比被压到 0.08%（100 只的看盘范围内等于不可见）。
-       现在：只有「突破前是收敛基座（preRange60 ≤35% 且离长期均线 ≤30%）+ 突破新鲜」才算 2A；
+       现在：只有「突破前是收敛基座（突破前 60 日区间 ≤45%）+ 突破在近 5 日内 + 守住上沿」才算 2A；
        趋势中继的新高（突破前并未收敛）仍走 2B「成熟上涨」，语义不被放宽。 */
     if (freshBO && baseOK && boRecent) {
       set('p2a', freshBOStrong ? 'High' : 'Medium');
-      add('新鲜突破（2A）：收盘 ' + fmtN(price) + ' 站上前 60 日最高 ' + fmtN(ind.prevHi60) +
-        '，突破前 60 日区间收敛至 ' + fmtN(ind.preRange60) + '%（基座），偏离长期均线 ' + sPct(ind.devLT) +
-        '，量能 ' + fmtN(ind.volRatio) + '×' + (freshBOStrong ? '（强确认）' : '（量能偏温和，次一级确认）') +
-        '；' + (ind.barsSinceBreakout === 0 ? '就是今日突破' : ind.barsSinceBreakout + ' 个交易日前突破'), 'hit');
+      add('新鲜突破（2A）：' + (ind.barsSinceBreakout === 0 ? '今日' : ind.barsSinceBreakout + ' 个交易日前') +
+        '收盘带量创出 60 日新高（越过前 60 日上沿 ' + fmtN(ind.boPrevHi) + '，突破当日量能 ' +
+        fmtN(ind.boVolRatio) + '×' + (freshBOStrong ? '，强确认' : '') + '）；' +
+        '突破前 60 日区间收敛至 ' + fmtN(ind.boPreRange) + '%（属基座，非趋势中继），' +
+        '长期均线' + (ind.ltUp ? '上行' : '走平') + '（偏离 ' + sPct(ind.devLT) + '），' +
+        '突破后' + (ind.boHold ? '守住上沿（未跌回）' : '仍在容差内未破位'), 'hit');
     } else if (ind.extended) {
       set('p2b', (ind.dev != null && ind.dev > 12) ? 'High' : 'Medium');
       add('趋势仍在延续但已明显延伸：' + (ind.devLT != null ? ('偏离长期均线 ' + sPct(ind.devLT)) : '') +
