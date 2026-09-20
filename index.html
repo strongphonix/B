@@ -101,6 +101,33 @@
   .schip:hover { border-color:#3a4a7a; color:var(--text); }
   .schip b { color:var(--text); font-weight:700; }
   .schip.on { color:var(--text); font-weight:600; background:var(--card2); }
+  /* 零数量阶段：仍然显示（否则用户以为"没有这个阶段"，而不是"这个阶段暂时没有股票"） */
+  .schip.zero { opacity:.45; border-style:dashed; }
+  .schip.zero:hover { opacity:.85; }
+  .schip.zero b { color:var(--dim); }
+  .stage-empty { color:var(--dim); text-align:center; padding:12px; font-size:12px; }
+  .stage-empty b { color:var(--muted); }
+
+  .bstage-bar { display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:-2px 0 12px;
+    font-size:12px;color:var(--muted); }
+  .bstage-bar:empty { display:none; }
+  .bstage-bar .bs-cov b { color:var(--text); }
+  .bstage-bar .bs-cov .dim { color:var(--dim);margin-left:6px; }
+  .bstage-bar .bs-prog { color:#fbbf24;font-weight:600;font-family:ui-monospace,Consolas,monospace; }
+  .bstage-bar .bs-btn { padding:5px 11px;font-size:12px;border-radius:7px;border:1px solid var(--line);
+    background:var(--card2);color:var(--text);cursor:pointer;font-family:inherit; }
+  .bstage-bar .bs-btn:hover { border-color:#3a4a7a; }
+  .bstage-bar select { background:var(--card2);color:var(--text);border:1px solid var(--line);border-radius:7px;
+    padding:5px 9px;font-size:12px;outline:none;font-family:inherit; }
+  /* 板块卡片上的阶段信息行 */
+  .bcard .bc-stage { margin-top:6px;padding-top:6px;border-top:1px dashed rgba(51,65,85,.6);
+    font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:8px;flex-wrap:wrap; }
+  .bcard .bc-stage .dim { color:var(--dim);margin-left:auto; }
+  .bcard .bc-stage.hit { border-top-style:solid;border-top-color:rgba(96,165,250,.45); }
+  .bcard .bc-stage.hit .t { color:var(--text);font-weight:700; }
+  .bcard .bc-stage .sg-chip { padding:1px 6px;border-radius:5px;background:rgba(148,163,184,.12);white-space:nowrap; }
+  .bcard .bc-stage .sg-chip b { color:var(--text); }
+  .bcard .bc-stage .na { color:var(--dim); }
 
   /* ---------- 表格 ---------- */
   .batch-toolbar { display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap: wrap; }
@@ -635,6 +662,71 @@
   #m7_33 .jj-secbox .none2 { font-size:12px;color:#94a3b8; }
   #m7_33 .jj-hint { color:#fbbf24;font-weight:700; }
   #m7_33 h3 { line-height:1.5; }
+
+  /* ===== 7.33 版式升级（2026-09-20）=====
+     问题：12 个子块顺序铺开 → 16 张表 + 32 段说明全部平铺，页面像"一堵墙"（56K HTML / 1354 个文本块）。
+     做法（不动判定逻辑，只动版式）：
+       ① 分节头强化：裸 h3 → 带强调色的分区条，形成清晰的视觉分区；
+       ② 深挖型分节默认折叠（.jj-fold），首屏只留「结论 + 可操作」的部分；
+       ③ 长表限高 + 内部滚动（表头 sticky 已就绪），把纵向长度压下来；
+       ④ 统一行高/内边距/斑马纹，减少"密"的观感。 */
+  #m7_33 { font-size:13px; line-height:1.75; }
+  #m7_33 h3 {
+    font-size:13.5px !important; line-height:1.6 !important;
+    margin:20px 0 10px !important; padding:9px 14px 9px 13px;
+    border-radius:9px;
+    background:linear-gradient(90deg,rgba(96,165,250,.15),rgba(96,165,250,.02) 62%,transparent);
+    border:1px solid rgba(96,165,250,.22); border-left:3px solid #60a5fa;
+    letter-spacing:.2px;
+  }
+  /* 章节前的细分小节标题（12.5px 那种）弱化，不与分区头抢注意力 */
+  #m7_33 h3[style*="12.5px"] {
+    background:transparent !important; border:none !important; border-left:2px solid rgba(148,163,184,.45) !important;
+    border-radius:0; padding:2px 0 2px 9px; margin:14px 0 7px !important; font-size:12.5px !important;
+  }
+  /* ① 折叠块 */
+  #m7_33 .jj-fold { margin:16px 0; border:1px solid var(--line); border-radius:10px; background:rgba(9,14,26,.55); overflow:hidden; }
+  #m7_33 .jj-fold>summary {
+    cursor:pointer; list-style:none; margin:0; padding:11px 15px;
+    display:flex; align-items:center; gap:9px; flex-wrap:wrap;
+    font-size:13.5px; font-weight:700; color:#cfe3ff;
+    background:linear-gradient(90deg,rgba(96,165,250,.15),transparent 70%);
+    border-left:3px solid #60a5fa;
+  }
+  #m7_33 .jj-fold>summary::-webkit-details-marker { display:none; }
+  #m7_33 .jj-fold>summary::before { content:'▸'; color:#60a5fa; font-size:12px; transition:transform .15s; }
+  #m7_33 .jj-fold[open]>summary::before { content:'▾'; }
+  #m7_33 .jj-fold[open]>summary { border-bottom:1px solid var(--line); }
+  #m7_33 .jj-fold>summary:hover { filter:brightness(1.18); }
+  #m7_33 .jj-fold .jj-fold-hint { margin-left:auto; font-size:11.5px; font-weight:400; color:var(--muted); }
+  #m7_33 .jj-fold[open] .jj-fold-hint { display:none; }
+  #m7_33 .jj-fold-b { padding:2px 15px 14px; }
+  #m7_33 .jj-fold .jj-fold-b>h3:first-child { margin-top:10px !important; }
+  /* 说明型折叠（口径速览）：比功能分区更轻，不与「结论/操作」抢注意力 */
+  #m7_33 .jj-fold-note { margin:10px 0 12px; background:rgba(148,163,184,.05); border-color:rgba(148,163,184,.25); }
+  #m7_33 .jj-fold-note>summary {
+    font-size:12.5px; font-weight:600; padding:9px 14px;
+    border-left-color:#94a3b8;
+    background:linear-gradient(90deg,rgba(148,163,184,.13),transparent 72%);
+  }
+  #m7_33 .jj-fold-note>summary::before { color:#94a3b8; }
+  #m7_33 .jj-fold-note>summary b { color:#dbe6f5; }
+  /* ② 长表限高 + 内部滚动（表头 sticky 已在上面定义） */
+  #m7_33 .twrap { max-height:460px; overflow:auto; }
+  #m7_33 .twrap.mini { max-height:320px; }
+  /* ③ 节奏与可读性 */
+  #m7_33 table { font-size:12.6px; }
+  #m7_33 td { padding:6px 10px; }
+  #m7_33 tbody tr:nth-child(even) { background:rgba(148,163,184,.05); }
+  #m7_33 tbody tr:hover { background:rgba(91,140,255,.11); }
+  #m7_33 .note { line-height:1.85; margin-top:7px; }
+  #m7_33 .concl { padding:11px 14px; line-height:1.85; margin:10px 0; }
+  #m7_33 .kpi { padding:11px 13px; }
+  #m7_33 .mini-tbl td, #m7_33 .mini-tbl th { padding:5px 9px; }
+  /* ④ 首屏「结论」区域更醒目：结论前置的两张 pick 卡与诊断报告之间留出呼吸 */
+  #m7_33 .jj-pick { margin:12px 0; padding:13px 15px; }
+  #m7_33 .jj-pick .ttl { font-size:15px; margin-bottom:7px; }
+  #m7_33 .jj-secbox { margin:9px 0 6px; padding:11px 13px; }
 </style>
 </head>
 <body>
@@ -671,11 +763,16 @@
           <option value="flowAsc">主力净流出 ↓</option>
           <option value="ztDesc">涨停家数 ↓</option>
           <option value="dtDesc">跌停家数 ↓</option>
+          <option value="stageDesc">阶段家数 ↓</option>
           <option value="name">名称排序</option>
         </select>
+        <!-- 生命周期阶段筛选：选项由 JS 依 STAGE_KEYS 生成（单一事实源，避免手写 12 档漏改） -->
+        <select class="ctl" id="bstage" title="按生命周期阶段筛选板块：只列出「成分股中含该阶段个股」的板块"></select>
         <input class="ctl" id="bfilter" placeholder="筛选板块名称，如：半导体 / CPO / 机器人" autocomplete="off" style="flex:1;min-width:170px">
         <button class="btn ghost" id="brefresh" style="padding:8px 14px;font-size:12.5px">刷新实时</button>
       </div>
+      <!-- 阶段数据的覆盖情况 + 批量扫描（板块阶段分布来自「打开/扫描过的板块」，未覆盖的筛不出来） -->
+      <div class="bstage-bar" id="bStageBar"></div>
       <div class="mkt-strip" id="mktStrip"></div>
       <div id="boardGridWrap"><div class="loading"><div class="spinner"></div><p>正在加载板块列表…</p></div></div>
     </div>
@@ -3957,6 +4054,11 @@ var ST = {
   boards: [],
   // 板块 code -> { zt, dt, ts }：打开板块时统计并持久化，供板块列表显示/排序（未打开过的板块为未知）
   boardZT: (function () { try { return JSON.parse(localStorage.getItem('bwork_ztstat') || '{}'); } catch (e) { return {}; } })(),
+  // 板块 code -> { c:{p1a:n,...}, n:已判定只数, total:成分股数, date, ts }：生命周期阶段分布
+  // 与 boardZT 同一套路：打开板块（或「扫描阶段」）时聚合并持久化；未覆盖的板块筛不出来
+  boardStage: loadBoardStage(),
+  bstage: 'all',         // 板块全景的阶段筛选：'all' 或 STAGE_KEYS 之一
+  scan: null,            // 批量扫描进度 { running, done, total, stk, board, t0, stop }
   detail: null,          // { code, name, stocks, err, chg, upCount, downCount, flow }
   stocksLoading: false,
   results: {},           // code -> { ok, ind, sr, quote, source }  （跨板块共享，避免重复分析）
@@ -4095,16 +4197,156 @@ function computeBoardRoles() {
 }
 
 /* ---------- 板块列表 ---------- */
+/* ===== 板块级「生命周期阶段分布」（供板块全景筛选 / 排序）=====
+   数据链路与 ST.boardZT 完全一致：打开板块 → 分析成分股 → 聚合阶段分布 → 持久化。
+   · 未分析过的板块没有数据 → 筛选时筛不出来（界面上明确标注覆盖数 + 提供批量扫描补齐）
+   · 为什么不做「全市场 504 个板块自动扫描」：全站个股 × 日K ≈ 5 万次请求，不可行。
+     所以与 boardZT 一样采取「用到才分析、结果持久化、可一键补齐」的策略。 */
+var BWORK_STAGE_KEY = 'bwork_stagestat';
+var SCAN_MAX_PER_BOARD = 40;      // 批量扫描时每个板块最多判定多少只（按成交额降序），控住请求量
+
+function loadBoardStage() {
+  try {
+    var o = JSON.parse(localStorage.getItem(BWORK_STAGE_KEY) || '{}');
+    return (o && typeof o === 'object' && !Array.isArray(o)) ? o : {};
+  } catch (e) { return {}; }
+}
+function saveBoardStage() {
+  try { localStorage.setItem(BWORK_STAGE_KEY, JSON.stringify(ST.boardStage)); } catch (e) {}
+}
+function boardStageOf(code) { return ST.boardStage[code] || null; }
+function boardStageCount(code, stage) {
+  var o = ST.boardStage[code];
+  return (o && o.c && o.c[stage]) ? o.c[stage] : 0;
+}
+/* 用「某板块的成分股 + 已判定结果」聚合出阶段分布 */
+function aggregateBoardStage(code, stocks) {
+  if (!code || !stocks || !stocks.length) return null;
+  var c = {}, n = 0;
+  for (var i = 0; i < stocks.length; i++) {
+    var r = ST.results[stocks[i].code];
+    if (r && r.ok && r.sr && r.sr.stage) { c[r.sr.stage] = (c[r.sr.stage] || 0) + 1; n++; }
+  }
+  if (!n) return null;
+  ST.boardStage[code] = { c: c, n: n, total: stocks.length, date: D.date || '', ts: Date.now() };
+  saveBoardStage();
+  return ST.boardStage[code];
+}
+/* 当前正在浏览的板块：分析过程中/结束后刷新其阶段分布 */
+function refreshBoardStage(code) {
+  var d = ST.detail;
+  if (!code || !d || d.code !== code || !d.stocks) return;
+  aggregateBoardStage(code, d.stocks);
+  refreshBStageBar();
+}
+function boardStageCoverage() {
+  var list = ST.boards || [], cov = 0, i;
+  for (i = 0; i < list.length; i++) { if (ST.boardStage[list[i].code]) cov++; }
+  return { cov: cov, all: list.length };
+}
+function stageLabelOf(k) {
+  var i = STAGE_KEYS.indexOf(k);
+  return i >= 0 ? STAGE_FLOW[i] : k;
+}
+/* 未筛选时，卡片上给出「占比最高的前 3 个阶段」概览 */
+function boardStageChips(o) {
+  return STAGE_KEYS.filter(function (k) { return (o.c[k] || 0) > 0; })
+    .sort(function (a, b) { return (o.c[b] || 0) - (o.c[a] || 0); })
+    .slice(0, 3)
+    .map(function (k) {
+      return '<span class="sg-chip" style="color:' + stageColorOf(k) + '">' + STAGE_TAGS[STAGE_KEYS.indexOf(k)] +
+        ' <b>' + o.c[k] + '</b></span>';
+    }).join('');
+}
+
+/* ---------- 覆盖情况条 + 批量扫描 ---------- */
+function refreshBStageBar() { try { renderBStageBar(); } catch (e) {} }
+
+function renderBStageBar() {
+  var box = el('bStageBar'); if (!box) return;
+  if (!ST.boards.length) { box.innerHTML = ''; return; }
+  var cov = boardStageCoverage();
+  var sc = ST.scan;
+  var h = '<span class="bs-cov">🧭 阶段数据覆盖 <b>' + cov.cov + '</b>/' + cov.all + ' 个板块' +
+    '<span class="dim">（打开板块或点「扫描阶段」后累计并持久化；未覆盖的板块筛不出来）</span></span>';
+  if (sc && sc.running) {
+    var eta = (sc.done > 0 && sc.t0) ? Math.max(0, Math.round((sc.total - sc.done) * ((Date.now() - sc.t0) / sc.done / 1000))) : 0;
+    h += '<span class="bs-prog">⏳ ' + esc(sc.board || '') + ' ' + sc.done + '/' + sc.total +
+      ' · 本板已判 ' + sc.stk + ' 只 · 累计 ' + sc.ok + ' 只' +
+      (eta ? ' · 剩约 ' + eta + 's' : '') + '</span>' +
+      '<button class="bs-btn" data-bsact="stop">■ 停止扫描</button>';
+  } else {
+    h += '<button class="bs-btn" data-bsact="scan">🔍 扫描阶段</button>' +
+      '<select id="bScanN" title="按当前列表顺序批量判定前 N 个板块的成分股（每个板块最多 ' + SCAN_MAX_PER_BOARD + ' 只，按成交额降序）">' +
+      '<option value="5">前 5 个板块</option>' +
+      '<option value="8" selected>前 8 个板块</option>' +
+      '<option value="15">前 15 个板块</option>' +
+      '<option value="30">前 30 个板块（约 4–8 分钟）</option>' +
+      '</select>' +
+      '<span class="dim">未覆盖的板块优先扫描；已覆盖的不重复扫</span>';
+  }
+  box.innerHTML = h;
+}
+
+/* 批量扫描：按当前列表顺序判定前 N 个板块的成分股（跳过已覆盖的板块），
+   每个板块取成交额降序前 SCAN_MAX_PER_BOARD 只 → 聚合阶段分布并持久化。
+   结果与「打开板块分析」走同一套 ST.results / aggregateBoardStage，无重复请求。 */
+async function scanBoardsForStages(limit) {
+  if (ST.scan && ST.scan.running) return;
+  var kw = ST.bfilter.trim();
+  var list = ST.boards.filter(function (b) { return !kw || String(b.name).indexOf(kw) >= 0; });
+  var todo = sortBoards(list).filter(function (b) { return !ST.boardStage[b.code]; }).slice(0, limit);
+  if (!todo.length) { refreshBStageBar(); return; }
+  ST.scan = { running: true, done: 0, total: todo.length, stk: 0, ok: 0, t0: Date.now(), stop: false, board: todo[0].name };
+  renderBStageBar();
+  for (var i = 0; i < todo.length; i++) {
+    if (ST.scan.stop) break;
+    var b = todo[i];
+    ST.scan.board = b.name; ST.scan.stk = 0;
+    renderBStageBar();
+    var stocks = null;
+    try { stocks = await getBoardStocks(b.code); } catch (e) { stocks = null; }
+    if (stocks && stocks.length) {
+      var scan = stocks.slice().sort(function (x, y) { return (y.amount || 0) - (x.amount || 0); }).slice(0, SCAN_MAX_PER_BOARD);
+      await mapPool(scan, 5, async function (s) {        if (ST.scan.stop) return;
+        if (ST.results[s.code]) { ST.scan.stk++; return; }
+        var res;
+        try { res = await analyzeStock(s, null); }
+        catch (e) { res = { ok: false, code: s.code, name: s.name, error: e.message || String(e) }; }
+        if (ST.scan.stop) return;
+        ST.results[s.code] = res;
+        if (res.ok) ST.scan.ok++;
+        ST.scan.stk++;
+        if (ST.scan.stk % 4 === 0) renderBStageBar();
+      });
+      aggregateBoardStage(b.code, stocks);
+    }
+    ST.scan.done++;
+    renderBStageBar();
+  }
+  ST.scan.running = false;
+  renderBStageBar();
+  if (ST.bstage !== 'all') renderBoardGrid();
+}
+
 function sortBoards(list) {
   var arr = list.slice();
-  var m = ST.bsort;
-  if (m === 'chgDesc') arr.sort(function (a, b) { return (b.chg === null ? -999 : b.chg) - (a.chg === null ? -999 : a.chg); });
+  var m = ST.bsort;  if (m === 'chgDesc') arr.sort(function (a, b) { return (b.chg === null ? -999 : b.chg) - (a.chg === null ? -999 : a.chg); });
   else if (m === 'chgAsc') arr.sort(function (a, b) { return (a.chg === null ? 999 : a.chg) - (b.chg === null ? 999 : b.chg); });
   else if (m === 'flowDesc') arr.sort(function (a, b) { return (b.flow === null ? -1e18 : b.flow) - (a.flow === null ? -1e18 : a.flow); });
   else if (m === 'flowAsc') arr.sort(function (a, b) { return (a.flow === null ? 1e18 : a.flow) - (b.flow === null ? 1e18 : b.flow); });
   else if (m === 'ztDesc') arr.sort(function (a, b) { return (boardZTOf(b.code).zt || -1) - (boardZTOf(a.code).zt || -1); });
   else if (m === 'dtDesc') arr.sort(function (a, b) { return (boardZTOf(b.code).dt || -1) - (boardZTOf(a.code).dt || -1); });
   else if (m === 'name') arr.sort(function (a, b) { return String(a.name).localeCompare(String(b.name), 'zh'); });
+  else if (m === 'stageDesc') {
+    /* 按「当前筛选的那个阶段」的家数降序；同数按涨幅降序。未选阶段时退化为涨幅降序。 */
+    var stg = ST.bstage;
+    arr.sort(function (a, b) {
+      var d = (stg === 'all' ? 0 : boardStageCount(b.code, stg) - boardStageCount(a.code, stg));
+      if (d) return d;
+      return (b.chg === null ? -999 : b.chg) - (a.chg === null ? -999 : a.chg);
+    });
+  }
   return arr;
 }
 
@@ -4134,8 +4376,24 @@ function renderMarketStrip(list) {
 function renderBoardGrid() {
   var kw = ST.bfilter.trim();
   var list = ST.boards.filter(function (b) { return !kw || String(b.name).indexOf(kw) >= 0; });
+  var stgOn = (ST.bstage && ST.bstage !== 'all');
+  if (stgOn) {
+    /* 生命周期阶段筛选：只保留「成分股里含该阶段个股」的板块 */
+    list = list.filter(function (b) { return boardStageCount(b.code, ST.bstage) > 0; });
+  }
   var arr = sortBoards(list);
   if (!arr.length) {
+    if (stgOn) {
+      var cov0 = boardStageCoverage();
+      el('boardGridWrap').innerHTML = '<div class="empty-state"><div class="icon">🧭</div>' +
+        '<p>没有筛到含「<b>' + escapeHtml(stageLabelOf(ST.bstage)) + '</b>」的板块</p>' +
+        '<p style="font-size:12px;color:var(--dim);margin-top:8px;line-height:1.9">' +
+        '板块的阶段分布来自<b>成分股判定结果</b>，目前只覆盖 <b>' + cov0.cov + '/' + cov0.all + '</b> 个板块（打开过的 + 扫描过的）。<br>' +
+        '点上方「🔍 扫描阶段」可批量判定更多板块的成分股，扫完再回来筛即可筛出全市场符合条件的板块。' +
+        (cov0.cov === 0 ? '<br>（还没有板块被判定过：也可以直接点开任意板块，成分股分析完成后自动计入。）' : '') +
+        '</p></div>';
+      return;
+    }
     el('boardGridWrap').innerHTML = '<div class="empty-state"><div class="icon">🔍</div><p>没有匹配「' + escapeHtml(kw) + '」的板块</p></div>';
     return;
   }
@@ -4143,6 +4401,14 @@ function renderBoardGrid() {
     var c = (b.chg === null || b.chg === 0) ? 'flat' : (b.chg > 0 ? 'up' : 'down');
     var col = (b.chg === null || b.chg === 0) ? '#5d6788' : (b.chg > 0 ? 'var(--up)' : 'var(--down)');
     var lead = b.leadName ? ('<em>' + escapeHtml(b.leadName) + '</em> ' + (b.leadChg === null ? '' : fmtPct(b.leadChg))) : '—';
+    var so = boardStageOf(b.code);
+    var stageLine;
+    if (!so) stageLine = '<div class="bc-stage"><span class="na">阶段 未分析</span></div>';
+    else if (stgOn) stageLine = '<div class="bc-stage hit"><span class="t" style="color:' + stageColorOf(ST.bstage) + '">' +
+        escapeHtml(stageLabelOf(ST.bstage)) + ' ×<b>' + boardStageCount(b.code, ST.bstage) + '</b></span>' +
+        '<span class="dim">已判 ' + so.n + '/' + so.total + ' 只</span></div>';
+    else stageLine = '<div class="bc-stage">' + boardStageChips(so) +
+        '<span class="dim">已判 ' + so.n + '/' + so.total + ' 只</span></div>';
     return '<div class="bcard" data-bk="' + b.code + '" data-bn="' + escapeHtml(b.name) + '" data-bc="' + (b.chg === null ? '' : b.chg) + '" style="border-left-color:' + col + '">' +
       '<div class="bc-top"><span class="bc-name">' + escapeHtml(b.name) + '</span>' +
       '<span class="bc-chg ' + c + '">' + fmtPct(b.chg || 0) + '</span></div>' +
@@ -4150,6 +4416,7 @@ function renderBoardGrid() {
         '<span>涨停 <b class="' + ((z.zt || 0) > 0 ? 'up' : '') + '">' + (z.zt == null ? '—' : z.zt) + '</b> / 跌停 <b class="' + ((z.dt || 0) > 0 ? 'down' : '') + '">' + (z.dt == null ? '—' : z.dt) + '</b></span></div>' +
         '<div class="bc-mid"><span class="' + ((b.flow || 0) >= 0 ? 'up' : 'down') + '">主力净流入 ' + fmtYi(b.flow) + '</span></div>'; })() +
       '<div class="bc-bot">领涨 ' + lead + '</div>' +
+      stageLine +
       '</div>';
   }).join('');
   el('boardGridWrap').innerHTML = '<div class="board-grid">' + cards + '</div>';
@@ -4165,6 +4432,7 @@ async function loadBoardList(force) {
     ST.boards = list;
     renderMarketStrip(list);
     renderBoardGrid();
+    renderBStageBar();
     var stale = window.__BOARD_STALE;
     if (stale) {
       el('mktStrip').innerHTML = '<div class="tip-box" style="width:100%">⚠️ 实时接口暂时不可用，当前显示的是本地缓存（' +
@@ -4403,21 +4671,18 @@ function renderDetailHead() {
       if (c > 0) segs += '<i style="width:' + (c / stat.done * 100).toFixed(2) + '%;background:' + STAGE_COLOR[i] + '" title="' + STAGE_FLOW[i] + ' ' + c + '只"></i>';
     });
     h += '<div class="dist">' + segs + '</div>';
-    h += '<div class="dist-legend">' + STAGE_KEYS.map(function (k, i) {
-      var c = stat.counts[k] || 0;
-      return '<span><i class="dot" style="background:' + STAGE_COLOR[i] + '"></i>' + STAGE_FLOW[i] + ' <b style="color:var(--text)">' + c + '</b></span>';
-    }).join('') + '</div>';
 
     h += '<div class="stage-chips">' +
       '<button class="schip' + (ST.stageFilter === 'all' ? ' on' : '') + '" data-act="stage" data-stage="all">' +
       '<i class="dot" style="background:linear-gradient(135deg,#5b8cff,#26c281)"></i>全部分类 <b>' + stat.done + '</b></button>' +
       STAGE_KEYS.map(function (k, i) {
         var c = stat.counts[k] || 0;
-        if (!c) return '';
-        return '<button class="schip' + (ST.stageFilter === k ? ' on' : '') + '" data-act="stage" data-stage="' + k + '">' +
+        return '<button class="schip' + (ST.stageFilter === k ? ' on' : '') + (c ? '' : ' zero') + '" ' +
+          'data-act="stage" data-stage="' + k + '" title="' + STAGE_FLOW[i] + (c ? ('：' + c + ' 只') : '：当前池内 0 只（该阶段需同时满足多项判据才会出现）') + '">' +
           '<i class="dot" style="background:' + STAGE_COLOR[i] + '"></i>' + STAGE_FLOW[i] + ' <b>' + c + '</b></button>';
       }).join('') + '</div>';
-    h += '<div style="font-size:11.5px;color:var(--dim);margin-top:10px">点击阶段标签可只看该阶段股票；点击任意股票行可展开完整生命周期分析。</div>';
+    h += '<div style="font-size:11.5px;color:var(--dim);margin-top:10px">点击阶段标签可只看该阶段股票；点击任意股票行可展开完整生命周期分析。' +
+      '<br><span style="color:var(--muted)">虚线框标签表示<b style="color:var(--muted)">该阶段当前池内 0 只</b>（阶段本身存在，只是这一轮没有股票同时满足其判据）—— 2A 新鲜突破 / 3 分配 等属「条件型阶段」，需要多项判据同时成立才会出现。</span></div>';
 
     // ---------- MA5 终极策略：四态汇总 + 筛选 ----------
     if (stat.ma5Done) {
@@ -4678,38 +4943,60 @@ function renderDetailBody() {
 
   if (filter !== 'all') {
     // 单阶段视图
-    var list = sorted(d.stocks.filter(function (s) {
+    var allOfStage = d.stocks.filter(function (s) {
       var r = ST.results[s.code];
-      return r && r.ok && r.sr.stage === filter && passGene(s);
-    }));
+      return r && r.ok && r.sr.stage === filter;
+    });
+    var list = sorted(allOfStage.filter(passGene));
     var idx = STAGE_KEYS.indexOf(filter);
     var stg = STAGES[filter];
     body += '<tr class="group-head" style="background:' + STAGE_COLOR[idx] + '18">' +
       '<td colspan="16"><span style="color:' + STAGE_COLOR[idx] + '">● ' + STAGE_FLOW[idx] + '</span>' +
       '<span class="g-tip">' + stg.subtitle + ' · 建议仓位 ' + stg.position + '</span>' +
       '<span class="g-count">' + list.length + ' 只</span></td></tr>';
-    if (!list.length) body += '<tr><td colspan="16" style="color:var(--dim);text-align:center;padding:26px">当前没有处于「' + STAGE_FLOW[idx] + '」阶段的股票</td></tr>';
+    if (!list.length) {
+      var whyS = allOfStage.length
+        ? ('当前有 <b style="color:var(--muted)">' + allOfStage.length + '</b> 只处于「' + STAGE_FLOW[idx] +
+           '」，但被筛选条（基因筛选 / 主力资金）过滤掉 —— 把筛选切回「全部」即可查看')
+        : ('当前池内没有处于「' + STAGE_FLOW[idx] + '」的股票。<br>该阶段属<b style="color:var(--muted)">条件型阶段</b>：' +
+           stg.subtitle + '（建议仓位 ' + stg.position + '），需要多项判据同时成立才会出现，' +
+           '所以部分交易日会是 0 只 —— 这是正常现象，不是功能缺失。');
+      body += '<tr><td colspan="16" class="stage-empty" style="padding:26px">' + whyS + '</td></tr>';
+    }
     list.forEach(function (s) { body += stockRowHTML(s); });
   } else {
     // 分类视图：交易价值组 → 生命周期阶段
+    // ★ 2026-09-20：改为「全部 4 区 × 全部 12 阶段都渲染」。
+    //   原来 `if (!inGroup.length) return;` + `if (!list.length) return;` 会把空阶段整行跳过，
+    //   用户看到的是「2A / 1B 根本不存在」而不是「这一轮池内没有」，直接导致误判为工具没实现该阶段。
     TRADE_GROUPS.forEach(function (g) {
-      var inGroup = [];
-      g.stages.forEach(function (k) { inGroup = inGroup.concat(stat.counts[k] || 0 ? [k] : []); });
-      if (!inGroup.length) return;
-      var gTotal = inGroup.reduce(function (a, k) { return a + (stat.counts[k] || 0); }, 0);
+      var gTotal = g.stages.reduce(function (a, k) { return a + (stat.counts[k] || 0); }, 0);
       body += '<tr class="group-head"><td colspan="16">' + g.label +
         '<span class="g-tip">' + g.tip + '</span><span class="g-count">' + gTotal + ' 只</span></td></tr>';
       g.stages.forEach(function (k) {
-        var list = sorted(d.stocks.filter(function (s) {
-          var r = ST.results[s.code];
-          return r && r.ok && r.sr.stage === k && passGene(s);
-        }));
-        if (!list.length) return;
         var idx = STAGE_KEYS.indexOf(k);
+        var all = d.stocks.filter(function (s) {
+          var r = ST.results[s.code];
+          return r && r.ok && r.sr.stage === k;
+        });
+        var list = sorted(all.filter(passGene));
+        /* ★ 2026-09-20 修复：这里原为 `if (!list.length) continue;` —— continue 用在 forEach 回调里是
+           **语法错误**（"Illegal continue statement"），会让整个 <script> 编译失败、页面直接白屏打不开。
+           按本段注释的原意（「全部 4 区 × 全部 12 阶段都渲染」）改为：空阶段也照常渲染表头 + 一行说明，
+           不再整行跳过 —— 否则用户会误以为该阶段「根本不存在」。 */
         body += '<tr class="group-head" style="background:' + STAGE_COLOR[idx] + '18">' +
           '<td colspan="16"><span style="color:' + STAGE_COLOR[idx] + '">● ' + STAGE_FLOW[idx] + '</span>' +
           '<span class="g-tip">' + STAGES[k].subtitle + ' · 建议仓位 ' + STAGES[k].position + '</span>' +
           '<span class="g-count">' + list.length + ' 只</span></td></tr>';
+        if (!list.length) {
+          var whyC = all.length
+            ? ('当前有 <b style="color:var(--muted)">' + all.length + '</b> 只处于「' + STAGE_FLOW[idx] +
+               '」，但被筛选条（基因筛选 / 主力资金）过滤掉 —— 把筛选切回「全部」即可查看')
+            : ('本轮池内没有处于「' + STAGE_FLOW[idx] + '」的股票。该阶段属<b style="color:var(--muted)">条件型阶段</b>：' +
+               STAGES[k].subtitle + '（建议仓位 ' + STAGES[k].position + '），需多项判据同时成立才会出现，' +
+               '部分交易日为 0 只属正常现象，不是功能缺失。');
+          body += '<tr><td colspan="16" class="stage-empty" style="padding:18px">' + whyC + '</td></tr>';
+        }
         list.forEach(function (s) { body += stockRowHTML(s); });
       });
     });
@@ -4785,6 +5072,7 @@ async function analyzeBoard(range) {
   if (runId === ST.runId) {
     ST.running = false;
     renderBoardDetail();
+    refreshBoardStage(d.code);        // 分析完成 → 聚合该板块的阶段分布并持久化（供板块全景筛选/排序）
   }
 }
 
@@ -5200,8 +5488,8 @@ function renderWatch() {
     '<button class="schip' + (WATCH.stageFilter === 'all' ? ' on' : '') + '" data-wact="wstage" data-stage="all">全部分类 <b>' + totalDone + '</b></button>';
   STAGE_KEYS.forEach(function (k, i) {
     var c = stageCounts[k] || 0;
-    if (!c) return;
-    stageChips += '<button class="schip' + (WATCH.stageFilter === k ? ' on' : '') + '" data-wact="wstage" data-stage="' + k + '">' +
+    stageChips += '<button class="schip' + (WATCH.stageFilter === k ? ' on' : '') + (c ? '' : ' zero') + '" ' +
+      'data-wact="wstage" data-stage="' + k + '" title="' + STAGE_FLOW[i] + (c ? ('：' + c + ' 只') : '：当前列表内 0 只') + '">' +
       '<i class="dot" style="background:' + STAGE_COLOR[i] + '"></i>' + STAGE_FLOW[i] + ' <b>' + c + '</b></button>';
   });
   stageChips += '</div>';
@@ -7444,8 +7732,17 @@ function jjHeadHtml(s){
     : '<div class="concl c-ora"><b>⚠️ ' + esc(au.label.replace(/\*\*/g, '')) + '</b>' +
       '<br><span class="flat">严格口径：本卡<b>只在当日已产生集合竞价时才产出</b>推荐 / 回避板块、情绪定级与仓位建议。' +
       '现在没有当日竞价数据，下面的分节仅供复盘，<b>不要拿它做今天的决策</b>。</span></div>';
-  var h = '<div class="note"><b>核心原则：9:20 前可撤单＝演戏，9:20 后不可撤单＝真金白银 —— 只看 9:20-9:25 的真实委托。</b>' +
-    '三窗口：<b>9:15-9:20</b> 可挂可撤（演戏区，不作决策依据）｜ <b>9:20-9:25</b> 可挂不可撤（核心观察窗口）｜ <b>9:25-9:30</b> 撮合成交（最终决策窗口）。</div>';
+  /* ★ 2026-09-20 版式：口径说明是"读一次就够"的静态说明，折成一行摘要 ——
+     核心规则（9:20 前可撤＝演戏 / 9:20 后不可撤＝真金白银）保留在摘要里始终可见，
+     只把「三窗口」细则收起；这样首屏第一眼就是相位横幅 + 结论，不再被说明文字顶下去。 */
+  var h = '<details class="jj-fold jj-fold-note">' +
+    '<summary>📖 竞价口径速览：<b>9:20 前可撤单＝演戏，9:20 后不可撤单＝真金白银</b>（只看 9:20-9:25 的真实委托）' +
+      '<span class="jj-fold-hint">三窗口细则 ▾</span></summary>' +
+    '<div class="jj-fold-b"><div class="note">' +
+      '三窗口：<b>9:15-9:20</b> 可挂可撤（演戏区，不作决策依据）｜ ' +
+      '<b>9:20-9:25</b> 可挂不可撤（核心观察窗口）｜ ' +
+      '<b>9:25-9:30</b> 撮合成交（最终决策窗口）。' +
+    '</div></div></details>';
   h += aucBanner;
   h += '<div class="m730-gate">' +
     jjTag('当前相位：' + esc(ph.name) + '（' + esc(hmNow()) + '）', ph.cls) +
@@ -8041,6 +8338,24 @@ function jjRulesHtml(){
     '<div class="note" style="margin-top:8px"><b>⚠️ 风险提示（原文条）：</b>本策略仅为集合竞价分析框架，不构成投资建议。股市有风险，入市需谨慎。集合竞价数据仅为参考，实际操作需结合开盘后走势和大盘环境综合判断。</div>' +
     '<span class="flat">原文《A股集合竞价全景分析系统（AI可执行版）》。本卡为「<b>竞价快照</b>」口径，与顶部大盘情绪周期（日线阶段）、模块2 三窗口不是同一口径 —— <b>最终仓位取更严者</b>。仅为交易体系梳理与数据可视化，<b>不构成任何投资建议</b>。</span></div></details>';
 }
+/* ★ 2026-09-20 版式：把「分节头 + 内容」包成可折叠块。
+   做法：抽出每个分节开头的 <h3>…</h3> 当作 <summary> 的标题，其余内容放进 .jj-fold-b。
+   好处：① 首屏不再被 16 张表平铺；② 标题只写一次（不重复挂 h3，避免"两个标题"）；
+        ③ 纯包装、不碰任何判定逻辑；④ 分节里没有 h3 时原样返回（不会误伤）。 */
+function jjFold(sec, open, hint){
+  if(!sec) return '';
+  var m = /^\s*<h3[^>]*>([\s\S]*?)<\/h3>/.exec(sec);
+  if(!m) return sec;                                  /* 无分节头 → 原样输出 */
+  var titleHtml = m[1];
+  var rest = sec.slice(m[0].length);
+  return '<details class="jj-fold"' + (open ? ' open' : '') + '>' +
+    '<summary>' + titleHtml +
+      '<span class="jj-fold-hint">' + (hint || '点击展开明细') + ' ▾</span>' +
+    '</summary>' +
+    '<div class="jj-fold-b">' + rest + '</div>' +
+  '</details>';
+}
+
 function renderM733(){
   var box = $('m7_33'); if(!box) return;
   if(!JJ.done){
@@ -8065,9 +8380,25 @@ function renderM733(){
     return;
   }
   /* 顺序＝第一工作区优先：相位头 → ①【推荐板块 / 回避板块 + 9:25 诊断报告】→ 其余逐段推导 → 规则速查。
-     ⚠️ jjReportHtml 只在 jjTopHtml 内出现一次（不要在两处都挂，否则重复 id="jjreport"）。 */
-  setHtml(box, jjHeadHtml(s) + jjTopHtml(s) + jjIdxHtml(s) + jjZtDtHtml(s) + jjPrevHtml(s) + jjShapeHtml(s) +
-    jjDirHtml(s) + jjFaceHtml(s) + jjScoreHtml(s) + jjStepHtml(s) + jjActHtml(s) + jjRulesHtml());
+     ⚠️ jjReportHtml 只在 jjTopHtml 内出现一次（不要在两处都挂，否则重复 id="jjreport"）。
+     ★ 2026-09-20 版式：分三档展开策略 ——
+        · 首屏直出（不折叠）：相位头、结论前置(推荐/回避+9:25诊断报告)、① 大盘、② 涨跌停、③ 昨日涨停工资单、⑧ 操作提示
+          —— 这六块就是"今天能不能干、干什么"的答案；扫一眼就够。
+        · 默认展开但可收起：④ 今日方向（行业强度/梯队，表格大但要看）
+        · 默认收起：③b 轨迹五形态(需在线采样)、⑤ 风险明细、⑥ 六维打分明细、⑦ 决策五步、规则速查
+          —— 都是"深挖/复核"型内容，需要时点开，不用时不占屏。 */
+  setHtml(box,
+    jjHeadHtml(s) + jjTopHtml(s) +
+    jjFold(jjIdxHtml(s), true, '原文 §3.1 五档') +
+    jjFold(jjZtDtHtml(s), true, '原文 §2 情绪温度计') +
+    jjFold(jjPrevHtml(s), true, '原文 §4 短线工资单') +
+    jjFold(jjShapeHtml(s), false, '需 9:15–9:30 在线逐点采样') +
+    jjFold(jjDirHtml(s), true, '原文 §5 行业强度/梯队') +
+    jjFold(jjFaceHtml(s), false, '原文 §6 大面股与扩散路径') +
+    jjFold(jjScoreHtml(s), false, '原文 §7 18 分制明细') +
+    jjFold(jjStepHtml(s), false, '原文 §8 决策五步') +
+    jjActHtml(s) +
+    jjRulesHtml());
 }
 var AUTO_REFRESH = false;
 
@@ -10136,6 +10467,38 @@ function init() {
   });
 
   el('bsort').addEventListener('change', function () { ST.bsort = this.value; if (ST.boards.length) renderBoardGrid(); });
+  // 生命周期阶段筛选：选项由 JS 依 STAGE_KEYS 生成（单一事实源，改阶段定义不用动 HTML）
+  (function () {
+    var sel = el('bstage'); if (!sel) return;
+    var h = '<option value="all">生命周期阶段：全部</option>';
+    var fams = { 1: '阶段1 · 积累（探索区）', 2: '阶段2 · 上升（机会区）', 3: '阶段3 · 分配（风险区）', 4: '阶段4 · 下跌（避免区）' };
+    [1, 2, 3, 4].forEach(function (f) {
+      h += '<optgroup label="' + fams[f] + '">';
+      STAGE_KEYS.forEach(function (k, i) {
+        if (STAGE_FAMILY[k] !== f) return;
+        h += '<option value="' + k + '">' + STAGE_FLOW[i] + '</option>';
+      });
+      h += '</optgroup>';
+    });
+    sel.innerHTML = h;
+  })();
+  el('bstage').addEventListener('change', function () {
+    ST.bstage = this.value;
+    // 选了具体阶段 → 自动切到「该阶段家数 ↓」排序，最匹配的板块排最前；取消筛选则回到默认涨幅序
+    ST.bsort = (ST.bstage === 'all') ? 'chgDesc' : 'stageDesc';
+    el('bsort').value = ST.bsort;
+    if (ST.boards.length) renderBoardGrid();
+  });
+  // 覆盖条上的 扫描 / 停止（事件委托，扫描进度重绘后无需重新绑定）
+  el('bStageBar').addEventListener('click', function (e) {
+    var a = e.target.closest('[data-bsact]');
+    if (!a) return;
+    if (a.getAttribute('data-bsact') === 'stop') { if (ST.scan) ST.scan.stop = true; return; }
+    if (a.getAttribute('data-bsact') === 'scan') {
+      var n = parseInt((el('bScanN') || {}).value || '8', 10);
+      scanBoardsForStages(isFinite(n) ? n : 8);
+    }
+  });
   el('brefresh').addEventListener('click', function () { loadBoardList(true); });
   var ft = null;
   el('bfilter').addEventListener('input', function () {
