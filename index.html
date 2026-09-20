@@ -119,6 +119,20 @@
   .bstage-bar .bs-btn:hover { border-color:#3a4a7a; }
   .bstage-bar select { background:var(--card2);color:var(--text);border:1px solid var(--line);border-radius:7px;
     padding:5px 9px;font-size:12px;outline:none;font-family:inherit; }
+  /* 选了阶段 → 直接列「符合条件的股票」 */
+  .stg-bar { display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 12px;
+    padding:10px 14px;border:1px solid var(--line);border-left:4px solid #5b8cff;
+    border-radius:10px;background:linear-gradient(135deg,#141c2c,#101725);font-size:12.5px;color:var(--muted); }
+  .stg-bar .stg-title { font-size:16px;font-weight:800;letter-spacing:.4px; }
+  .stg-bar .stg-n b { font-size:20px;font-weight:800;color:var(--text); }
+  .stg-bar .dim { color:var(--dim); }
+  .stg-note { font-size:12px;color:var(--dim);line-height:1.8;margin-top:10px; }
+  .stg-note b { color:#9fb4ff; }
+  table.batch-table td.sn { font-weight:700;color:var(--text);white-space:nowrap; }
+  table.batch-table td.sn .cd { color:var(--dim);font-size:11.5px;margin-left:7px;font-weight:400; }
+  table.batch-table tr.stg-row { cursor:pointer; }
+  table.batch-table tr.stg-row:hover { background:#141b2b; }
+  table.batch-table td.mono { font-family:ui-monospace,Consolas,monospace;white-space:nowrap; }
   /* 板块卡片上的阶段信息行 */
   .bcard .bc-stage { margin-top:6px;padding-top:6px;border-top:1px dashed rgba(51,65,85,.6);
     font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:8px;flex-wrap:wrap; }
@@ -4057,7 +4071,11 @@ var ST = {
   // 板块 code -> { c:{p1a:n,...}, n:已判定只数, total:成分股数, date, ts }：生命周期阶段分布
   // 与 boardZT 同一套路：打开板块（或「扫描阶段」）时聚合并持久化；未覆盖的板块筛不出来
   boardStage: loadBoardStage(),
+  // 个股 code -> { code,name,bk,bkn,stage,price,chg,turnover,volRatio,flow,amount,zt20,conf,date,ts }
+  // ★ 选了生命周期阶段后「直接列出符合条件的股票」用的就是它（板块级 boardStage 只有家数，列不出股票）
+  stageStocks: loadStageStocks(),
   bstage: 'all',         // 板块全景的阶段筛选：'all' 或 STAGE_KEYS 之一
+  bstageMode: 'stock',   // 选了阶段后的展示形态：'stock' = 直接列股票（默认，用户要求）/ 'board' = 旧行为（列板块）
   scan: null,            // 批量扫描进度 { running, done, total, stk, board, t0, stop }
   detail: null,          // { code, name, stocks, err, chg, upCount, downCount, flow }
   stocksLoading: false,
@@ -4219,6 +4237,81 @@ function boardStageCount(code, stage) {
   var o = ST.boardStage[code];
   return (o && o.c && o.c[stage]) ? o.c[stage] : 0;
 }
+
+/* ---------- 个股级「阶段档案」：选了阶段 → 直接列出符合条件的股票 ----------
+   ★ 用户要求：选了生命周期阶段后，出来的应该是**符合的股票**，而不是「含这种股票的板块」。
+   板块级 boardStage 只存家数（{c:{p2a:3,...}}），列不出股票；所以另存一份**个股档案**，
+   与 aggregateBoardStage 同一入口、同一时机写入（打开板块分析 / 扫描阶段 都会走到）。 */
+var BWORK_STK_KEY = 'bwork_stage_stocks';
+var STAGE_STOCK_CAP = 6000;        // 上限：防止 localStorage 无限膨胀（超限按时间淘汰最旧的一半）
+
+function loadStageStocks() {
+  try {
+    var o = JSON.parse(localStorage.getItem(BWORK_STK_KEY) || '{}');
+    return (o && typeof o === 'object' && !Array.isArray(o)) ? o : {};
+  } catch (e) { return {}; }
+}
+function saveStageStocks() {
+  try { localStorage.setItem(BWORK_STK_KEY, JSON.stringify(ST.stageStocks)); }
+  catch (e) {          // 写不进去（超限）→ 淘汰最旧的一半再试一次
+    try {
+      var ks = Object.keys(ST.stageStocks).sort(function (a, b) { return (ST.stageStocks[a].ts || 0) - (ST.stageStocks[b].ts || 0); });
+      ks.slice(0, Math.ceil(ks.length / 2)).forEach(function (k) { delete ST.stageStocks[k]; });
+      localStorage.setItem(BWORK_STK_KEY, JSON.stringify(ST.stageStocks));
+    } catch (e2) {}
+  }
+}
+/* 把一个板块的判定结果落成个股档案。stocks = getBoardStocks() 的返回（含 name/chg/flow/amount），
+   判定结果取 ST.results[code]（analyzeStock / scanBoardsForStages 都会写进去）。 */
+function collectStageStocks(code, boardName, stocks) {
+  if (!code || !stocks || !stocks.length) return 0;
+  var now = Date.now(), add = 0;
+  for (var i = 0; i < stocks.length; i++) {
+    var s = stocks[i], r = ST.results[s.code];
+    if (!r || !r.ok || !r.sr || !r.sr.stage) continue;
+    var ind = r.ind || {};
+    ST.stageStocks[s.code] = {
+      code: s.code, name: s.name || s.code,
+      bk: code, bkn: boardName || '',
+      stage: r.sr.stage,
+      price: (ind.price != null) ? ind.price : null,
+      chg: (s.chg != null) ? s.chg : (ind.chgToday != null ? ind.chgToday : null),
+      turnover: (ind.turnover != null) ? ind.turnover : null,
+      volRatio: (ind.volRatio != null) ? ind.volRatio : null,
+      flow: (s.flow != null) ? s.flow : null,
+      amount: (s.amount != null) ? s.amount : null,
+      zt20: (ind.ztCount20 != null) ? ind.ztCount20 : 0,
+      conf: r.sr.confidence || '', date: D.date || '', ts: now
+    };
+    add++;
+  }
+  if (add) {
+    var ks = Object.keys(ST.stageStocks);
+    if (ks.length > STAGE_STOCK_CAP) {
+      ks.sort(function (a, b) { return (ST.stageStocks[a].ts || 0) - (ST.stageStocks[b].ts || 0); });
+      ks.slice(0, ks.length - STAGE_STOCK_CAP).forEach(function (k) { delete ST.stageStocks[k]; });
+    }
+    saveStageStocks();
+  }
+  return add;
+}
+/* 选了阶段 → 汇总所有已判定股票里处于该阶段的（可再按关键字过滤股票名/板块名） */
+function stageStockRows(stage, kw) {
+  var out = [];
+  for (var c in ST.stageStocks) {
+    var r = ST.stageStocks[c];
+    if (r.stage !== stage) continue;
+    if (kw && String(r.name).indexOf(kw) < 0 && String(r.bkn || '').indexOf(kw) < 0) continue;
+    out.push(r);
+  }
+  /* 涨跌幅降序，同级按成交额（活跃度）降序 */
+  out.sort(function (a, b) {
+    var d = ((b.chg == null ? -999 : b.chg) - (a.chg == null ? -999 : a.chg));
+    return d !== 0 ? d : ((b.amount || 0) - (a.amount || 0));
+  });
+  return out;
+}
+
 /* 用「某板块的成分股 + 已判定结果」聚合出阶段分布 */
 function aggregateBoardStage(code, stocks) {
   if (!code || !stocks || !stocks.length) return null;
@@ -4230,6 +4323,10 @@ function aggregateBoardStage(code, stocks) {
   if (!n) return null;
   ST.boardStage[code] = { c: c, n: n, total: stocks.length, date: D.date || '', ts: Date.now() };
   saveBoardStage();
+  /* 同时落个股档案（供「按阶段直接列股票」用）—— 板块名从当前详情或板块列表里取 */
+  var bkn = (ST.detail && ST.detail.code === code && ST.detail.name) ? ST.detail.name : '';
+  if (!bkn) { for (var j = 0; j < (ST.boards || []).length; j++) { if (ST.boards[j].code === code) { bkn = ST.boards[j].name; break; } } }
+  collectStageStocks(code, bkn, stocks);
   return ST.boardStage[code];
 }
 /* 当前正在浏览的板块：分析过程中/结束后刷新其阶段分布 */
@@ -4373,7 +4470,65 @@ function renderMarketStrip(list) {
     '<div class="cell"><span>最弱</span><b>' + escapeHtml(worstName) + ' <span class="' + (worstChg >= 0 ? 'up' : 'down') + '">' + fmtPct(worstChg) + '</span></b></div>';
 }
 
+/* ★ 选了生命周期阶段 → 直接列出「符合条件的股票」（不再只是筛板块） */
+function renderStageStockTable() {
+  var k = ST.bstage, kw = ST.bfilter.trim();
+  var rows = stageStockRows(k, kw);
+  var cov = boardStageCoverage(), hit = {};
+  rows.forEach(function (r) { hit[r.bk] = 1; });
+  var hitN = Object.keys(hit).length;
+  var c = o8SideColorSafe(k);
+
+  var head = '<div class="stg-bar" style="border-left-color:' + c + '">' +
+    '<span class="stg-title" style="color:' + c + '">🎯 「' + esc(stageLabelOf(k)) + '」符合条件的股票</span>' +
+    '<span class="stg-n"><b>' + rows.length + '</b> 只</span>' +
+    '<span class="dim">分布在已覆盖的 <b>' + hitN + '</b> 个板块（共覆盖 ' + cov.cov + '/' + cov.all + ' 个）</span>' +
+    '<span style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">' +
+    '<button class="bs-btn" data-bsact="scan">🔍 扫描阶段（补齐更多板块）</button>' +
+    '<button class="bs-btn" data-bsmode="board">改为按板块查看</button>' +
+    '</span></div>';
+
+  if (!rows.length) {
+    el('boardGridWrap').innerHTML = head + '<div class="empty-state"><div class="icon">🧭</div>' +
+      '<p>已覆盖的 <b>' + cov.cov + '</b> 个板块里，暂时没有处于「<b>' + esc(stageLabelOf(k)) + '</b>」的股票' +
+      (kw ? '（已按关键字「' + esc(kw) + '」过滤）' : '') + '</p>' +
+      '<p style="font-size:12px;color:var(--dim);margin-top:8px;line-height:1.9">' +
+      '点上方「🔍 扫描阶段」批量判定更多板块的成分股；或直接点开任意板块，成分股分析完成后自动计入。<br>' +
+      '也可以把「生命周期阶段」切回「全部」查看板块列表，或点「改为按板块查看」。</p></div>';
+    return;
+  }
+
+  var body = rows.map(function (r) {
+    var cc = (r.chg == null || r.chg === 0) ? '#5d6788' : (r.chg > 0 ? 'var(--up)' : 'var(--down)');
+    return '<tr class="stg-row" data-code="' + r.code + '" title="点击进入「个股诊断」">' +
+      '<td class="sn">' + esc(r.name) + '<span class="cd">' + r.code + '</span></td>' +
+      '<td><span class="board-link" data-bkcode="' + r.bk + '" data-bkname="' + esc(r.bkn || '') + '" title="点击查看该板块全部成分股">' + esc(r.bkn || '—') + '</span></td>' +
+      '<td class="mono">' + (r.price != null ? r.price.toFixed(2) : '—') + '</td>' +
+      '<td class="mono" style="color:' + cc + ';font-weight:700">' + (r.chg == null ? '—' : fmtPct(r.chg)) + '</td>' +
+      '<td class="mono">' + (r.turnover != null ? fmtN(r.turnover) + '%' : '—') + '</td>' +
+      '<td class="mono">' + (r.volRatio != null ? r.volRatio.toFixed(2) : '—') + '</td>' +
+      '<td class="mono ' + ((r.flow || 0) >= 0 ? 'up' : 'down') + '">' + (r.flow != null ? fmtYi(r.flow) : '—') + '</td>' +
+      '<td class="mono">' + (r.zt20 || 0) + '</td>' +
+      '<td class="mono" style="color:' + stageColorOf(r.stage) + ';font-weight:700">' + esc(stageLabelOf(r.stage)) + '</td>' +
+      '<td class="dim mono">' + esc(r.date || '') + '</td>' +
+      '</tr>';
+  }).join('');
+
+  el('boardGridWrap').innerHTML = head +
+    '<div style="overflow-x:auto"><table class="batch-table"><thead><tr>' +
+    '<th>股票</th><th>所属板块</th><th>现价</th><th>涨跌幅</th><th>换手率</th><th>量能倍数</th><th>主力净流入</th><th>近20日涨停</th><th>阶段</th><th>数据时间</th>' +
+    '</tr></thead><tbody>' + body + '</tbody></table></div>' +
+    '<div class="stg-note">💡 点<b>股票行</b>进入「个股诊断」；点<b>板块名</b>进入该板块全部成分股。' +
+    '同一只股票可能属于多个板块，这里按「个股」去重、保留最近一次判定结果。</div>';
+}
+/* 阶段色兜底（stageColorOf 若尚未定义也不至于抛错） */
+function o8SideColorSafe(stageKey) {
+  try { return stageColorOf(stageKey) || '#5b8cff'; } catch (e) { return '#5b8cff'; }
+}
+
 function renderBoardGrid() {
+  /* ★ 选了具体阶段 → 默认直接列「符合条件的股票」（用户要求）；要回到旧行为用 bstageMode='board' */
+  if (ST.bstage && ST.bstage !== 'all' && ST.bstageMode !== 'board') { renderStageStockTable(); return; }
   var kw = ST.bfilter.trim();
   var list = ST.boards.filter(function (b) { return !kw || String(b.name).indexOf(kw) >= 0; });
   var stgOn = (ST.bstage && ST.bstage !== 'all');
@@ -10509,6 +10664,18 @@ function init() {
 
   // 点击板块卡片
   el('boardGridWrap').addEventListener('click', function (e) {
+    /* ★ 选了阶段后的「股票清单」：点行 → 个股诊断；点板块名 → 该板块成分股；点按钮 → 切换形态 / 补扫 */
+    var lk = e.target.closest('.board-link[data-bkcode]');
+    if (lk) { e.stopPropagation(); return openBoard(lk.getAttribute('data-bkcode'), lk.getAttribute('data-bkname'), null); }
+    var bm = e.target.closest('[data-bsmode]');
+    if (bm) { ST.bstageMode = bm.getAttribute('data-bsmode'); return renderBoardGrid(); }
+    var sa = e.target.closest('[data-bsact="scan"]');
+    if (sa) {
+      var nn = parseInt((el('bScanN') || {}).value || '8', 10);
+      return scanBoardsForStages(isFinite(nn) ? nn : 8);
+    }
+    var row = e.target.closest('tr.stg-row[data-code]');
+    if (row) return switchToSingle(row.getAttribute('data-code'));
     var c = e.target.closest('.bcard');
     if (!c) return;
     openBoard(c.getAttribute('data-bk'), c.getAttribute('data-bn'), c.getAttribute('data-bc'));
