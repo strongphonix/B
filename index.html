@@ -2784,6 +2784,9 @@ function buildResultHTML(quote, ind, sr, compact, source, gene, cap, rec, open8)
     '<div class="safety">' + safetyHtml + '</div>' +
     '</div>';
 
+  // dev 分档操作规则卡（紧跟阶段分析后面）
+  html += renderDevRuleCard(ind);
+
   // 阶段转折确认清单（对齐图谱「什么证实了这一转变」）+ 今昨强弱（日线口径）
   html += renderStageTransitionCard(sr, st);
 
@@ -2840,9 +2843,7 @@ function buildResultHTML(quote, ind, sr, compact, source, gene, cap, rec, open8)
     indItem('近5日 / 10日涨幅', fmtPct(ind.gain5) + ' / ' + fmtPct(ind.gain10), '60日分位 ' + (ind.pos * 100).toFixed(0) + '%', '') +
     '</div></div>';
 
-  /* dev 分档操作规则卡（方框 + 醒目配色）—— 不设 compact 闸门：
-     板块成分股表的展开行走的是 compact=true（见 detailRowHTML），闸门会让最常用的那条路径看不到它 */
-  html += renderDevRuleCard(ind);
+
 
   html += '<div class="card"><div class="card-title">K线走势（近 ' + Math.min(70, ind.klines.length) + ' 日 · 前复权）</div>' + renderChart(ind) + '</div>';
 
