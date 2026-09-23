@@ -533,6 +533,11 @@
   /* ===== 涨停池 ===== */
   .ztp-toolbar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:12px; }
   .ztp-status { font-size:12.5px; color:#7fd1a0; margin-left:auto; text-align:right; }
+  /* 2026-09-22 批量加自选：勾选统计（紧跟按钮，不抢 .ztp-status 的右对齐位）+ 勾选列 */
+  .ztp-selinfo { font-size:12.5px; color:#fbbf24; }
+  .ztsel-cell { width:34px; text-align:center; white-space:nowrap; }
+  .ztsel-cell input[type=checkbox] { cursor:pointer; vertical-align:middle; }
+  .ztp-inwl { margin-left:2px; font-size:11px; }
   .ztp-status.err { color:#ff6b6b; }
   .ztp-tag { font-size:11.5px; border-radius:20px; padding:2px 10px; border:1px solid #2b3550; color:#cdd6f4; background:#121724; }
   .ztp-tag b { font-family:Consolas,Menlo,monospace; color:#ffce54; }
@@ -811,6 +816,7 @@
         <div class="ding-checks" style="margin-top:8px;">
           <label><input type="checkbox" id="dingPosSplit"> 每只标的单独发一条钉钉消息（不勾选 = 合并成一条日报）</label>
           <label><input type="checkbox" id="dingPosRisk" checked> 推送内容带风险提示行</label>
+          <label><input type="checkbox" id="dingPosPnl" checked> 推送内容带<b>盈亏行</b>（按成本 vs 推送时实时价计算，默认开）</label>
         </div>
         <label>触发条件（买点判定 · 作用于持仓清单里的所有标的 · 盘中按下面的间隔自动检测）</label>
         <div class="ding-checks">
@@ -964,6 +970,9 @@
         <button class="btn" id="ztpAna" title="对本页全部涨停股逐只抓 260 根日K，用与「成分股生命周期分类」完全相同的引擎算出 阶段 / KDJ / 辨识度 / 涨停基因 / dev / MA5斜率 / 破线 / 开盘强弱 等列（并发 4，可随时停止）">▶ 分析全部</button>
         <button class="btn ghost" id="ztpAnaStop" style="display:none">■ 停止</button>
         <button class="btn ghost" id="ztpClear" title="清空本页这些股票的分析缓存（板块详情里的同一批股票会一起回到「待分析」）">清空分析结果</button>
+        <button class="btn ghost" id="ztpWlAdd" disabled style="opacity:.5" title="把表格里勾选的股票批量加入「★ 自选」（已在自选里的会自动跳过；顺序与表格一致）">⭐ 批量加自选</button>
+        <button class="btn ghost" id="ztpSelClear" style="display:none" title="清空当前勾选">清空勾选</button>
+        <span class="ztp-selinfo" id="ztpSelInfo"></span>
         <span class="ztp-status" id="ztpStatus"></span>
       </div>
       <div id="ztpResult"><div class="loading">切换到本页时自动拉取：① 近 10 个交易日涨停池并集（约 10 个请求）→ ② 一次批量报价补齐现价 / 涨跌幅 / 换手 / 主力净流入 / 60日涨幅（1~3 个请求）。阶段 / KDJ / 辨识度 等日K列点「▶ 分析全部」再算。</div></div>
@@ -2817,6 +2826,22 @@ function ma5BuyShort(t) {
     .replace(/，.*$/, '')
     .trim();
 }
+/* MA5 策略 chip（「阶段」格里跟在阶段名后面的那一个）＝ 持有 / 止盈 / 观察 / 减仓 / 清仓…；满足买点时再追加「买点」。
+   ★ 2026-09-22 抽成公共函数：本文件有**三张 17 列表**（板块成分股 rowCells / 涨停池 ZTPL_COLS / 自选 watchBatchBody），
+     此前这段 chip 是"各写一份"，结果自选表漏掉了 → 用户实测「自选股不显示 MA5 的买点 / 持有 / 止盈」。
+     统一走这里后，改一处三张表同时生效；缺 ms（未分析 / 老结果对象没有 ma5）时返回空串，由调用方回退去现算。 */
+function ma5ChipHtml(ms) {
+  if (!ms || !ms.meta) return '';
+  var h = '<span class="ma5-chip" style="background:' + ms.meta.color + '22;color:' + ms.meta.color + ';border:1px solid ' + ms.meta.color + '55" title="MA5 终极策略：' + escapeHtml(ms.meta.name) + '｜' + escapeHtml(ms.meta.pos) + '">' + ms.meta.short + '</span>';
+  if (ms.buySignal) h += '<span class="ma5-chip" style="background:#26c28122;color:#26c281;border:1px solid #26c28155" title="收盘已满足买入信号：斜率翻上 + 连续2日站线 + dev 0~6% + 放量阳线；次日 14:50 复核买入 或 开盘回踩MA5买入（失效则作废）">买点</span>';
+  return h;
+}
+/* 取某行的 MA5 策略对象：优先用分析结果里已算好的（含 meta），否则按 ind 现算 —— 三张表统一走这个入口 */
+function ma5Of(r, ind) {
+  if (r && r.ma5 && r.ma5.meta) return r.ma5;
+  return computeMA5Strategy(ind);
+}
+
 function ma5BuyLine(adv) {
   if (!adv) return '买入信号：—';
   if (adv.buySignal) return '买入信号：✓ 已生成（①②③④ 全满足）→ 待次日执行';
@@ -5358,9 +5383,8 @@ function rowCells(s, opt) {
   }
   var ind = r.ind, sr = r.sr, stg = sr.stage;
   var chipStyle = 'background:' + stageColorOf(stg) + '22;color:' + stageColorOf(stg) + ';border:1px solid ' + stageColorOf(stg) + '55';
-  var ms = r.ma5 || computeMA5Strategy(ind);
-  var msChip = '<span class="ma5-chip" style="background:' + ms.meta.color + '22;color:' + ms.meta.color + ';border:1px solid ' + ms.meta.color + '55" title="MA5 终极策略：' + escapeHtml(ms.meta.name) + '｜' + escapeHtml(ms.meta.pos) + '">' + ms.meta.short + '</span>';
-  if (ms.buySignal) msChip += '<span class="ma5-chip" style="background:#26c28122;color:#26c281;border:1px solid #26c28155" title="收盘已满足买入信号：斜率翻上 + 连续2日站线 + dev 0~6% + 放量阳线；次日 14:50 复核买入 或 开盘回踩MA5买入（失效则作废）">买点</span>';
+  var ms = ma5Of(r, ind);
+  var msChip = ma5ChipHtml(ms);        /* 2026-09-22 走公共函数（输出与原来逐字一致） */
   cells += '<td><span class="st-chip" style="' + chipStyle + '">' + stageNameOf(stg) + '</span>' + msChip + '</td>';
   var kjc = r.kdj || (r.kdj = kdjState(ind.klines));   /* 分析时已算好；老结果对象兜底现算并缓存 */
   cells += '<td>' + kdjTag(kjc) + '</td>';
@@ -5544,11 +5568,19 @@ function stockHead(ctx){
       (on ? (s.dir > 0 ? '▲' : '▼') : '⇅') + '</span></th>';
   }).join('') + '</tr></thead>';
 }
-function stockSortState(ctx){ return (ctx === 'stage') ? ST.stgSort : ST.hdrSort; }
+/* 2026-09-22 自选表（★ 自选）表头排序：第三套独立状态 —— 与板块详情 / 选阶段清单互不影响 */
+var WSORT = { col: null, dir: -1 };
+function stockSortState(ctx){
+  if(ctx === 'watch') return WSORT;
+  return (ctx === 'stage') ? ST.stgSort : ST.hdrSort;
+}
 /* 箭头显示用状态：没点过表头时，把排序下拉映射回对应列（下拉只有部分列没有对应列，那就全灰） */
 function stockHeadView(ctx){
   var st = stockSortState(ctx);
   if(st && st.col) return st;
+  if(ctx === 'watch'){
+    return { col: 'stage', dir: -1 };          /* 自选表默认序 = 阶段序（组内按涨幅）→ 点亮「阶段」列 */
+  }
   if(ctx !== 'stage'){
     var map = { chg: 'chg', gene: 'gene', cap: 'cap', rec: 'rec' };
     if(map[ST.rowSort]) return { col: map[ST.rowSort], dir: -1 };
@@ -5559,7 +5591,10 @@ function stockHeadView(ctx){
 }
 function stockSortActive(ctx){ var st = stockSortState(ctx); return !!(st && st.col); }
 function stockSort(th, col){
-  var ctx = (th && th.closest && th.closest('#boardDetailWrap')) ? 'detail' : 'stage';
+  /* 上下文优先看表格上的 data-ctx（自选表标了 watch）；没有标记时按老规则（板块详情 / 选阶段清单） */
+  var tbl = (th && th.closest) ? th.closest('table[data-ctx]') : null;
+  var ctx = (tbl && tbl.getAttribute) ? (tbl.getAttribute('data-ctx') || '') : '';
+  if(!ctx) ctx = (th && th.closest && th.closest('#boardDetailWrap')) ? 'detail' : 'stage';
   var st = stockSortState(ctx);
   if(st.col === col){ st.dir = -st.dir; }                    /* 同列再点 → 反向 */
   else {
@@ -5567,7 +5602,44 @@ function stockSort(th, col){
     STOCK_COLS.forEach(function(c){ if(c.k === col) def = c; });
     st.col = col; st.dir = (def && def.def === 1) ? 1 : -1;
   }
-  if(ctx === 'detail') renderBoardDetail(); else renderStageStockTable();
+  if(ctx === 'detail') renderBoardDetail();
+  else if(ctx === 'watch') renderWatch();                     /* 2026-09-22：自选表 */
+  else renderStageStockTable();
+}
+/* 自选表排序取值：数据形态与 ST.results 版不同（WATCH.results 行自带 ind/sr/kdj/gene/rec/cap），
+   故单独取值；行情未完成（!ok）与自选表本就恒「—」的列（主力净流入 / 60日涨幅）一律 null → 沉底。 */
+function watchSortVal(r, col){
+  if(!r || !r.ok || !r.ind) return null;
+  var ind = r.ind, sr = r.sr;
+  switch(col){
+    case 'name':  return (r.quote && r.quote.name) || r.code || '';
+    case 'price': return (ind.price == null) ? null : ind.price;
+    case 'chg':   return (ind.chgToday == null) ? null : ind.chgToday;
+    case 'stage': return sr ? STAGE_KEYS.indexOf(sr.stage) : null;
+    case 'kdj':   return (r.kdj && r.kdj.ok) ? r.kdj.j : null;
+    case 'pos':   return sr ? stockPosNum(r) : null;
+    case 'pow':   return stockPowDiff(r, { code: r.code, name: (r.quote && r.quote.name) || r.code });
+    case 'rec':   return r.rec ? r.rec.score : null;
+    case 'gene':  return r.gene ? r.gene.total : null;
+    case 'dev':   return (ind.dev == null) ? null : ind.dev;
+    case 'ma5':   return (ind.ma5SlopePct == null) ? null : ind.ma5SlopePct;
+    case 'brk':   return (ind.breakDays == null) ? null : ind.breakDays;
+    case 'turn':  return (ind.turnover == null) ? null : ind.turnover;
+    case 'cap':   return (ind.volRatio == null) ? null : ind.volRatio;
+    case 'o8':    return stockO8Num(r.open8);
+    default:      return null;
+  }
+}
+function watchCmp(a, b, col, dir){
+  var va = watchSortVal(a, col), vb = watchSortVal(b, col);
+  var na = (va === null || va === undefined), nb = (vb === null || vb === undefined);
+  if(na && nb) return 0;
+  if(na) return 1;                       /* 无值/取数失败行永远沉底，不随升降序翻转 */
+  if(nb) return -1;
+  var c = (typeof va === 'string' || typeof vb === 'string')
+    ? String(va).localeCompare(String(vb), 'zh-Hans-CN') : (va - vb);
+  if(c === 0) return String(a.code || '').localeCompare(String(b.code || ''));   /* 同值收尾：代码，保证顺序稳定 */
+  return dir > 0 ? c : -c;
 }
 function stockPosNum(r){
   var txt = ma5PositionInfo(r.ind, (STAGES[r.sr.stage] || {}).position).text || '';
@@ -6049,7 +6121,10 @@ function renderSingle() {
       ' <span style="color:var(--dim)">' + r.code + '</span></td>' +
       '<td>' + ind.price.toFixed(2) + '</td>' +
       '<td class="' + chgCls + '">' + fmtPct(ind.chgToday) + '</td>' +
-      '<td><span class="st-chip" style="background:' + col + '22;color:' + col + ';border:1px solid ' + col + '55">' + stageNameOf(sr.stage) + '</span></td>' +
+      /* ★ 2026-09-22：阶段格补 MA5 策略 chip（持有 / 止盈 / 观察…，满足买点时追加「买点」）——
+         与板块成分股 / 涨停池 / 自选表统一走 ma5ChipHtml，四张表口径一致。 */
+      '<td><span class="st-chip" style="background:' + col + '22;color:' + col + ';border:1px solid ' + col + '55">' + stageNameOf(sr.stage) + '</span>' +
+      ma5ChipHtml(ma5Of(r, ind)) + '</td>' +
       /* ⚠️ 2026-09-20：这里是「阶段 → KDJ → 建议仓位」的第 5 格。表头加了 KDJ 列后**必须同步补这一格**，
          否则数据行只有 16 格、表头 17 列 → 整行从 KDJ 起右移一格（KDJ 列显示成"建议仓位"、最后一列空缺）。
          本文件有三张 17 列表格（板块成分股 rowCells / 个股诊断 renderSingle / 自选 watchBatchBody），
@@ -6274,14 +6349,19 @@ function watchBatchBody() {
   // 排序优先级：机会区 → 探索区 → 风险区 → 避免区（同区按当日涨幅降序）
   var order = { p2: 0, p2a: 1, p1b: 2, p1: 3, p1a: 4, p2b: 5, p3a: 6, p3: 7, p3b: 8, p4b: 9, p4a: 10, p4: 11 };
   function stageOrder(k) { var v = order[k]; return (v == null) ? 99 : v; }
-  arr.sort(function (a, b) {
-    if (!a.ok && !b.ok) return 0;
-    if (!a.ok) return 1;
-    if (!b.ok) return -1;
-    var d = stageOrder(a.sr.stage) - stageOrder(b.sr.stage);
-    if (d) return d;
-    return b.ind.chgToday - a.ind.chgToday;
-  });
+  /* 2026-09-22：表头点击排序优先（WSORT.col 有值用它；未点击时沿用原有「阶段序 → 当日涨幅」） */
+  if (WSORT.col) {
+    arr.sort(function (a, b) { return watchCmp(a, b, WSORT.col, WSORT.dir); });
+  } else {
+    arr.sort(function (a, b) {
+      if (!a.ok && !b.ok) return 0;
+      if (!a.ok) return 1;
+      if (!b.ok) return -1;
+      var d = stageOrder(a.sr.stage) - stageOrder(b.sr.stage);
+      if (d) return d;
+      return b.ind.chgToday - a.ind.chgToday;
+    });
+  }
   return arr.map(function (r) {
     var tk = r.code || r.token;
     var open = WATCH.open[tk];
@@ -6304,7 +6384,11 @@ function watchBatchBody() {
       ' <button type="button" class="wl-x" data-act="del" data-code="' + escapeHtml(r.code) + '" title="取消自选">✕</button></td>' +
       '<td>' + ind.price.toFixed(2) + '</td>' +
       '<td class="' + chgCls + '">' + fmtPct(ind.chgToday) + '</td>' +
-      '<td><span class="st-chip" style="background:' + col + '22;color:' + col + ';border:1px solid ' + col + '55">' + stageNameOf(sr.stage) + '</span></td>' +
+      /* ★ 2026-09-22 修复（用户：自选股没有显示 MA5 策略的买点 / 持有 / 止盈）：阶段格口径与板块成分股对齐 ——
+         阶段 chip + MA5 策略 chip + 满足买点时的「买点」。此前自选表这一格只画了阶段 chip
+         （三张 17 列表各写一份行渲染，这里漏了），用户在自选页看不到策略结论。 */
+      '<td><span class="st-chip" style="background:' + col + '22;color:' + col + ';border:1px solid ' + col + '55">' + stageNameOf(sr.stage) + '</span>' +
+      ma5ChipHtml(ma5Of(r, ind)) + '</td>' +
       /* ⚠️ 2026-09-20：这里是「阶段 → KDJ → 建议仓位」的第 5 格。表头加了 KDJ 列后**必须同步补这一格**，
          否则数据行只有 16 格、表头 17 列 → 整行从 KDJ 起右移一格（KDJ 列显示成"建议仓位"、最后一列空缺）。
          本文件有三张 17 列表格（板块成分股 rowCells / 个股诊断 renderSingle / 自选 watchBatchBody），
@@ -6397,9 +6481,13 @@ function renderWatch() {
     '</div>';
 
   var body = watchBatchBody();
+  /* 2026-09-22：表头改用 stockHead('watch') —— 与板块详情 / 选阶段清单同一套 17 列定义与点击排序逻辑，
+     data-ctx="watch" 让 stockSort 认出这是第三张表（排序状态 WSORT 独立，点它不影响其它两张表）。 */
   list.innerHTML = stageChips + ma5Chips +
-    '<div class="card"><div style="overflow-x:auto"><table class="batch-table"><thead><tr><th>股票</th><th>现价</th><th>涨跌幅</th><th>阶段</th><th>KDJ</th><th>建议仓位</th><th>今昨强弱</th><th>辨识度</th><th>涨停基因</th>' +
-    '<th>dev</th><th>MA5斜率</th><th>破线</th><th>换手</th><th>主力参与</th><th>主力净流入</th><th>60日涨幅</th><th>开盘强弱</th></tr></thead><tbody>' + body + '</tbody></table></div></div>';
+    '<div class="card"><div style="overflow-x:auto"><table class="batch-table" data-ctx="watch">' + stockHead('watch') +
+    '<tbody>' + body + '</tbody></table></div></div>';
+  /* ⚠️ 表头由 STOCK_COLS 生成（17 列），行单元格仍由 watchBatchBody 输出（17 格）——
+     两处列数与顺序必须严格一致，加列时一处都不能漏。 */
 }
 
 /* =========================================================================
@@ -6893,6 +6981,21 @@ function readPosForm() {
   return a;
 }
 
+/* 2026-09-22 用户要求：推送时按「成本 vs 推送时实时价」计算盈亏，**默认带上盈亏行**。
+   - 盈亏% = (现价 − 成本) / 成本；同时给出每股盈亏金额（元/股），便于直观看懂。
+   - 无成本 / 无现价 → 如实写「—（原因）」，不臆造。
+   - 受 x.withPnl !== false 控制（界面复选框「推送内容带盈亏行」默认勾选）。 */
+function posPnlLine(x) {
+  if (x.cost == null || x.price == null || !isFinite(x.cost) || !isFinite(x.price) || x.cost <= 0) {
+    return '- 盈亏：—（' + (x.cost == null ? '未填成本' : '无现价') + '，无法计算）';
+  }
+  var pct = (x.price - x.cost) / x.cost * 100;
+  var amt = x.price - x.cost;
+  var tag = pct > 0.05 ? '浮盈' : (pct < -0.05 ? '浮亏' : '持平');
+  return '- 盈亏：' + tag + ' ' + (pct > 0 ? '+' : '') + pct.toFixed(2) + '%' +
+    '（成本 ' + x.cost + ' → 现价 ' + posFmt2(x.price) + '，每股 ' + (amt > 0 ? '+' : '') + amt.toFixed(2) + ' 元）';
+}
+
 /* 单只标的 → 推送块（格式对齐群里现有日报；带 trig 时多一行「触发」） */
 function posStockBlock(x) {
   var head = '### ' + x.code + ' ' + x.name + (x.cost ? '（成本 ' + x.cost + '）' : '');
@@ -6904,16 +7007,17 @@ function posStockBlock(x) {
     '｜破线连板 ' + (x.breakDays == null ? '—' : x.breakDays) +
     '｜MA5斜率 ' + (x.slopeUp ? 'up' : 'down') +
     '｜KDJ ' + (x.kdj ? kdjBrief(x.kdj) : '—');
-  var profit = (x.cost && x.price != null) ? ((x.price - x.cost) / x.cost * 100) : null;
+  /* 2026-09-22：盈亏从「依据行尾部括号」升为独立行（默认推送，显眼可见）；依据行不再重复。 */
+  var linePnl = (x.withPnl !== false) ? ('\n' + posPnlLine(x)) : '';
   var reason = (x.reasons || []).join('；') || '—';
-  var line3 = '- 依据：' + reason + (profit == null ? '' : '（浮盈参考 ' + posFmtProfit(profit) + '）');
+  var line3 = '- 依据：' + reason;
   var lineKdj = x.kdjDetail ? ('\n- ' + KDJ_TAG_TXT + '：' + kdjDetailLine(x.kdj)) : '';
   var lineTrig = (x.trig && x.trig.length) ? ('\n- 触发：✅ ' + x.trig.join(' + '))
     : (x.trigChecked ? ('\n- 触发：未命中' + (x.trigNames && x.trigNames.length ? '（本次检测：' + x.trigNames.join('、') + '）' : '')) : '');
   /* ★ 2026-09-21：补上网页 MA5 卡里那三行（建议仓位 / 买入信号 / 止盈止损）——
      没有 adv 时保持原样输出（老测试的固定 fixture 不带 adv，不许因此变样）。 */
   var lineAdv = x.adv ? ('\n- 建议仓位：' + (x.adv.pos || '—') + '\n- ' + ma5BuyLine(x.adv) + '\n- ' + ma5ExitLine(x.adv)) : '';
-  return head + '\n' + line1 + lineKdj + '\n- 结论：【' + posStateLabel(x.state) + '】' + lineTrig + lineAdv + '\n' + line3;
+  return head + '\n' + line1 + linePnl + lineKdj + '\n- 结论：【' + posStateLabel(x.state) + '】' + lineTrig + lineAdv + '\n' + line3;
 }
 
 /* 抓取 + 组装：返回 {res, ok, failed, header, blocks, footer, messages} */
@@ -6965,6 +7069,25 @@ async function buildPosReport(rows, cfg, opt) {
   var summary = Object.keys(cnt).map(function (k) { return k + ' ' + cnt[k] + ' 只'; }).join('、');
   header += '\n**小结**：共 ' + ok.length + ' 只' + (summary ? ' —— ' + summary : '') +
     (failed.length ? '（' + failed.length + ' 只取数失败：' + failed.map(function (f) { return f.code; }).join('、') + '）' : '');
+  /* 2026-09-22 盈亏汇总（默认推送）：按「成本 vs 推送时实时价」统计浮盈/浮亏只数；未填成本的单独计数。 */
+  var pnOn = (opt.withPnl !== false);
+  ok.forEach(function (x) { x.withPnl = pnOn; });
+  if (pnOn) {
+    var pn = { win: 0, lose: 0, flat: 0, na: 0 };
+    ok.forEach(function (x) {
+      if (x.cost == null || x.price == null || !isFinite(x.cost) || !isFinite(x.price) || x.cost <= 0) { pn.na++; return; }
+      var q = (x.price - x.cost) / x.cost * 100;
+      if (q > 0.05) pn.win++; else if (q < -0.05) pn.lose++; else pn.flat++;
+    });
+    var pnTxt = [];
+    if (pn.win + pn.lose + pn.flat) {
+      pnTxt.push('浮盈 ' + pn.win + ' 只');
+      pnTxt.push('浮亏 ' + pn.lose + ' 只');
+      if (pn.flat) pnTxt.push('持平 ' + pn.flat + ' 只');
+    }
+    if (pn.na) pnTxt.push(pn.na + ' 只未填成本');
+    if (pnTxt.length) header += '\n**盈亏汇总**（成本 vs 实时价）：' + pnTxt.join(' / ');
+  }
 
   var blocks = ok.map(posStockBlock);
   var footer = '—— 来自个股生命周期工作台';
@@ -7007,7 +7130,8 @@ async function dingPosPreview() {
   dingPosStatus('正在抓取 ' + rows.length + ' 只标的，生成预览…（' + nowHM() + '）');
   var split = el('dingPosSplit') ? el('dingPosSplit').checked : false;
   var withRisk = el('dingPosRisk') ? el('dingPosRisk').checked : true;
-  var rep = await buildPosReport(rows, cfg, { split: split, withRisk: withRisk });
+  var withPnl = el('dingPosPnl') ? el('dingPosPnl').checked : true;   /* 2026-09-22 盈亏行（默认开） */
+  var rep = await buildPosReport(rows, cfg, { split: split, withRisk: withRisk, withPnl: withPnl });
   posSet(rows); if (el('dingPosList')) el('dingPosList').value = posToText(rows); posRefreshBadge();
   if (pre) pre.textContent = rep.messages.map(function (m, i) {
     return '【第 ' + (i + 1) + '/' + rep.messages.length + ' 条】\n' + m;
@@ -10902,6 +11026,7 @@ function powSyncCold() {
 var ZTPL = { key: '', loading: false, done: false, rows: [], diag: null,
   byCode: {}, qtAt: 0, qtErr: '', qtSrc: '',        /* 批量报价：代码→行、上次成功时间、错误、走的通道 */
   sort: { col: '', dir: -1 }, open: {},                 /* 表头排序状态 / 展开行（同时只开一行） */
+  sel: {}, wlSet: null,                                 /* 2026-09-22 批量加自选：勾选状态（code→true）/ 自选代码集合缓存 */
   anaRun: 0, anaRunning: false, stopFlag: false, anaProg: { done: 0, total: 0 }, anaBusy: {}, anaFail: {} };
 
 function ztpoolStatus(msg, err) {
@@ -11017,6 +11142,14 @@ function ztpGain60(r) {
 /* ---------------- 列定义（表头 + 表体的唯一事实源） ----------------
    每列：{ k 键, t 标题, src 取数来源, def 默认升序?, noSort 不可排?, tip 补充说明, td 单元格 class, cell(r,i) 内容 } */
 var ZTPL_COLS = [
+  /* 2026-09-22 用户需求：勾选列（批量加自选入口）。noSort → 表头不参与排序；
+     ⭐ = 该股已在自选里（渲染前用 ZTPL.wlSet 缓存判断，不在每行读 localStorage）。 */
+  { k: 'sel', t: '选', noSort: 1, td: function () { return 'ztsel-cell'; }, cell: function (r) {
+      var inWl = !!ztpWlSet()[r.code];
+      return '<input type="checkbox" data-ztsel="' + r.code + '"' + (ZTPL.sel[r.code] ? ' checked' : '') +
+        ' title="勾选后可点上方「⭐ 批量加自选」"' + (inWl ? ' style="accent-color:#fbbf24"' : '') + '>' +
+        (inWl ? '<span class="ztp-inwl" title="已在「★ 自选」里">⭐</span>' : '');
+    } },
   { k: 'idx', t: '#', src: 'pool', noSort: 1, cell: function (r, i) { return String(i + 1); } },
   { k: 'name', t: '股票', src: 'pool', cell: function (r) {
       return '<span class="caret">' + (ZTPL.open[r.code] ? '▼' : '▶') + '</span><b>' + escapeHtml(r.name) + '</b>' +
@@ -11033,10 +11166,9 @@ var ZTPL_COLS = [
   { k: 'stage', t: '阶段', src: 'ana', def: 1, tip: '按生命周期顺序 1A → 4B；后面跟的是 MA5 终极策略状态', cell: function (r) {
       var a = ztpAna(r.code); if (!a) return ztpNa(ztpNaTip(r));
       var stg = a.sr.stage, c = stageColorOf(stg);
-      var ms = a.ma5 || computeMA5Strategy(a.ind);
+      var ms = ma5Of(a, a.ind);
       var h = '<span class="st-chip" style="background:' + c + '22;color:' + c + ';border:1px solid ' + c + '55">' + stageNameOf(stg) + '</span>' +
-        '<span class="ma5-chip" style="background:' + ms.meta.color + '22;color:' + ms.meta.color + ';border:1px solid ' + ms.meta.color + '55" title="MA5 终极策略：' + escapeHtml(ms.meta.name) + '｜' + escapeHtml(ms.meta.pos) + '">' + ms.meta.short + '</span>';
-      if (ms.buySignal) h += '<span class="ma5-chip" style="background:#26c28122;color:#26c281;border:1px solid #26c28155" title="收盘已满足买入信号：斜率翻上 + 连续2日站线 + dev 0~6% + 放量阳线；次日 14:50 复核买入 或 开盘回踩MA5买入（失效则作废）">买点</span>';
+        ma5ChipHtml(ms);                 /* 2026-09-22 走公共函数（输出与原来逐字一致） */
       return h;
     } },
   { k: 'kdj', t: 'KDJ', src: 'ana', tip: '按 J 值排序', cell: function (r) {
@@ -11126,8 +11258,99 @@ var ZTPL_COLS = [
     } }
 ];
 
+/* ---------------- 批量加自选（勾选）— 2026-09-22 用户需求 ----------------
+   设计要点（都踩过坑才这么写）：
+   ① 勾选状态存 ZTPL.sel（code→true），**不存 DOM** —— 表头排序会重画表体（ztpSort → ztpoolRenderBody），
+      状态存 DOM 就会全丢；
+   ② 单只勾选**不重绘表体**（几百行重绘会丢纵向滚动位置与展开行）—— 只同步按钮文案与全选框；
+      只有「全选/清空」这种要一次性同步所有行的动作才重绘；
+   ③ 是否已在自选用 ZTPL.wlSet 缓存判断（渲染前算一次）—— 每行都 wlGet() 就是每行一次
+      localStorage 读 + JSON.parse，几百行下明显卡；
+   ④ 批量写入一次性 lsSet（而不是循环 wlAdd：那会做 N 次 读+序列化+写，400 只就是 400 次全量写）。 */
+function ztpWlSet() {
+  if (!ZTPL.wlSet) {
+    var s = {};
+    try { wlGet().forEach(function (x) { s[x.code] = true; }); } catch (e) { }
+    ZTPL.wlSet = s;
+  }
+  return ZTPL.wlSet;
+}
+function ztpSelCodes() {
+  var out = [];
+  ZTPL.rows.forEach(function (r) { if (ZTPL.sel[r.code]) out.push(r.code); });
+  return out;
+}
+function ztpSelInfoHtml() {
+  var codes = ztpSelCodes(), n = codes.length;
+  if (!n) return '';
+  var ws = ztpWlSet(), has = 0;
+  codes.forEach(function (c) { if (ws[c]) has++; });
+  return '已勾选 <b style="color:#fbbf24">' + n + '</b> 只' + (has ? '（其中 <b>' + has + '</b> 只已在自选）' : '');
+}
+/* 按钮文案/禁用/清空按钮显隐 + 全选框状态（含 indeterminate） */
+function ztpSelSync() {
+  var n = ztpSelCountCache();
+  var b = el('ztpWlAdd');
+  if (b) {
+    b.textContent = '⭐ 批量加自选' + (n ? '（' + n + '）' : '');
+    b.disabled = !n;
+    b.style.opacity = n ? '' : '.5';
+  }
+  var clr = el('ztpSelClear');
+  if (clr) clr.style.display = n ? '' : 'none';
+  var info = el('ztpSelInfo');
+  if (info) info.innerHTML = ztpSelInfoHtml();
+  var hall = el('ztpSelAll');
+  if (hall) {
+    var total = ZTPL.rows.length, sel = ztpSelCodes().length;
+    hall.checked = total > 0 && sel === total;
+    hall.indeterminate = sel > 0 && sel < total;
+  }
+}
+function ztpSelCountCache() { return ztpSelCodes().length; }
+/* 勾选/取消一只：只动状态 + 同步按钮（不重绘表体） */
+function ztpSelSet(code, on) {
+  if (on) ZTPL.sel[code] = true; else delete ZTPL.sel[code];
+  ztpSelSync();
+}
+/* 全选 / 清空（需要同步每一行的复选框 → 重绘表体） */
+function ztpSelAll(on) {
+  ZTPL.rows.forEach(function (r) { if (on) ZTPL.sel[r.code] = true; else delete ZTPL.sel[r.code]; });
+  ztpoolRenderBody();
+  ztpSelSync();
+}
+/* 把勾选的股票批量加入「★ 自选」：已在自选里的自动跳过并如实计数 */
+function ztpWlAddSelected() {
+  var codes = ztpSelCodes();
+  if (!codes.length) { ztpoolStatus('请先勾选要加入自选的股票'); return; }
+  var byCode = {};
+  ZTPL.rows.forEach(function (r) { byCode[r.code] = r; });
+  var arr = wlGet(), have = {};
+  arr.forEach(function (x) { have[x.code] = true; });
+  var added = 0, dup = 0;
+  /* 倒序插入：wlAdd 是 unshift（新加的排最前）→ 倒序加完，自选里的顺序与涨停池表格顺序一致 */
+  codes.slice().reverse().forEach(function (c) {
+    if (have[c]) { dup++; return; }
+    var r = byCode[c] || {};
+    arr.unshift({ code: c, name: r.name || c, t: Date.now() });
+    have[c] = true; added++;
+  });
+  if (added) lsSet(WL_KEY, arr);
+  ZTPL.wlSet = have;                                   /* 缓存同步（勾选列立刻出现 ⭐） */
+  ztpoolStatus('已加入自选 ' + added + ' 只' + (dup ? '（' + dup + ' 只本来就在自选里，已跳过）' : '') +
+    ' —— 到「★ 自选」页查看 / 刷新查询');
+  if (el('wlList') && typeof renderWatch === 'function') { try { renderWatch(); } catch (e) { } }
+  ztpoolRenderBody();                                  /* 让勾选列 ⭐ 标记立刻显示 */
+  ztpSelSync();
+}
+
 function ztpHeadRowHtml() {
   return '<tr>' + ZTPL_COLS.map(function (c) {
+    /* 2026-09-22 勾选列：表头 = 全选复选框（行全选 → checked，部分选中 → indeterminate 由 ztpSelSync 补） */
+    if (c.k === 'sel') {
+      return '<th style="white-space:nowrap" title="全选 / 取消全选（当前 ' + ZTPL.rows.length + ' 只）">' +
+        '<input type="checkbox" id="ztpSelAll" data-ztselall="1"></th>';
+    }
     var dot = c.src ? ('<span style="display:inline-block;width:5px;height:5px;border-radius:50%;margin-right:4px;vertical-align:1px;background:' + (ZTPL_SRC_DOT[c.src] || '#5b8cff') + ';opacity:.85"></span>') : '';
     if (c.noSort) return '<th style="white-space:nowrap">' + dot + c.t + '</th>';
     var on = (ZTPL.sort.col === c.k);
@@ -11272,11 +11495,14 @@ function ztpNoteHtml(nDays, d) {
     dot('ana', '逐股日K分析 —— 与「成分股生命周期分类」<b>同一套引擎</b>，数值口径完全一致。<b style="color:#fbbf24">不自动跑</b>（几百只逐股抓日K既慢又易被限速）：点「▶ 分析全部」批量补，或展开单行点「分析这一只」') + '。<br>' +
     '<b style="color:#9fb4ff">表头可点击排序</b>（▲/▼，同列再点反向；无值 / 待分析的行永远沉底）；点任意一行展开完整详情卡' +
     '（阶段路线图 / 转折确认清单 / 辨识度 / 涨停基因 / 今昨强弱 / dev 规则卡）。' +
-    '在板块详情或个股诊断里已分析过的股票，这里<b>打开就有值</b>（共用同一份分析缓存）。';
+    '在板块详情或个股诊断里已分析过的股票，这里<b>打开就有值</b>（共用同一份分析缓存）。<br>' +
+    '<b style="color:#fbbf24">批量加自选</b>：勾选最左侧复选框（表头那个 = 全选 / 取消全选），点上方「⭐ 批量加自选」一次把这批股票加入「★ 自选」' +
+    '——已在自选里的自动跳过，勾选列会亮出 ⭐ 标记；勾选状态按股票代码保存，表头排序 / 分析中重绘都不会丢。';
 }
 function ztpoolRender() {
   var box = el('ztpResult'); if (!box) return;
   if (!ZTPL.done) { setHtml(box, '<div class="loading">正在拉取涨停池…</div>'); return; }
+  ZTPL.wlSet = null;                    /* 2026-09-22 重绘前失效自选缓存（自选可能在别处被改过，如个股诊断加自选） */
   var d = ZTPL.diag || { days: [], raw: 0, stCut: 0, kept: 0 };
   var nDays = ZTPL.key ? ZTPL.key.split(',').length : 10;
   var h = '<div class="note" style="margin:6px 0 10px">' + ztpNoteHtml(nDays, d) + '</div>' +
@@ -11289,12 +11515,14 @@ function ztpoolRender() {
   h += '<div class="ztp-wrap"><table class="batch-table"><thead id="ztpHead">' + ztpHeadRowHtml() + '</thead>' +
     '<tbody id="ztpBody">' + ztpBodyHtml() + '</tbody></table></div>';
   setHtml(box, h);
+  ztpSelSync();                         /* 2026-09-22 全选框/按钮状态与 ZTPL.sel 对齐 */
 }
 /* 只刷表格本体（分析中每 400ms 刷一次也保持滚动位置不跳） */
 function ztpoolRenderBody() {
   var tb = el('ztpBody'); if (!tb) return;
   tb.innerHTML = ztpBodyHtml();
   var st = el('ztpStat'); if (st) st.innerHTML = ztpStatHtml();
+  ztpSelSync();                         /* 2026-09-22 勾选列随重绘恢复（状态在 ZTPL.sel，不丢） */
 }
 
 /* ---------------- 批量报价（双通道）：现价 / 涨跌幅 / 换手 / 量比 / 主力净流入 / 60日涨幅 / 流通市值 ----------------
@@ -11745,7 +11973,28 @@ function init() {
   if (el('ztpAna')) el('ztpAna').addEventListener('click', function () { ztpoolAnalyze(null); });
   if (el('ztpAnaStop')) el('ztpAnaStop').addEventListener('click', ztpoolStop);
   if (el('ztpClear')) el('ztpClear').addEventListener('click', ztpoolClearAna);
+  /* 2026-09-22 批量加自选：加自选 / 清空勾选 */
+  if (el('ztpWlAdd')) el('ztpWlAdd').addEventListener('click', ztpWlAddSelected);
+  if (el('ztpSelClear')) el('ztpSelClear').addEventListener('click', function () { ztpSelAll(false); });
   if (el('ztpResult')) el('ztpResult').addEventListener('click', function (e) {
+    /* 2026-09-22 勾选列（批量加自选）：① 点在复选框 → 按复选框新态切换；② 点在 ⭐ 标记/整格 → 取反复选框。
+       两种情况都必须 return —— 否则会继续走到下面的行开合逻辑（想勾一只却顺手把详情展开，很难受）。 */
+    var sbox = e.target.closest && e.target.closest('input[data-ztsel]');
+    if (sbox) { ztpSelSet(sbox.getAttribute('data-ztsel'), !!sbox.checked); return; }
+    var scell = e.target.closest && e.target.closest('td.ztsel-cell');
+    if (scell) {
+      var str2 = scell.closest('tr.batch-row');
+      if (str2) {
+        var c2 = str2.getAttribute('data-code');
+        var box2 = scell.querySelector('input[data-ztsel]');
+        var next = !(box2 && box2.checked);
+        if (box2) box2.checked = next;
+        ztpSelSet(c2, next);
+      }
+      return;
+    }
+    var sall = e.target.closest && e.target.closest('input[data-ztselall]');
+    if (sall) { ztpSelAll(!!sall.checked); return; }
     var b = e.target.closest('[data-ztact]');
     if (b) {                                     /* 展开行里的按钮：先处理，别触发行的开合 */
       if (b.getAttribute('data-ztact') === 'one') ztpoolAnalyze(b.getAttribute('data-code'));
