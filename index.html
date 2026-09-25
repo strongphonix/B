@@ -157,7 +157,9 @@
   .batch-table .fail { color: var(--danger); }
   .caret { color: var(--dim); font-size: 10px; margin-right: 5px; display:inline-block; }
   .batch-detail > td { padding: 0 !important; background: #0a1122; }
-  .batch-detail .card { margin: 8px; }
+  /* ★ 2026-09-25（用户反馈）：展开详情**贴左**（auto 居中在超宽表格里把卡推到可视区右外 → 左侧大片空白）；
+     max-width 用 min() 保证卡不超可视区；td overflow-x:auto 兜底横向内容在行内滚、不撑爆页面 */
+  .batch-detail .card { margin: 8px 0; max-width: min(1180px, calc(100vw - 48px)); }
 
   tr.group-head td { background:#0f1730; padding:10px !important; font-size:12.5px; font-weight:700;
     border-top:1px solid var(--line); border-bottom:1px solid var(--line); white-space:normal; }
@@ -221,9 +223,31 @@
           第 1 行 .d12-r1  ：评分 / 档位 / 三闸门灯 / 多空中性 / 位置档 / 闸门结论
           第 2 行 .d12-act ：**可直接执行的买卖策略原文**（+ 闸门封顶时的「取更严者」提示）
         仍然**不下沉 12 行明细**（那在下方卡片里；两处共用同一次 d12Judge 计算，口径不可能不一致）。 */
-  .stock-head .d12-top { display:inline-flex; flex-direction:column; align-items:flex-start; gap:3px;
-    margin-left:14px; vertical-align:2px; font-size:12px; padding:4px 10px;
+  .stock-head .d12-top { display:flex; flex-direction:column; align-items:flex-start; gap:3px;
+    margin-left:0; width:100%; font-size:12px; padding:4px 10px;
     border:1px solid #2b3a55; border-radius:8px; background:rgba(43,58,85,.28); max-width:100%; }
+  /* ★ 2026-09-25（用户反馈）：12维与四指标**上下两个文本框**排列 —— 并排会挤出页面右缘 */
+  .stock-head .s4k-top { display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+    margin-left:0; width:100%; font-size:12px; padding:4px 10px; margin-top:6px;
+    border:1px solid #2b3a55; border-radius:8px; background:rgba(43,58,85,.28); max-width:100%; }
+  .stock-head .s4k-top .k { font-size:11px; color:var(--muted); border:1px solid var(--line); border-radius:5px; padding:1px 6px; }
+  .stock-head .s4k-trend { font-weight:700; color:#9fb4ff; }
+  .stock-head .s4k-score { font-size:13px; font-weight:800; }
+  .stock-head .s4k-score.up { color:#26c281; }
+  .stock-head .s4k-score.warn { color:#f59e0b; }
+  .stock-head .s4k-score.down { color:#f0453a; }
+  .stock-head .s4k-act { font-weight:700; }
+  .stock-head .s4k-act.up { color:#26c281; }
+  .stock-head .s4k-act.warn { color:#f59e0b; }
+  .stock-head .s4k-act.down { color:#f0453a; }
+  .stock-head .s4k-veto { font-size:11px; font-weight:800; color:#fff; background:#f0453a; border-radius:5px; padding:1px 7px; }
+  /* ★ 2026-09-25（用户反馈）：详情页限宽 —— min() 让卡永远不超可视区；展开详情**贴左**（原 auto 居中
+     在超宽表格里会把卡推到可视区右外，左侧大片空白）+ td 横向滚动兜底 */
+  #resultArea { max-width: min(1180px, calc(100vw - 48px)); margin: 0; }
+  #resultArea .card { padding: 12px 14px; margin-bottom: 10px; }
+  #resultArea .stock-head .name { font-size: 18px; }
+  #resultArea .stock-head { gap: 8px; }
+  .batch-detail > td { overflow-x: auto; }
   .stock-head .d12-top .d12-r1 { display:inline-flex; align-items:center; gap:7px; flex-wrap:wrap; }
   .stock-head .d12-top .k { font-size:11px; font-weight:800; color:#9fb4ff; letter-spacing:.3px; }
   .stock-head .d12-top .d12-cnt { font-weight:700; color:#cdd6f4; }
@@ -293,9 +317,11 @@
   .stage-views .sv-trd .k { color:#ffb347; }
 
   /* 阶段路线图（4 大阶段 × 每阶段 3 子阶段） */
-  .stage-road { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:16px; }
-  @media (max-width: 720px) { .stage-road { grid-template-columns:repeat(2,1fr); } }
-  .sr-block { border:1px solid var(--line); border-radius:9px; padding:8px 10px; background:var(--card2); }
+  /* ★ 2026-09-25（用户反馈"生命周期各阶段太宽"）：阶段路线图整体限宽 + minmax(0,1fr) 防内容撑爆——
+     四列均分、每块约 240px，无论父容器多宽都不会把子阶段行拉成长条 */
+  .stage-road { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:8px; margin-top:16px; max-width: 980px; }
+  @media (max-width: 720px) { .stage-road { grid-template-columns:repeat(2, minmax(0,1fr)); } }
+  .sr-block { border:1px solid var(--line); border-radius:9px; padding:8px 10px; background:var(--card2); overflow:hidden; }
   .sr-block.on { border-color:#5b8cff; }
   .sr-head { font-size:12px; font-weight:700; color:#9fb4ff; margin-bottom:6px; }
   .sr-sub { font-size:11.5px; color:var(--dim); padding:3px 7px; border-radius:6px; margin-bottom:3px; }
@@ -351,7 +377,7 @@
   .strategy-item .s-content ol { padding-left: 18px; }
   .strategy-item .s-content li { margin: 3px 0; }
 
-  .indicators { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+  .indicators { display: grid; grid-template-columns: repeat(auto-fill, minmax(132px, 1fr)); gap: 8px; }
   .ind-item { background: var(--card2); border: 1px solid var(--line); border-radius: 10px; padding: 11px 13px; border-left: 3px solid var(--muted); }
   .ind-item.good { border-left-color: var(--good); }
   .ind-item.warn { border-left-color: var(--warn); }
@@ -878,6 +904,7 @@
           <label><input type="checkbox" id="posTrigOpen8"> 开盘八法多方盘（三高盘 / 两高盘 / 平移上）</label>
           <label><input type="checkbox" id="posTrigKdjBuy"> KDJ 金叉（买入）—— K 上穿 D（9,3,3 经典参数），<b>仅限当日实时金叉</b>（交叉K线的日期＝今天，隔日老金叉不触发）；低位金叉会在推送文案里标明</label>
           <label><input type="checkbox" id="posTrigKdjSell"> KDJ 死叉（卖出）—— K 下穿 D，<b>仅限当日实时死叉</b>（交叉K线的日期＝今天，隔日老死叉不触发）；高位死叉会在推送文案里标明</label>
+          <label><input type="checkbox" id="posTrigS4k"> 四指标打分触发 —— MA5+KDJ+VOL+冲高回吐 加权总分：≥60 推「买入」档、&lt;15 或一票否决推「清仓」档（作用于持仓清单里的标的；与监控范围那组同名策略同一套 s4kTotal 引擎）</label>
         </div>
         <label>盘中自动检测间隔（分钟 · 0 = 仅手动）</label>
         <input id="posInterval" type="number" min="0" max="60" value="3">
@@ -935,6 +962,7 @@
           <label><input type="checkbox" id="trigKdjBuy"> KDJ 金叉（买入）—— K 上穿 D（9,3,3 经典参数），金叉当日触发</label>
           <label><input type="checkbox" id="trigKdjSell"> KDJ 死叉（卖出）—— K 下穿 D，死叉当日触发</label>
           <label><input type="checkbox" id="trigZtSector"> <b>板块涨停共振</b>—— 板块内涨停 ≥3 家 且 至少 1 家 2 连板及以上 → 推送该板块（家数/连板高度变化当天会再推）</label>
+          <label><input type="checkbox" id="trigS4k"> <b>四指标打分触发</b>—— MA5+KDJ+VOL+冲高回吐 加权总分：≥60 推「买入」档、&lt;15 推「清仓」档（所有买点推送行都默认附带打分与操作指令）</label>
         </div>
         <label>盘中自动检测间隔（分钟 · 0 = 仅手动）</label>
         <input id="dingInterval" type="number" min="0" max="60" value="5">
@@ -942,6 +970,7 @@
              勾选 = 详细日报（列全部自选股，按结论分组 + 命中的给完整块）；不勾 = 旧行为（只推命中的票） -->
         <div class="ding-checks" style="margin-top:10px;">
           <label><input type="checkbox" id="dingDailyDetail" checked> <b>「推送日报」用详细模式</b>——列出<b>全部自选股</b>的状态（按结论分组，命中的置顶给完整块）；不勾 = 只推命中的票</label>
+          <label><input type="checkbox" id="dingFixed" checked> <b>定时日报</b>—— 每个交易日 <b>11:20 / 14:40</b> 自动推送日报（含 S4K 四指标打分；需已填 Webhook；周末不推，法定节假日数据末根提示会自动说明）</label>
         </div>
         <div class="ding-actions">
           <button class="btn" id="dingSave">保存配置</button>
@@ -3730,6 +3759,9 @@ function buildResultHTML(quote, ind, sr, compact, source, gene, cap, rec, open8,
      下方卡片给完整 12 行（d12Html）。这里**只算一次**，两处共用同一份结果（纯计算，零额外网络请求）。 */
   var d12 = null;
   try { d12 = d12Judge(ind, quote, gene, cap, m5, open8); } catch (eD12) { d12 = null; }
+  /* ★ 2026-09-25（用户要求）：顶部「四指标打分」与 12 维并列 —— 只算一次，顶部徽标与下方卡片共用。 */
+  var s4kR = null;
+  try { s4kR = s4kTotal(ind.klines, kdjState(ind.klines)); } catch (eS4kT) { s4kR = null; }
 
   var html = '';
   html += '<div class="card"><div class="stock-head">' +
@@ -3743,6 +3775,8 @@ function buildResultHTML(quote, ind, sr, compact, source, gene, cap, rec, open8,
     renderOpen8Top(open8) +
     /* 顶部同步显示 12 维复盘结论（三闸门灯 + 多空计数 + 位置档 + 一句话；完整依据在下方卡片） */
     renderD12Top(d12) +
+    /* 顶部同步显示「四指标打分」结论（趋势 → 总分 → 操作指令；2026-09-25 用户要求与 12 维一起显示） */
+    renderS4kTop(s4kR) +
     '</div>' +
     (quote.code ? '<button type="button" class="wl-btn' + (wlHas(quote.code) ? ' on' : '') + '" data-code="' + escapeHtml(quote.code) + '" data-name="' + escapeHtml(name) + '" title="加入 / 移出自选列表">' + (wlHas(quote.code) ? '★ 已自选' : '☆ 加自选') + '</button>' : '') +
     '</div>' +
@@ -3863,6 +3897,9 @@ function buildResultHTML(quote, ind, sr, compact, source, gene, cap, rec, open8,
 
 
 
+  /* ★ 2026-09-25（用户要求）：四指标打分交易系统 v2（MA5+KDJ+VOL+冲高回吐，满分 100 → 六档买卖指令）。
+     KDJ 复用 kdjState（9,3,3 同参，零额外请求）。pre=s4kR —— 顶部徽标已算过，这里直接复用（不重复计算）。 */
+  try { html += s4kCardHtml(ind, null, s4kR); } catch (eS4k) {}
   html += '<div class="card"><div class="card-title">K线走势（近 ' + Math.min(70, ind.klines.length) + ' 日 · 前复权）</div>' + renderChart(ind) + '</div>';
 
   if (!compact) {
@@ -4846,6 +4883,7 @@ var ST = {
   bsort: 'chgDesc',
   bfilter: '',
   boards: [],
+  bsel: {},   /* ★ 2026-09-25：板块成分股「批量加自选」勾选状态（code→true，跨板块卡共享；不存 DOM） */
   // 板块 code -> { zt, dt, ts }：打开板块时统计并持久化，供板块列表显示/排序（未打开过的板块为未知）
   boardZT: (function () { try { return JSON.parse(localStorage.getItem('bwork_ztstat') || '{}'); } catch (e) { return {}; } })(),
   // 板块 code -> { c:{p1a:n,...}, n:已判定只数, total:成分股数, date, ts }：生命周期阶段分布
@@ -5928,6 +5966,273 @@ function kdjBrief(kj) {
   if (kj.signal === 'dead') return '死叉·' + kdjZoneTxt(kj.zone);
   return (kj.side === 'bull' ? '多头' : '空头') + '(K' + Math.round(kj.k) + ' D' + Math.round(kj.d) + ')';
 }
+/* ==================================================================
+   四指标打分交易系统（2026-09-25 新增 · 用户导入《四指标打分交易系统（全自动执行版）.md》）
+   ------------------------------------------------------------------
+   来源：用户提供文档（MA5 + KDJ(9,3,3) + VOL对比VOL5 + 冲高回吐，满分 100，纯技术面）。
+   流程：趋势判定（决定权重）→ 四指标分项打分 → 加权总分 → 六档操作指令 + 仓位 → 止盈止损。
+   文档未定义的**缝隙按保守/插值处理**，全部在卡片折叠区自证（不臆造）：
+     · MA5「走平」阈值 = |斜率| < 0.3%（文档未量化）
+     · S1 未列组合（站稳+向下 / 跌破+走平/向上）按 25 分插值
+     · S3 量比 1.5~2.0 缝隙按「爆量」保守处理；「放量下跌」实现口径 = 收跌 且 量 ≥1.0×VOL5
+     · S4 位置「中位」（20日涨幅 10~20%）与量能中性 → 取低/高档均值
+     · KDJ 交叉以**当根**为准（前K≤前D 且 今K>今D = 金叉）；背离窗口 = 近 20 日
+   KDJ 序列复用页面既有 kdjSeries/kdjState（9,3,3 同参数，零额外请求）。
+   ================================================================== */
+/* ==== S4K-BEGIN ==== */
+var S4K_RULE = {
+  flatPct: 0.3,          /* MA5 走平阈值（%） */
+  lowK: 20, highK: 80,   /* KDJ 区间：K、D 均 <20 低位 / 均 >80 高位 */
+  posHigh: 20, posLow: 10, /* 近20日涨幅 >20% 高位 / <10% 低位，10~20 中位 */
+  strongRise5: 15, strongVol: 1.2, /* 强势主升：近5日涨幅>15% 且 近2日均 ≥1.2×VOL5 */
+  gap12: 1.5,            /* 温和放量上界；1.5~2.0 缝隙按爆量保守 */
+  minBars: 26,           /* 最低 K 线数（20日窗口 + MA5 + KDJ9,3,3 平滑起步） */
+  /* ---- v2 校正版新增（2026-09-25 用户上传）：回吐权重全面上调 + S4 八档 + 三叠加修正 + 三条一票否决 ---- */
+  yestHt: 3,             /* 连续长上影判定：昨日回吐率 >3% 视为有效上影（数据项 D9） */
+  shadowRatio: 2,        /* 有效长上影：上影线 ≥ 2×实体；短于实体不扣高位放量档（叠加修正③） */
+  longYin: -5            /* 一票否决「放量长阴」实现口径：当日跌幅 <-5% 且 量 ≥1.2×VOL5（文档未量化，自证） */
+};
+/* 基础量：全部从 klines 自算（不依赖 ind 内部字段命名） */
+function s4kCalc(klines) {
+  var n = klines.length;
+  if (n < S4K_RULE.minBars) return { ok: false, why: '日K不足 ' + S4K_RULE.minBars + ' 根（需 20 日窗口 + MA5 + KDJ 9,3,3 平滑起步）' };
+  var i = n - 1, m, s;
+  var c = klines[i].close, cYes = klines[i - 1].close;
+  s = 0; for (m = i; m > i - 5; m--) s += klines[m].close; var m5 = s / 5;
+  s = 0; for (m = i - 1; m > i - 6; m--) s += klines[m].close; var m5p = s / 5;
+  var slope = m5p > 0 ? (m5 / m5p - 1) * 100 : 0;      /* MA5 日斜率（%） */
+  var flat = Math.abs(slope) < S4K_RULE.flatPct;
+  var stand = c > m5 && cYes > m5p;                     /* 连续 2 日收盘在当日 MA5 上方 */
+  s = 0; for (m = i - 5; m < i; m++) s += (klines[m].volume || 0); var v5 = s / 5;   /* VOL5 = 前 5 日均量（不含今日） */
+  var v = klines[i].volume || 0, vr = v5 > 0 ? v / v5 : 1;
+  var base20 = klines[i - 20].close, chg20 = base20 > 0 ? (c / base20 - 1) * 100 : 0;
+  var chg5 = klines[i - 5].close > 0 ? (c / klines[i - 5].close - 1) * 100 : 0;
+  var volCont = (klines[i].volume || 0) / (v5 || 1) >= S4K_RULE.strongVol &&
+                (klines[i - 1].volume || 0) / (v5 || 1) >= S4K_RULE.strongVol;
+  var lo20 = klines[i].low, hi20 = klines[i].high, q;
+  for (q = i - 20; q < i; q++) { if (klines[q].low < lo20) lo20 = klines[q].low; if (klines[q].high > hi20) hi20 = klines[q].high; }
+  var loC20 = c, hiC20 = c;
+  for (q = i - 20; q < i; q++) { if (klines[q].close < loC20) loC20 = klines[q].close; if (klines[q].close > hiC20) hiC20 = klines[q].close; }
+  /* v2 新增数据项：当日回吐率 ht、昨日回吐率 htYes（D9）、昨日高点 hYes（次日验证用）、
+     上影线/实体（有效长上影判定）、昨日量比 vrYes（连续长上影「每日放量」）、当日涨跌幅 chgDay（放量长阴） */
+  var gv = function (x) { return klines[x].volume || klines[x].vol || 0; };
+  var ht = cYes > 0 ? (klines[i].high - c) / cYes * 100 : 0;
+  var htYes = klines[i - 1].close > 0 ? (klines[i - 1].high - klines[i - 1].close) / klines[i - 1].close * 100 : 0;
+  var hYes = klines[i - 1].high;
+  var body = Math.abs(c - klines[i].open), upsh = klines[i].high - Math.max(c, klines[i].open);
+  var longShadow = body > 0 ? (upsh >= body * S4K_RULE.shadowRatio) : (upsh > 0);   /* 实体近 0（十字星）时只要有上影即算有效 */
+  var v5y = 0; for (m = i - 6; m < i - 1; m++) v5y += gv(m); var vrYes = (v5y > 0) ? gv(i - 1) / (v5y / 5) : 1;
+  var chgDay = cYes > 0 ? (c / cYes - 1) * 100 : 0;
+  return { ok: true, i: i, c: c, cYes: cYes, h: klines[i].high, m5: m5, m5p: m5p, slope: slope, flat: flat, stand: stand,
+    v5: v5, vr: vr, chg20: chg20, chg5: chg5, volCont: volCont, lo20: lo20, hi20: hi20, loC20: loC20, hiC20: hiC20,
+    ht: ht, htYes: htYes, hYes: hYes, body: body, upsh: upsh, longShadow: longShadow, vrYes: vrYes, chgDay: chgDay };
+}
+/* 第1步 趋势：连续 2 根日线确认（单日无效）；强势主升修正 MA5 55 / KDJ 15 */
+function s4kTrend(k) {
+  var trend, notes = [];
+  if (!k.flat && k.slope > 0 && k.stand) trend = 'up';
+  else if (!k.flat && k.slope < 0 && k.c < k.m5 && k.cYes < k.m5p) trend = 'down';
+  else trend = 'side';
+  var strong = trend === 'up' && k.chg5 > S4K_RULE.strongRise5 && k.volCont;
+  if (strong) notes.push('强势主升修正：近5日涨幅 ' + k.chg5.toFixed(1) + '% 且 近2日连续放量 → MA5 权重 50%、KDJ 15%（v2）');
+  return { trend: trend, strong: strong, notes: notes };
+}
+/* 2.1 MA5 打分 S1（0/25/50/100；文档未列组合按 25 插值） */
+function s4kS1(k) {
+  var notes = [], v;
+  if (k.stand && !k.flat && k.slope > 0) v = 100;
+  else if (k.stand && k.flat) v = 50;
+  else if (!k.stand && !k.flat && k.slope < 0) v = 0;
+  else { v = 25; notes.push('S1 插值：文档未列组合（' + (k.stand ? '站稳' : '跌破') + (k.flat ? '+走平' : (k.slope > 0 ? '+向上' : '+向下')) + '）→ 按 25 分处理'); }
+  return { v: v, notes: notes, txt: (k.stand ? '站稳' : '跌破') + 'MA5 · MA5' + (k.flat ? '走平' : (k.slope > 0 ? '向上' : '向下')) };
+}
+/* 2.2 KDJ 打分 S2（区间 + 当根交叉 + 趋势修正 + 背离 ±10） */
+function s4kS2(kj, trend, k, klines) {
+  var notes = [], raw = 0, kind = '无交叉（钝化/横盘）';
+  if (kj && kj.ok) {
+    var gold = kj.prevK <= kj.prevD && kj.k > kj.d, dead = kj.prevK >= kj.prevD && kj.k < kj.d;   /* 当根交叉 */
+    var low = kj.k < S4K_RULE.lowK && kj.d < S4K_RULE.lowK, high = kj.k > S4K_RULE.highK && kj.d > S4K_RULE.highK;
+    if (gold && low) { raw = 100; kind = '低位金叉'; if (trend === 'down') { raw = 30; notes.push('S2 趋势修正：下降趋势低位金叉 100 → 30'); } }
+    else if (gold && high) { raw = 85; kind = '高位金叉'; if (trend !== 'up') { raw = 0; notes.push('S2 趋势修正：震荡/下跌高位金叉归零'); } }
+    else if (dead && high) { raw = -100; kind = '高位死叉'; if (trend === 'up') notes.push('S2：上升趋势高位死叉 → 仅减仓不清仓'); }
+    else if (dead && low) { raw = -30; kind = '低位死叉'; }
+    else if (gold) { raw = 20; kind = '中位金叉'; notes.push('S2 趋势修正：中位金叉 +40 减半 → +20'); }
+    else if (dead) { raw = -20; kind = '中位死叉'; notes.push('S2 趋势修正：中位死叉 -40 减半 → -20'); }
+    /* 背离修正（窗口 = 近 20 日，复用 kdjSeries 的 K 序列） */
+    try {
+      var S = kdjSeries(klines), i = S.n - 1, q, loK = 1e9, hiK = -1e9;
+      for (q = Math.max(0, i - 20); q <= i; q++) { if (S.K[q] < loK) loK = S.K[q]; if (S.K[q] > hiK) hiK = S.K[q]; }
+      var newLowC = k.c <= k.loC20, newHiC = k.c >= k.hiC20;
+      if (gold && low && newLowC && S.K[i] > loK) { raw += 10; notes.push('S2 背离修正：底背离（价格新低、KDJ 不新低）+ 低位金叉 → +10'); }
+      if (dead && high && newHiC && S.K[i] < hiK) { raw -= 10; notes.push('S2 背离修正：顶背离（价格新高、KDJ 不新高）+ 高位死叉 → -10'); }
+    } catch (eB) { notes.push('背离修正未算出（' + (eB.message || eB) + '），不加不减'); }
+  } else notes.push('KDJ 未算出（' + ((kj && kj.reason) || '数据不足') + '）→ S2 按 0 处理');
+  return { v: raw, notes: notes, txt: kind };
+}
+/* 2.3 VOL 打分 S3（对比 VOL5；放量下跌口径 = 收跌 且 量 ≥1.0×VOL5） */
+function s4kS3(k, trend) {
+  var notes = [], vr = k.vr, dn = trend === 'down';
+  if (k.c < k.cYes && vr >= 1.0) return { v: (dn ? -100 : 0), notes: ['S3 口径：放量下跌 = 收跌 且 量 ≥1.0×VOL5（实测 ' + vr.toFixed(2) + '×）'], txt: '放量下跌' };
+  if (vr >= S4K_RULE.gap12 && vr < 2.0) notes.push('S3 缝隙：量比 1.5~2.0 文档未列 → 按「爆量」保守处理');
+  if (vr >= 2.0) return { v: (dn ? 0 : (trend === 'side' ? 50 : (k.chg20 > S4K_RULE.posHigh ? 0 : 60))), notes: notes, txt: '爆量 ' + vr.toFixed(2) + '×' + (k.chg20 > S4K_RULE.posHigh ? '（高位爆量→0）' : '') };
+  if (vr >= 1.0) return { v: (dn ? 20 : 100), notes: notes, txt: '温和放量 ' + vr.toFixed(2) + '×' };
+  if (vr >= 0.7) return { v: (dn ? 0 : (trend === 'side' ? 40 : 80)), notes: notes, txt: '温和缩量 ' + vr.toFixed(2) + '×' };
+  return { v: (dn ? 30 : (trend === 'side' ? 20 : 30)), notes: notes, txt: '极度缩量 ' + vr.toFixed(2) + '×' };
+}
+/* 2.4 冲高回吐打分 S4（v2 大幅校正版，2026-09-25 用户上传）
+   核心原则：位置第一、量能第二、幅度第三。高位+放量+大幅回吐 = 最危险卖出信号；低位+缩量+回吐 = 仙人指路试盘。
+   八档（v1 的 5~8% / >8% 高位+放量由 0/-50 改为 -30/-40/-60 与 -60/-70/-90 负分）+
+   三叠加修正：① 连续长上影 -20（三炷香）② 次日验证 -10 / 洗盘 +30 ③ 上影 ≥2×实体 才算有效长上影 */
+function s4kS4(k, trend) {
+  var notes = [];
+  var ht = k.ht;
+  var pos = k.chg20 > S4K_RULE.posHigh ? 'high' : (k.chg20 < S4K_RULE.posLow ? 'low' : 'mid');
+  var vk = k.vr > S4K_RULE.strongVol ? 'big' : (k.vr < 0.8 ? 'small' : 'mid');
+  var dn = trend === 'down', side = trend === 'side';
+  var col = dn ? 'dn' : (side ? 'side' : 'up');
+  var posTxt = (pos === 'high' ? '高位' : (pos === 'low' ? '低位' : '中位')) + (vk === 'big' ? '+放量' : (vk === 'small' ? '+缩量' : '+温和量'));
+  var v, band;
+  if (ht < 1) { v = dn ? 40 : 100; band = '<1%'; }
+  else if (ht < 3) { v = dn ? 30 : (side ? 80 : 85); band = '1~3%'; }
+  else if (ht < 5) band = '3~5%';
+  else if (ht < 8) band = '5~8%';
+  else band = '>8%';
+  if (band !== '<1%' && band !== '1~3%') {
+    var lo = band === '3~5%' ? { up: 65, side: 55, dn: 20 } : (band === '5~8%' ? { up: 45, side: 35, dn: 10 } : { up: 20, side: 10, dn: -10 });
+    var hi = band === '3~5%' ? { up: 10, side: 0, dn: -20 } : (band === '5~8%' ? { up: -30, side: -40, dn: -60 } : { up: -60, side: -70, dn: -90 });
+    if (pos === 'low' && vk === 'small') { v = lo[col]; notes.push('S4：' + band + '% 低位+缩量（仙人指路试盘方向）'); }
+    else if (pos === 'high' && vk === 'big' && k.longShadow) {
+      v = hi[col];
+      notes.push('S4：' + band + '% 高位+放量 + 有效长上影（上影 ' + k.upsh.toFixed(2) + ' ≥ 实体 ' + k.body.toFixed(2) + ' ×2）→ ' + (band === '>8%' ? '🔴 天量长上影' : '🔴 避雷针信号'));
+    } else {
+      v = Math.round((lo[col] + hi[col]) / 2);
+      notes.push('S4 插值：' + posTxt + (band === '3~5%' || band === '5~8%' || band === '>8%' ? (pos === 'high' && vk === 'big' ? ' 且上影线短于实体（v2 修正③：非有效长上影不扣高位档）' : '（文档仅定义 低位+缩量 / 高位+放量 两档）') : '') + ' → 取两档均值 ' + v);
+    }
+  }
+  /* v2 叠加①：连续长上影（昨日回吐也 >3%）+ 高位放量 → -20（"三炷香"确认见顶） */
+  if (k.htYes > S4K_RULE.yestHt && pos === 'high' && vk === 'big') {
+    v -= 20;
+    notes.push('S4 叠加①：连续长上影（昨日回吐 ' + k.htYes.toFixed(1) + '% + 今日高位放量）→ -20（三炷香确认见顶）');
+  }
+  /* v2 叠加②：次日验证 —— 昨日回吐 >3% 后：今日未收复昨日高点 → -10（确认诱多）；放量突破昨日高点 → +30（确认为洗盘） */
+  if (k.htYes > 3) {
+    if (k.h < k.hYes) { v -= 10; notes.push('S4 叠加②：昨日回吐 ' + k.htYes.toFixed(1) + '%、今日高点未收复 → -10（确认诱多）'); }
+    else if (k.h > k.hYes && k.vr > S4K_RULE.strongVol) { v += 30; notes.push('S4 叠加②：昨日回吐 ' + k.htYes.toFixed(1) + '%、今日放量突破昨日高点 → 确认为洗盘，+30'); }
+  }
+  return { v: v, notes: notes, txt: '回吐 ' + ht.toFixed(1) + '% · ' + posTxt + (k.htYes > S4K_RULE.yestHt ? ' · 连续第2日长上影' : '') };
+}
+/* 第4步 操作指令六档 */
+function s4kAction(t) {
+  if (t >= 75) return { name: '🟢 重仓买入/加仓', pos: '单票≤30%' };
+  if (t >= 60) return { name: '🟢 买入', pos: '单票≤15%' };
+  if (t >= 45) return { name: '🟡 观察仓/小仓试错', pos: '单票≤5%' };
+  if (t >= 30) return { name: '🟠 持有不买', pos: '不加仓' };
+  if (t >= 15) return { name: '🟠 减仓', pos: '减至半仓' };
+  return { name: '🔴 清仓/止损', pos: '0仓' };
+}
+/* v2 一票否决规则（不看总分直接执行，任一触发 → 立即清仓） */
+function s4kVeto(k) {
+  var L = [];
+  if (k.chg20 > S4K_RULE.posHigh && k.vr > S4K_RULE.strongVol && k.ht > 8)
+    L.push('高位 + 放量 + 回吐 ' + k.ht.toFixed(1) + '%（>8%）→ 立即清仓');
+  if (k.htYes > 5 && k.ht > 5 && k.chg20 > S4K_RULE.posHigh && k.vr > S4K_RULE.strongVol && k.vrYes > S4K_RULE.strongVol)
+    L.push('连续 2 日高位长上影（每日回吐>5% + 两日均放量）→ 立即清仓（"三炷香"）');
+  if (k.slope < 0 && k.c < k.m5 && k.chgDay < S4K_RULE.longYin && k.vr > S4K_RULE.strongVol)
+    L.push('MA5 向下 + 当日放量长阴（跌 ' + Math.abs(k.chgDay).toFixed(1) + '%，口径 <-5% 且 量 ≥1.2×VOL5）→ 立即清仓');
+  return L;
+}
+/* 第5步 止盈止损（强制执行）——返回触发清单；跨日条件（次日收复）只提示不判定 */
+function s4kGuards(k, kj, total) {
+  var L = [];
+  if (k.c < k.m5 && k.cYes < k.m5p) L.push({ kind: 'stop', txt: '连续 2 日收盘跌破 MA5 → 全部清仓' });
+  if (k.chgDay < -S4K_RULE.stopFall && k.vr >= 1.0) L.push({ kind: 'stop', txt: '当日跌幅 ' + k.chgDay.toFixed(1) + '% 且放量 → 减半仓' });
+  if (k.ht > S4K_RULE.stopHt && k.chg20 > S4K_RULE.posHigh && k.vr > S4K_RULE.strongVol)
+    L.push({ kind: 'stop', txt: '冲高回吐 ' + k.ht.toFixed(1) + '% + 高位放量 → 若次日不能收复今日高点则清仓（跨日条件，人工盯）' });
+  if (k.ht > 8 && k.chg20 > S4K_RULE.posHigh && k.vr > S4K_RULE.strongVol)
+    L.push({ kind: 'stop', txt: '冲高回吐 ' + k.ht.toFixed(1) + '%（>8%）+ 高位放量 → 当日即清仓，不等次日（v2）' });
+  if (kj && kj.ok && kj.prevK >= kj.prevD && kj.k < kj.d && kj.k > S4K_RULE.highK && kj.d > S4K_RULE.highK)
+    L.push({ kind: 'tp', txt: 'KDJ 高位死叉（顶背离另见 S2）→ 减仓 1/2' });
+  if (k.ht > 3 && k.chg20 > S4K_RULE.posHigh && k.vr > S4K_RULE.strongVol) L.push({ kind: 'tp', txt: '冲高回吐 ' + k.ht.toFixed(1) + '%（高位放量）→ 减仓 1/3' });
+  if (k.ht > 5 && k.chg20 > S4K_RULE.posHigh && k.vr > S4K_RULE.strongVol) L.push({ kind: 'tp', txt: '冲高回吐 ' + k.ht.toFixed(1) + '%（高位放量）→ 减仓 1/2（v2）' });
+  if (total < 45) L.push({ kind: 'tp', txt: '总分 ' + total + ' < 45 → 降至观察仓' });
+  var addOk = total >= 75 && k.slope > 0 && k.ht < 3 && k.vr >= 1.0 && k.vr <= S4K_RULE.gap12 + 0.5;
+  if (addOk) L.push({ kind: 'add', txt: '加仓四条件同时满足（≥75 分 / MA5 向上 / 回吐<3% / 温和放量）' });
+  return L;
+}
+/* 主入口：klines + kdjState 结果 → 完整报告对象（v2：权重上调回吐 + 一票否决覆盖操作指令） */
+function s4kTotal(klines, kj) {
+  var k = s4kCalc(klines);
+  if (!k.ok) return { ok: false, why: k.why };
+  var tr = s4kTrend(k);
+  var p1 = s4kS1(k), p2 = s4kS2(kj, tr.trend, k, klines), p3 = s4kS3(k, tr.trend), p4 = s4kS4(k, tr.trend);
+  /* v2 权重：上升/下降 40/25/20/15；震荡 15/35/25/25（回吐在震荡市决定箱体高抛低吸 → 25%）；强势主升 50/15/20/15 */
+  var w = tr.strong ? { ma5: 50, kdj: 15, vol: 20, ht: 15 }
+    : (tr.trend === 'side' ? { ma5: 15, kdj: 35, vol: 25, ht: 25 } : { ma5: 40, kdj: 25, vol: 20, ht: 15 });
+  var total = Math.round((p1.v * w.ma5 + p2.v * w.kdj + p3.v * w.vol + p4.v * w.ht) / 100);
+  var act = s4kAction(total);
+  var vetoL = s4kVeto(k);
+  return { ok: true, trend: tr.trend, strong: tr.strong, w: w, total: total,
+    action: vetoL.length ? '🔴 清仓/止损（一票否决）' : act.name, pos: vetoL.length ? '0仓（立即）' : act.pos,
+    veto: vetoL.length > 0, vetoWhy: vetoL,
+    s1: p1, s2: p2, s3: p3, s4: p4,
+    notes: tr.notes.concat(p1.notes, p2.notes, p3.notes, p4.notes),
+    guards: s4kGuards(k, kj, total) };
+}
+/* ==== S4K-END ==== */
+/* 渲染：四指标打分报告卡（按文档第 6 步模板；接入 buildResultHTML → 单股 + 自选展开详情全覆盖）。
+   pre = 预计算的 s4kTotal 结果（顶部徽标已算过 → 复用，不重复计算）；为 null 时内部现算。 */
+function s4kCardHtml(ind, kj, pre) {
+  var r;
+  if (pre) { r = pre; }
+  else { try { r = s4kTotal(ind.klines, kj); } catch (e) { r = { ok: false, why: e.message || String(e) }; } }
+  var h = '<div class="card"><div class="card-title">🎯 四指标打分交易系统 v2（MA5 + KDJ(9,3,3) + VOL + 冲高回吐 · 满分 100）</div>';
+  if (!r.ok) return h + '<div class="stage-desc">本股不参与打分：' + escapeHtml(r.why || '数据不足') + '（缺失不推断，不打分）</div></div>';
+  var trTxt = r.trend === 'up' ? '上升趋势' : (r.trend === 'down' ? '下降趋势' : '震荡趋势');
+  var tone = r.total >= 60 ? 'up' : (r.total >= 30 ? 'warn' : 'down');
+  h += '<div class="' + tone + '" style="font-size:15px;font-weight:800">趋势：' + trTxt + (r.strong ? '（强势主升修正生效）' : '') +
+    ' → 总分 <b>' + r.total + '</b> / 100 → ' + esc(r.action) + '（' + esc(r.pos) + '）</div>';
+  /* v2 一票否决：不看总分直接执行 */
+  if (r.veto) {
+    h += '<div class="down" style="margin-top:4px;font-weight:700;text-align:left">⛔ 一票否决（不看总分直接执行）：' + esc(r.vetoWhy.join('；')) + '</div>';
+  }
+  h += '<table class="rules" style="margin-top:6px"><tr><th>指标</th><th>读数</th><th>得分</th><th>权重</th><th>加权</th></tr>' +
+    '<tr><td>MA5</td><td style="text-align:left">' + esc(r.s1.txt) + '</td><td>' + r.s1.v + '</td><td>' + r.w.ma5 + '%</td><td class="mono">' + (r.s1.v * r.w.ma5 / 100).toFixed(1) + '</td></tr>' +
+    '<tr><td>KDJ</td><td style="text-align:left">' + esc(r.s2.txt) + '</td><td>' + r.s2.v + '</td><td>' + r.w.kdj + '%</td><td class="mono">' + (r.s2.v * r.w.kdj / 100).toFixed(1) + '</td></tr>' +
+    '<tr><td>VOL</td><td style="text-align:left">' + esc(r.s3.txt) + '</td><td>' + r.s3.v + '</td><td>' + r.w.vol + '%</td><td class="mono">' + (r.s3.v * r.w.vol / 100).toFixed(1) + '</td></tr>' +
+    '<tr><td>冲高回吐</td><td style="text-align:left">' + esc(r.s4.txt) + '</td><td>' + r.s4.v + '</td><td>' + r.w.ht + '%</td><td class="mono">' + (r.s4.v * r.w.ht / 100).toFixed(1) + '</td></tr>' +
+    '</table>';
+  if (r.guards.length) {
+    h += '<div style="margin-top:6px">' + r.guards.map(function (g) {
+      var tag = g.kind === 'stop' ? '🔴 止损' : (g.kind === 'tp' ? '🟡 止盈' : '🟢 加仓');
+      return '<div class="' + (g.kind === 'stop' ? 'down' : (g.kind === 'add' ? 'up' : 'warn')) + '" style="text-align:left">' + tag + '：' + esc(g.txt) + '</div>';
+    }).join('') + '</div>';
+  }
+  h += '<details style="margin-top:6px"><summary style="cursor:pointer;font-size:12px;color:#9fb4ff">📖 分项明细 / 实现口径自证（文档未定义缝隙的处理，点开看）</summary><div style="margin-top:4px">' +
+    (r.notes.length ? r.notes.map(function (x) { return '<div class="stage-desc" style="text-align:left">· ' + esc(x) + '</div>'; }).join('') : '<div class="stage-desc" style="text-align:left">本股四项全部落在文档明确定义的组合内，无插值处理。</div>') +
+    '<div class="stage-desc" style="text-align:left">通则：① MA5「走平」= |斜率|&lt;0.3%（文档未量化，此处定档）；② KDJ 交叉以当根为准（前K≤前D 且 今K&gt;今D），近根交叉记「无交叉=0」；③ 背离窗口 = 近 20 日；④ 趋势判定需连续 2 根日线确认，单日无效。纯技术量化模型，极端行情失效，不构成投资建议。</div>' +
+    '</div></details></div>';
+  return h;
+}
+/* ★ 2026-09-25（用户要求）：顶部「四指标打分」徽标 —— 趋势 → 总分 → 操作指令（仓位），与 12 维徽标并排。
+   与下方「🎯 四指标打分」卡共用同一次 s4kTotal 计算（pre 传入），title 给分项与口径。 */
+function renderS4kTop(r) {
+  if (!r || !r.ok) return '';
+  var trTxt = r.trend === 'up' ? '上升' : (r.trend === 'down' ? '下降' : '震荡');
+  var tone = r.total >= 60 ? 'up' : (r.total >= 30 ? 'warn' : 'down');
+  var tip = '四指标打分 v2（MA5 + KDJ(9,3,3) + VOL + 冲高回吐，满分 100）：' + trTxt + '趋势，总分 ' + r.total +
+    ' → ' + r.action + '（' + r.pos + '）\n' +
+    '分项：MA5 ' + r.s1.v + ' / KDJ ' + r.s2.v + ' / VOL ' + r.s3.v + ' / 回吐 ' + r.s4.v +
+    '（权重 ' + r.w.ma5 + '% / ' + r.w.kdj + '% / ' + r.w.vol + '% / ' + r.w.ht + '%）\n' +
+    '完整分项明细与叠加修正见下方「🎯 四指标打分」卡（本徽标与该卡共用同一次计算）';
+  if (r.veto) tip += '\n⛔ 一票否决（不看总分直接清仓）：' + r.vetoWhy.join('；');
+  return '<span class="s4k-top" title="' + escapeHtml(tip) + '">' +
+    '<span class="k">四指标</span>' +
+    '<span class="s4k-trend">' + trTxt + '</span>' +
+    '<span class="s4k-score ' + tone + '">' + r.total + '/100</span>' +
+    '<span class="s4k-act ' + tone + '">' + escapeHtml(r.action) + '（' + escapeHtml(r.pos) + '）</span>' +
+    (r.veto ? '<span class="s4k-veto">⛔ 一票否决</span>' : '') +
+    '</span>';
+}
 /* 列标签：金叉 / 死叉 / 多头 / 空头（红=金叉·买入、绿=死叉·卖出，与全站涨跌配色一致） */
 function kdjTag(kj) {
   if (!kj || !kj.ok) {
@@ -5967,6 +6272,35 @@ function kdjDetailLine(kj) {
 }
 /* ==== KDJ-DETAIL-END ==== */
 /* ==== KDJ-END ==== */
+/* ===== 表格「12维 / 四指标」摘要列（2026-09-25 用户要求：排在建议仓位之前）=====
+   四张批量表（个股诊断 / 自选 / 板块成分股 / 涨停池）共用；结果缓存在行对象上（r.d12 / r.s4kSum），
+   详情展开、表格列、顶部徽标同一套引擎。Html 版返回 inner（涨停池 ZTPL_COLS cell 用），Cell 版包 <td>。 */
+function stockD12Html(r) {
+  if (!r || !r.ok || !r.ind) return '<span style="color:var(--dim)">—</span>';
+  if (!r.d12) {
+    try { r.d12 = d12Judge(r.ind, r.quote, r.gene, r.cap, r.m5 || ma5Of(r, r.ind), r.open8); } catch (e) { r.d12 = null; }
+  }
+  var d = r.d12;
+  if (!d || d.score == null) return '<span style="color:var(--dim)">—</span>';
+  var g = d.strategy ? String(d.strategy.grade) : '';
+  var short = g.replace(/\s*·\s*/g, '·');
+  var col = d.conclCls === 'up' ? '#26c281' : (d.conclCls === 'mid' ? '#f59e0b' : '#f0453a');
+  return '<span title="12维复盘：' + escapeHtml(d.concl || '') + '（完整依据见展开详情顶部与 12 维卡）">' +
+    '<b style="color:' + col + '">' + d.score + '</b> <span style="color:' + col + '">' + escapeHtml(short) + '</span></span>';
+}
+function stockD12Cell(r) { return '<td>' + stockD12Html(r) + '</td>'; }
+function stockS4kHtml(r) {
+  if (!r || !r.ok || !r.ind || !r.ind.klines) return '<span style="color:var(--dim)">—</span>';
+  if (!r.s4kSum) {
+    try { var x = s4kTotal(r.ind.klines, r.kdj || kdjState(r.ind.klines)); r.s4kSum = (x && x.ok) ? x : null; } catch (e) { r.s4kSum = null; }
+  }
+  var s = r.s4kSum;
+  if (!s) return '<span style="color:var(--dim)">—</span>';
+  var col = s.veto ? '#f0453a' : (s.total >= 60 ? '#26c281' : (s.total >= 30 ? '#f59e0b' : '#f0453a'));
+  return '<span title="四指标打分 v2：' + escapeHtml(s.action + '（' + s.pos + '）' + (s.veto ? '；⛔ ' + s.vetoWhy.join('；') : '')) + '">' +
+    '<b style="color:' + col + '">' + s.total + '</b>' + (s.veto ? ' <span style="color:#f0453a;font-weight:800">⛔</span>' : '') + '</span>';
+}
+function stockS4kCell(r) { return '<td>' + stockS4kHtml(r) + '</td>'; }
 function rowCells(s, opt) {
   /* opt（2026-09-20 新增，供「选阶段 → 股票清单」复用同一套列）：
      openMap = 展开状态表（板块详情用 ST.rowOpen；股票清单用 ST.stgOpen，两处互不干扰）
@@ -5977,6 +6311,11 @@ function rowCells(s, opt) {
   var chgCls = s.chg === null ? 'flat' : (s.chg > 0 ? 'up' : 'down');
   var cells = '';
   var badge = '';
+  /* ★ 2026-09-25（用户要求）：批量加自选勾选列（仅板块详情传 selMode；选阶段清单不带） */
+  if (opt.selMode) {
+    cells += '<td class="ztsel-cell"><input type="checkbox" data-bsel="' + s.code + '"' + (ST.bsel[s.code] ? ' checked' : '') +
+      (ST.results[s.code] ? '' : ' disabled') + ' title="勾选后点上方「⭐ 批量加自选」"></td>';
+  }
   if (ST.ztTime && ST.ztTime[s.code]) badge += '<span class="zt-time">' + ST.ztTime[s.code] + ' 涨停</span>';
   if (!opt.noRoles) {
   if (ST.roles && ST.roles.leader && ST.roles.leader.code === s.code) badge += '<span class="role-chip role-leader">龙头</span>';
@@ -5988,14 +6327,13 @@ function rowCells(s, opt) {
   cells += '<td class="' + chgCls + '">' + (s.chg === null ? '—' : fmtPct(s.chg)) + '</td>';
 
   if (!r) {
-    /* ⚠️ colspan 必须减去前面已输出的 3 格（股票/现价/涨跌幅）：17 列表格 → 14。
-       原来写成 17（跟随表头列数一起从 16 改成了 17）→ 该行实际占 3+17=20 列，
-       浏览器会把表格网格撑宽、后面几列的列宽被拉散。实测由 jsdom 真 DOM 核验抓到。 */
-    cells += '<td colspan="14"><span class="pending">' + (ST.running ? '分析中' : '待分析') + '</span></td>';
+    /* ⚠️ colspan 恒为 16：19 列表（+勾选列=20）时前 3（勾选则 4）格已输出，19-3=16（20-4=16）。
+       写成跟随表头总数会把表格网格撑宽、后面列宽被拉散（jsdom 实测抓过）。 */
+    cells += '<td colspan="16"><span class="pending">' + (ST.running ? '分析中' : '待分析') + '</span></td>';
     return cells;
   }
   if (!r.ok) {
-    cells += '<td colspan="14" class="fail">数据获取失败：' + escapeHtml(r.error || '') + '</td>';
+    cells += '<td colspan="16" class="fail">数据获取失败：' + escapeHtml(r.error || '') + '</td>';
     return cells;
   }
   var ind = r.ind, sr = r.sr, stg = sr.stage;
@@ -6005,6 +6343,9 @@ function rowCells(s, opt) {
   cells += '<td><span class="st-chip" style="' + chipStyle + '">' + stageNameOf(stg) + '</span>' + msChip + '</td>';
   var kjc = r.kdj || (r.kdj = kdjState(ind.klines));   /* 分析时已算好；老结果对象兜底现算并缓存 */
   cells += '<td>' + kdjTag(kjc) + '</td>';
+  /* ★ 2026-09-25（用户要求）：12维 / 四指标 摘要列 —— 排在建议仓位之前 */
+  cells += stockD12Cell(r);
+  cells += stockS4kCell(r);
   // 建议仓位（与MA5策略一致）
   var pInfo = ma5PositionInfo(ind, STAGES[sr.stage].position);
   cells += '<td style="color:' + pInfo.color + ';font-size:11.5px">' + pInfo.text + '</td>';
@@ -6139,7 +6480,7 @@ function detailRowHTML(code) {
 }
 
 function stockRowHTML(s) {
-  return '<tr class="batch-row' + (ST.rowOpen[s.code] ? ' open' : '') + '" data-code="' + s.code + '">' + rowCells(s) + '</tr>' +
+  return '<tr class="batch-row' + (ST.rowOpen[s.code] ? ' open' : '') + '" data-code="' + s.code + '">' + rowCells(s, { selMode: 1 }) + '</tr>' +
     (ST.rowOpen[s.code] ? detailRowHTML(s.code) : '');
 }
 
@@ -6160,6 +6501,9 @@ var STOCK_COLS = [
   { k: 'chg',   t: '涨跌幅' },
   { k: 'stage', t: '阶段',     def: 1, tip: '按生命周期顺序 1A → 4B' },
   { k: 'kdj',   t: 'KDJ',      tip: '按 J 值' },
+  /* ★ 2026-09-25（用户要求）：12维 / 四指标 摘要列，排在建议仓位之前（noSort → 不参与点击排序） */
+  { k: 'd12',   t: '12维',     noSort: 1, tip: '12维加权评分（0~100）+ 评级；完整依据见展开详情' },
+  { k: 's4k',   t: '四指标',   noSort: 1, tip: '四指标打分 v2（MA5+KDJ+VOL+冲高回吐，满分 100）；⛔ = 触发一票否决' },
   { k: 'pos',   t: '建议仓位', tip: '按建议仓位的成数上限' },
   { k: 'pow',   t: '今昨强弱', tip: '按「今日涨幅 − 昨日涨幅」差值（正=动能增强）' },
   { k: 'rec',   t: '辨识度' },
@@ -6175,7 +6519,15 @@ var STOCK_COLS = [
 ];
 function stockHead(ctx){
   var s = stockHeadView(ctx);
-  return '<thead><tr>' + STOCK_COLS.map(function(c){
+  /* ★ 2026-09-25：按上下文在行首插勾选列 —— watch=批量删除自选；detail=板块成分股批量加自选（stage 清单不加） */
+  var cols = STOCK_COLS;
+  if (ctx === 'watch') cols = [{ k: 'wlsel', t: '删', noSort: 1 }].concat(cols);
+  if (ctx === 'detail') cols = [{ k: 'bsel', t: '选', noSort: 1 }].concat(cols);
+  return '<thead><tr>' + cols.map(function(c){
+    if (c.noSort) {
+      return '<th style="white-space:nowrap;user-select:none" title="' + (c.k === 'wlsel' ? '勾选后点上方「🗑 删除选中」批量取消自选'
+        : (c.k === 'bsel' ? '勾选后点上方「⭐ 批量加自选」' : (c.tip || ''))) + '">' + c.t + '</th>';
+    }
     var on = (s.col === c.k);
     return '<th class="th-sort' + (on ? ' on' : '') + '" data-col="' + c.k + '"' +
       ' style="cursor:pointer;user-select:none;white-space:nowrap;' + (on ? 'color:#fbbf24;' : '') + '"' +
@@ -6184,6 +6536,50 @@ function stockHead(ctx){
       '<span style="font-size:10px;opacity:' + (on ? .9 : .3) + ';margin-left:2px">' +
       (on ? (s.dir > 0 ? '▲' : '▼') : '⇅') + '</span></th>';
   }).join('') + '</tr></thead>';
+}
+/* ===== 批量勾选（2026-09-25 用户要求）=====
+   ① 自选表（ctx=watch）：勾选 → 「🗑 删除选中」批量取消自选；
+   ② 板块成分股（ctx=detail）：勾选 → 「⭐ 批量加自选」批量收藏（涨停池 2026-09-22 已有同款入口）。
+   沿用涨停池踩坑换来的四条纪律：状态存内存对象不存 DOM（排序/筛选重绘不丢）；单只勾选不重绘表格只刷按钮；
+   已在自选的自动跳过；批量写入一次性 lsSet（不循环 wlAdd）。 */
+function wlSelCodes() { return Object.keys(WATCH.sel).filter(function (k) { return WATCH.sel[k]; }); }
+function wlSelPaint() {
+  var n = wlSelCodes().length, b = el('wldelBtn');
+  if (b) { b.disabled = !n; b.textContent = '🗑 删除选中（' + n + '）'; }
+}
+function wlDelSel() {
+  var codes = wlSelCodes();
+  if (!codes.length) return;
+  var keep = wlGet().filter(function (x) { return !WATCH.sel[x.code]; });
+  lsSet(WL_KEY, keep);
+  WATCH.sel = {};
+  if (WATCH.loaded) WATCH.results = WATCH.results.filter(function (r) { return !codes.some(function (c) { return (r.code || r.token) === c; }); });
+  wlSelPaint();
+  renderWatch();
+}
+function bselCodes() { return Object.keys(ST.bsel).filter(function (k) { return ST.bsel[k]; }); }
+function bselPaint() {
+  var n = bselCodes().length, b = el('bselAdd');
+  if (b) { b.disabled = !n; b.textContent = '⭐ 批量加自选（' + n + '）'; }
+}
+function bselAdd() {
+  var codes = bselCodes();
+  if (!codes.length) return;
+  var has = {};
+  wlGet().forEach(function (x) { has[x.code] = true; });
+  var a = wlGet(), added = 0;
+  codes.forEach(function (c) {
+    if (has[c]) return;
+    var s = ST.detail && ST.detail.stocks ? ST.detail.stocks.filter(function (x) { return x.code === c; })[0] : null;
+    a.push({ code: c, name: (s && s.name) || c });
+    added++;
+  });
+  lsSet(WL_KEY, a);
+  ST.bsel = {};
+  ZTPL.wlSet = null;
+  bselPaint();
+  var tip = el('bselTip');
+  if (tip) tip.innerHTML = '✅ 已加入 <b>' + added + '</b> 只（已在自选的自动跳过）→ 自选共 <b>' + a.length + '</b> 只';
 }
 /* 2026-09-22 自选表（★ 自选）表头排序：第三套独立状态 —— 与板块详情 / 选阶段清单互不影响 */
 var WSORT = { col: null, dir: -1 };
@@ -6198,6 +6594,7 @@ function stockHeadView(ctx){
   if(ctx === 'watch'){
     return { col: 'stage', dir: -1 };          /* 自选表默认序 = 阶段序（组内按涨幅）→ 点亮「阶段」列 */
   }
+
   if(ctx !== 'stage'){
     var map = { chg: 'chg', gene: 'gene', cap: 'cap', rec: 'rec' };
     if(map[ST.rowSort]) return { col: map[ST.rowSort], dir: -1 };
@@ -6500,7 +6897,11 @@ function renderDetailBody() {
 function renderBoardDetail() {
   if (!ST.detail) return;
   ST.roles = computeBoardRoles();
-  el('boardDetailWrap').innerHTML = renderDetailHead() + renderDetailBody();
+  el('boardDetailWrap').innerHTML =
+    /* ★ 2026-09-25（用户要求）：板块成分股批量加自选工具条（勾选列在各板块表行首；状态跨板块卡共享） */
+    '<div class="batch-toolbar"><button class="btn" id="bselAdd" disabled style="opacity:.5" title="把各板块表里勾选的股票批量加入「★ 自选」（已在自选里的自动跳过）">⭐ 批量加自选（0）</button>' +
+    '<button class="btn ghost" id="bselNone">清空选择</button><span class="pk-tip note" id="bselTip" style="margin:0">未勾选（勾选列在各板块表首列）</span></div>' +
+    renderDetailHead() + renderDetailBody();
 }
 
 /* ---------- 板块内批量分析（并发池 + 渐进渲染）---------- */
@@ -6725,7 +7126,7 @@ function renderSingle() {
     var open = SINGLE.open[r.token];
     if (!r.ok) {
       return '<tr class="batch-row" data-idx="' + escapeHtml(r.token) + '"><td><span class="caret">▶</span>' + escapeHtml(r.token) + '</td>' +
-        '<td colspan="16" class="fail">数据获取失败：' + escapeHtml(r.error || '') + '</td></tr>';
+        '<td colspan="18" class="fail">数据获取失败：' + escapeHtml(r.error || '') + '</td></tr>';
     }
     var ind = r.ind, sr = r.sr;
     var col = stageColorOf(sr.stage);
@@ -6748,6 +7149,9 @@ function renderSingle() {
          本文件有三张 17 列表格（板块成分股 rowCells / 个股诊断 renderSingle / 自选 watchBatchBody），
          三者各有自己的行渲染函数 —— 加列时**一处都不能漏**。 */
       '<td>' + kdjTag(r.kdj || (r.kdj = kdjState(ind.klines))) + '</td>' +
+      /* ★ 2026-09-25（用户要求）：12维 / 四指标 摘要列，排在建议仓位之前 */
+      stockD12Cell(r) +
+      stockS4kCell(r) +
       ma5PositionCell(ind, STAGES[sr.stage].position) +
       powCellHtml(ind, r.code, r.quote.name || r.code) +
       (r.rec ? '<td style="color:' + r.rec.tier.color + '">' + r.rec.tier.short + ' <em>' + r.rec.score + '</em></td>' : '<td style="color:var(--dim)">—</td>') +
@@ -6761,12 +7165,13 @@ function renderSingle() {
       '<td style="color:var(--dim)">—</td>' +
       open8Cell(r) +
       '</tr>' +
-      (open ? '<tr class="batch-detail"><td colspan="17">' + buildResultHTML(r.quote, r.ind, r.sr, false, r.source, r.gene, r.cap, r.rec, r.open8, r.m5) + '</td></tr>' : '');
+      (open ? '<tr class="batch-detail"><td colspan="19">' + buildResultHTML(r.quote, r.ind, r.sr, false, r.source, r.gene, r.cap, r.rec, r.open8, r.m5) + '</td></tr>' : '');
   }).join('');
 
   var summary = '<div class="batch-toolbar"><span class="count">共 ' + arr.length + ' 只，成功 ' + okList.length + ' 只</span><span style="margin-left:auto"></span></div>';
   el('resultArea').innerHTML = '<div class="card">' + summary +
-    '<div style="overflow-x:auto"><table class="batch-table"><thead><tr><th>股票</th><th>现价</th><th>涨跌幅</th><th>阶段</th><th>KDJ</th><th>建议仓位</th><th>今昨强弱</th><th>辨识度</th><th>涨停基因</th>' +
+    /* ★ 2026-09-25：表头 17→19 列（KDJ 后插入 12维 / 四指标），与三处行渲染同步 */
+    '<div style="overflow-x:auto"><table class="batch-table"><thead><tr><th>股票</th><th>现价</th><th>涨跌幅</th><th>阶段</th><th>KDJ</th><th>12维</th><th>四指标</th><th>建议仓位</th><th>今昨强弱</th><th>辨识度</th><th>涨停基因</th>' +
     '<th>dev</th><th>MA5斜率</th><th>破线</th><th>换手</th><th>主力参与</th><th>主力净流入</th><th>60日涨幅</th><th>开盘强弱</th></tr></thead><tbody>' + body + '</tbody></table></div></div>';
 }
 
@@ -6816,7 +7221,7 @@ async function runSearch() {
 /* =========================================================================
    自选列表：自动拉取每只自选股的实时诊断并内联成表格
    ========================================================================= */
-var WATCH = { running: false, runId: 0, results: [], open: {}, loaded: false, lastTs: 0, stageFilter: 'all', ma5Filter: 'all' };
+var WATCH = { running: false, runId: 0, results: [], open: {}, loaded: false, lastTs: 0, stageFilter: 'all', ma5Filter: 'all', sel: {} };
 
 async function runWatchSearch() {
   var a = wlGet();
@@ -6984,8 +7389,8 @@ function watchBatchBody() {
     var tk = r.code || r.token;
     var open = WATCH.open[tk];
     if (!r.ok) {
-      /* ⚠️ 这一行前面已经输出了 1 格（代码），所以跨列只能写 16（= 17 − 1）；写 17 会让该行占 18 列。 */
-      return '<tr class="batch-row" data-idx="' + escapeHtml(tk) + '"><td colspan="16" class="fail">⚠ ' + escapeHtml(tk) +
+      /* ⚠️ 这一行前面已经输出了 2 格（勾选列 + 代码），所以跨列只能写 18（= 20 − 2）；写大会把表格网格撑宽。 */
+      return '<tr class="batch-row" data-idx="' + escapeHtml(tk) + '"><td class="ztsel-cell"><input type="checkbox" data-wldel="' + escapeHtml(tk) + '"' + (WATCH.sel[tk] ? ' checked' : '') + '></td><td colspan="18" class="fail">⚠ ' + escapeHtml(tk) +
         ' 数据获取失败：' + escapeHtml(r.error || '') + '</td></tr>';
     }
     var ind = r.ind, sr = r.sr;
@@ -6996,6 +7401,9 @@ function watchBatchBody() {
         '<em>' + (r.gene.total >= 80 ? '强' : r.gene.total >= 60 ? '基础' : r.gene.total >= 40 ? '弱' : '无') + '</em></td>'
       : '<td class="gene-cell">—</td>';
     return '<tr class="batch-row' + (open ? ' open' : '') + '" data-idx="' + escapeHtml(tk) + '">' +
+      /* ★ 2026-09-25（用户要求）：批量删除勾选列 —— 状态存 WATCH.sel（表头排序/筛选重绘不丢），点工具条「🗑 删除选中」执行 */
+      '<td class="ztsel-cell"><input type="checkbox" data-wldel="' + escapeHtml(tk) + '"' + (WATCH.sel[tk] ? ' checked' : '') +
+      ' title="勾选后点上方「🗑 删除选中」批量取消自选"></td>' +
       '<td><span class="caret">' + (open ? '▼' : '▶') + '</span>' + escapeHtml(r.quote.name || r.code) +
       ' <span style="color:var(--dim)">' + r.code + '</span>' +
       (r.gene && r.gene.boardName ? '<br><span style="font-size:10.5px;color:#5b8cff">🏷 ' + escapeHtml(r.gene.boardName) + '</span>' : '') +
@@ -7012,6 +7420,9 @@ function watchBatchBody() {
          本文件有三张 17 列表格（板块成分股 rowCells / 个股诊断 renderSingle / 自选 watchBatchBody），
          三者各有自己的行渲染函数 —— 加列时**一处都不能漏**。 */
       '<td>' + kdjTag(r.kdj || (r.kdj = kdjState(ind.klines))) + '</td>' +
+      /* ★ 2026-09-25（用户要求）：12维 / 四指标 摘要列，排在建议仓位之前 */
+      stockD12Cell(r) +
+      stockS4kCell(r) +
       ma5PositionCell(ind, STAGES[sr.stage].position) +
       powCellHtml(ind, r.code, r.quote.name || r.code) +
       (r.rec ? '<td style="color:' + r.rec.tier.color + '">' + r.rec.tier.short + ' <em>' + r.rec.score + '</em></td>' : '<td style="color:var(--dim)">—</td>') +
@@ -7025,7 +7436,7 @@ function watchBatchBody() {
       '<td style="color:var(--dim)">—</td>' +
       open8Cell(r) +
       '</tr>' +
-      (open ? '<tr class="batch-detail"><td colspan="17">' + buildResultHTML(r.quote, r.ind, r.sr, false, r.source, r.gene, r.cap, r.rec, r.open8, r.m5) + '</td></tr>' : '');
+      (open ? '<tr class="batch-detail"><td colspan="20">' + buildResultHTML(r.quote, r.ind, r.sr, false, r.source, r.gene, r.cap, r.rec, r.open8, r.m5) + '</td></tr>' : '');
   }).join('');
 }
 
@@ -7099,10 +7510,13 @@ function renderWatch() {
     '</div>';
 
   var body = watchBatchBody();
-  /* 2026-09-22：表头改用 stockHead('watch') —— 与板块详情 / 选阶段清单同一套 17 列定义与点击排序逻辑，
-     data-ctx="watch" 让 stockSort 认出这是第三张表（排序状态 WSORT 独立，点它不影响其它两张表）。 */
+  /* 2026-09-22：表头改用 stockHead('watch') —— 与板块详情 / 选阶段清单同一套列定义与点击排序逻辑，
+     data-ctx="watch" 让 stockSort 认出这是第三张表（排序状态 WSORT 独立，点它不影响其它两张表）。
+     ★ 2026-09-25（用户要求）：勾选批量删除工具条。 */
   list.innerHTML = stageChips + ma5Chips +
-    '<div class="card"><div style="overflow-x:auto"><table class="batch-table" data-ctx="watch">' + stockHead('watch') +
+    '<div class="card"><div class="batch-toolbar"><button class="btn" id="wldelBtn" disabled style="opacity:.5" title="把表格里勾选的股票批量移出自选">🗑 删除选中（0）</button>' +
+    '<button class="btn ghost" id="wlselNone">清空勾选</button><span class="pk-tip note" id="wldelTip" style="margin:0">未勾选（勾选列在表格首列）</span></div>' +
+    '<div style="overflow-x:auto"><table class="batch-table" data-ctx="watch">' + stockHead('watch') +
     '<tbody>' + body + '</tbody></table></div></div>';
   /* ⚠️ 表头由 STOCK_COLS 生成（17 列），行单元格仍由 watchBatchBody 输出（17 格）——
      两处列数与顺序必须严格一致，加列时一处都不能漏。 */
@@ -7252,7 +7666,13 @@ async function dingPushDailyReport() {
       var ms = computeMA5Strategy(r.ind);
       var pInfo = ma5PositionInfo(r.ind, STAGES[r.sr.stage].position);
       var kdj = kdjState(r.ind.klines);          /* 复用已抓到的日K，零额外请求 */
-      var trig = posTriggers(cfg, ms, r.open8, kdj);
+      /* ★ 2026-09-25（用户要求）：日报并入 S4K 打分（MA5+KDJ+VOL+冲高回吐 → 六档买卖指令）——
+         复用同一份日K与 KDJ，纯函数零额外请求；算不出（日K不足）→ null，日报如实标注。 */
+      var s4k = null;
+      try { var s4kR = s4kTotal(r.ind.klines, kdj); if (s4kR && s4kR.ok) s4k = { total: s4kR.total, action: s4kR.action, pos: s4kR.pos, trend: s4kR.trend, veto: s4kR.veto }; } catch (eS4) {}
+      var s4k = null;
+      try { var s4kR = s4kTotal(r.ind.klines, kdj); if (s4kR && s4kR.ok) s4k = { total: s4kR.total, action: s4kR.action, pos: s4kR.pos, trend: s4kR.trend, veto: s4kR.veto }; } catch (eS4) {}
+      var trig = posTriggers(cfg, ms, r.open8, kdj, s4k);
       
       stocks.push({
         code: x.code,
@@ -7269,6 +7689,7 @@ async function dingPushDailyReport() {
         posText: pInfo.text,
         reason: (ms.reasons || []).join('；') || '',
         kdj: kdj,
+        s4k: s4k,
         trig: trig,
         /* ★ 2026-09-21：网页 MA5 卡上的「建议仓位 / 买入信号（4 条检查）/ 止盈止损」在这里一并取好，
            否则群里只剩一句【减仓防守】—— 就是用户说的"钉钉与网页不一致"。 */
@@ -7357,7 +7778,29 @@ async function dingPushDailyReport() {
     text += '（' + (stocks.length - kdjVal.length) + ' 只 KDJ 无法计算：日K 不足 ' + KDJ_RULE.minBars + ' 根或该标的没有日K数据源）\n';
   }
   text += '\n';
-  
+
+  /* ===== 四指标打分（2026-09-25 用户要求并入日报）：MA5+KDJ+VOL+冲高回吐 加权总分 → 六档买卖指令 =====
+     汇总买入档（≥60）/ 清仓档（<15）点名 + 全员一行（按总分降序）。打分与单股/自选详情卡同一套 s4kTotal。 */
+  text += '## 🎯 四指标打分\n';
+  var s4kVal = stocks.filter(function (s) { return s.s4k; });
+  var s4kNo = stocks.filter(function (s) { return !s.s4k; });
+  var trendTxt = { up: '上升', down: '下降', side: '震荡' };
+  if (!s4kVal.length) {
+    text += '本批自选股全部无法打分（日K不足 ' + S4K_RULE.minBars + ' 根或无日K数据源）——缺失不推断，不打分。\n\n';
+  } else {
+    var s4kBuy = s4kVal.filter(function (s) { return s.s4k.total >= 60; });
+    var s4kClear = s4kVal.filter(function (s) { return s.s4k.total < 15 || s.s4k.veto; });
+    text += '算出 ' + s4kVal.length + '/' + stocks.length + ' 只：**买入档（≥60 分）' + s4kBuy.length + ' 只**' +
+      (s4kBuy.length ? '（' + s4kBuy.map(function (s) { return s.code + ' ' + s.name + ' ' + s.s4k.total + '分'; }).join('、') + '）' : '') +
+      '；**清仓档（<15 分）' + s4kClear.length + ' 只**' +
+      (s4kClear.length ? '（' + s4kClear.map(function (s) { return s.code + ' ' + s.name + ' ' + s.s4k.total + '分'; }).join('、') + '）' : '') + '。\n';
+    s4kVal.slice().sort(function (a, b) { return b.s4k.total - a.s4k.total; }).forEach(function (s) {
+      text += '- ' + s.code + ' ' + s.name + '　**' + s.s4k.total + '分** → ' + s.s4k.action + '（' + s.s4k.pos + '）｜趋势：' + (trendTxt[s.s4k.trend] || s.s4k.trend) + '\n';
+    });
+    if (s4kNo.length) text += '（' + s4kNo.length + ' 只无法打分：日K不足，见上）\n';
+    text += '口径（v2）：与单股/自选详情「🎯 四指标打分」卡同一套 s4kTotal；六档 = ≥75 重仓买入 / 60 买入 / 45 观察 / 30 持有 / 15 减仓 / <15 清仓；一票否决（高位+放量+回吐>8% / 连续2日高位长上影 / MA5向下+放量长阴）不看总分直接清仓。\n\n';
+  }
+
   // 持仓详情（有成本就带上「成本 / 浮盈参考」，与持仓清单推送一致）
   var posCost = {};
   posGet().forEach(function (p) { if (p.code) posCost[p.code] = p.cost; });
@@ -7387,6 +7830,8 @@ async function dingPushDailyReport() {
     block += '- 现价 ' + posFmt2(s.price) + '（' + chgTxt(s) + '）｜MA5 ' + posFmt2(s.ma5) + '｜偏离 ' + posFmtPct(s.dev) +
       '｜量比 ' + volTxt(s) + '｜破线连板 ' + s.breakDays + '｜MA5斜率 ' + (s.slopeUp ? 'up' : 'down') + '\n';
     block += '- ' + KDJ_TAG_TXT + '：' + kdjDetailLine(s.kdj) + '\n';
+    /* ★ 2026-09-25：完整块并入 S4K 打分结论（与「🎯 四指标打分」卡同源） */
+    block += '- 🎯 四指标打分：' + (s.s4k ? ('**' + s.s4k.total + '分** → ' + s.s4k.action + '（' + s.s4k.pos + '）｜趋势：' + ({ up: '上升', down: '下降', side: '震荡' })[s.s4k.trend]) : '无法打分（日K不足）') + '\n';
     block += '- 触发：✅ ' + s.trig.join(' + ') + '\n';
     /* ★ 2026-09-21：群里这几行原来**不存在**（只写一句【减仓防守】），而网页「个股诊断 → MA5 终极策略提示」
        上明明白白列着「操作建议 / 买入信号（4 条检查）/ 次日执行 / 信号失效」——
@@ -7408,13 +7853,26 @@ async function dingPushDailyReport() {
     if (profit != null) line += '｜浮盈 ' + posFmtProfit(profit);
     /* 一行版也要能对上网页：仓位 + 买点是否成立（命中条件的票另有完整块） */
     if (adv) line += '｜仓位 ' + adv.pos + '｜买点 ' + (adv.buySignal ? '✓已生成' : '✗未生成');
+    if (s.s4k) line += '｜🎯' + s.s4k.total + '分→' + s.s4k.action.replace(/🟢 |🟡 |🟠 |🔴 /, '');
     if (s.trig && s.trig.length) line += '｜✅ ' + s.trig.join('+');
     return line;
   }
   var hitStocksIn = stocks.filter(function (s) { return s.trig && s.trig.length; });
-  var blocks = hitStocksIn.map(fullBlock);
+  /* ★ 2026-09-25（用户要求）：命中完整块按「卖出 / 止盈 / 买入」类型分组（危险优先置顶）。
+     ⚠️ 组标题并入**该组第一个成员块**、每组每成员各自成块 —— 不能把整组合成一个大 block：
+        dingPackBytes 对超限单块**不切分直接发**（会被钉钉整条拒），几十只买入组必然超 18000 字节。 */
+  var grpOrder = ['sell', 'tp', 'buy', 'other'];
+  var blocks = [];
+  grpOrder.forEach(function (gk) {
+    var g = hitStocksIn.filter(function (s) { return dingTrigGroup(s.trig).key === gk; });
+    if (!g.length) return;
+    var gname = DING_GRP.find(function (x) { return x.key === gk; }).name;
+    g.forEach(function (s, i) {
+      blocks.push((i === 0 ? '### ' + gname + '（' + g.length + ' 只）\n\n' : '') + fullBlock(s));
+    });
+  });
 
-  text += '## ✅ 触发命中（' + hitStocks.length + ' 只）\n\n';
+  text += '## ✅ 信号触发（' + hitStocks.length + ' 只 · 按 卖出/止盈/买入 分组）\n\n';
   if (!blocks.length) {
     if (!detailMode) {
       dingStatus('检测完成（' + nowHM() + '）：' + stocks.length + ' 只自选股均未命中已勾选的触发条件' +
@@ -7664,7 +8122,10 @@ async function buildPosReport(rows, cfg, opt) {
       /* posStockBlock() 会打印「｜KDJ」和「- 触发」，但原来这里从没给过这两个字段
          → 持仓清单日报里的 KDJ 恒显示「—」、触发行恒为空（静默失效，没人报错）。 */
       out.kdj = kdjState(r.ind.klines);
-      out.trig = posTriggers(cfg, ms, r.open8, out.kdj);
+      /* ★ 2026-09-25：持仓触发并入 S4K 打分（与日报同一套 s4kTotal，传给 posTriggers） */
+      out.s4k = null;
+      try { var s4kP = s4kTotal(r.ind.klines, out.kdj); if (s4kP && s4kP.ok) out.s4k = { total: s4kP.total, action: s4kP.action, pos: s4kP.pos, trend: s4kP.trend, veto: s4kP.veto }; } catch (eS4k) {}
+      out.trig = posTriggers(cfg, ms, r.open8, out.kdj, out.s4k);
       out.trigChecked = true;
       out.trigNames = posCheckedTrigNames(cfg);
       out.kdjDetail = true;
@@ -7812,7 +8273,7 @@ async function dingPushPositions() {
 }
 
 /* 持仓清单的触发条件判定（与「买点提醒配置」同一套口径，只是对象换成持仓） */
-function posTriggers(cfg, ms, open8, kdj) {
+function posTriggers(cfg, ms, open8, kdj, s4k) {
   var trig = [];
   if (cfg.posTrigMa5 !== false && ms.buySignal) trig.push('MA5买入信号');
   if (cfg.posTrigMa5Profit && ms.state === 'overbought') trig.push('MA5止盈·超涨');
@@ -7830,6 +8291,12 @@ function posTriggers(cfg, ms, open8, kdj) {
   if (cfg.posTrigKdjSell && kdjFiredToday(kdj, 'dead')) {
     trig.push('KDJ死叉' + (kdj.zone === 'high' ? '·高位' : (kdj.zone === 'low' ? '·低位' : '')));
   }
+  /* ★ 2026-09-25（用户要求）：持仓/自选组复制监控范围的「四指标打分触发」—— 同一套 s4kTotal 引擎：
+     总分 ≥60 推买入档 / <15 或一票否决推清仓档。s4k 为 null（未算出/日K不足）→ 不判定。 */
+  if (cfg.posTrigS4k && s4k && s4k.ok) {
+    if (s4k.total >= 60) trig.push('S4K打分·' + (s4k.total >= 75 ? '重仓买入' : '买入'));
+    else if (s4k.total < 15 || s4k.veto) trig.push('S4K打分·清仓' + (s4k.veto ? '·一票否决' : ''));
+  }
   return trig;
 }
 
@@ -7841,7 +8308,8 @@ var POS_TRIG_NAMES = [
   ['posTrigMa5Sell', 'MA5卖出·破线'],
   ['posTrigOpen8', '开盘八法多方盘'],
   ['posTrigKdjBuy', 'KDJ金叉（买入）'],
-  ['posTrigKdjSell', 'KDJ死叉（卖出）']
+  ['posTrigKdjSell', 'KDJ死叉（卖出）'],
+  ['posTrigS4k', 'S4K四指标打分']   /* 2026-09-25：复制监控范围的触发策略 → 持仓清单组补齐四指标打分 */
 ];
 /* 已勾选条件的名字（posTrigMa5 缺省视为勾选 —— 与 posTriggers 的判定口径保持一致，别在这里另写一套默认值） */
 function posCheckedTrigNames(cfg) {
@@ -7876,7 +8344,7 @@ function dingTrigLiveMerge(cfg) {
   /* 盯盘提醒那组（trig*）同在钉钉页，一并合并；元素缺失时保持原值。
      ★ 2026-09-24：把「板块涨停共振」trigZtSector 也并进来 —— 它是**新实装**的触发规则，
        不合并就会出现"刚勾上、点立即检测却没生效"的静默失效（与本函数存在的原因完全同类）。 */
-  ['trigMa5', 'trigMa5Profit', 'trigMa5Sell', 'trigOpen8', 'trigKdjBuy', 'trigKdjSell', 'trigZtSector'].forEach(function (id) {
+  ['trigMa5', 'trigMa5Profit', 'trigMa5Sell', 'trigOpen8', 'trigKdjBuy', 'trigKdjSell', 'trigZtSector', 'trigS4k'].forEach(function (id) {
     node = el(id);
     if (node && typeof node.checked === 'boolean') out[id] = node.checked;
   });
@@ -8161,6 +8629,124 @@ async function dingBoardTargets(workBoards, perBoard, cap) {
 }
 
 // 生成推送文本（板块清单 + 买点信号）
+/* ==================================================================
+   回踩买点二次推送 + 追价闸门（2026-09-24 新增 · 用户要求「收到买入推送时股价已大涨，尽量买在低点」）
+   ------------------------------------------------------------------
+   问题根源：买点信号是**确认型**的（如连续站稳 MA5），触发即滞后 3~5%；且 2026-09-24
+   全网三轮交叉验证：追确认价/突破价胜率仅 38~48%（354 万条 A 股回测：放量突破新高次日
+   上涨率 45.6% 低于 48.07% 基准；雪球 71 样本：突破次日 5 日内回踩概率 68%；DMA：假突破
+   占 50~70%）→ **信号确认日不是好买点，其后的缩量回踩才是**（回踩入场 65~75% 胜率；
+   Weinstein 原书亦为 buy on breakout OR first pullback）。
+   落地两件事：
+     ① 回踩监控池：买入型信号触发 → 入池（36 小时过期 = 信号当日 + 次日，上限 12 只）。
+        每轮扫描对池内逐只复查：已自信号价回落 ∧ 现价回到 MA5(信号时记录) ±1% ∧ 缩量
+        （量能 <1.0×，powQuick.volRatio 与「今昨强弱」列同源）∧ 未破位（较 MA5 跌 <3%）
+        ∧ 当日涨幅 ∈ [-4%, +2%] → 二次推送「回踩买点」。触发/破位/过期 → 出池。
+     ② 追价闸门：买入推送行尾，现价较 MA5 高 >3% → 提示追价风险 + 明示等回踩二次推送。
+   ⚠️ 不承诺"买在最低点"：本质是把入场从确认价前移到回踩企稳价，代价是**可能错过不回踩
+      直接走的强势股** —— 原买入推送保留（小仓试探参考），回踩推送才是主力仓买点（双轨）。
+   ================================================================== */
+/* ==== DING-PB-BEGIN ==== */
+var DING_PB = {
+  chasePct: 3,         /* 追价闸门：现价较 MA5 高 >3% → 警示 */
+  near: 0.01,          /* 回踩判定：|现价/MA5 - 1| ≤ 1% */
+  breakDn: 0.03,       /* 破位出池：较 MA5 跌幅 >3%（回踩逻辑失效） */
+  volMax: 1.0,         /* 缩量判定：量能倍数 <1.0×（powQuick.volRatio 同源） */
+  chgLo: -4, chgHi: 2, /* 当日涨幅窗口 %：跌停（破位风险）/大阳（已飞）不推 */
+  keepMs: 36 * 3600e3, /* 有效期 36 小时（信号当日 + 次日，符合 T+1） */
+  maxN: 12,            /* 池上限（每轮至多 12 次复查请求） */
+  lsKey: 'wb_ding_pullback_v1'
+};
+function dingPBLoad(){ try { return lsGet(DING_PB.lsKey, []) || []; } catch (e) { return []; } }
+function dingPBSave(a){ try { lsSet(DING_PB.lsKey, a); } catch (e) {} }
+/* fresh 买入命中 → 入池（按 code 去重；ref 缺失不入池 —— 没有 MA5 锚就无法定义"回踩"） */
+function dingPBAdd(fresh, tk){
+  var pool = dingPBLoad(), now = Date.now();
+  pool = pool.filter(function (p) { return now - p.ts < DING_PB.keepMs; });   /* 顺手清过期 */
+  (fresh || []).forEach(function (h) {
+    if (h.ref == null || !h.code) return;
+    var i = -1;
+    for (var k = 0; k < pool.length; k++) if (pool[k].code === h.code) { i = k; break; }
+    var rec = { code: h.code, name: h.name || h.code, board: h.board || '', ref: h.ref, px: h.px,
+      trig: (h.trig || []).join('+'), day: tk, ts: now };
+    if (i >= 0) pool[i] = rec; else pool.push(rec);
+  });
+  pool.sort(function (a, b) { return b.ts - a.ts; });
+  if (pool.length > DING_PB.maxN) pool = pool.slice(0, DING_PB.maxN);
+  dingPBSave(pool);
+  return pool.length;
+}
+/* 回踩复查：{fired, poolN, notes}。**先于本轮 fresh 入池执行**（同价新命中当轮不复查）。
+   log 由调用方传入并原地追加（与买点/板块清单共用一次 dingLogSet，避免互相覆盖）。 */
+async function dingPullbackStage(cfg, tk, log){
+  var pool = dingPBLoad(), now = Date.now();
+  pool = pool.filter(function (p) { return now - p.ts < DING_PB.keepMs; });
+  var res = { fired: 0, poolN: pool.length, notes: [] }, keep = [], lines = [], firedRecs = [];
+  for (var i = 0; i < pool.length; i++) {
+    var p = pool[i], r = null;
+    try { r = await evaluateOne(p.code); } catch (e) { keep.push(p); res.notes.push(p.name + ' 取数失败，保留观察'); continue; }
+    var px = (r.quote && r.quote.price != null) ? r.quote.price : (r.ind && r.ind.price != null ? r.ind.price : null);
+    if (px == null) { keep.push(p); continue; }
+    var dev = px / p.ref - 1;
+    if (dev < -DING_PB.breakDn) { res.notes.push(p.name + ' 已跌破 MA5 达 ' + (dev * 100).toFixed(1) + '%（破位出池）'); continue; }
+    var near = Math.abs(dev) <= DING_PB.near;
+    var pulled = px < p.px;                              /* 必须**自信号价回落**才算回踩（直线上飞不推，防同价新命中立刻误触发） */
+    var vol = null, chg0 = null;
+    try { var pq = powQuick(r.ind, p.code, p.name); if (pq) { vol = pq.volRatio; chg0 = pq.chg0; } } catch (eV) {}
+    var shrunk = (vol != null && vol < DING_PB.volMax);
+    var inChg = (chg0 == null) || (chg0 >= DING_PB.chgLo && chg0 <= DING_PB.chgHi);
+    var pushed = log.some(function (l) { return l.date === tk && l.code === p.code && l.sig === '回踩买点'; });
+    if (pulled && near && shrunk && inChg && !pushed) {
+      lines.push(' ▶ ' + p.name + ' (' + p.code + ')' + (p.board ? ' · ' + p.board : '') +
+        ' — 已回踩至 MA5(' + Number(p.ref).toFixed(2) + ') 附近，缩量企稳可低吸' +
+        '｜现价 ' + px.toFixed(2) + '（较信号时 ' + (dev >= 0 ? '+' : '') + (dev * 100).toFixed(1) + '%）' +
+        '｜今量能 ' + (vol == null ? '—' : vol.toFixed(2) + '×') + (chg0 != null ? '｜今涨 ' + chg0.toFixed(1) + '%' : '') +
+        '｜原信号：' + p.trig);
+      log.push({ date: tk, code: p.code, name: p.name, sig: '回踩买点', ts: now });
+      firedRecs.push(p);
+      res.fired++;
+      continue;                                          /* 触发后出池（推送成功才真正出，见下） */
+    }
+    keep.push(p);
+  }
+  if (res.fired) {
+    var txt = ['🌱 回踩买点（二次提醒 · 信号确认后的缩量回踩才是高胜率入场）', ''].concat(lines);
+    txt.push(' 纪律：收盘跌破 MA5 或买入价 -7% 无条件止损；回踩推送 ≠ 满仓理由，仓位仍受生命周期阶段与大盘环境约束。');
+    txt.push('—— 来自个股生命周期工作台');
+    var okPush = false;
+    try { var rr = await dingPost(txt.join('\n'), '回踩买点提醒'); okPush = !!(rr && rr.success); }
+    catch (eP) { res.notes.push('回踩推送失败：' + (eP.message || eP)); }
+    if (!okPush) {
+      /* 推送失败 → 回滚：出池的放回池子、去重记录撤回，下轮重试（不静默丢信号） */
+      firedRecs.forEach(function (p) { keep.push(p); });
+      res.notes.push('推送未成功，' + firedRecs.length + ' 只保留在监控池，下轮重试');
+      for (var j = log.length - 1; j >= 0; j--) if (log[j].sig === '回踩买点') log.splice(j, 1);
+      res.fired = 0;
+    }
+  }
+  dingPBSave(keep);
+  res.poolN = keep.length;
+  return res;
+}
+/* ==== DING-PB-END ==== */
+/* ===== 信号分组（2026-09-25 用户要求：推送消息把股票按「买入 / 止盈 / 卖出」等类型分组）=====
+   归类规则：一只股可能同时命中多类触发（如 KDJ金叉 + MA5卖出）→ **危险优先**（卖出 > 止盈 > 买入 > 其他），
+   组内行仍显示完整触发列表，不丢信息。回踩买点（dingPullbackStage）本就是独立消息，不参与此分组。 */
+/* ==== DINGGRP-BEGIN ==== */
+var DING_GRP = [
+  { key: 'sell', name: '🔴 卖出 / 清仓（风险优先）', re: /清仓|减仓|死叉/ },
+  { key: 'tp',   name: '🟡 止盈 / 超涨', re: /止盈|超涨/ },
+  { key: 'buy',  name: '🟢 买入 / 买点', re: /买入|金叉|开盘八法/ },
+  { key: 'other', name: '⚪ 其他信号', re: null }
+];
+function dingTrigGroup(trig) {
+  var t = (trig || []).join(' + ');
+  for (var i = 0; i < DING_GRP.length; i++) {
+    if (!DING_GRP[i].re || DING_GRP[i].re.test(t)) return DING_GRP[i];
+  }
+  return DING_GRP[DING_GRP.length - 1];
+}
+/* ==== DINGGRP-END ==== */
 function composeDingDigest(sec, hits) {
   var cfg = dingGet();
   var kw = cfg.keyword ? (cfg.keyword + ' ') : '';
@@ -8210,14 +8796,35 @@ function composeDingDigest(sec, hits) {
     }
   }
   if (hits && hits.length) {
-    out.push(''); out.push('✅ 买点信号（自选股 / 当前板块 / 前5板块成分股）：');
-    hits.forEach(function (h) {
+    /* ★ 2026-09-25（用户要求）：按「卖出 / 止盈 / 买入」类型分组（危险优先置顶），组内行带完整触发列表 */
+    out.push(''); out.push('✅ 信号提醒（自选股 / 当前板块 / 前5板块成分股 · 按类型分组）：');
+    DING_GRP.forEach(function (g) {
+      var gh = hits.filter(function (h) { return dingTrigGroup(h.trig).key === g.key; });
+      if (!gh.length) return;
+      out.push('');
+      out.push('【' + g.name + '】' + gh.length + ' 只：');
+      gh.forEach(function (h) {
       /* ★ 2026-09-21：每条命中行尾带上**当时的建议仓位**（MA5 统一口径，ma5PosText 同源）
          ★ 2026-09-21 第二弹：再带上**当时的生命周期阶段**（judgeStage → stageNameOf，与表格阶段列同源） */
       var stgTxt = '';
       try { stgTxt = (h.sr && h.sr.stage) ? stageNameOf(h.sr.stage) : ''; } catch (eS) {}
+      /* ★ 2026-09-24（用户要求）：追价闸门 —— 现价较信号参考价（MA5）已高 >3% 时提示追价风险。
+         依据（全网三轮交叉验证）：追确认价胜率 38~48%，回踩企稳入场 65~75%；命中已入回踩监控池，
+         回踩企稳时会二次推送「回踩买点」。 */
+      var chaseTxt = '';
+      if (h.px != null && h.ref != null && h.ref > 0) {
+        var devChase = (h.px / h.ref - 1) * 100;
+        if (devChase > DING_PB.chasePct) {
+          chaseTxt = ' ⚠️ 追价警示：现价较 MA5(' + Number(h.ref).toFixed(2) + ') 已高 ' + devChase.toFixed(1) +
+            '%，追价胜率低（回测 38~48%）—— 已入回踩监控池，等回踩 MA5 缩量企稳会二次推送「回踩买点」';
+        }
+      }
       out.push(' ▶ ' + h.name + ' (' + h.code + ')' + (h.board ? ' · ' + h.board : '') + ' — ' + h.trig.join(' + ')
-        + (stgTxt ? ' · 阶段：' + stgTxt : '') + (h.pos ? ' · 建议仓位：' + h.pos : ''));
+        + (stgTxt ? ' · 阶段：' + stgTxt : '') + (h.pos ? ' · 建议仓位：' + h.pos : '')
+        + (h.pow ? ' · 今昨强弱：' + h.pow : '')
+        + (h.kdj ? ' · KDJ：' + h.kdj : '')
+        + (h.s4 ? ' · 打分 ' + h.s4.total + ' → ' + h.s4.action + '（' + h.s4.pos + '）' : '') + chaseTxt);
+      });
     });
   }
   out.push(''); out.push('—— 来自个股生命周期工作台');
@@ -8282,8 +8889,9 @@ async function dingScan(silent) {
   var cfg = dingTrigLiveMerge(dingGet());
   if (!cfg.url) { dingStatus('请先填写并保存钉钉 Webhook 地址', true); return; }
   var scopes = dingScopes();
-  /* 「板块涨停共振」是**板块级**触发规则，不依赖"监控范围"（不需要逐只买点判定）→ 单独勾它也能工作 */
-  if (!scopes.length && !cfg.trigZtSector) { dingStatus('请至少勾选一个监控范围（或勾选「板块涨停共振」）', true); return; }
+  /* 「板块涨停共振」是**板块级**触发规则，不依赖"监控范围"（不需要逐只买点判定）→ 单独勾它也能工作；
+     「四指标打分触发」同理 —— 单独勾它时 fallback 到自选股（否则没有可打分的对象）。 */
+  if (!scopes.length && !cfg.trigZtSector && !cfg.trigS4k) { dingStatus('请至少勾选一个监控范围（或勾选「板块涨停共振」「四指标打分」）', true); return; }
   DING.running = true;
   try {
     // ① 板块范围：拿板块清单 + 需要监控成分股的板块
@@ -8302,6 +8910,10 @@ async function dingScan(silent) {
 
     // ② 组装监控股票：自选股 / 当前板块 + 各前5板块的涨幅居前成分股
     var targets = dingWatchTargets(scopes);
+    /* ★ 2026-09-25：单独勾「四指标打分触发」且未勾任何监控范围 → fallback 到自选股（否则没有打分对象） */
+    if (!targets.length && cfg.trigS4k) {
+      wlGet().forEach(function (x) { targets.push({ code: x.code, name: x.name }); });
+    }
     if (sd.workBoards.length) {
       if (!silent) dingStatus('正在获取前5板块成分股…（' + nowHM() + '）');
       var boardTargets = await dingBoardTargets(sd.workBoards, 8, 80);
@@ -8334,6 +8946,15 @@ async function dingScan(silent) {
         var kjw = kdjState(r.ind.klines);
         if (cfg.trigKdjBuy && kdjFiredToday(kjw, 'gold')) trig.push('KDJ金叉' + (kjw.zone === 'low' ? '·低位' : ''));
         if (cfg.trigKdjSell && kdjFiredToday(kjw, 'dead')) trig.push('KDJ死叉' + (kjw.zone === 'high' ? '·高位' : ''));
+        /* ★ 2026-09-25（用户要求）：四指标打分 —— **每只监控股都算**（纯函数零额外请求）：
+           ① 所有买点命中行统一附带「打分 N → 操作指令（仓位）」；
+           ② 勾选「四指标打分触发」后：总分 ≥60 推买入档 / <15 推清仓档（独立于 MA5/KDJ 买点）。 */
+        var s4k = null;
+        try { s4k = s4kTotal(r.ind.klines, kjw); } catch (eS4k) { s4k = null; }
+        if (cfg.trigS4k && s4k && s4k.ok) {
+          if (s4k.total >= 60) trig.push('S4K打分·' + (s4k.total >= 75 ? '重仓买入' : '买入'));
+          else if (s4k.total < 15 || s4k.veto) trig.push('S4K打分·清仓' + (s4k.veto ? '·一票否决' : ''));
+        }
         if (trig.length) {
           /* ★ 2026-09-21：推送时带上**当时的建议仓位**——直接复用上面已算好的 ms（不重复计算），
              走 ma5PosText 统一口径（与自选表格「建议仓位」列、MA5 卡、日报完全同源，勿另起炉灶）。 */
@@ -8344,8 +8965,33 @@ async function dingScan(silent) {
              （fetchEMProfile 有 __profCache 缓存，且只对**命中的**股票补取，请求量 = 命中数（通常个位数））。 */
           var bd = x.board;
           if (!bd) { try { var profB = await fetchEMProfile(r.sym); bd = (profB && profB.industry) || ''; } catch (eB) { bd = ''; } }
+          /* ★ 2026-09-24（用户要求）：推送消息默认带「今昨强弱」—— 复用表格列同一套日线轻量口径
+             powQuick（powFeatures + powPath，与自选表格「今昨强弱」列完全同源、零额外请求；分时维度不参与）。 */
+          var powTxt = '';
+          try {
+            var pq = powQuick(r.ind, r.code, (r.quote && r.quote.name) || x.name);
+            if (pq) powTxt = pq.label + '（昨 ' + pq.prevLabel + ' ' + implodePct(pq.chg1) + ' / 今 ' + implodePct(pq.chg0) +
+              '，量能 ' + (pq.volRatio == null ? '—' : pq.volRatio.toFixed(2) + '×') + ' → ' + powActShort(pq.actCls) + '）';
+          } catch (eP) { powTxt = ''; }
+          /* ★ 2026-09-24（用户要求「尽量买在低点」）：记录 信号参考价 ref（买入型触发时的 MA5）与当时现价 px ——
+             ① composeDingDigest 据此做「追价闸门」（现价较 MA5 高 >3% → 提示等回踩）；
+             ② fresh 命中进入「回踩监控池」（dingPBAdd），回踩企稳时二次推送「回踩买点」。
+             参考价只对买入型触发有意义（买入/金叉）；卖出/止盈/死叉 → ref=null（不入池、不警示）。 */
+          var refPx = null, curPx = null;
+          var isBuyTrig = trig.some(function (t) { return /买入|金叉/.test(t); });
+          if (isBuyTrig) { try { refPx = (r.ind && r.ind.ma5v != null) ? r.ind.ma5v : null; } catch (eR) {} }
+          try { curPx = (r.quote && r.quote.price != null) ? r.quote.price : (r.ind && r.ind.price != null ? r.ind.price : null); } catch (eC) {}
+          /* ★ 2026-09-24（用户要求）：推送消息默认**统一附带 KDJ 信息** —— 不管 KDJ 是否勾选为触发条件，
+             每条买点行都带 K/D/J 数值与状态（金叉·低位 / 多头(K.. D..)），复用上面已算好的 kjw + kdjBrief
+             （与日报 / 自选表格 KDJ 列同源，零额外请求）。日K不足等 kjw.ok=false → 不留空尾巴。 */
+          var kdjTxt = '';
+          try {
+            if (kjw && kjw.ok) kdjTxt = 'K ' + Math.round(kjw.k) + ' / D ' + Math.round(kjw.d) + ' / J ' + Math.round(kjw.j) +
+              '（' + kdjBrief(kjw) + '）';
+          } catch (eK) { kdjTxt = ''; }
           hits.push({ code: r.code, name: (r.quote && r.quote.name) || x.name, board: bd,
-            ind: r.ind, sr: r.sr, o8: o8, trig: trig, pos: posTxt });
+            ind: r.ind, sr: r.sr, o8: o8, trig: trig, pos: posTxt, pow: powTxt, ref: refPx, px: curPx, kdj: kdjTxt,
+            s4: (s4k && s4k.ok) ? { total: s4k.total, action: s4k.action, pos: s4k.pos } : null });
         }
       });
     }
@@ -8358,12 +9004,28 @@ async function dingScan(silent) {
     });
     DING.lastFresh = fresh;
 
+    /* ★ 2026-09-24 回踩监控池：**先复查既有池**（可能触发「回踩买点」二次推送），**再把本轮 fresh 入池**
+       （顺序不能反 —— 同份新命中当轮不复查，防"刚推买入信号 5 分钟后立刻推回踩"的噪音）。
+       复查放在「无新命中 → 提前返回」**之前**：今天没有新买点 ≠ 池子不用看。 */
+    var pb = { fired: 0, poolN: 0, notes: [] };
+    try { pb = await dingPullbackStage(cfg, tk, log); } catch (ePB) { pb.notes.push('回踩复查异常：' + (ePB.message || ePB)); }
+    if (fresh.length) pb.poolN = dingPBAdd(fresh, tk);
+
     var sig = dingSecSig(sec);
     var secChanged = secPresent && !log.some(function (l) { return l.date === tk && l.code === '__DIGEST__' && l.sig === sig; });
 
+    /* 分支 0：本轮只有回踩推送（无新买点、板块清单没变）→ 推送已在 stage 内完成，这里只落去重记录 */
+    if (pb.fired && !fresh.length && !secChanged) {
+      dingLogSet(log);
+      dingStatus('已推送 回踩买点 ×' + pb.fired + ' 到钉钉（' + nowHM() + '）· 监控池余 ' + pb.poolN + ' 只' +
+        (pb.notes.length ? '｜' + pb.notes.join('；') : ''), false);
+      renderDing(); return;
+    }
     if (!fresh.length && !secChanged) {
       dingStatus('检测完成（' + nowHM() + '）：' + (hits.length ? ('命中 ' + hits.length + ' 只，均已推送过') : '暂无新买点') +
-        (secPresent ? '，板块清单无变化' : ''), false);
+        (secPresent ? '，板块清单无变化' : '') +
+        (pb.poolN ? '；回踩监控池 ' + pb.poolN + ' 只在观察' : '') +
+        (pb.notes.length ? '｜' + pb.notes.join('；') : ''), false);
       renderDing(); return;
     }
     var text = composeDingDigest(secChanged ? sec : {}, fresh);
@@ -8377,7 +9039,10 @@ async function dingScan(silent) {
     var parts = [];
     if (fresh.length) parts.push(fresh.length + ' 只买点');
     if (secChanged) parts.push('板块清单');
-    dingStatus('已推送（' + parts.join(' + ') + '）到钉钉（' + nowHM() + '）· 请到群里确认', false);
+    if (pb.fired) parts.push('回踩买点 ×' + pb.fired);
+    dingStatus('已推送（' + parts.join(' + ') + '）到钉钉（' + nowHM() + '）· 请到群里确认' +
+      (pb.poolN ? ' · 回踩监控池 ' + pb.poolN + ' 只在观察' : '') +
+      (pb.notes.length ? '｜' + pb.notes.join('；') : ''), false);
   } catch (e) {
     dingStatus('推送失败：' + (e.message || e), true);
   } finally {
@@ -8438,6 +9103,7 @@ function renderDingForm() {
   });
   if (el('dingInterval')) el('dingInterval').value = (c.interval == null ? 5 : c.interval);
   if (el('dingDailyDetail')) el('dingDailyDetail').checked = (c.dailyDetail !== false);   /* 默认勾选：详细日报 */
+  if (el('dingFixed')) el('dingFixed').checked = (c.dingFixed !== false);                  /* 默认勾选：定时日报 11:20/14:40（2026-09-25） */
   if (el('trigMa5')) el('trigMa5').checked = (c.trigMa5 !== false);
   if (el('trigMa5Profit')) el('trigMa5Profit').checked = (c.trigMa5Profit !== false);
   if (el('trigMa5Sell')) el('trigMa5Sell').checked = (c.trigMa5Sell !== false);
@@ -8445,6 +9111,7 @@ function renderDingForm() {
   if (el('trigKdjBuy')) el('trigKdjBuy').checked = !!c.trigKdjBuy;
   if (el('trigKdjSell')) el('trigKdjSell').checked = !!c.trigKdjSell;
   if (el('trigZtSector')) el('trigZtSector').checked = !!c.trigZtSector;   /* 板块涨停共振（默认不勾，手动开启） */
+  if (el('trigS4k')) el('trigS4k').checked = !!c.trigS4k;                   /* 四指标打分触发（默认不勾，手动开启） */
   // 持仓清单（含成本）
   if (el('dingPosList')) {
     var pos = (Array.isArray(c.positions) && c.positions.length) ? c.positions : posGet();
@@ -8459,6 +9126,7 @@ function renderDingForm() {
   if (el('posTrigOpen8')) el('posTrigOpen8').checked = !!c.posTrigOpen8;
   if (el('posTrigKdjBuy')) el('posTrigKdjBuy').checked = !!c.posTrigKdjBuy;
   if (el('posTrigKdjSell')) el('posTrigKdjSell').checked = !!c.posTrigKdjSell;
+  if (el('posTrigS4k')) el('posTrigS4k').checked = !!c.posTrigS4k;   /* 四指标打分触发（2026-09-25 复制自监控范围组） */
   if (el('posInterval')) el('posInterval').value = (c.posInterval == null ? 3 : c.posInterval);
   posRefreshBadge();
 }
@@ -8487,6 +9155,7 @@ function readDingForm() {
     scopes: scopes,
     interval: Math.max(0, parseInt(el('dingInterval').value, 10) || 0),
     dailyDetail: el('dingDailyDetail') ? el('dingDailyDetail').checked : true,   /* 日报详细模式（默认开） */
+    dingFixed: el('dingFixed') ? el('dingFixed').checked : true,                 /* 定时日报 11:20/14:40（默认开，2026-09-25） */
     trigMa5: el('trigMa5').checked,
     trigMa5Profit: el('trigMa5Profit') ? el('trigMa5Profit').checked : true,
     trigMa5Sell: el('trigMa5Sell') ? el('trigMa5Sell').checked : true,
@@ -8495,6 +9164,7 @@ function readDingForm() {
     trigKdjSell: el('trigKdjSell') ? el('trigKdjSell').checked : false,
     /* 板块涨停共振（2026-09-24 实装）：板块内涨停 ≥3 家 且 至少 1 家 ≥2 连板 → 推该板块 */
     trigZtSector: el('trigZtSector') ? el('trigZtSector').checked : false,
+    trigS4k: el('trigS4k') ? el('trigS4k').checked : false,   /* 四指标打分触发（2026-09-25 新增） */
     positions: positions.length ? positions : posGet(),
     posSplit: el('dingPosSplit') ? el('dingPosSplit').checked : false,
     posRisk: el('dingPosRisk') ? el('dingPosRisk').checked : true,
@@ -8504,9 +9174,54 @@ function readDingForm() {
     posTrigOpen8: el('posTrigOpen8') ? el('posTrigOpen8').checked : false,
     posTrigKdjBuy: el('posTrigKdjBuy') ? el('posTrigKdjBuy').checked : false,
     posTrigKdjSell: el('posTrigKdjSell') ? el('posTrigKdjSell').checked : false,
+    posTrigS4k: el('posTrigS4k') ? el('posTrigS4k').checked : false,   /* 四指标打分触发（2026-09-25 复制自监控范围组） */
     posInterval: Math.max(0, parseInt(el('posInterval') ? el('posInterval').value : '3', 10) || 0)
   };
 }
+/* ==================================================================
+   交易日定时日报（2026-09-25 新增 · 用户要求：每个交易日 11:20 / 14:40 固定推送日报）
+   ------------------------------------------------------------------
+   · 前提：已填 Webhook 且「定时日报」开关未关（cfg.dingFixed !== false，默认开）。
+   · 触发：每 20 秒 tick 一次，落在目标分钟的 ±2 分钟窗口内即触发（**当日去重**——
+     后台标签页会被浏览器节流，20s tick 也可能错过整分，用窗口 + 去重兜底）。
+   · 周末不推（getDay 1~5）；法定节假日无法本地判定 —— 数据末根不是今天时日报自带
+     「⚠️ 数据末根为 X 日」提示行，不会假装是当日数据。
+   · 去重记录落 localStorage（wb_ding_fixed_v1，保留 5 日）：刷新页面 / 重开浏览器都不会重复推。
+   ================================================================== */
+/* ==== DINGFIXED-BEGIN ==== */
+var DING_FIXED_TIMES = ['11:20', '14:40'];
+var DING_FIXED_LS = 'wb_ding_fixed_v1';
+function dingFixedFiredGet(){ try { return lsGet(DING_FIXED_LS, {}) || {}; } catch (e) { return {}; } }
+function dingFixedTick() {
+  var cfg = dingGet();
+  if (!cfg.url || cfg.dingFixed === false) return;      /* 未配 Webhook 或用户关闭 → 不推 */
+  if (DING.running) return;                              /* 正在手动扫描/推送 → 本轮让路（fired 未记，下轮窗口内补推） */
+  var now = new Date();
+  var wd = now.getDay();
+  if (wd < 1 || wd > 5) return;                          /* 周末不推 */
+  var hm = nowHM();
+  var hit = DING_FIXED_TIMES.filter(function (t) {
+    var diff = (now.getHours() * 60 + now.getMinutes()) - (parseInt(t.slice(0, 2), 10) * 60 + parseInt(t.slice(3, 5), 10));
+    return diff >= 0 && diff <= 2;                       /* 目标分钟 ±2 分钟窗口 */
+  });
+  if (!hit.length) return;
+  var tk = dateKey();
+  var fired = dingFixedFiredGet();
+  if (fired[tk] && hit.every(function (t) { return fired[tk].indexOf(t) >= 0; })) return;
+  var toFire = hit.filter(function (t) { return !(fired[tk] && fired[tk].indexOf(t) >= 0); });
+  if (!toFire.length) return;
+  toFire.forEach(function (t) { (fired[tk] = fired[tk] || []).push(t); });
+  var ks = Object.keys(fired).sort();
+  while (ks.length > 5) { delete fired[ks[0]]; ks.shift(); }
+  try { lsSet(DING_FIXED_LS, fired); } catch (e) {}
+  dingStatus('⏰ 定时任务触发（' + toFire.join('、') + '）：正在推送日报…（' + hm + '）');
+  dingPushDailyReport().catch(function (e) { dingStatus('定时日报推送失败：' + (e.message || e) + '（下个时点自动重试；也可手动点「推送日报」）', true); });
+}
+function dingSetupFixed() {
+  if (DING.fixedTimer) { clearInterval(DING.fixedTimer); DING.fixedTimer = null; }
+  DING.fixedTimer = setInterval(dingFixedTick, 20000);
+}
+/* ==== DINGFIXED-END ==== */
 function dingSetupAuto() {
   if (DING.timer) { clearInterval(DING.timer); DING.timer = null; }
   var c = dingGet();
@@ -11888,6 +12603,15 @@ var ZTPL_COLS = [
       var a = ztpAna(r.code); if (!a) return ztpNa(ztpNaTip(r));
       return kdjTag(a.kdj || (a.kdj = kdjState(a.ind.klines)));
     } },
+  /* ★ 2026-09-25（用户要求）：12维 / 四指标 摘要列，排在建议仓位之前（与其它三张批量表同口径） */
+  { k: 'd12z', t: '12维', src: 'ana', noSort: 1, cell: function (r) {
+      var a = ztpAna(r.code); if (!a) return ztpNa(ztpNaTip(r));
+      return stockD12Html(a);
+    } },
+  { k: 's4kz', t: '四指标', src: 'ana', noSort: 1, cell: function (r) {
+      var a = ztpAna(r.code); if (!a) return ztpNa(ztpNaTip(r));
+      return stockS4kHtml(a);
+    } },
   { k: 'pos', t: '建议仓位', src: 'ana', tip: '按建议仓位的成数上限（与 MA5 策略一致）', cell: function (r) {
       var a = ztpAna(r.code); if (!a) return ztpNa(ztpNaTip(r));
       var p = ma5PositionInfo(a.ind, (STAGES[a.sr.stage] || {}).position);
@@ -12541,6 +13265,22 @@ function init() {
     if (!tr) return;
     var code = tr.getAttribute('data-code');
     if (!code) return;
+    /* ★ 2026-09-25 修复：板块勾选列（批量加自选）点击必须拦截 —— 否则冒泡到行开合 → 整表重绘把刚勾上的清掉
+       （与自选表同款修复；涨停池 2026-09-22 已踩过同坑）。点复选框按新态记录，点整格取反。 */
+    var bbox = e.target.closest('input[data-bsel]');
+    var bcell = e.target.closest('td.ztsel-cell');
+    if (bbox || bcell) {
+      var br = bcell && bcell.closest('tr.batch-row');
+      var bcb = bbox || (br ? br.querySelector('input[data-bsel]') : null);
+      var bcCode = bcb ? bcb.getAttribute('data-bsel') : null;
+      if (bcCode) {
+        var nextB = bbox ? bbox.checked : !(bcb && bcb.checked);
+        if (bcb) bcb.checked = nextB;
+        if (nextB) ST.bsel[bcCode] = true; else delete ST.bsel[bcCode];
+        bselPaint();
+      }
+      return;
+    }
     var isOpen = !ST.rowOpen[code];
     ST.rowOpen = {};                      // 同时只展开一行，避免表格过长
     if (isOpen) ST.rowOpen[code] = true;
@@ -12618,9 +13358,34 @@ function init() {
       var code = b.getAttribute('data-code'); var act = b.getAttribute('data-act');
       if (act === 'del') {
         wlRemove(code);
+        delete WATCH.sel[code];
         if (WATCH.loaded) WATCH.results = WATCH.results.filter(function (r) { return (r.code || r.token) !== code; });
+        wlSelPaint();
         renderWatch();
       } else if (act === 'q') { switchToSingle(code); }
+      return;
+    }
+    /* ★ 2026-09-25：批量删除工具条按钮 */
+    var tb = e.target.closest('button#wldelBtn, button#wlselNone');
+    if (tb) {
+      if (tb.id === 'wldelBtn') wlDelSel();
+      else { WATCH.sel = {}; wlSelPaint(); renderWatch(); }
+      return;
+    }
+    /* ★ 2026-09-25 修复（用户：勾选不上）：勾选列点击必须在此拦截 —— 否则冒泡到行开合逻辑 → 整表重绘
+       把刚勾上的状态瞬间清掉。点复选框按新态记录；点整格取反（与涨停池 2026-09-22 同款，那边踩过同坑）。 */
+    var wbox = e.target.closest('input[data-wldel]');
+    var wcell = e.target.closest('td.ztsel-cell');
+    if (wbox || wcell) {
+      var wr = wcell && wcell.closest('tr.batch-row');
+      var wcb = wbox || (wr ? wr.querySelector('input[data-wldel]') : null);
+      var wcCode = wcb ? wcb.getAttribute('data-wldel') : null;
+      if (wcCode) {
+        var nextW = wbox ? wbox.checked : !(wcb && wcb.checked);
+        if (wcb) wcb.checked = nextW;
+        if (nextW) WATCH.sel[wcCode] = true; else delete WATCH.sel[wcCode];
+        wlSelPaint();
+      }
       return;
     }
     var tr = e.target.closest('tr.batch-row');
@@ -12632,6 +13397,30 @@ function init() {
       renderWatch();
     }
   });
+  /* ★ 2026-09-25：勾选状态不存 DOM —— change 委托同步到 WATCH.sel / ST.bsel 并刷新按钮文案（不重绘表格） */
+  el('wlList').addEventListener('change', function (e) {
+    var cb = e.target.closest('input[data-wldel]');
+    if (!cb) return;
+    var c = cb.getAttribute('data-wldel');
+    if (cb.checked) WATCH.sel[c] = true; else delete WATCH.sel[c];
+    wlSelPaint();
+  });
+  var bdw = el('boardDetailWrap');
+  if (bdw) {
+    bdw.addEventListener('change', function (e) {
+      var cb = e.target.closest('input[data-bsel]');
+      if (!cb) return;
+      var c = cb.getAttribute('data-bsel');
+      if (cb.checked) ST.bsel[c] = true; else delete ST.bsel[c];
+      bselPaint();
+    });
+    bdw.addEventListener('click', function (e) {
+      var tb = e.target.closest('button#bselAdd, button#bselNone');
+      if (!tb) return;
+      if (tb.id === 'bselAdd') bselAdd();
+      else { ST.bsel = {}; bselPaint(); var tip = el('bselTip'); if (tip) tip.innerHTML = '已清空勾选'; }
+    });
+  }
   document.addEventListener('click', function (e) {
     var b = e.target.closest('.wl-btn'); if (!b) return;
     var code = b.getAttribute('data-code'); var nm = b.getAttribute('data-name') || code;
@@ -12643,10 +13432,10 @@ function init() {
   });
 
   // 钉钉提醒
-  renderDingForm(); renderDing(); dingSetupAuto(); dingPosSetupAuto(); watchAutoSetup();
+  renderDingForm(); renderDing(); dingSetupAuto(); dingSetupFixed(); dingPosSetupAuto(); watchAutoSetup();
   el('dingSave').addEventListener('click', function () {
     dingSaveCfg(readDingForm());
-    dingSetupAuto(); dingPosSetupAuto();
+    dingSetupAuto(); dingSetupFixed(); dingPosSetupAuto();
     var c = dingGet();
     dingStatus('配置已保存' + (c.url ? (c.interval ? '（盘中每 ' + c.interval + ' 分钟自动检测）' : '（仅手动检测）') : '：还没填 Webhook，无法推送') +
       ' · 持仓清单 ' + ((c.positions || []).length) + ' 只', !c.url);
