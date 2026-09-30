@@ -1074,8 +1074,9 @@
           <label data-page-node-id="3h5k0pIrHVfLlbnpCUEJBn"><input type="checkbox" id="scopeCallTop" data-page-node-id="Jyv24vRDS6EavEDLPvAyPr"> 集合竞价推荐前5板块的成分股</label>
           <label data-page-node-id="C3I6JszwPfJDyqDKk52kGK"><input type="checkbox" id="scopeFlowTop" data-page-node-id="WBfdZNMk8s8lSV0TyXgqZn"> 主力资金净流入前5板块的成分股</label>
           <label data-page-node-id="iONMDKtQFEFMo6nrkVIeBH"><input type="checkbox" id="scopeChgTop" data-page-node-id="9TEDe1ymAyKo5HyzlXFLty"> 涨幅前5板块的成分股</label>
+          <label data-page-node-id="ZtTop8Lbl0AaBbCc11DdEe01"><input type="checkbox" id="scopeZtTop8" data-page-node-id="ZtTop8Box0AaBbCc11DdEe01"> 涨停家数前8行业板块的成分股 → 推其中触发四指标买入档的个股（剔除跌停）</label>
         </div>
-        <div class="ding-warn" style="margin-top:6px;" data-page-node-id="zADX9wFpl6rOMCg6Gb6bM2">三个「前 5 板块」都取自<b data-page-node-id="DdWqBxa7VReYWIAmACwWtl">行业板块</b>：自动抓取板块内涨幅居前的成分股，对每只跑买点/卖点/止盈判定。板块清单未变化当天不重复推送，新出现的信号会继续推。</div>
+        <div class="ding-warn" style="margin-top:6px;" data-page-node-id="zADX9wFpl6rOMCg6Gb6bM2">三个「前 5 板块」都取自<b data-page-node-id="DdWqBxa7VReYWIAmACwWtl">行业板块</b>：自动抓取板块内涨幅居前的成分股，对每只跑买点/卖点/止盈判定。「涨停家数前8行业板块」按<b data-page-node-id="ZtTop8Note1AaBb01">当日涨停池按行业聚合的涨停家数</b>取前 8 个行业板块（非概念板块），监控其<b data-page-node-id="ZtTop8Note2AaBb01">全部成分股（剔除跌停股）</b>，推送其中<b data-page-node-id="ZtTop8Note3AaBb01">四指标打分达到买入档（≥62，含 ≥76 重仓）的个股</b>——板块名字本身不推送；单轮扫描上限 240 只（超出按成交额降序截断，防打爆行情接口）。板块清单未变化当天不重复推送，新出现的信号会继续推。</div>
         <label data-page-node-id="ZJ56KGkkttpmFy0nAYBNaO">触发条件（买点判定 · 作用于所有勾选范围内的成分股）</label>
         <div class="ding-checks" data-page-node-id="3ylBFW156CrvBvtgrxaTHZ">
           <label data-page-node-id="ilQ44MRqjgxwOTstEWEiTU"><input type="checkbox" id="trigMa5" checked data-page-node-id="TWYeq1nlhrOVl0szbgN9Lg"> MA5 买入信号（斜率翻上 + 连续2日站线 + dev 0~6% + 放量阳线）</label>
@@ -3448,7 +3449,7 @@ var RISK_RULE = {
   retracePct: 3,       /* 冲高回吐阈值（pp，> 3 报警 · 与 S4K_RULE.yestHt 同值同源） */
   retraceHigh: 5,      /* 回吐 ≥5pp → 红色高危（S4K 里 ≥5pp 已是「减仓 1/2」档） */
   spikeMinChg: 1,      /* 「冲高」前置条件：当日最高价较昨收 ≥1%（否则是全天弱势，不算冲高） */
-  color: true          /* 钉钉正文彩色标签（钉钉页可关；关掉后退化为 emoji + 色名） */
+  color: false         /* ★ 2026-09-30（用户要求）：钉钉正文不再发 <font color=#…> 彩色标签（emoji + 色名保留，信息不丢） */
 };
 var RISK_LEVELS = {
   high: { key: 'high', tag: '🔴', name: '红色高危', color: '#ff5252' },
@@ -4443,6 +4444,11 @@ function buildResultHTML(quote, ind, sr, compact, source, gene, cap, rec, open8,
      （SRPS 区块口径：只扫左侧K线、由近到远、命中即止；创新高走移动止盈分支；不进钉钉推送）。 */
   var srp = null;
   try { srp = srpJudge(ind.klines); } catch (eSrp) { srp = null; }
+  /* ★ 2026-09-30（用户要求）：KDJ 金叉质量评价（六维量化 · 满分 100）—— 顶部徽标 + 下方卡片
+     共用同一份判定（纯计算，零额外网络请求）。压力位复用上面刚算好的 srp.R（黑名单4 用）；
+     srp 拿不到 → press=null → 黑名单4 不触发（缺失不当利好也不当利空）。 */
+  var kdjq = null;
+  try { kdjq = kdjFullJudge(ind.klines, { press: (srp && srp.R && isFinite(srp.R.v)) ? srp.R.v : null }); } catch (eKdjq) { kdjq = null; }
 
   var html = '';
   html += '<div class="card"><div class="stock-head">' +
@@ -4464,6 +4470,8 @@ function buildResultHTML(quote, ind, sr, compact, source, gene, cap, rec, open8,
     renderWaveTop(wave) +
     /* 顶部同步显示「支撑压力与盈亏比」（2026-09-28 用户要求：现价买入的空间测算，顶部一眼可见） */
     renderSrpTop(srp) +
+    /* 顶部同步显示「KDJ 金叉质量评价」（2026-09-30 用户要求：六维量化打分 + 硬性黑名单，顶部一眼可见） */
+    renderKdjqTop(kdjq) +
     '</div>' +
     (quote.code ? '<button type="button" class="wl-btn' + (wlHas(quote.code) ? ' on' : '') + '" data-code="' + escapeHtml(quote.code) + '" data-name="' + escapeHtml(name) + '" title="加入 / 移出自选列表">' + (wlHas(quote.code) ? '★ 已自选' : '☆ 加自选') + '</button>' : '') +
     '</div>' +
@@ -4547,6 +4555,10 @@ function buildResultHTML(quote, ind, sr, compact, source, gene, cap, rec, open8,
   /* ★ 2026-09-28（用户要求）：支撑压力与理论盈亏比测算卡 —— 排在浪型卡之后；复用顶部已算好的
      同一份 srpJudge 结果（零重复计算）。空间结构测算层：不发买卖指令、不进钉钉推送。 */
   try { if (ind && ind.klines && ind.klines.length) html += srpCardHtml(ind, srp); } catch (eSrpCard) {}
+
+  /* ★ 2026-09-30（用户要求）：KDJ 金叉质量评价卡 —— 排在支撑压力卡之后；复用顶部已算好的
+     同一份 kdjqJudge 结果（零重复计算）。金叉质量评价层：不改四指标打分、不进钉钉推送、不发买卖指令。 */
+  try { if (ind && ind.klines && ind.klines.length) html += kdjqCardHtml(ind, kdjq); } catch (eKdjqCard) {}
 
   // 今昨强弱（日线口径：昨日K线 × 今日路径）
   var pwq = powQuick(ind, quote.code, name);
@@ -6249,6 +6261,29 @@ async function loadBoardList(force) {
       '这通常是行情站对本机网络的临时限流，一般几十分钟内自动解除。<br><br>' +
       '<button class="btn" data-act="retry-boards">重新加载板块</button></div>';
   }
+}
+
+/* ===== ★ 2026-09-30（用户要求）：板块全景 · 交易时间每 3 分钟自动刷新一次 =====
+   仿 WATCH_AUTO 的 setInterval 1 秒 tick 模式；三重门：交易时段（inTrading）/ 页面在前台 /
+   板块视图处于 on。离开视图或收盘后自动挂起，回来重新起算 180 秒倒计时。 */
+var BOARD_AUTO = { sec: 180, timer: null, nextAt: 0, busy: false };
+function boardViewOn() {
+  var e = el('view-board');
+  return !!(e && e.classList.contains('on'));
+}
+function boardAutoTick() {
+  if (document.hidden) return;
+  if (!inTrading()) { BOARD_AUTO.nextAt = 0; return; }
+  if (!boardViewOn()) { BOARD_AUTO.nextAt = 0; return; }
+  if (!BOARD_AUTO.nextAt) BOARD_AUTO.nextAt = Date.now() + BOARD_AUTO.sec * 1000;
+  if (Date.now() < BOARD_AUTO.nextAt || BOARD_AUTO.busy) return;
+  BOARD_AUTO.nextAt = Date.now() + BOARD_AUTO.sec * 1000;
+  BOARD_AUTO.busy = true;
+  loadBoardList(true).catch(function () {}).then(function () { BOARD_AUTO.busy = false; });
+}
+function boardAutoSetup() {
+  if (BOARD_AUTO.timer) { clearInterval(BOARD_AUTO.timer); BOARD_AUTO.timer = null; }
+  BOARD_AUTO.timer = setInterval(boardAutoTick, 1000);
 }
 
 /* ---------- 板块详情 ---------- */
@@ -10462,6 +10497,729 @@ function srpCardHtml(ind, r) {
 }
 /* ==== SRPS-END ==== */
 
+/* ==========================================================================
+   KDJ 金叉质量量化测量体系（KDJQ）—— 2026-09-30 新增 · 用户导入外部策略文档
+   --------------------------------------------------------------------------
+   来源：《KDJ金叉质量量化测量体系（全网3轮交叉核验）》六维 100 分制 + 5 条硬性黑名单 +
+   三档质量分级（≥75 高质量 / 55~74 普通 / <55 低质量）。定位（文档核心定位原话）：
+   「KDJ 金叉只是**动量初选信号，不是独立买点**；高质量金叉之后仍要过
+   【大盘情绪周期校验 + 支撑压力测算 + 理论盈亏比阈值过滤】才触发买点推送。」
+
+   ★★ 接入前先做规则审计（_verify_kdjq_rule.js，28 断言 + 11 条缺陷清单），
+      以下 5 处**刻意偏离**文档伪代码，全部有证据、全部在卡片折叠区披露：
+
+   ┌ 修1（P0）维度1 档位倒置：文档自述三处都称「40~60 趋势中继 = 主升行情最优区间、
+   │  胜率优于低位超跌金叉」（核验结论第2轮 / 维度1 表头 / §六.2），但赋分表却给
+   │  D∈[20,40] = 20~30 分、(40,60] = 10~19 分 —— 自述更优者反而少 15 分。
+   │  → 按自述修正为 (40,60]=28 / [20,40]=22 / (60,80]=8 / D<20=10 / D>80=−30。
+   ├ 修2（P0）顶背离「金叉作废」：文档维度6 明写「0 分：存在顶背离，金叉作废，直接排除」，
+   │  但伪代码只有 `if not top: score += 5`，顶背离时其余 95 分照拿（实测 648 组里
+   │  186 组仍 ≥55 分、最高 95 分）→ 改为**前置否决**，与「直接排除」逐字一致。
+   ├ 修3（P1）维度5：文档正文「收盘价在 MA20 下方 → 0 分（下跌途中反弹，过滤）」
+   │  被伪代码写成 `elif close>ma5: +5`（不检查 MA20）→ 按正文实现。
+   ├ 修4（P1）维度2 三条件被压缩：正文 20 分档要「D向上 + 金叉后连续 2 根 K-D 差值
+   │  持续扩大 + K/D/J 同步上行」，伪代码只看 delta_D → 拆成 20/14/12 三档。
+   └ 修5（P2）维度4 漏「收阳线」：正文 16~20 分档要「放量 + 收阳线 + 站上 MA5」，
+      伪代码只看量比与 MA5 → 补回收阳判据，缺一个降到 12。
+
+   文档未定义、此处补齐口径并披露：
+     · D<20 无档位（伪代码静默 0 分）→ 补 10 分（低位钝化风险区，需量价+均线过滤）
+     · 金叉评价窗口 = 最近一次金叉发生在 5 根内（文档只说了「金叉后连续 2 根」，没说有效期）
+     · 黑名单2「D>70 高位**反复**钝化」→ 量化为「近 5 根里 ≥3 根 D>70」
+     · 黑名单4「紧贴上方压力位」→ 量化为「距压力位 < 3%」，压力位取既有 srpJudge 的 R；
+       拿不到 R 时**本条不触发**（缺失不当利好、也不当利空，skill §2.4 数据缺口纪律）
+     · §六 底背离加分 / 二次金叉 +8 属「可选扩展」→ 默认 0（加分会换标尺、让 75/55 漂移，
+       skill 坑8），可在 KDJQ_RULE 里开启
+
+   ★ 分层纪律（skill 坑13 / 15.2）：本卡 = **金叉质量评价层**（纯读数 + 打分），
+     **不改 s4kTotal 权重、不进钉钉推送、不发买卖指令** —— 买卖点仍只认四指标
+     （2026-09-26 定稿）。与 ATR 通道卡 / 浪型卡 / 支撑压力卡同款定位。
+   KDJ 序列复用页面既有 kdjSeries（9,3,3 同参数）→ 零额外网络请求。
+   ========================================================================== */
+/* ==== KDJQ-BEGIN ==== */
+var KDJQ_RULE = {
+  volUp: 1.2,            /* 维度4 放量阈值：vol ≥ 1.2 × vol_ma5 */
+  volFlat: 0.8,          /* 维度4 平量下限：vol ≥ 0.8 × vol_ma5；< 0.8 = 缩量金叉 */
+  jRoom: 80, jTight: 90, /* 维度3 J 空间档：<80 满分 / 80~90 谨慎 / ≥90 严重超买 */
+  dLow: 20, dMid: 40, dHigh: 60, dTop: 80,   /* 维度1 D 值分档边界 */
+  dullD: 70, dullBars: 3, dullWin: 5,        /* 黑名单2：D>70 且 近 5 根里 ≥3 根 D>70 = 反复钝化 */
+  pressNear: 3,          /* 黑名单4：(R/close − 1) < 3% = 紧贴上方压力位 */
+  win: 5,                /* 金叉评价窗口：最近一次金叉发生在 5 根内才评价（文档未定义 → 补齐） */
+  divWin: 30,            /* 维度6 背离检测窗口（近 30 根内找两个摆动点） */
+  flatEps: 0.05,         /* 维度2「D 走平」阈值：|ΔD| < 0.05 */
+  maFlatPct: 0.3,        /* 维度5「MA20 走平」阈值：MA20 近 5 日斜率 |%| < 0.3（与 S4K_RULE.flatPct 同源） */
+  minBars: 30,           /* 最少日K：MA20 起算 20 + 背离窗口摆动点 ±2 + 金叉窗口 5 */
+  tierHigh: 75, tierNormal: 55,              /* 文档三档分级阈值（不改刻度） */
+  bottomDivBonus: 0,     /* §六 底背离加分（可选扩展）默认 0 —— 保持 75/55 刻度不漂移 */
+  secondCrossBonus: 0,   /* §六.3 二次金叉 +8（可选扩展）默认 0 */
+  blHoldBars: 2          /* ★ BL1 口径（2026-09-30 修正死代码）：「K 短暂上穿 D」= 金叉后 ≤blHoldBars 根内
+                            K 重新跌破 D（已失败的诱多金叉）。数学事实：交叉当根 ΔD=(K[x]−D[x−1])/3 在金叉时恒>0
+                            （K>D ⟺ K>D₋₁），故原文「ΔD<0」条件永不触发；净斜率口径（D[x]−D[x−3]<0）又会把
+                            趋势中继回撤金叉全部误杀 → 只有用「交叉是否站得住」才既可达又不误杀 */
+};
+/* n 日均量（收盘口径：i-n+1 .. i 共 n 根；不足 n 根返回 null —— 缺失不当 0） */
+function kdjqVolMa(klines, i, n) {
+  if (i - n + 1 < 0) return null;
+  var s = 0, t, v;
+  for (t = i - n + 1; t <= i; t++) {
+    v = (klines[t].volume != null) ? klines[t].volume : klines[t].vol;
+    if (v == null || !isFinite(v)) return null;
+    s += v;
+  }
+  return s / n;
+}
+/* n 日收盘均线（不足 n 根返回 null） */
+function kdjqMA(klines, i, n) {
+  if (i - n + 1 < 0) return null;
+  var s = 0, t;
+  for (t = i - n + 1; t <= i; t++) {
+    if (!isFinite(klines[t].close)) return null;
+    s += klines[t].close;
+  }
+  return s / n;
+}
+/* 维度6 背离检测：近 divWin 根内取**已确认**摆动点（±2 邻域完整 → t ≤ i-2），
+   比较最后两个同向摆动点的「价格 vs KDJ（K 值）」是否同向。
+   顶背离 = 价格创更高高点 且 K 高点反而降低；底背离 = 价格创更低低点 且 K 低点反而抬高。
+   摆动点不足 2 个 → na = true（不猜、不否决）。 */
+function kdjqDivergence(klines, S, i) {
+  var lo = Math.max(1, i - KDJQ_RULE.divWin + 1), lim = i - 2, t, q, isH, isL, r = { top: false, bottom: false, na: true, txt: '摆动点不足，未判定' };
+  if (lim - lo < 4) return r;
+  var hs = [], ls = [];
+  for (t = lo; t <= lim; t++) {
+    isH = true; isL = true;
+    for (q = t - 2; q <= t + 2; q++) {
+      if (q === t || q < 0 || q > lim + 2 || q >= S.n) continue;
+      if (klines[q].high >= klines[t].high) isH = false;
+      if (klines[q].low <= klines[t].low) isL = false;
+    }
+    if (isH) hs.push(t);
+    if (isL) ls.push(t);
+  }
+  if (hs.length >= 2) {
+    var h1 = hs[hs.length - 2], h2 = hs[hs.length - 1];
+    r.top = (klines[h2].high > klines[h1].high) && (S.K[h2] < S.K[h1]);
+  }
+  if (ls.length >= 2) {
+    var l1 = ls[ls.length - 2], l2 = ls[ls.length - 1];
+    r.bottom = (klines[l2].low < klines[l1].low) && (S.K[l2] > S.K[l1]);
+  }
+  r.na = (hs.length < 2 && ls.length < 2);
+  r.txt = r.na ? '摆动点不足 2 个，未判定（不否决）'
+    : (r.top ? '顶背离：价格创新高但 KDJ 高点降低' : (r.bottom ? '底背离：价格创新低但 KDJ 低点抬高' : '未见背离'));
+  return r;
+}
+/* 主引擎：评价「最近一次金叉」的质量。
+   opts = { press: 上方压力位数值 | null（黑名单4 用，来自既有 srpJudge 的 R） }
+   返回 { ok, fired, invalid, why, bl, score, dims[], grade, dull, div, xIdx, xBars, xDate, K, D, J, Dprev, second, notes[] } */
+function kdjqJudge(klines, opts) {
+  opts = opts || {};
+  var S = kdjSeries(klines), n = S.n;
+  if (!klines || n < KDJQ_RULE.minBars) {
+    return { ok: false, fired: false, invalid: false, score: 0, dims: [], grade: 'na', notes: [], why: '日K不足 ' + KDJQ_RULE.minBars + ' 根' };
+  }
+  var i = n - 1, t, x = -1;
+  /* 最近一次金叉（前 K≤D 且 当 K>D，与页面 kdjCrosses 同口径）→ 从末根往前扫，命中即停 */
+  for (t = i; t >= Math.max(1, i - KDJQ_RULE.win); t--) {
+    if (S.K[t - 1] <= S.D[t - 1] && S.K[t] > S.D[t]) { x = t; break; }
+  }
+  var xBars = (x >= 0) ? (i - x) : -1;
+  if (x < 0) {
+    /* 窗口内没有金叉：如实报「无金叉」而不是静默消失（坑18 #6 同款纪律） */
+    var lastDead = -1;
+    for (t = i; t >= Math.max(1, i - KDJQ_RULE.win); t--) { if (S.K[t - 1] >= S.D[t - 1] && S.K[t] < S.D[t]) { lastDead = t; break; } }
+    return { ok: true, fired: false, invalid: false, score: 0, dims: [], grade: 'none', notes: [],
+      K: S.K[i], D: S.D[i], J: S.J[i], xIdx: -1, xBars: -1,
+      why: (lastDead >= 0 ? '近 ' + KDJQ_RULE.win + ' 根内无金叉（最近一次是死叉，' + (i - lastDead) + ' 根前）'
+        : '近 ' + KDJQ_RULE.win + ' 根内无交叉（KDJ 粘连/单边走势）') };
+  }
+  var notes = [], dims = [];
+  var D = S.D[x], Dp = S.D[x - 1], K = S.K[x], J = S.J[x], dD = D - Dp;
+  var close = klines[x].close, open = klines[x].open;
+  var ma5 = kdjqMA(klines, x, 5), ma20 = kdjqMA(klines, x, 20), ma20p = kdjqMA(klines, x - 5, 20);
+  var vol = (klines[x].volume != null) ? klines[x].volume : klines[x].vol;
+  var vma5 = kdjqVolMa(klines, x, 5);
+  var vr = (vma5 && vma5 > 0 && isFinite(vol)) ? vol / vma5 : null;
+  var yang = (isFinite(open) && isFinite(close)) ? close > open : null;
+  var ma20Flat = (ma20 != null && ma20p != null && ma20p > 0) ? (Math.abs(ma20 / ma20p - 1) * 100 < KDJQ_RULE.maFlatPct) : null;
+
+  /* ── 硬性黑名单（任意一条 → 无效，不参与打分）─────────────────────── */
+  /* BL1 死亡金叉（「K 短暂上穿 D」的可验证口径，2026-09-30 修正死代码）：
+     数学事实：金叉当根 ΔD=(K[x]−D[x−1])/3 恒>0（K>D ⟺ K>D₋₁），原文「ΔD<0」永不触发；
+     净斜率口径（D[x]−D[x−3]<0）会把趋势中继回撤金叉全部误杀。
+     → 「短暂上穿」= 金叉后 ≤blHoldBars 根内 K 重新跌破 D（站不住的交叉 = 已失败的诱多）。 */
+  var blFail = -1;
+  if (x + 1 <= i && S.K[x + 1] < S.D[x + 1]) blFail = 1;
+  else if (x + 2 <= i && S.K[x + 1] >= S.D[x + 1] && S.K[x + 2] < S.D[x + 2]) blFail = 2;
+  if (blFail > 0) {
+    return { ok: true, fired: true, invalid: true, bl: 'BL1', score: 0, dims: [], grade: 'invalid', notes: [],
+      K: K, D: D, J: J, Dprev: Dp, xIdx: x, xBars: xBars, xDate: klines[x].date || '',
+      why: '死亡金叉：金叉后 ' + blFail + ' 根内 K 重新跌破 D（短暂上穿·已失败的诱多交叉），直接判定无效' };
+  }
+  /* BL2 高位反复钝化：D>70 且 近 5 根里 ≥3 根 D>70（「反复」的量化口径，审计修 BL2-VAGUE） */
+  var dullCnt = 0;
+  for (t = Math.max(0, x - KDJQ_RULE.dullWin + 1); t <= x; t++) { if (S.D[t] > KDJQ_RULE.dullD) dullCnt++; }
+  var dull = (D > KDJQ_RULE.dullD && dullCnt >= KDJQ_RULE.dullBars);
+  if (dull) {
+    return { ok: true, fired: true, invalid: true, bl: 'BL2', score: 0, dims: [], grade: 'invalid', notes: [], dull: true,
+      K: K, D: D, J: J, Dprev: Dp, xIdx: x, xBars: xBars, xDate: klines[x].date || '',
+      why: '高位反复钝化：D=' + D.toFixed(1) + '>70 且近 ' + KDJQ_RULE.dullWin + ' 根有 ' + dullCnt + ' 根 D>70（≥' + KDJQ_RULE.dullBars + '），属高位震荡诱多' };
+  }
+  /* BL4 缩量 + 紧贴上方压力位（审计修 BL4-VAGUE；R 拿不到 → 本条不触发，缺失不当利好也不当利空） */
+  var press = (opts.press != null && isFinite(opts.press) && opts.press > 0) ? opts.press : null;
+  if (vr != null && vr < KDJQ_RULE.volFlat && press != null && close > 0 && (press / close - 1) * 100 < KDJQ_RULE.pressNear) {
+    return { ok: true, fired: true, invalid: true, bl: 'BL4', score: 0, dims: [], grade: 'invalid', notes: [],
+      K: K, D: D, J: J, Dprev: Dp, xIdx: x, xBars: xBars, xDate: klines[x].date || '',
+      why: '缩量金叉且紧贴上方压力位：量比 ' + vr.toFixed(2) + '× <' + KDJQ_RULE.volFlat + '，距压力 ' + press.toFixed(2) +
+        ' 仅 ' + ((press / close - 1) * 100).toFixed(1) + '%（<' + KDJQ_RULE.pressNear + '%），上涨空间不足' };
+  }
+  if (vr != null && vr < KDJQ_RULE.volFlat && press == null) {
+    notes.push('黑名单4 未参与：压力位数据缺失（缺失不当利好、也不当利空），本条不否决也不放行');
+  }
+  /* BL3 盘中瞬时交叉 —— 本实现**只用收盘K线**（每根 kline 的 close 都是该日收盘），天然满足。
+     但当金叉就发生在末根且该根是当日实时 bar 时，收盘可能变脸 → 显式提示复核。 */
+  if (xBars === 0) notes.push('金叉发生在最新一根K线；盘中价会变，收盘后请复核（本体系只认收盘K线）');
+
+  /* ── 维度6 顶背离：前置否决（审计修 D6-VETO，文档原文「金叉作废，直接排除」）────── */
+  var div = kdjqDivergence(klines, S, i);
+  if (div.top) {
+    return { ok: true, fired: true, invalid: true, bl: 'BL-DIV', score: 0, dims: [], grade: 'invalid', notes: [], div: div,
+      K: K, D: D, J: J, Dprev: Dp, xIdx: x, xBars: xBars, xDate: klines[x].date || '',
+      why: '顶背离：价格创新高但 KDJ 高点降低 → 文档维度6「金叉作废，直接排除」' };
+  }
+
+  /* ── 六维打分 ─────────────────────────────────────────────────────── */
+  var score = 0;
+  /* 维度1 金叉位置（满分 30）—— ★按文档自述修正倒置（审计 D1-INVERT） */
+  var v1 = 0, t1 = '';
+  if (D > KDJQ_RULE.dTop) { v1 = -30; t1 = 'D=' + D.toFixed(1) + ' >80 严重超买 → 倒扣 30 分（标记无效金叉）'; }
+  else if (D > KDJQ_RULE.dHigh) { v1 = 8; t1 = 'D=' + D.toFixed(1) + ' ∈(60,80] 高位震荡，诱多概率高'; }
+  else if (D > KDJQ_RULE.dMid) { v1 = 28; t1 = 'D=' + D.toFixed(1) + ' ∈(40,60] 趋势中继（文档自述「主升行情最优区间」）'; }
+  else if (D >= KDJQ_RULE.dLow) { v1 = 22; t1 = 'D=' + D.toFixed(1) + ' ∈[20,40] 低位修复（超跌反弹，胜率低于趋势中继）'; }
+  else { v1 = 10; t1 = 'D=' + D.toFixed(1) + ' <20 深度超卖·低位钝化风险区（文档未定义档位→补齐，需量价+均线过滤）'; }
+  dims.push({ k: '位置', max: 30, v: v1, txt: t1 }); score += v1;
+
+  /* 维度2 斜率与发散（满分 20）—— 三分支（审计修 D2-SPEC） */
+  var v2 = 0, t2 = '';
+  if (Math.abs(dD) <= KDJQ_RULE.flatEps) {
+    v2 = 10; t2 = 'D 走平（ΔD ' + dD.toFixed(2) + '），K 向上、开口缓慢打开，动量偏弱';
+  } else {
+    var avail = (x + 2 <= i);
+    if (!avail) { v2 = 14; t2 = 'D 向上（ΔD +' + dD.toFixed(2) + '）但金叉后不足 2 根 → 发散未验证，按 14/20 计'; notes.push('维度2：金叉后不足 2 根，K-D 差值发散与 J 同步上行**未验证**（文档 20 分档三条件只满足 1 条）'); }
+    else {
+      var a0 = S.K[x] - S.D[x], a1 = S.K[x + 1] - S.D[x + 1], a2 = S.K[x + 2] - S.D[x + 2];
+      if ((a1 - a0) > 0 && (a2 - a1) > 0) { v2 = 20; t2 = 'D 向上 + 金叉后连续 2 根 K-D 差值持续扩大（发散确认）'; }
+      else { v2 = 12; t2 = 'D 向上但 K-D 差值未连续扩大（开口收窄/走平），动量强度不足'; }
+    }
+  }
+  dims.push({ k: '发散', max: 20, v: v2, txt: t2 }); score += v2;
+
+  /* 维度3 J 剩余上行空间（满分 15） */
+  var v3 = 0, t3 = '';
+  if (J < KDJQ_RULE.jRoom) { v3 = 15; t3 = 'J=' + J.toFixed(1) + ' <80，保留充足动量上行空间'; }
+  else if (J <= KDJQ_RULE.jTight) { v3 = 8; t3 = 'J=' + J.toFixed(1) + ' ∈[80,90]，上行空间有限，谨慎'; }
+  else { v3 = 0; t3 = 'J=' + J.toFixed(1) + ' ≥90，临近严重超买，容易脉冲诱多'; }
+  dims.push({ k: 'J空间', max: 15, v: v3, txt: t3 }); score += v3;
+
+  /* 维度4 量价配合（满分 20）—— 补回收阳线判据（审计修 D4-YANG） */
+  var v4 = 0, t4 = '';
+  var vrTxt = (vr == null) ? '量比不可用' : '量比 ' + vr.toFixed(2) + '×';
+  if (vr == null) { v4 = 0; t4 = '成交量数据缺失，本维不计分（缺失不当 0 以外的推断）'; notes.push('维度4：成交量或 5 日均量缺失 → 按 0 计并披露，不做推断'); }
+  else if (vr >= KDJQ_RULE.volUp && ma5 != null && close > ma5 && yang === true) { v4 = 20; t4 = vrTxt + ' ≥1.2 且收阳线且站上 MA5 → 放量金叉（主力资金进场信号）'; }
+  else if (vr >= KDJQ_RULE.volUp && ma5 != null && close > ma5 && yang === false) { v4 = 12; t4 = vrTxt + ' ≥1.2、站上 MA5，但**收阴线**（放量滞涨/长上影）→ 按 12 分（文档未定义该组合，20 与 10 之间插值）'; notes.push('维度4：放量站上 MA5 但收阴 → 文档正文要求「收阳线」，伪代码漏掉该判据，此处按 12 分插值'); }
+  else if (vr >= KDJQ_RULE.volUp) { v4 = 10; t4 = vrTxt + ' ≥1.2 但未站上 MA5（' + (ma5 == null ? 'MA5 不可用' : 'MA5 ' + ma5.toFixed(2)) + '）→ 放量但反弹力度不足'; }
+  else if (vr >= KDJQ_RULE.volFlat) { v4 = 10; t4 = vrTxt + ' ∈[0.8,1.2) 平量金叉，中性观察'; }
+  else { v4 = 0; t4 = vrTxt + ' <0.8 缩量金叉，无量反弹，诱多概率高'; }
+  dims.push({ k: '量价', max: 20, v: v4, txt: t4 }); score += v4;
+
+  /* 维度5 中长期均线环境（满分 10）—— 按文档正文「MA20 下方 = 0 分」执行（审计修 D5-MA20） */
+  var v5 = 0, t5 = '';
+  if (ma5 == null || ma20 == null) { v5 = 0; t5 = 'MA5/MA20 数据不足，本维不计分'; notes.push('维度5：MA5/MA20 不足 20 根日K → 按 0 计并披露'); }
+  else if (close > ma5 && close > ma20) { v5 = 10; t5 = '收盘 ' + close.toFixed(2) + ' > MA5 ' + ma5.toFixed(2) + ' 且 > MA20 ' + ma20.toFixed(2) + ' → 均线多头，趋势中继（优先级最高）'; }
+  else if (close > ma5 && close <= ma20) {
+    if (ma20Flat) { v5 = 5; t5 = '收盘 > MA5 但 MA20 走平（近 5 日斜率 <' + KDJQ_RULE.maFlatPct + '%）→ 震荡行情，仅观察'; }
+    else { v5 = 0; t5 = '收盘 ' + close.toFixed(2) + ' ≤ MA20 ' + ma20.toFixed(2) + ' → **均线空头，下跌途中反弹金叉，按文档正文 0 分**'; notes.push('维度5：收盘在 MA20 下方 → 文档正文「0 分，过滤」；伪代码此处误给 5 分（审计 D5-MA20）'); }
+  }
+  else if (close <= ma5 && close > ma20) { v5 = 5; t5 = '收盘 ≤ MA5 但 > MA20 → 回踩中轨（文档未定义该组合 → 按 5 分插值）'; }
+  else { v5 = 0; t5 = '收盘 ≤ MA5 且 ≤ MA20 → 均线空头排列'; }
+  dims.push({ k: '均线', max: 10, v: v5, txt: t5 }); score += v5;
+
+  /* 维度6 背离校验（满分 5）—— 顶背离已在前面否决，此处只可能是「无顶背离 5 分」 */
+  var v6 = 5, t6 = '无顶背离' + (div.na ? '（摆动点不足，本维按无顶背离处理，不否决）' : (div.bottom ? '，且存在**底背离**（看多加分项）' : ''));
+  dims.push({ k: '背离', max: 5, v: v6, txt: t6 }); score += v6;
+
+  /* ── 可选扩展加分（默认 0：加分会换标尺、让 75/55 门槛漂移 → skill 坑8）───────── */
+  var second = kdjqSecondCross(S, x, klines);
+  var bonus = 0;
+  if (KDJQ_RULE.secondCrossBonus && second) { bonus += KDJQ_RULE.secondCrossBonus; notes.push('二次金叉 +' + KDJQ_RULE.secondCrossBonus + '（文档 §六.3 可选扩展）'); }
+  if (KDJQ_RULE.bottomDivBonus && div.bottom) { bonus += KDJQ_RULE.bottomDivBonus; notes.push('底背离 +' + KDJQ_RULE.bottomDivBonus + '（文档 §六 可选扩展）'); }
+  score += bonus;
+
+  /* ── 分级 ────────────────────────────────────────────────────────── */
+  var grade = (score >= KDJQ_RULE.tierHigh) ? 'high' : ((score >= KDJQ_RULE.tierNormal) ? 'normal' : 'low');
+  if (D > KDJQ_RULE.dTop) notes.push('D>80 已倒扣 30 分（文档维度1 倒扣规则），本结果按无效倾向处理');
+  if (dullCnt >= KDJQ_RULE.dullBars && D <= KDJQ_RULE.dullD) notes.push('近 5 根有 ' + dullCnt + ' 根 D>' + KDJQ_RULE.dullD + '：KDJ 处于钝化边缘，指标权重应下调');
+
+  return { ok: true, fired: true, invalid: false, score: score, dims: dims, grade: grade, notes: notes,
+    dull: (dullCnt >= KDJQ_RULE.dullBars), dullCnt: dullCnt, div: div, second: second, bonus: bonus,
+    K: K, D: D, J: J, Dprev: Dp, dD: dD, xIdx: x, xBars: xBars, xDate: (klines[x] && klines[x].date) || '',
+    close: close, ma5: ma5, ma20: ma20, vr: vr, yang: yang, press: press };
+}
+/* 二次金叉（文档 §六.3）：同一轮回调内，第一次金叉后小幅回撤、不创新低，再次金叉。
+   判据：① x 之前存在另一次金叉 g2，且 g2..x 之间出现过死叉（说明中间回撤过）
+        ② 回撤段最低点 ≥ 第一次金叉附近低点的 99.5%（不创新低） */
+function kdjqSecondCross(S, x, klines) {
+  if (x < 6) return false;
+  var g2 = -1, dead = -1, t;
+  for (t = x - 1; t >= 1; t--) {
+    if (dead < 0 && S.K[t - 1] >= S.D[t - 1] && S.K[t] < S.D[t]) { dead = t; continue; }
+    if (dead >= 0 && S.K[t - 1] <= S.D[t - 1] && S.K[t] > S.D[t]) { g2 = t; break; }
+  }
+  if (g2 < 0 || dead < 0 || dead <= g2) return false;
+  var baseLo = Infinity, pullLo = Infinity, q;
+  for (q = Math.max(0, g2 - 2); q <= g2; q++) if (klines[q].low < baseLo) baseLo = klines[q].low;
+  for (q = g2 + 1; q <= x; q++) if (klines[q].low < pullLo) pullLo = klines[q].low;
+  return (isFinite(baseLo) && isFinite(pullLo) && pullLo >= baseLo * 0.995);
+}
+/* 文案唯一事实源（顶部徽标 .headTop / 卡片 .head / tip）—— 判定逻辑只写一份（坑12） */
+function kdjqInfo(q) {
+  if (!q || !q.ok) return { na: true, headTop: '数据不足', head: 'KDJ 金叉质量：数据不足', tone: '', tip: '日K不足，无法评价' };
+  if (!q.fired) return { na: false, headTop: '无金叉', head: 'KDJ 金叉质量：' + (q.why || '窗口内无金叉'), tone: '', tip: q.why || '窗口内无金叉' };
+  if (q.invalid) return { na: false, headTop: '无效', head: 'KDJ 金叉：无效 —— ' + (q.why || ''), tone: 'down', tip: q.why || '触发硬性黑名单' };
+  var g = q.grade === 'high' ? '高质量' : (q.grade === 'normal' ? '普通' : '低质量');
+  var tone = q.grade === 'high' ? 'up' : (q.grade === 'normal' ? 'warn' : 'down');
+  var next = q.grade === 'high' ? '进入下一环节：支撑压力测算 + 理论盈亏比校验（不达标依旧过滤）'
+    : (q.grade === 'normal' ? '仅入观察池，不建仓；等二次金叉 / 放量突破压力' : '直接过滤，不纳入候选池');
+  return { na: false, headTop: g + ' ' + q.score, head: 'KDJ 金叉质量：' + g + '（' + q.score + ' / 100）→ ' + next,
+    tone: tone, tip: (q.why || '') + '｜' + next };
+}
+/* 顶部徽标（复用 .s4k-buyage 系列样式，零新增 CSS）—— 2026-09-30 起覆盖四态（金叉/死叉/高位/低位） */
+function renderKdjqTop(q) {
+  if (!q) {
+    return '<span class="s4k-buyage" title="KDJ 四态评价未运行或数据不足；本卡只评价状态质量，不发买卖指令">' +
+      '<span class="k">KDJ</span><span class="ba-na">数据不足</span></span>';
+  }
+  var info = kdjFullInfo(q);
+  if (!info) return '';
+  var tip = info.tip + '｜KDJ 四态评价只描述状态质量、不是买卖指令；买卖点只按四指标。不构成投资建议';
+  return '<span class="s4k-buyage" title="' + escapeHtml(tip) + '">' +
+    '<span class="k">KDJ</span>' +
+    (info.na ? '<span class="ba-na">' + escapeHtml(info.headTop) + '</span>'
+      : '<span class="ba-days ' + info.tone + '">' + escapeHtml(info.headTop) + '</span>' +
+        (q.fired && !q.invalid && isFinite(q.D) ? '<span class="ba-src">D ' + q.D.toFixed(0) + '</span>' : '') +
+        (q.fired && !q.invalid && q.xBars > 0 ? '<span class="ba-src">' + q.xBars + '根前</span>' : '')) +
+    '</span>';
+}
+/* 详情卡（挂进 buildResultHTML → 单股 + 自选/涨停池展开详情全覆盖）
+   2026-09-30 起覆盖四态：死叉/高位/低位 → kdjdCardHtml；金叉/数据不足 → 既有金叉路径逐字保留 */
+function kdjqCardHtml(ind, pre) {
+  if (!ind || !ind.klines || !ind.klines.length) return '';
+  var f = pre;
+  if (!f) { try { f = kdjFullJudge(ind.klines, {}); } catch (eKdjq2) { f = null; } }
+  if (!f) return '';
+  if (f.state === 'dead') return kdjdCardHtml(ind, f);
+  if (f.state === 'high' || f.state === 'low' || f.state === 'mid') return kdjdCardHtml(ind, f);
+  var q = f;   /* gold（含无 state 的旧结果）/ na —— 既有金叉路径逐字保留 */
+  var info = kdjqSafeInfo(q);
+  var h = '<div class="card"><div class="card-title">🎯 KDJ 四态评价（金叉 · 死叉 · 高位 · 低位 · 六维量化 · 满分 100 · 参数 9,3,3 · 收盘K线口径）</div>';
+  h += '<div class="stage-desc" style="text-align:left;margin:0 0 6px">' +
+    '<b>分层定位：本卡 = 金叉质量评价层</b>（量价时空=择时风控层 · 四指标=技术形态层 · ATR通道=趋势跟踪层 · 浪型=位置描述层 · 支撑压力=空间结构层）。' +
+    '<b>不改四指标打分、不进钉钉推送、不发买卖指令</b> —— 买卖点仍只按四指标（2026-09-26 定稿）。' +
+    '文档核心定位：<b>KDJ 金叉只是动量初选信号，不是独立买点</b>。</div>';
+  if (!q.ok) { h += '<div class="stage-desc">数据不足：' + escapeHtml(q.why || '') + '（需 ≥' + KDJQ_RULE.minBars + ' 根日K：MA20 起算 + 背离摆动点 + 金叉窗口）。</div></div>'; return h; }
+  h += '<div class="stage-desc" style="text-align:left;margin:0 0 6px"><b>' + escapeHtml(info.head) + '</b></div>';
+  if (!q.fired) {
+    h += '<div class="stage-desc">' + escapeHtml(q.why || '') + '。评价窗口 = 最近 ' + KDJQ_RULE.win + ' 根日K（文档未定义有效期，此处补齐并披露）。' +
+      '当前 KDJ：K ' + (isFinite(q.K) ? q.K.toFixed(1) : '—') + ' / D ' + (isFinite(q.D) ? q.D.toFixed(1) : '—') + ' / J ' + (isFinite(q.J) ? q.J.toFixed(1) : '—') + '。</div>';
+    h += kdjqFold();
+    return h + '</div>';
+  }
+  if (q.invalid) {
+    h += '<div class="down" style="margin-top:4px;font-weight:700;text-align:left">⛔ 触发硬性黑名单 ' + escapeHtml(q.bl || '') + '：' + escapeHtml(q.why || '') + '</div>';
+    h += '<div class="stage-desc" style="text-align:left">金叉日 ' + escapeHtml(q.xDate || '—') + '（' + q.xBars + ' 根前）· K ' + q.K.toFixed(1) +
+      ' / D ' + q.D.toFixed(1) + ' / J ' + q.J.toFixed(1) + '　→ <b>不参与打分，直接排除</b>。</div>';
+    h += kdjqFold();
+    return h + '</div>';
+  }
+  /* 读数头 */
+  h += '<div class="stage-desc" style="text-align:left">金叉日 <b>' + escapeHtml(q.xDate || '—') +     '</b>（' + (q.xBars === 0 ? '最新一根' : q.xBars + ' 根前') + ')' +
+    '　K <b>' + q.K.toFixed(1) + '</b>　D <b>' + q.D.toFixed(1) + '</b>　J <b>' + q.J.toFixed(1) + '</b>　ΔD <b>' + (q.dD >= 0 ? '+' : '') + q.dD.toFixed(2) + '</b>' +
+    (q.vr != null ? '　量比 ' + q.vr.toFixed(2) + '×' : '') + (q.second ? '　<b style="color:#26c281">二次金叉</b>' : '') +
+    (q.dull ? '　<span style="color:#f59e0b">⚠ KDJ 钝化边缘（权重应下调）</span>' : '') + '</div>';
+  /* 六维表（首列短标签：.rules 首列是 nowrap，长文本必须放第二列 —— 坑16 #4） */
+  h += '<table class="rules" style="margin-top:6px"><tr><th>维度</th><th>读数与判据</th><th>得分</th></tr>';
+  (q.dims || []).forEach(function (d) {
+    h += '<tr><td>' + escapeHtml(d.k) + '</td><td style="text-align:left">' + escapeHtml(d.txt) + '</td>' +
+      '<td class="mono">' + d.v + ' / ' + d.max + '</td></tr>';
+  });
+  h += '</table>';
+  var sumTxt = '六维合计 <b>' + q.score + '</b> / 100' + (q.bonus ? '（含可选扩展加分 +' + q.bonus + '）' : '');
+  var cls = q.grade === 'high' ? '#26c281' : (q.grade === 'normal' ? '#f59e0b' : '#f0453a');
+  h += '<div class="stage-desc" style="margin-top:6px;text-align:left">' + sumTxt +
+    '　→ <b style="color:' + cls + '">' + (q.grade === 'high' ? '高质量金叉' : (q.grade === 'normal' ? '普通金叉' : '垃圾低质量金叉')) + '</b>　' +
+    '<span style="color:var(--dim)">阈值：≥' + KDJQ_RULE.tierHigh + ' 高质量 / ' + KDJQ_RULE.tierNormal + '~' + (KDJQ_RULE.tierHigh - 1) + ' 普通（仅观察池）/ <' + KDJQ_RULE.tierNormal + ' 过滤</span></div>';
+  if (q.grade === 'high') h += '<div class="stage-desc" style="text-align:left;color:#f59e0b">⚠ 高质量 ≠ 买点：仍需过【大盘情绪周期校验 + 支撑压力测算 + 理论盈亏比阈值过滤】三关，全部达标才触发买点（文档核心定位）。</div>';
+  if (q.div && q.div.bottom) h += '<div class="stage-desc" style="text-align:left;color:#26c281">✓ 检测到底背离（价格创新低、KDJ 低点抬高）—— 文档列为加分项，本实现默认 0 分以免改动 75/55 刻度（可在 KDJQ_RULE.bottomDivBonus 开启）。</div>';
+  if (q.second) h += '<div class="stage-desc" style="text-align:left">· 识别为<b>二次金叉</b>（同一轮回调内首次金叉后回撤不创新低、再次金叉）—— 文档 §六.3 称质量显著更高，默认 +0（可在 KDJQ_RULE.secondCrossBonus 开启 +8）。</div>';
+  h += kdjqFold();
+  return h + '</div>';
+}
+/* 折叠区：口径、修正、缺陷披露（与徽标 tip 同一套说法，避免两处各写一遍） */
+function kdjqSafeInfo(q) { try { return kdjqInfo(q) || { head: '', tone: '' }; } catch (eKInfo) { return { head: '', tone: '' }; } }
+function kdjqFold() {
+  return '<details style="margin-top:8px"><summary style="cursor:pointer;font-size:12px;color:#9fb4ff">📖 口径 · 与原文的五处偏离 · 信息置信度（点开看）</summary><div class="stage-desc">' +
+    '<b>基础定义</b>：金叉 = 前一根 K≤D 且 当根 K&gt;D，<b>只用收盘K线</b>（盘中瞬时刺破、收盘回落一律无效）；' +
+    'RSV=(C−LLV(L,9))/(HHV(H,9)−LLV(L,9))×100，K=2/3·K₋₁+1/3·RSV，D=2/3·D₋₁+1/3·K，J=3K−2D，参数 (9,3,3)，复用页面既有 kdjSeries。<br>' +
+    '<b>★ 与原文伪代码的五处偏离（规则审计 _verify_kdjq_rule.js 实证，28 断言 / 11 条缺陷）</b>：<br>' +
+    '· <b>修1（P0）维度1 档位倒置</b>：文档自述三处称「40~60 趋势中继 = 最优区间、胜率优于低位超跌」，但赋分表给 D∈[20,40] 更高分 → 已按自述改为 (40,60]=28 / [20,40]=22。<br>' +
+    '· <b>修2（P0）顶背离「作废」没落地</b>：原文伪代码顶背离时只少 5 分、其余 95 分照拿（实测 648 组里 186 组仍 ≥55）→ 改为前置否决，与「直接排除」逐字一致。<br>' +
+    '· <b>修3（P1）维度5 MA20</b>：正文「收盘在 MA20 下方 = 0 分」，伪代码 <code>elif close&gt;ma5: +5</code> 不检查 MA20 → 按正文执行。<br>' +
+    '· <b>修4（P1）维度2 发散</b>：正文 20 分档要三条同时满足，伪代码只看 ΔD → 拆成 20（发散已验证）/ 14（不足 2 根未验证）/ 12（发散不成立）。<br>' +
+    '· <b>修5（P2）维度4 收阳线</b>：正文要求「收阳线」，伪代码漏掉 → 补回；放量站上 MA5 但收阴降到 12。<br>' +
+    '· <b>★ 修6（P0，2026-09-30 二轮审计）BL1「死亡金叉」原文条件是死代码</b>：数学事实 —— 金叉当根 ΔD=(K[x]−D[x−1])/3 恒&gt;0（K&gt;D ⟺ K&gt;D₋₁），' +
+    '原文「D 线仍在下行（ΔD&lt;0）」<b>永不触发</b>（首日上线的 68 例单测里 BL1 断言被守卫条件跳过，未被执行）。' +
+    '净斜率口径（D[x]−D[x−3]&lt;0）会把趋势中继回撤金叉全部误杀 → 改用可验证且不过度否决的口径：<b>金叉后 ≤' + KDJQ_RULE.blHoldBars + ' 根内 K 重新跌破 D（短暂上穿·已失败）→ 无效</b>。<br>' +
+    '<b>文档未定义、此处补齐</b>：D&lt;20 → 10 分（原文无档位=静默 0）；金叉评价窗口 = 最近 ' + KDJQ_RULE.win + ' 根；' +
+    '黑名单2「反复钝化」= 近 ' + KDJQ_RULE.dullWin + ' 根里 ≥' + KDJQ_RULE.dullBars + ' 根 D&gt;' + KDJQ_RULE.dullD + '；' +
+    '黑名单4「紧贴压力」= 距压力 &lt;' + KDJQ_RULE.pressNear + '%（压力位取支撑压力卡的 R，<b>拿不到时本条不触发</b>，缺失不当利好也不当利空）；' +
+    '底背离加分与二次金叉 +8 属可选扩展 → <b>默认 0</b>（加分会换标尺、让 75/55 门槛漂移）。<br>' +
+    '<b>已知局限（文档 §六 + 交叉核验）</b>：① KDJ 是震荡指标，<b>单边趋势会钝化失效</b>（主升浪 D 持续&gt;80 时金叉/死叉参考价值大幅下降，应降权改用均线量价）；' +
+    '② 低位 D20~40 属超跌反弹，波动大、胜率低于 40~60 趋势中继，不可重仓；③ 单边下跌无底个股、小盘冷门股不适用；④ 题材情绪行情 KDJ 权重可提高，指数权重蓝筹行情灵敏度下降。<br>' +
+    '<b>信息置信度</b>：基础定义 / 超买超卖分区 / D 线趋势规则 = <b>High</b>（随机指标原始理论 + 券商研报交叉核验）；' +
+    '打分阈值 / 斜率发散 / 量价均线过滤 = <b>Medium</b>（A股量化回测实证，属经验规则，会随市场风格变化）。<br>' +
+    '<b>风险提示</b>：技术指标不能保证盈利，存在风格失效与黑天鹅风险；本卡只评价金叉质量，<b>不构成投资建议，也不发买卖指令</b>。</div></details>';
+}
+/* ───── KDJ 四态评价 · 死叉质量 + 高位/低位状态（2026-09-30 三轮全网核验后设计，规则审计 _verify_kdjd_rule.js 23 断言）─────
+ * 核验结论收敛：① 高位死叉(D>80)=最强止盈离场信号；② 高位钝化+趋势完好时死叉多为假信号（卖飞高危）；
+ * ③ 中位死叉=趋势依赖噪声区；④ 低位死叉=低可信（续跌/欺骗性两说并存，但都同意不作为可靠独立卖出依据）；
+ * ⑤ D 上行中 K 下穿=诱空陷阱（金叉 BL1 镜像）；⑥ 缩量下跌=洗盘嫌疑低可信，放量阴线破 MA5=出货高可信；
+ * ⑦ 底背离=看涨预警与死叉矛盾 → 作废（金叉维度6 顶背离作废镜像）。
+ * 与金叉评价的两处关键不对称：位置维方向反转（死叉随 D 单调升）；趋势完好（收盘>MA20）时死叉裸分最高 90
+ * → trendCap=74 封顶降级为「减仓预警」而非「清仓信号」。 */
+var KDJD_RULE = {
+  volUp: 1.2, volFlat: 0.8,          /* 量价阈值（与 KDJQ_RULE 同源） */
+  jHi: 20, jMid: 10,                 /* 维度3 J 下行空间：>20 满分 / [10,20] 谨慎 / <10 临近超卖 */
+  dHigh: 80, dMid: 60, dLow2: 40, dLow: 20,  /* 维度1 D 位置分档（方向与金叉相反：越高越可信） */
+  highDullD: 70, dullBars: 3, dullWin: 5,    /* BD2 高位钝化：与金叉 BL2 完全同参 */
+  trendCap: 74,                      /* ★ 收盘>MA20（趋势完好）→ 总分封顶 74：多源一致「趋势未破死叉多为洗盘假信号」 */
+  blHoldBars: 2,                     /* BD1 口径（BL1 镜像）：死叉后 ≤2 根内 K 重新站回 D 上方 = 假死叉/洗盘 */
+  win: 5, flatEps: 0.05, maFlatPct: 0.3,     /* 与金叉评价同参 */
+  minBars: 30, tierHigh: 75, tierNormal: 55  /* 分级刻度与金叉评价同构 */
+};
+/* 死叉质量评价：最近一次死叉发生在 win 根内才评价。返回结构与 kdjqJudge 镜像（state='dead'）。 */
+function kdjdJudge(klines, opts) {
+  var S = kdjSeries(klines), n = S.n;
+  if (!klines || n < KDJD_RULE.minBars) {
+    return { ok: false, fired: false, state: 'dead', invalid: false, score: 0, dims: [], grade: 'na', notes: [], why: '日K不足 ' + KDJD_RULE.minBars + ' 根' };
+  }
+  var i = n - 1, t, x = -1;
+  for (t = i; t >= Math.max(1, i - KDJD_RULE.win); t--) {
+    if (S.K[t - 1] >= S.D[t - 1] && S.K[t] < S.D[t]) { x = t; break; }
+  }
+  var xBars = (x >= 0) ? (i - x) : -1;
+  if (x < 0) {
+    return { ok: true, fired: false, state: 'dead', invalid: false, score: 0, dims: [], grade: 'none', notes: [],
+      K: S.K[i], D: S.D[i], J: S.J[i], xIdx: -1, xBars: -1, why: '近 ' + KDJD_RULE.win + ' 根内无死叉' };
+  }
+  var notes = [], dims = [];
+  var D = S.D[x], Dp = S.D[x - 1], K = S.K[x], J = S.J[x], dD = D - Dp;
+  var close = klines[x].close, open = klines[x].open;
+  var ma5 = kdjqMA(klines, x, 5), ma20 = kdjqMA(klines, x, 20);
+  var vol = (klines[x].volume != null) ? klines[x].volume : klines[x].vol;
+  var vma5 = kdjqVolMa(klines, x, 5);
+  var vr = (vma5 && vma5 > 0 && isFinite(vol)) ? vol / vma5 : null;
+  var yin = (isFinite(open) && isFinite(close)) ? close < open : null;
+
+  /* ── 黑名单（镜像金叉三条，任意一条 → 不作为卖出依据）────────────── */
+  /* BD1 假死叉/诱空（BL1 镜像，「K 短暂下穿 D」的可验证口径）：死叉后 ≤blHoldBars 根内
+     K 重新站回 D 上方 = 站不住的交叉 = 洗盘/诱空。数学事实：死叉当根 ΔD 恒<0（K<D ⟺ K<D₋₁），
+     「ΔD>0」式原文条件永不触发；净斜率口径会把趋势回踩死叉全部误杀 → 只用「交叉是否站得住」。 */
+  var blFail = -1;
+  if (x + 1 <= i && S.K[x + 1] > S.D[x + 1]) blFail = 1;
+  else if (x + 2 <= i && S.K[x + 1] <= S.D[x + 1] && S.K[x + 2] > S.D[x + 2]) blFail = 2;
+  if (blFail > 0) {
+    return { ok: true, fired: true, state: 'dead', invalid: true, bl: 'BD1', score: 0, dims: [], grade: 'invalid', notes: [],
+      K: K, D: D, J: J, Dprev: Dp, xIdx: x, xBars: xBars, xDate: klines[x].date || '',
+      why: '假死叉（诱空陷阱）：死叉后 ' + blFail + ' 根内 K 重新站回 D 上方（短暂下穿·已失败的空头交叉），属洗盘概率大，不作为卖出依据' };
+  }
+  /* BD2 高位钝化 + 趋势完好：强势主升中的死叉多为假信号（多源一致「见死叉勿卖，卖飞高危」） */
+  var dullHi = 0;
+  for (t = Math.max(0, x - KDJD_RULE.dullWin + 1); t <= x; t++) { if (S.D[t] > KDJD_RULE.highDullD) dullHi++; }
+  if (D > KDJD_RULE.highDullD && dullHi >= KDJD_RULE.dullBars && ma20 != null && close > ma20) {
+    return { ok: true, fired: true, state: 'dead', invalid: true, bl: 'BD2', score: 0, dims: [], grade: 'invalid', notes: [], dull: true,
+      K: K, D: D, J: J, Dprev: Dp, xIdx: x, xBars: xBars, xDate: klines[x].date || '',
+      why: '高位钝化中的死叉：D=' + D.toFixed(1) + '>70 且近 ' + KDJD_RULE.dullWin + ' 根有 ' + dullHi + ' 根 D>70，且收盘仍站在 MA20 ' +
+        ma20.toFixed(2) + ' 上方（趋势完好）→ 强势主升中多为洗盘假信号，不作为卖出依据' };
+  }
+  /* BD3 底背离：价格创新低但 KDJ 低点抬高 = 看涨预警，与死叉方向矛盾 → 作废（金叉维度6 顶背离作废镜像） */
+  var div = kdjqDivergence(klines, S, i);
+  if (div.bottom) {
+    return { ok: true, fired: true, state: 'dead', invalid: true, bl: 'BD3', score: 0, dims: [], grade: 'invalid', notes: [], div: div,
+      K: K, D: D, J: J, Dprev: Dp, xIdx: x, xBars: xBars, xDate: klines[x].date || '',
+      why: '底背离矛盾：价格创新低但 KDJ 低点抬高（看涨预警）→ 与死叉方向矛盾，该死叉作废（审计查4/查6）' };
+  }
+  if (xBars === 0) notes.push('死叉发生在最新一根K线；盘中价会变，收盘后请复核（本体系只认收盘K线）');
+
+  /* ── 六维打分（满分 100；与金叉评价同构但方向反转）───────────────── */
+  var score = 0;
+  /* 维度1 位置（满分 30）：死叉可信度随 D 单调升（高位死叉最强 —— 审计查3 单调性实证） */
+  var v1 = 0, t1 = '';
+  if (D > KDJD_RULE.dHigh) { v1 = 30; t1 = 'D=' + D.toFixed(1) + ' >80 高位死叉 → 多源一致「最强止盈离场信号」'; }
+  else if (D > KDJD_RULE.dMid) { v1 = 22; t1 = 'D=' + D.toFixed(1) + ' ∈(60,80] 次高位死叉，预警意义强'; }
+  else if (D > KDJD_RULE.dLow2) { v1 = 10; t1 = 'D=' + D.toFixed(1) + ' ∈(40,60] 中位死叉 → 趋势依赖噪声区（牛市中多为假摔）'; }
+  else if (D >= KDJD_RULE.dLow) { v1 = 5; t1 = 'D=' + D.toFixed(1) + ' ∈[20,40) 低位死叉，低可信'; }
+  else { v1 = 0; t1 = 'D=' + D.toFixed(1) + ' <20 深度超卖区死叉 → 杀跌不可持续（续跌/欺骗性两说并存，均不作为可靠卖出依据）'; notes.push('维度1：D<20 低位死叉 —— 网格穷举证明该档裸分最大 70<75，结构性不可能判「高可信离场」（防杀在最低点）'); }
+  dims.push({ k: '位置', max: 30, v: v1, txt: t1 }); score += v1;
+
+  /* 维度2 斜率与发散（满分 20）：D 向下 + 死叉后 K-D 负向连续扩大 = 20（镜像金叉维度2） */
+  var v2 = 0, t2 = '';
+  if (Math.abs(dD) <= KDJD_RULE.flatEps) {
+    v2 = 10; t2 = 'D 走平（ΔD ' + dD.toFixed(2) + '），开口未打开，动量偏弱';
+  } else {
+    var avail = (x + 2 <= i);
+    if (!avail) { v2 = 14; t2 = 'D 向下（ΔD ' + dD.toFixed(2) + '）但死叉后不足 2 根 → 发散未验证，按 14/20 计'; notes.push('维度2：死叉后不足 2 根，K-D 负向发散与 J 同步下行**未验证**'); }
+    else {
+      var a0 = S.K[x] - S.D[x], a1 = S.K[x + 1] - S.D[x + 1], a2 = S.K[x + 2] - S.D[x + 2];
+      if ((a1 - a0) < 0 && (a2 - a1) < 0) { v2 = 20; t2 = 'D 向下 + 死叉后连续 2 根 K-D 差值负向扩大（空头发散确认）'; }
+      else { v2 = 12; t2 = 'D 向下但 K-D 差值未连续扩大（开口收窄/走平），空头动量不足'; }
+    }
+  }
+  dims.push({ k: '发散', max: 20, v: v2, txt: t2 }); score += v2;
+
+  /* 维度3 J 下行空间（满分 15） */
+  var v3 = 0, t3 = '';
+  if (J > KDJD_RULE.jHi) { v3 = 15; t3 = 'J=' + J.toFixed(1) + ' >20，保留充足下行空间'; }
+  else if (J >= KDJD_RULE.jMid) { v3 = 8; t3 = 'J=' + J.toFixed(1) + ' ∈[10,20]，临近超卖，下行空间有限'; }
+  else { v3 = 0; t3 = 'J=' + J.toFixed(1) + ' <10 临近严重超卖，杀跌不可持续（警惕见底反抽）'; }
+  dims.push({ k: 'J空间', max: 15, v: v3, txt: t3 }); score += v3;
+
+  /* 维度4 量价（满分 20）：放量阴线跌破 MA5 = 出货高可信；缩量下跌 = 洗盘嫌疑低可信 */
+  var v4 = 0, t4 = '';
+  var vrTxt = (vr == null) ? '量比不可用' : '量比 ' + vr.toFixed(2) + '×';
+  if (vr == null) { v4 = 0; t4 = '成交量数据缺失，本维不计分（缺失不当 0 以外的推断）'; notes.push('维度4：成交量或 5 日均量缺失 → 按 0 计并披露'); }
+  else if (vr >= KDJD_RULE.volUp && yin === true && ma5 != null && close < ma5) { v4 = 20; t4 = vrTxt + ' ≥1.2 且收阴线且跌破 MA5 → 放量真跌（主力出货信号，多源一致）'; }
+  else if (vr >= KDJD_RULE.volUp && yin === true) { v4 = 12; t4 = vrTxt + ' ≥1.2 且收阴线，但收盘未破 MA5 → 放量下跌但趋势内支撑未失'; }
+  else if (vr >= KDJD_RULE.volUp) { v4 = 10; t4 = vrTxt + ' ≥1.2 但收阳线（高开回落/长下影）→ 放量假摔嫌疑，按 10 分插值'; }
+  else if (vr >= KDJD_RULE.volFlat) { v4 = 10; t4 = vrTxt + ' ∈[0.8,1.2) 平量死叉，中性观察'; }
+  else { v4 = 5; t4 = vrTxt + ' <0.8 缩量下跌 → 抛压轻/洗盘嫌疑（多源一致「缩量下跌主力未出逃」），低可信'; }
+  dims.push({ k: '量价', max: 20, v: v4, txt: t4 }); score += v4;
+
+  /* 维度5 均线环境（满分 10）：方向与金叉相反 —— 压在 MA20 下 = 下跌中继确认；趋势完好 = 0 分 */
+  var v5 = 0, t5 = '';
+  if (ma5 == null || ma20 == null) { v5 = 0; t5 = 'MA5/MA20 数据不足，本维不计分'; notes.push('维度5：MA5/MA20 不足 20 根日K → 按 0 计并披露'); }
+  else if (close < ma5 && close < ma20) { v5 = 10; t5 = '收盘 ' + close.toFixed(2) + ' < MA5 ' + ma5.toFixed(2) + ' 且 < MA20 ' + ma20.toFixed(2) + ' → 均线空头，下跌中继确认'; }
+  else if (close < ma5) { v5 = 0; t5 = '收盘 < MA5 但 ≥ MA20 → 仅回踩 MA5，趋势未破（趋势内死叉多为洗盘假信号）'; }
+  else if (close < ma20) { v5 = 5; t5 = '收盘 ≥ MA5 但 < MA20 → 反抽后仍压 MA20 下方，中继概率大'; }
+  else { v5 = 0; t5 = '收盘 ≥ MA5 且 ≥ MA20 → 趋势完好（趋势内死叉多为假信号）'; }
+  dims.push({ k: '均线', max: 10, v: v5, txt: t5 }); score += v5;
+
+  /* 维度6 背离（满分 5）：底背离已在 BD3 否决；顶背离加持死叉（仍是 5 分，只加标注） */
+  var v6 = 5, t6 = '无底背离' + (div.na ? '（摆动点不足，本维按无底背离处理，不否决）' : (div.top ? '，且存在**顶背离**（看跌预警，与死叉同向加持）' : ''));
+  dims.push({ k: '背离', max: 5, v: v6, txt: t6 }); score += v6;
+
+  /* ── 趋势完好封顶（审计查4/查5 实证：不封顶裸分最高 90 会误判「高可信」）── */
+  var trendOk = (ma20 != null && close > ma20);
+  var capped = false;
+  if (trendOk && score > KDJD_RULE.trendCap) {
+    notes.push('★ 趋势完好封顶：收盘 > MA20 ' + ma20.toFixed(2) + '（趋势未破），裸分 ' + score + ' 封顶至 ' + KDJD_RULE.trendCap +
+      ' → 降级为「减仓预警」而非「清仓信号」（多源一致：趋势未破时死叉多为洗盘假信号，执行仍看均线破位）');
+    score = KDJD_RULE.trendCap; capped = true;
+  }
+
+  var grade = (score >= KDJD_RULE.tierHigh) ? 'high' : ((score >= KDJD_RULE.tierNormal) ? 'normal' : 'low');
+  return { ok: true, fired: true, state: 'dead', invalid: false, score: score, dims: dims, grade: grade, notes: notes,
+    dull: (dullHi >= KDJD_RULE.dullBars), dullHi: dullHi, div: div, capped: capped, trendOk: trendOk,
+    K: K, D: D, J: J, Dprev: Dp, dD: dD, xIdx: x, xBars: xBars, xDate: (klines[x] && klines[x].date) || '',
+    close: close, ma5: ma5, ma20: ma20, vr: vr, yin: yin, press: (opts && opts.press != null) ? opts.press : null };
+}
+/* 无交叉时的状态评价：高位（D>70）出「追高风险分」、低位（D<20）出「超卖关注分」，各四项 40/20/20/20=100；
+   中性（20~70）只描述不打分。这是本实现的设计口径（无交叉 → 无交叉信号可评，只评状态本身），已在折叠区披露。 */
+function kdjZoneJudge(klines, opts) {
+  var S = kdjSeries(klines), n = S.n;
+  if (!klines || n < 30) return { ok: false, fired: false, state: 'na', score: 0, dims: [], grade: 'na', notes: [], why: '日K不足 30 根' };
+  var i = n - 1, D = S.D[i], K = S.K[i], J = S.J[i];
+  var vol = (klines[i].volume != null) ? klines[i].volume : klines[i].vol;
+  var vma5 = kdjqVolMa(klines, i, 5);
+  var vr = (vma5 && vma5 > 0 && isFinite(vol)) ? vol / vma5 : null;
+  var t, dullN = 0;
+  if (D > KDJD_RULE.highDullD) {
+    for (t = Math.max(0, i - KDJD_RULE.dullWin + 1); t <= i; t++) { if (S.D[t] > KDJD_RULE.highDullD) dullN++; }
+    var zD, zdD;
+    if (D > 90) { zD = 40; zdD = 'D=' + D.toFixed(1) + ' >90 严重超买'; }
+    else if (D > 80) { zD = 32; zdD = 'D=' + D.toFixed(1) + ' ∈(80,90] 超买区'; }
+    else { zD = 24; zdD = 'D=' + D.toFixed(1) + ' ∈(70,80] 高位区'; }
+    var zJ, zdJ;
+    if (J > 100) { zJ = 20; zdJ = 'J=' + J.toFixed(1) + ' >100 严重超买钝化'; }
+    else if (J > 80) { zJ = 12; zdJ = 'J=' + J.toFixed(1) + ' ∈(80,100] 超买'; }
+    else { zJ = 4; zdJ = 'J=' + J.toFixed(1) + ' ≤80 未极端'; }
+    var zDull, zdDull;
+    if (dullN >= KDJD_RULE.dullBars) { zDull = 20; zdDull = '近 ' + KDJD_RULE.dullWin + ' 根有 ' + dullN + ' 根 D>70 → 高位反复钝化（趋势强劲但随时反转）'; }
+    else if (dullN >= 1) { zDull = 10; zdDull = '近 ' + KDJD_RULE.dullWin + ' 根有 ' + dullN + ' 根 D>70 → 钝化边缘'; }
+    else { zDull = 4; zdDull = '近 ' + KDJD_RULE.dullWin + ' 根无 D>70 → 未钝化'; }
+    var zV, zdV;
+    if (vr == null) { zV = 0; zdV = '量比不可用，本项不计分'; }
+    else if (vr < KDJD_RULE.volFlat) { zV = 20; zdV = '量比 ' + vr.toFixed(2) + '× <0.8 缩量推升 → 量价背离，追高最危险'; }
+    else if (vr < KDJD_RULE.volUp) { zV = 12; zdV = '量比 ' + vr.toFixed(2) + '× 平量推升'; }
+    else { zV = 8; zdV = '量比 ' + vr.toFixed(2) + '× ≥1.2 放量上攻 → 钝化属强势特征（相对最不危险）'; }
+    var zs = zD + zJ + zDull + zV;
+    var zg = (zs >= 75) ? 'danger' : ((zs >= 55) ? 'warn' : 'watch');
+    return { ok: true, fired: false, state: 'high', score: zs, dims: [
+      { k: '位置', max: 40, v: zD, txt: zdD }, { k: 'J极值', max: 20, v: zJ, txt: zdJ },
+      { k: '钝化', max: 20, v: zDull, txt: zdDull }, { k: '量价', max: 20, v: zV, txt: zdV }],
+      grade: zg, dull: (dullN >= KDJD_RULE.dullBars), dullN: dullN,
+      K: K, D: D, J: J, vr: vr, notes: [], why: '窗口内无交叉且 KDJ 处于高位区（D>70）' };
+  }
+  if (D < 20) {
+    for (t = Math.max(0, i - KDJD_RULE.dullWin + 1); t <= i; t++) { if (S.D[t] < 20) dullN++; }
+    var lD, ldD;
+    if (D < 10) { lD = 40; ldD = 'D=' + D.toFixed(1) + ' <10 深度超卖'; }
+    else { lD = 32; ldD = 'D=' + D.toFixed(1) + ' ∈[10,20) 超卖区'; }
+    var lJ, ldJ;
+    if (J < 0) { lJ = 20; ldJ = 'J=' + J.toFixed(1) + ' <0 严重超卖'; }
+    else if (J < 10) { lJ = 12; ldJ = 'J=' + J.toFixed(1) + ' ∈[0,10) 临近超卖'; }
+    else { lJ = 4; ldJ = 'J=' + J.toFixed(1) + ' ≥10 未极端'; }
+    var lDull, ldDull;
+    if (dullN >= KDJD_RULE.dullBars) { lDull = 20; ldDull = '近 ' + KDJD_RULE.dullWin + ' 根有 ' + dullN + ' 根 D<20 → 低位反复钝化（反弹需等钝化解除，勿急抄底）'; }
+    else if (dullN >= 1) { lDull = 10; ldDull = '近 ' + KDJD_RULE.dullWin + ' 根有 ' + dullN + ' 根 D<20 → 钝化边缘'; }
+    else { lDull = 4; ldDull = '近 ' + KDJD_RULE.dullWin + ' 根无 D<20 → 未钝化'; }
+    var lV, ldV;
+    if (vr == null) { lV = 0; ldV = '量比不可用，本项不计分'; }
+    else if (vr < KDJD_RULE.volFlat) { lV = 20; ldV = '量比 ' + vr.toFixed(2) + '× <0.8 缩量企稳 → 恐慌衰竭，关注金叉酝酿'; }
+    else if (vr < KDJD_RULE.volUp) { lV = 12; ldV = '量比 ' + vr.toFixed(2) + '× 平量'; }
+    else { lV = 8; ldV = '量比 ' + vr.toFixed(2) + '× ≥1.2 放量下跌 → 恐慌未止（相对最低关注）'; }
+    var ls = lD + lJ + lDull + lV;
+    var lg = (ls >= 75) ? 'deep' : ((ls >= 55) ? 'oversold' : 'mild');
+    return { ok: true, fired: false, state: 'low', score: ls, dims: [
+      { k: '位置', max: 40, v: lD, txt: ldD }, { k: 'J极值', max: 20, v: lJ, txt: ldJ },
+      { k: '钝化', max: 20, v: lDull, txt: ldDull }, { k: '量价', max: 20, v: lV, txt: ldV }],
+      grade: lg, dull: (dullN >= KDJD_RULE.dullBars), dullN: dullN,
+      K: K, D: D, J: J, vr: vr, notes: [], why: '窗口内无交叉且 KDJ 处于低位区（D<20）' };
+  }
+  return { ok: true, fired: false, state: 'mid', score: 0, dims: [], grade: 'none', notes: [],
+    K: K, D: D, J: J, vr: vr, why: 'KDJ 中性区（D=' + D.toFixed(1) + ' ∈[20,70]），窗口内无交叉，无评价信号' };
+}
+/* 四态编排：谁的交叉更近评谁（金叉后 ≤2 根即死叉 = BL1 已失败金叉 → 当前状态是死叉，评死叉）；
+   窗口内无任何交叉 → 高位/低位/中性状态评价 */
+function kdjFullJudge(klines, opts) {
+  var g = null, d = null;
+  try { g = kdjqJudge(klines, opts); } catch (eKfG) { g = null; }
+  if (g && !g.ok) { g.state = 'na'; return g; }   /* 日K不足 → 直接透传 */
+  try { d = kdjdJudge(klines, opts); } catch (eKfD) { d = null; }
+  var gx = (g && g.ok && g.fired) ? g.xIdx : -1;
+  var dx = (d && d.ok && d.fired) ? d.xIdx : -1;
+  if (gx >= 0 && gx >= dx) { g.state = 'gold'; return g; }
+  if (dx >= 0) { d.state = 'dead'; d.goldWhy = (g && g.why) || ''; return d; }
+  var z = null;
+  try { z = kdjZoneJudge(klines, opts); } catch (eKfZ) { z = null; }
+  if (z && z.ok) { z.goldWhy = (g && g.why) || ''; return z; }
+  if (g) { g.state = 'mid'; return g; }           /* 兜底：zone 也失败时用金叉引擎的「无金叉」结论 */
+  return { ok: false, fired: false, state: 'na', score: 0, dims: [], grade: 'na', notes: [], why: 'KDJ 评价引擎异常' };
+}
+/* 四态文案唯一事实源：金叉沿用 kdjqInfo（无 state 字段的旧金叉结果也走此分支，向后兼容）；死叉/状态在此 */
+function kdjFullInfo(f) {
+  if (!f || !f.ok) return { na: true, headTop: '数据不足', head: 'KDJ 四态评价：数据不足', tone: '', tip: '日K不足，无法评价' };
+  if (!f.state || f.state === 'gold') return kdjqInfo(f);
+  if (f.state === 'dead') {
+    if (f.invalid) {
+      var blName = (f.bl === 'BD1') ? '诱空陷阱' : ((f.bl === 'BD2') ? '高位钝化假死叉' : '底背离矛盾');
+      return { na: false, headTop: '假死叉', head: 'KDJ 死叉：' + blName + ' —— ' + (f.why || ''), tone: 'up', tip: (f.why || '') + '｜不作为卖出依据' };
+    }
+    var g2 = (f.grade === 'high') ? '死叉·强' : ((f.grade === 'normal') ? '死叉·中' : '死叉·弱');
+    var next2 = (f.grade === 'high') ? '离场预警强（评价层；执行仍按四指标 + 风控纪律）'
+      : ((f.grade === 'normal') ? '死叉可信度一般，减仓观察（趋势未破时更偏洗盘嫌疑）'
+      : '死叉低可信，不作为卖出依据（低位杀跌易卖在最低点）');
+    return { na: false, headTop: g2 + ' ' + f.score, head: 'KDJ 死叉质量：' + g2 + '（' + f.score + ' / 100）→ ' + next2,
+      tone: (f.grade === 'high') ? 'down' : ((f.grade === 'normal') ? 'warn' : 'up'), tip: next2 };
+  }
+  if (f.state === 'high') {
+    var hg = (f.grade === 'danger') ? '高位高危' : ((f.grade === 'warn') ? '高位偏高' : '高位观察');
+    return { na: false, headTop: hg + ' ' + f.score, head: 'KDJ 高位状态：' + hg + '（追高风险 ' + f.score + ' / 100）—— 超买区不追高，警惕高位死叉；高位钝化期指标失效，以均线量价为主',
+      tone: (f.grade === 'danger') ? 'down' : 'warn', tip: '超买区评价：不追高、不逆势；钝化期死叉多为假信号' };
+  }
+  if (f.state === 'low') {
+    var lg2 = (f.grade === 'deep') ? '低位深超' : ((f.grade === 'oversold') ? '低位超卖' : '低位观察');
+    return { na: false, headTop: lg2 + ' ' + f.score, head: 'KDJ 低位状态：' + lg2 + '（超卖关注 ' + f.score + ' / 100）—— 超卖区不割肉、不急抄底，等金叉+量价确认',
+      tone: (f.grade === 'deep') ? 'warn' : '', tip: '超卖区评价：低位钝化期金叉多为假反弹，等钝化解除' };
+  }
+  return { na: false, headTop: '中性观望', head: 'KDJ 中性区（D=' + (isFinite(f.D) ? f.D.toFixed(1) : '—') + '）：窗口内无交叉，震荡徘徊无评价信号', tone: '', tip: 'KDJ 中性区信号易反复，观望' };
+}
+/* 死叉/状态评价的详情卡内层 */
+function kdjdCardHtml(ind, f) {
+  var info = kdjFullInfo(f);
+  var h = '<div class="card"><div class="card-title">🎯 KDJ 四态评价（金叉 · 死叉 · 高位 · 低位 · 参数 9,3,3 · 收盘K线口径）</div>';
+  h += '<div class="stage-desc" style="text-align:left;margin:0 0 6px">' +
+    '<b>分层定位：本卡 = KDJ 状态质量评价层</b>（量价时空=择时风控层 · 四指标=技术形态层 · ATR通道=趋势跟踪层 · 浪型=位置描述层 · 支撑压力=空间结构层）。' +
+    '<b>不改四指标打分、不进钉钉推送、不发买卖指令</b> —— 买卖点仍只按四指标（2026-09-26 定稿）。</div>';
+  h += '<div class="stage-desc" style="text-align:left;margin:0 0 6px"><b>' + escapeHtml(info.head) + '</b></div>';
+  if (f.invalid) {
+    h += '<div class="up" style="margin-top:4px;font-weight:700;text-align:left">⛔ 触发黑名单 ' + escapeHtml(f.bl || '') + '：' + escapeHtml(f.why || '') + '</div>';
+    h += '<div class="stage-desc" style="text-align:left">死叉日 ' + escapeHtml(f.xDate || '—') + '（' + f.xBars + ' 根前）· K ' + f.K.toFixed(1) +
+      ' / D ' + f.D.toFixed(1) + ' / J ' + f.J.toFixed(1) + '　→ <b>不作为卖出依据</b>。</div>';
+    h += kdjdFold();
+    return h + '</div>';
+  }
+  if (f.state === 'dead') {
+    h += '<div class="stage-desc" style="text-align:left">死叉日 <b>' + escapeHtml(f.xDate || '—') + '</b>（' + (f.xBars === 0 ? '最新一根' : f.xBars + ' 根前') + ')' +
+      '　K <b>' + f.K.toFixed(1) + '</b>　D <b>' + f.D.toFixed(1) + '</b>　J <b>' + f.J.toFixed(1) + '</b>　ΔD <b>' + (f.dD >= 0 ? '+' : '') + f.dD.toFixed(2) + '</b>' +
+      (f.vr != null ? '　量比 ' + f.vr.toFixed(2) + '×' : '') + (f.yin === true ? '　收阴' : (f.yin === false ? '　收阳' : '')) +
+      (f.dull ? '　<span style="color:#f59e0b">⚠ 近期 D 高位反复</span>' : '') + '</div>';
+  } else {
+    h += '<div class="stage-desc" style="text-align:left">当前 KDJ：K <b>' + (isFinite(f.K) ? f.K.toFixed(1) : '—') + '</b>　D <b>' +
+      (isFinite(f.D) ? f.D.toFixed(1) : '—') + '</b>　J <b>' + (isFinite(f.J) ? f.J.toFixed(1) : '—') + '</b>' +
+      (f.vr != null ? '　量比 ' + f.vr.toFixed(2) + '×' : '') + '</div>';
+  }
+  if ((f.dims || []).length) {
+    h += '<table class="rules" style="margin-top:6px"><tr><th>维度</th><th>读数与判据</th><th>得分</th></tr>';
+    f.dims.forEach(function (d) {
+      h += '<tr><td>' + escapeHtml(d.k) + '</td><td style="text-align:left">' + escapeHtml(d.txt) + '</td>' +
+        '<td class="mono">' + d.v + ' / ' + d.max + '</td></tr>';
+    });
+    h += '</table>';
+  }
+  if (f.state === 'dead') {
+    var cls = f.grade === 'high' ? '#f0453a' : (f.grade === 'normal' ? '#f59e0b' : '#26c281');
+    var gTxt = f.grade === 'high' ? '强离场预警' : (f.grade === 'normal' ? '减仓观察' : '低可信·不作为卖出依据');
+    h += '<div class="stage-desc" style="margin-top:6px;text-align:left">六维合计 <b>' + f.score + '</b> / 100' + (f.capped ? '（趋势完好封顶 ' + KDJD_RULE.trendCap + '）' : '') +
+      '　→ <b style="color:' + cls + '">' + gTxt + '</b>　' +
+      '<span style="color:var(--dim)">阈值：≥' + KDJD_RULE.tierHigh + ' 强 / ' + KDJD_RULE.tierNormal + '~' + (KDJD_RULE.tierHigh - 1) + ' 中 / <' + KDJD_RULE.tierNormal + ' 弱</span></div>';
+    if (f.grade === 'high') h += '<div class="stage-desc" style="text-align:left;color:#f59e0b">⚠ 评价层提示：离场执行仍按四指标止盈/清仓档 + 风控纪律，本卡不产生卖出指令。</div>';
+  } else if (f.state === 'high' || f.state === 'low') {
+    var zTxt = (f.state === 'high')
+      ? ((f.grade === 'danger') ? '高危·严禁追高' : (f.grade === 'warn' ? '偏高·谨慎追高' : '观察'))
+      : ((f.grade === 'deep') ? '深度超卖·关注金叉酝酿' : (f.grade === 'oversold' ? '超卖·观察企稳' : '偏低·观望'));
+    h += '<div class="stage-desc" style="margin-top:6px;text-align:left">四项合计 <b>' + f.score + '</b> / 100　→ <b>' + zTxt + '</b>　' +
+      '<span style="color:var(--dim)">阈值：≥75 ' + (f.state === 'high' ? '高危' : '深度超卖') + ' / 55~74 ' + (f.state === 'high' ? '偏高' : '超卖') + ' / <55 观察</span></div>';
+  } else {
+    h += '<div class="stage-desc" style="margin-top:6px;text-align:left">中性区（D ∈[20,70]）：KDJ 信号易反复，本态不评价（审计查2：无交叉则无信号可评）。</div>';
+  }
+  (f.notes || []).forEach(function (nt) { h += '<div class="stage-desc" style="text-align:left;color:var(--dim)">· ' + escapeHtml(nt) + '</div>'; });
+  h += kdjdFold();
+  return h + '</div>';
+}
+/* 死叉/状态评价折叠区：口径、设计出处、置信度（与金叉折叠区同一纪律） */
+function kdjdFold() {
+  return '<details style="margin-top:8px"><summary style="cursor:pointer;font-size:12px;color:#9fb4ff">📖 死叉/高低位评价口径 · 设计出处 · 信息置信度（点开看）</summary><div class="stage-desc">' +
+    '<b>死叉定义</b>：前一根 K≥D 且 当根 K&lt;D，<b>只用收盘K线</b>；参数 (9,3,3)，复用页面既有 kdjSeries。评价窗口 = 最近 ' + KDJD_RULE.win + ' 根。<br>' +
+    '<b>★ 死叉评价是本实现的设计口径（外部文档只覆盖金叉）</b>，依据 = 三轮全网核验（2026-09-30）多源收敛结论：' +
+    '① 高位死叉(D&gt;80)=最强止盈离场信号（多源一致）；② 高位钝化+趋势完好时死叉多为假信号（强势主升「见死叉勿卖，卖飞高危」）；' +
+    '③ 中位死叉(40~60)=趋势依赖噪声区；④ 低位死叉(D&lt;20)=低可信（「续跌信号」与「欺骗性信号」两说并存，均同意不作为可靠独立卖出依据）；' +
+    '⑤ 缩量下跌=洗盘嫌疑低可信、放量阴线破 MA5=出货高可信；⑥ 底背离与死叉方向矛盾 → 作废。<br>' +
+    '<b>★ 与金叉评价的两处刻意不对称</b>：① 位置维方向反转 —— 金叉「中位最优」，死叉「高位最优」且随 D 单调升（审计查3）；' +
+    '② 均线维反向 —— 趋势完好（收盘&gt;MA20）时死叉裸分最高可达 90，但多源一致判其为洗盘嫌疑 → <b>trendCap=' + KDJD_RULE.trendCap + ' 封顶</b>，' +
+    '降级为「减仓预警」而非「清仓信号」（审计查5 实证 ' + 38 + ' 组被该规则压档）。<br>' +
+    '<b>黑名单镜像三条</b>：BD1 假死叉/诱空（死叉后 ≤' + KDJD_RULE.blHoldBars + ' 根内 K 重新站回 D 上方 = 站不住的交叉；' +
+    '数学事实：死叉当根 ΔD 恒&lt;0，「ΔD&gt;0」式条件永不触发，净斜率口径又误杀回踩死叉 → 与金叉修6 同口径）/ ' +
+    'BD2 高位钝化+趋势完好（近 ' + KDJD_RULE.dullWin + ' 根 ≥' + KDJD_RULE.dullBars + ' 根 D&gt;' + KDJD_RULE.highDullD +
+    ' 且收盘&gt;MA20）/ BD3 底背离作废 —— 分别镜像金叉 BL1 / BL2 / 维度6。<br>' +
+    '<b>低位死叉的结构性保护</b>：不设黑名单，但位置维 0 分 + 网格穷举证明裸分最大 70&lt;75 —— 「低可信」由刻度保证，不靠一刀切否决（两类文献观点冲突时，低分+披露更诚实）。<br>' +
+    '<b>无交叉状态评价</b>：高位（D&gt;70）出「追高风险分」、低位（D&lt;20）出「超卖关注分」，各四项 位置40 / J极值20 / 钝化20 / 量价20=100；' +
+    '中性（D∈[20,70]）只描述不打分。状态评分是本实现设计（无交叉则无信号可评，只评状态本身）。<br>' +
+    '<b>信息置信度</b>：高位/低位死叉的强弱排序 = <b>High</b>（多源一致）；具体分档数值（30/22/10/5/0、trendCap=74、状态评分四项）= <b>Medium</b>' +
+    '（本实现基于核验结论的构造，属经验规则，无独立回测标定 —— 后续可用真实行情回放校准）。<br>' +
+    '<b>风险提示</b>：技术指标不能保证盈利；本卡只评价 KDJ 状态质量，<b>不构成投资建议，也不发买卖指令</b>。</div></details>';
+}
+/* ==== KDJQ-END ==== */
+
 /* 渲染：四指标打分报告卡（按文档第 6 步模板；接入 buildResultHTML → 单股 + 自选展开详情全覆盖）。
    pre = 预计算的 s4kTotal 结果（顶部徽标已算过 → 复用，不重复计算）；为 null 时内部现算。 */
 function s4kCardHtml(ind, kj, pre, ctx, ba) {
@@ -12085,6 +12843,16 @@ function inTrading() {
   var m = d.getHours() * 60 + d.getMinutes();
   return (m >= 570 && m <= 690) || (m >= 780 && m <= 900);   // 09:30-11:30 / 13:00-15:00
 }
+/* ★ 2026-09-30（用户要求）：所有推送消息统一带 MA5 斜率**数值** ——
+   口径与页面「MA5斜率」列 / 12 维卡完全同源（ind.ma5SlopePct，5 日均线今日较昨日的百分比变化）。
+   ind 缺失 / 算不出 → 返回 ''（调用方整段省略，不留空尾巴）。 */
+function dingSlopeTxt(ind) {
+  try {
+    var v = ind && ind.ma5SlopePct;
+    if (v == null || isNaN(+v)) return '';
+    return (+v > 0 ? '+' : '') + (+v).toFixed(2) + '%';
+  } catch (e) { return ''; }
+}
 function dingStatus(msg, err) {
   var s = el('dingStatus');
   if (s) { s.textContent = msg; s.style.color = err ? '#ff6b6b' : '#7fd1a0'; }
@@ -12251,6 +13019,8 @@ async function dingPushDailyReport() {
         volRatio: (r.ind.volRatio == null ? null : r.ind.volRatio),
         breakDays: r.ind.breakDays,
         slopeUp: r.ind.ma5Slope > 0,
+        /* ★ 2026-09-30（用户要求）：日报统一带 MA5 斜率**数值**（页面 MA5斜率 列同源 ma5SlopePct） */
+        slopeTxt: dingSlopeTxt(r.ind),
         stateKey: ms.state,
         stateFull: ms.meta.name,
         posText: pInfo.text,
@@ -12388,7 +13158,8 @@ async function dingPushDailyReport() {
       '；**清仓档（<' + S4K_RULE.s4kProfitMin + ' 分或一票否决）' + s4kClear.length + ' 只**' +
       (s4kClear.length ? '（' + s4kClear.map(s4kNm).join('、') + '）' : '') + '。\n';
     s4kVal.slice().sort(function (a, b) { return b.s4k.total - a.s4k.total; }).forEach(function (s) {
-      text += '- ' + s.code + ' ' + s.name + '　**' + s.s4k.total + '分** → ' + s.s4k.action + '（' + s.s4k.pos + '）｜趋势：' + (trendTxt[s.s4k.trend] || s.s4k.trend) + '\n';
+      /* ★ 2026-09-30（用户要求）：删掉仓位括号（S ≤15% / A ≤7%（按板块等级取））——分数与档位保留 */
+      text += '- ' + s.code + ' ' + s.name + '　**' + s.s4k.total + '分** → ' + s.s4k.action + '｜趋势：' + (trendTxt[s.s4k.trend] || s.s4k.trend) + '\n';
     });
     if (s4kNo.length) text += '（' + s4kNo.length + ' 只无法打分：日K不足，见上）\n';
     text += '口径（v3）：与单股/自选详情「🎯 四指标打分」卡同一套 s4kTotal；六档 = ≥' + S4K_RULE.s4kHeavyMin + ' 重仓买入/加仓 / ' +
@@ -12423,14 +13194,15 @@ async function dingPushDailyReport() {
     var cost = posCost[s.code] || null, profit = profitOf(s);
     var adv = s.adv || null;
     var block = '### ' + s.code + ' ' + s.name + (cost ? '（成本 ' + cost + '）' : '') + '\n';
+    /* ★ 2026-09-30（用户要求）：仓位括号（S ≤15% / A ≤7%）退出推送正文；MA5斜率改数值（slopeTxt，缺省回退 up/down） */
     block += '- 现价 ' + posFmt2(s.price) + '（' + chgTxt(s) + '）｜MA5 ' + posFmt2(s.ma5) + '｜偏离 ' + posFmtPct(s.dev) +
-      '｜量比 ' + volTxt(s) + '｜破线连板 ' + s.breakDays + '｜MA5斜率 ' + (s.slopeUp ? 'up' : 'down') + '\n';
+      '｜量比 ' + volTxt(s) + '｜破线连板 ' + s.breakDays + '｜MA5斜率 ' + (s.slopeTxt || (s.slopeUp ? 'up' : 'down')) + '\n';
     block += '- ' + KDJ_TAG_TXT + '：' + kdjDetailLine(s.kdj) + '\n';
     /* ★ 2026-09-25：完整块并入 S4K 打分结论（与「🎯 四指标打分」卡同源）
        ★ 2026-09-26：风控层未放行时追加压制标记（见 dingBuyHoldNote，恒为「⚠️ 不建仓」）
        ★ 2026-09-26（用户定稿）：「买卖点只按四指标」→ 本块已**不再输出「- 建议仓位：…」**，
          所以这一行现在是本块唯一的买卖/仓位结论，不再有"两套并列"的问题。 */
-    block += '- 🎯 四指标打分：' + (s.s4k ? ('**' + s.s4k.total + '分** → ' + s.s4k.action + '（' + s.s4k.pos + '）｜趋势：' + ({ up: '上升', down: '下降', side: '震荡' })[s.s4k.trend] + dingBuyHoldNote(s.s4k, s.stateKey, s.risk)) : '无法打分（日K不足）') + '\n';
+    block += '- 🎯 四指标打分：' + (s.s4k ? ('**' + s.s4k.total + '分** → ' + s.s4k.action + '｜趋势：' + ({ up: '上升', down: '下降', side: '震荡' })[s.s4k.trend] + dingBuyHoldNote(s.s4k, s.stateKey, s.risk)) : '无法打分（日K不足）') + '\n';
     /* ★ 2026-09-26（用户要求）：**每只都带**四指标「距买点」——
        与下方「买点已持续 N 天（含当日）」是两个不同口径的天数，故显式标注来源「四指标」。 */
     if (s.buyAge) block += '- 📍 四指标' + s.buyAge + '\n';
@@ -12463,7 +13235,8 @@ async function dingPushDailyReport() {
     var adv = s.adv || null;
     var line = '- ' + s.code + ' ' + s.name + '　' + posFmt2(s.price) + '（' + chgTxt(s) + '）' +
       '｜MA5 ' + posFmt2(s.ma5) + '｜偏离 ' + posFmtPct(s.dev) + '｜量比 ' + volTxt(s) +
-      '｜破线 ' + s.breakDays + '｜' + (s.slopeUp ? 'up' : 'down') + '｜' + kdjBrief(s.kdj);
+      /* ★ 2026-09-30（用户要求）：斜率段统一数值（slopeTxt，缺省回退 up/down） */
+      '｜破线 ' + s.breakDays + '｜' + (s.slopeTxt || (s.slopeUp ? 'up' : 'down')) + '｜' + kdjBrief(s.kdj);
     if (profit != null) line += '｜浮盈 ' + posFmtProfit(profit);
     /* 一行版也要能对上网页：买点是否成立（命中条件的票另有完整块）
        ★ 2026-09-26（用户定稿）：「买卖点只按四指标」→ 原来的「｜仓位 xxx」按 MA5 口径，
@@ -12712,7 +13485,7 @@ function posStockBlock(x) {
     '｜偏离 ' + posFmtPct(x.dev) +
     '｜量比 ' + posFmt2(x.volRatio) +
     '｜破线连板 ' + (x.breakDays == null ? '—' : x.breakDays) +
-    '｜MA5斜率 ' + (x.slopeUp ? 'up' : 'down') +
+    '｜MA5斜率 ' + (x.slopeTxt || (x.slopeUp ? 'up' : 'down')) +   /* ★ 2026-09-30（用户要求）：统一数值 */
     '｜KDJ ' + (x.kdj ? kdjBrief(x.kdj) : '—');
   /* 2026-09-22：盈亏从「依据行尾部括号」升为独立行（默认推送，显眼可见）；依据行不再重复。 */
   var linePnl = (x.withPnl !== false) ? ('\n' + posPnlLine(x)) : '';
@@ -12765,6 +13538,8 @@ async function buildPosReport(rows, cfg, opt) {
       out.volRatio = (r.ind.volRatio == null ? null : r.ind.volRatio);
       out.breakDays = r.ind.breakDays;
       out.slopeUp = r.ind.ma5Slope > 0;
+      /* ★ 2026-09-30（用户要求）：持仓日报统一带 MA5 斜率数值（与日报/盯盘行同源） */
+      out.slopeTxt = dingSlopeTxt(r.ind);
       out.state = ms.state;
       out.stateName = (ms.meta && ms.meta.name) || '';
       out.reasons = ms.reasons || [];
@@ -13180,6 +13955,8 @@ async function dingScanPositions(silent) {
         out.volRatio = (r.ind.volRatio == null ? null : r.ind.volRatio);
         out.breakDays = r.ind.breakDays;
         out.slopeUp = r.ind.ma5Slope > 0;
+        /* ★ 2026-09-30（用户要求）：持仓盘中也统一带 MA5 斜率数值（与日报/盯盘行同源） */
+        out.slopeTxt = dingSlopeTxt(r.ind);
         out.state = ms.state;
         out.reasons = ms.reasons || [];
         out.kdj = kdjState(r.ind.klines);
@@ -13319,6 +14096,36 @@ async function fetchBoardTopStocks(bk, n, boardName) {
   }).filter(function (s) { return s.code; });
 }
 
+/* ★ 2026-09-30（用户要求）：取某板块**全部**成分股（翻页取全量），并剔除跌停股
+   —— 供「涨停家数前8行业板块」监控范围使用（与 fetchBoardTopStocks 同通道，只是不裁前 N）。
+   跌停判据：现跌幅 ≤ −(板性阈值 − 0.2)（与开盘八法一字板判据同容差：主板 9.8 / 创科 19.8 / 北交所 29.7）。
+   f3 取不到的行（极少）不凭涨跌幅剔除，照常入池（缺数据不当跌停）。 */
+async function fetchBoardAllStocks(bk, boardName) {
+  var fields = 'f12,f13,f14,f2,f3,f6,f8,f10,f20,f21,f62';
+  var r = await emListAll('b:' + bk + '+f:!50', fields, { maxPages: 12, pz: 100, fid: 'f6' });
+  var out = [];
+  (r.list || []).forEach(function (d) {
+    var code = pad6(d.f12);
+    if (!code) return;
+    var chg = (d.f3 == null || isNaN(+d.f3)) ? null : +d.f3;
+    if (chg != null && chg <= -(boardOf(code).zt - 0.2)) return;   /* 跌停（含一字跌停）→ 排除 */
+    /* zt8 来源标记：fetchBoardAllStocks 只服务「涨停家数前8行业板块」（b.all 板块），
+       打上标记后 dingScan 对这些成分股强制启用「四指标买入档」触发（见 zt8 分支注释） */
+    out.push({ code: code, name: d.f14 || code, board: boardName || '', zt8: true });
+  });
+  return out;
+}
+
+/* 涨停池 hybk（东财 4 字截断，如「计算机设」）↔ 行业板块全名（「计算机设备」）匹配：
+   精确 / 归一（剥「行业ⅠⅡⅢ·」）相等 / 短名(≥3字)是长名前缀 —— 与 callTop 榜同一族口径，不双向子串。 */
+function dingZt8NameMatch(poolName, boardName) {
+  var a = callNormName(String(poolName || '').trim()), b = callNormName(String(boardName || '').trim());
+  if (!a || !b) return false;
+  if (a === b) return true;
+  var s = a.length <= b.length ? a : b, l = (s === a) ? b : a;
+  return s.length >= 3 && l.indexOf(s) === 0;
+}
+
 // 三类「板块」范围 → { sec: 板块清单(推送文案用), workBoards: 需监控成分股的板块 }
 async function dingSectorData(scopes) {
   var sec = {}, boards = [], list = null;
@@ -13361,8 +14168,43 @@ async function dingSectorData(scopes) {
       ct.forEach(function (b) { boards.push({ code: b.code, name: b.name }); });
     }
   }
+  /* ★ 2026-09-30（用户要求）：「涨停家数前8行业板块」—— 当日涨停池按行业（hybk）聚合涨停家数，
+     取前 8（映射到行业板块名单，非概念板块），监控其**全部成分股（剔除跌停股）**。
+     数据源与「板块涨停共振」同一通道（东财涨停池 + hybk 聚合），0 额外请求模式；
+     池子取不到 → 如实写 ztTop8Note 说明为什么不产出（不拿上一交易日冒充当日）。 */
+  if (scopes.indexOf('ztTop8') >= 0) {
+    try {
+      var dates8 = (typeof midTradingDates === 'function') ? midTradingDates(1) : [];
+      var d8 = dates8[0] || '';
+      var pool8 = d8 ? cleanPool(await fetchPool('getTopicZTPool', d8, 'fbt:asc')) : [];
+      if (!pool8.length) {
+        sec.ztTop8Note = '不产出 —— 当日涨停池未取到（' + (d8 || '交易日回溯失败') + '），无法统计各行业涨停家数';
+      } else {
+        var by8 = {};
+        pool8.forEach(function (x) { var k = String(x.hybk || '').trim() || '未分类'; by8[k] = (by8[k] || 0) + 1; });
+        var rank8 = Object.keys(by8).map(function (k) { return { name: k, zt: by8[k] }; })
+          .sort(function (a, b) { return b.zt - a.zt || (a.name < b.name ? -1 : (a.name > b.name ? 1 : 0)); });
+        if (!list) { try { list = await getBoards('industry'); } catch (e) { list = ST.boards || []; } }
+        var picked8 = [], used8 = {}, miss8 = 0;
+        for (var ri = 0; ri < rank8.length && picked8.length < 8; ri++) {
+          var r8 = rank8[ri];
+          var b8 = (list || []).filter(function (y) { return !used8[y.code] && dingZt8NameMatch(r8.name, y.name); })[0];
+          if (b8) { used8[b8.code] = 1; picked8.push({ name: b8.name, poolName: r8.name, zt: r8.zt }); boards.push({ code: b8.code, name: b8.name, all: true }); }
+          else miss8++;
+        }
+        sec.ztTop8 = picked8;
+        sec.ztTop8Date = d8;
+        sec.ztTop8Miss = miss8;
+        sec.ztTop8PoolN = pool8.length;
+      }
+    } catch (e8) { sec.ztTop8Note = '不产出 —— 涨停家数统计失败：' + ((e8 && e8.message) || e8); }
+  }
   var seen = {}, workBoards = [];
-  boards.forEach(function (b) { if (b.code && !seen[b.code]) { seen[b.code] = 1; workBoards.push(b); } });
+  boards.forEach(function (b) {
+    if (!b.code) return;
+    if (seen[b.code]) { if (b.all) seen[b.code].all = true; return; }   /* 同板块多来源 → all 标志合并（全成员口径优先保留） */
+    seen[b.code] = b; workBoards.push(b);
+  });
   return { sec: sec, workBoards: workBoards };
 }
 
@@ -13371,7 +14213,8 @@ async function dingBoardTargets(workBoards, perBoard, cap) {
   var buckets = [];
   await mapPool(workBoards, 3, async function (b) {
     var arr = [];
-    try { arr = await fetchBoardTopStocks(b.code, perBoard, b.name); } catch (e) {}
+    /* ★ 2026-09-30：b.all（涨停家数前8行业板块）→ 取**全部成分股**（剔除跌停），不做「涨幅居前 N」裁剪 */
+    try { arr = b.all ? await fetchBoardAllStocks(b.code, b.name) : await fetchBoardTopStocks(b.code, perBoard, b.name); } catch (e) {}
     buckets.push(arr);
   });
   var merged = [], i = 0, more = true;
@@ -13655,6 +14498,13 @@ function composeDingDigest(sec, hits) {
       out.push(' ' + (i + 1) + '. ' + x.name + ' ' + fmtPct(x.chg) + (x.lead ? ' · 领涨 ' + x.lead + ' ' + fmtPct(x.leadChg) : ''));
     });
   }
+  /* ★ 2026-09-30（用户澄清）：「涨停家数前8行业板块」推送的**不是板块名字清单** ——
+     板块清单段整体移除；这个范围推送的是这 8 个板块成分股里**触发四指标买入档**的个股，
+     在下方「✅ 信号提醒」按类型分组出现（每行带所属板块名 + 打分 → 档位）。
+     涨停池取不到时仍如实写一行（与板块涨停共振同纪律：让用户知道"跑了、只是没取到"）。 */
+  if (sec.ztTop8Note) {
+    out.push(''); out.push('🔥 前8行业板块成分股监控：' + sec.ztTop8Note);
+  }
   /* 🚀 板块涨停共振（2026-09-24 新增触发规则）：板块内涨停 ≥3 家 且 至少 1 家 ≥2 连板 → 推该板块。
      没有命中时也**照实写一行**（而不是整节消失）—— 让用户知道"规则跑了、只是今天没命中"，
      否则会误以为功能没生效。 */
@@ -13692,7 +14542,7 @@ function composeDingDigest(sec, hits) {
   }
   if (hits && hits.length) {
     /* ★ 2026-09-25（用户要求）：按「卖出 / 止盈 / 买入」类型分组（危险优先置顶），组内行带完整触发列表 */
-    out.push(''); out.push('✅ 信号提醒（自选股 / 当前板块 / 前5板块成分股 · 按类型分组）：');
+    out.push(''); out.push('✅ 信号提醒（自选股 / 当前板块 / 前5板块成分股 / 前8行业板块成分股 · 按类型分组）：');
     DING_GRP.forEach(function (g) {
       var gh = hits.filter(function (h) { return dingTrigGroup(h.trig).key === g.key; });
       if (!gh.length) return;
@@ -13739,13 +14589,18 @@ function composeDingDigest(sec, hits) {
             否则本行同时出现「风险·买点第6天」（MA5 口径、含当日）与「距买点 6 个交易日」
             （四指标口径、不含当日）两个"6"，会被读成自相矛盾（其实是两把不同的尺子）。 */
       var dtRow = dingTrigForShow(h.trig, true);
+      /* ★ 2026-09-30（用户要求）：① 每行统一带「MA5 斜率」**数值**（页面 MA5斜率 列同源 ma5SlopePct；
+            h.slope 缺省（老 fixture）→ 整段省略，输出与改动前逐字一致）；
+         ② 行尾「打分 N → 动作」**删掉仓位括号**（S ≤15% / A ≤7%（按板块等级取）退出推送正文；
+            四指标卡与页面不动 —— 与「买卖点只按四指标」同思路，分数与档位保留）。 */
       out.push(' ▶ ' + h.name + ' (' + h.code + ')' + (h.board ? ' · ' + h.board : '') +
         (dtRow.list.length ? ' — ' + dtRow.list.join(' + ') : '')
         + (stgTxt ? ' · 阶段：' + stgTxt : '')
         + (h.pow ? ' · 今昨强弱：' + h.pow : '')
         + (h.kdj ? ' · KDJ：' + h.kdj : '')
+        + (h.slope ? ' · MA5斜率 ' + h.slope : '')
         + (h.buyAge ? ' · 四指标' + h.buyAge : '')
-        + (h.s4 ? ' · 打分 ' + h.s4.total + ' → ' + h.s4.action + '（' + h.s4.pos + '）'
+        + (h.s4 ? ' · 打分 ' + h.s4.total + ' → ' + h.s4.action
             + dingBuyHoldNote(h.s4, h.m5, h.risk) : '') +
         (h.risk && h.risk.length ? ' ｜' + riskDingBrief(h.risk) : '') + chaseTxt);
       });
@@ -13830,23 +14685,29 @@ async function dingScan(silent) {
       try { sec.ztSec = await dingZtSectorResonance(); }
       catch (eZ) { sec.ztSec = { date: '', list: [], poolN: 0, bad: (eZ && eZ.message) || String(eZ) }; }
     }
+    /* ★ 2026-09-30：ztTop8 不再进 secPresent —— 板块名字清单已不推送（推的是成分股的四指标买入信号），
+       "前8板块集合变了"本身不构成推送理由；没成分股触发 → 本轮安静。 */
     var secPresent = !!((sec.callTop && sec.callTop.length) || (sec.flowTop && sec.flowTop.length)
-      || (sec.chgTop && sec.chgTop.length) || (sec.ztSec && sec.ztSec.list && sec.ztSec.list.length));
+      || (sec.chgTop && sec.chgTop.length)
+      || (sec.ztSec && sec.ztSec.list && sec.ztSec.list.length));
 
-    // ② 组装监控股票：自选股 / 当前板块 + 各前5板块的涨幅居前成分股
+    // ② 组装监控股票：自选股 / 当前板块 + 各前5板块的涨幅居前成分股 + 涨停家数前8行业板块全部成分股
     var targets = dingWatchTargets(scopes);
     /* ★ 2026-09-25：单独勾四指标（任一档）且未勾任何监控范围 → fallback 到自选股（否则没有打分对象） */
     if (!targets.length && s4kAnyOn) {
       wlGet().forEach(function (x) { targets.push({ code: x.code, name: x.name }); });
     }
+    /* ★ 2026-09-30：勾了「涨停家数前8行业板块」→ 上限放宽（8 板块全成分，240 只封顶；
+        不勾保持 80/90，行为与旧版逐字一致 —— 全成分 × evaluateOne 逐只抓日K，上限是防打爆行情接口的闸门） */
+    var zt8On = scopes.indexOf('ztTop8') >= 0;
     if (sd.workBoards.length) {
-      if (!silent) dingStatus('正在获取前5板块成分股…（' + nowHM() + '）');
-      var boardTargets = await dingBoardTargets(sd.workBoards, 8, 80);
+      if (!silent) dingStatus('正在获取板块成分股…（' + nowHM() + '）');
+      var boardTargets = await dingBoardTargets(sd.workBoards, 8, zt8On ? 240 : 80);
       boardTargets.forEach(function (s) { targets.push(s); });
     }
     var seenT = {}, uniq = [];
     targets.forEach(function (x) { if (x.code && !seenT[x.code]) { seenT[x.code] = 1; uniq.push(x); } });
-    targets = uniq.slice(0, 90);
+    targets = uniq.slice(0, zt8On ? 260 : 90);
 
     // ③ 逐只买点判定
     var hits = [];
@@ -13881,6 +14742,13 @@ async function dingScan(silent) {
            ★ 同日不再用 60/15 那组旧线（与页面六档 62/25 不一致，会出现"卡片说观察仓、推送说买入"）。 */
         var s4kTok = '';
         try { s4kTok = s4kTierTrig(cfg, 'trig', s4k); } catch (eTk) { s4kTok = ''; }
+        /* ★ 2026-09-30（用户澄清）：勾「涨停家数前8行业板块」→ 推送的不是板块名字清单，
+           而是这些板块成分股里**触发四指标买入策略**的个股。因此 zt8 来源的成分股只要
+           s4kTierOf ∈ 买入档（≥62 含 ≥76 重仓，一票否决已由 s4kTierOf 除名）就强制触发，
+           token 与勾选框路径同一份 s4kTierToken（勿另拼文案）。其余范围仍按勾选框走。 */
+        if (x.zt8 && !s4kTok && s4k && s4k.ok) {
+          try { if (s4kTierOf(s4k.total, s4k.veto) === 'buy') s4kTok = s4kTierToken(s4k.total, s4k.veto); } catch (eT8) { s4kTok = ''; }
+        }
         if (s4kTok) trig.push(s4kTok);
         /* ★ 2026-09-26（用户要求）：**每一条推送行都带**「距买点」（四指标口径 · 不含当日）——
            与详情页顶部徽标 / 卡片「📍 买点位置」同一份 s4kBuyAgeInfo（纯函数，复用已抓到的日K与 KDJ，
@@ -13936,6 +14804,8 @@ async function dingScan(silent) {
           } catch (eK) { kdjTxt = ''; }
           hits.push({ code: r.code, name: (r.quote && r.quote.name) || x.name, board: bd,
             ind: r.ind, sr: r.sr, o8: o8, trig: trig, pos: posTxt, pow: powTxt, ref: refPx, px: curPx, kdj: kdjTxt,
+            /* ★ 2026-09-30（用户要求）：每条命中行统一带「MA5 斜率」数值（页面 MA5斜率 列同源） */
+            slope: dingSlopeTxt(r.ind),
             risk: rkF,   /* ★ 2026-09-26：风险旗标（买点钝化 / 冲高回落）→ 命中行带颜色标识 */
             buyAge: buyAgeTxt,   /* ★ 2026-09-26：四指标「距买点」（不含当日）→ 每条命中行都带 */
             /* ★ 2026-09-26：MA5 六状态 —— dingBuyHoldNote 用它判「风控层是否放行新开仓」
@@ -14050,7 +14920,7 @@ function renderDingForm() {
   if (el('dingProxy')) el('dingProxy').value = c.proxy || 'http://localhost:8899/send';
   if (el('dingUseProxy')) el('dingUseProxy').checked = c.useProxy !== false;
   var scopes = Array.isArray(c.scopes) ? c.scopes : dingScopesFromCfg(c);
-  var boxes = { watch: 'scopeWatch', board: 'scopeBoard', callTop: 'scopeCallTop', flowTop: 'scopeFlowTop', chgTop: 'scopeChgTop' };
+  var boxes = { watch: 'scopeWatch', board: 'scopeBoard', callTop: 'scopeCallTop', flowTop: 'scopeFlowTop', chgTop: 'scopeChgTop', ztTop8: 'scopeZtTop8' };
   Object.keys(boxes).forEach(function (k) {
     if (el(boxes[k])) el(boxes[k]).checked = scopes.indexOf(k) >= 0;
   });
@@ -14110,6 +14980,7 @@ function readDingForm() {
   if (el('scopeCallTop') && el('scopeCallTop').checked) scopes.push('callTop');
   if (el('scopeFlowTop') && el('scopeFlowTop').checked) scopes.push('flowTop');
   if (el('scopeChgTop') && el('scopeChgTop').checked) scopes.push('chgTop');
+  if (el('scopeZtTop8') && el('scopeZtTop8').checked) scopes.push('ztTop8');   /* 涨停家数前8行业板块（2026-09-30） */
   var positions = parsePosText(el('dingPosList') ? el('dingPosList').value : '');
   if (positions.length) posSet(positions);          // 输入框有内容就顺手持久化，别让用户白填
   return {
@@ -19583,7 +20454,7 @@ function init() {
   });
 
   // 钉钉提醒
-  renderDingForm(); renderDing(); dingSetupAuto(); dingSetupFixed(); dingPosSetupAuto(); watchAutoSetup();
+  renderDingForm(); renderDing(); dingSetupAuto(); dingSetupFixed(); dingPosSetupAuto(); watchAutoSetup(); boardAutoSetup();
   el('dingSave').addEventListener('click', function () {
     dingSaveCfg(readDingForm());
     dingSetupAuto(); dingSetupFixed(); dingPosSetupAuto();
