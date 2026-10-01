@@ -584,6 +584,9 @@
     vertical-align:1px; white-space:nowrap; }
   .role-leader { background:#ffcc6622; color:#ffcc66; border:1px solid #ffcc6655; }
   .role-mid { background:#5b8cff22; color:#8fb0ff; border:1px solid #5b8cff55; }
+  /* ★ 2026-10-01（用户要求）：股票性格标签徽标 —— 名称格内联小 chip，与 .zt-time/.role-chip 同款暗色风格 */
+  .psn-tag { display:inline-block; font-size:10px; font-weight:700; padding:1px 6px; border-radius:5px; margin-left:5px;
+    vertical-align:1px; white-space:nowrap; cursor:help; }
   .bd-roles { font-size:12px; color:var(--muted); margin-top:8px; line-height:1.9; }
   .bd-roles b { color:var(--text); }
 
@@ -11646,6 +11649,9 @@ function rowCells(s, opt) {
   if (ST.roles && ST.roles.leader && ST.roles.leader.code === s.code) badge += '<span class="role-chip role-leader">龙头</span>';
   if (ST.roles && ST.roles.mids && ST.roles.mids[s.code]) badge += '<span class="role-chip role-mid" title="' + escapeHtml(ST.roles.mids[s.code]) + '">中军</span>';
   }
+  /* ★ 2026-10-01（用户要求）：股票性格标签 —— 是股票自身属性而非板块内角色，选阶段清单也显示（不受 noRoles 限制）；
+     r 待分析/失败时 personaTagHtml 返回空串，绝不渲染空壳 */
+  badge += personaTagHtml(r);
   cells += '<td><span class="caret">' + (openMap[s.code] ? '▼' : '▶') + '</span>' + escapeHtml(s.name) +
     ' <span style="color:var(--dim)">' + s.code + '</span>' + badge + '</td>';
   /* ★ 2026-09-29（用户要求）：行业列，紧跟股票名 */
@@ -11852,6 +11858,97 @@ var __SEC_OF = {};
 function secOfTxt(s, r) {
   var v = (s && s.industry) || (r && r.sec) || __SEC_OF[s && s.code] || '';
   return v ? escapeHtml(v) : '<span style="color:var(--dim)">—</span>';
+}
+/* ================= 股票性格标签（2026-10-01 用户要求）=================
+   「股票性格 × 策略匹配」体系 30 秒判定法的代码化。南微医学（趋势白马→ATR通道最优、
+   四指标少赚6pp）与同宇新材（题材情绪→四指标复利+73.5%、ATR通道几乎不赚）两个回测锚点
+   证明：同一策略在不同性格的票上收益差极大 → 每只股票名称旁标注性格，提示该用哪把尺子。
+   数据源：分析结果对象现成字段，零新增请求 ——
+     · gene.stats.nat12  全历史自然涨停次数（computeGene 引擎已算）
+     · gene.stats.maxStreak 最大连板数（同上）
+     · ind.klines        260 根日K（ATR% 均值 / EMA20 方向现算，O(n) 轻量）
+   诚实原则：周期股（商品驱动）/事件驱动（公告脉冲）需基本面信息，日K判不出 → 不硬猜；
+     涨停基因引擎（computeGene）拿不到时返回 null（不标），绝不用半截数据冒充结论。 */
+var PSN_STYLE = {
+  baima:   { bg: 'rgba(38,194,129,.14)', fg: '#4ddba4', bd: 'rgba(38,194,129,.35)' },  /* 趋势白绿 */
+  qingxu:  { bg: 'rgba(255,138,92,.14)', fg: '#ffa27a', bd: 'rgba(255,138,92,.35)' },  /* 题材暖橙 */
+  yao:     { bg: 'rgba(255,110,180,.14)', fg: '#ff8fc4', bd: 'rgba(255,110,180,.35)' },/* 妖股艳粉 */
+  lanou:   { bg: 'rgba(91,140,255,.14)', fg: '#8fb0ff', bd: 'rgba(91,140,255,.35)' },  /* 蓝筹蓝 */
+  xiangti: { bg: 'rgba(136,146,176,.16)', fg: '#a8b2cc', bd: 'rgba(136,146,176,.35)' },/* 箱体灰 */
+  weak:    { bg: 'rgba(38,194,129,.10)', fg: '#5da583', bd: 'rgba(38,194,129,.25)' },  /* 下行弱绿 */
+  wild:    { bg: 'rgba(255,183,77,.14)', fg: '#ffcc80', bd: 'rgba(255,183,77,.35)' },  /* 乱流琥珀 */
+  new:     { bg: 'rgba(93,103,136,.20)', fg: '#8892b0', bd: 'rgba(93,103,136,.35)' },  /* 次新灰 */
+  st:      { bg: 'rgba(255,82,82,.14)', fg: '#ff8a8a', bd: 'rgba(255,82,82,.35)' }    /* 风险红 */
+};
+/* 性格判定：输入分析结果对象 r（需 r.ok && r.ind.klines；r.gene 缺失时退化用日K自算涨停数） */
+function personaOf(r) {
+  try {
+    if (!r || !r.ok || !r.ind || !r.ind.klines) return null;
+    var ind = r.ind, kl = ind.klines, n = kl.length;
+    var nm = String((r.quote && r.quote.name) || '');
+    if (/ST|退/i.test(nm)) return { key: 'st', label: '风险', tip: 'ST/退市风险：工作台硬排除，不参与任何策略' };
+    if (n < 60) return { key: 'new', label: '次新', tip: '日K不足60根：形态未走完、波动失真，先观望等 60 日再套用常规策略' };
+    var g = (r.gene && r.gene.stats) || null;
+    var ztN = g ? (g.nat12 || 0) : -1;
+    if (ztN < 0) {                                     /* gene 引擎缺位 → 日K自算（板性阈值同 ztLimitOf 口径） */
+      var th = (ind.price != null && kl[n - 1].close != null && String(r.quote && r.quote.code || '').charAt(0) === '3') ? 19.8 : 9.8;
+      ztN = 0;
+      for (var zt = 1; zt < n; zt++) {
+        var pc = kl[zt - 1].close;
+        if (pc > 0 && (kl[zt].close / pc - 1) * 100 >= th) ztN++;
+      }
+    }
+    /* ATR% 均值（近60交易日）：与 atrcCalc 同口径 —— ATR14 = 近14根 TR 简单均值，÷ 当日收盘 ×100 */
+    var atrAvg = null;
+    if (n >= 40) {
+      var trs = [0];
+      for (var tt = 1; tt < n; tt++) trs.push(atrcTR(kl, tt));
+      var as = 0, ac = 0;
+      for (var t2 = Math.max(34, n - 60); t2 < n; t2++) {
+        var a = 0, cc = 0;
+        for (var m = t2 - 13; m <= t2; m++) { a += trs[m]; cc++; }
+        if (kl[t2].close > 0 && cc) { as += a / cc / kl[t2].close * 100; ac++; }
+      }
+      atrAvg = ac ? as / ac : null;
+    }
+    /* EMA20 方向：20 日变化，±0.3% 内视为走平（ATRC_RULE.pullFlatPct 同源阈） */
+    var midChg = null;
+    if (n >= 41) {
+      var ema = atrcEMA(kl.map(function (k) { return k.close; }), 20);
+      var mid = ema[n - 1], midP = ema[n - 21];
+      if (mid > 0 && midP > 0) midChg = (mid / midP - 1) * 100;
+    }
+    var atrTxt = (atrAvg == null) ? '—' : atrAvg.toFixed(1) + '%';
+    /* ① 情绪族优先：自然涨停 ≥2 次 = 有涨停基因（gene 评分口径：nat6≥5 才中等，这里用全历史宽口径） */
+    if (ztN >= 2) {
+      if ((g && g.maxStreak || 0) >= 3)
+        return { key: 'yao', label: '连板妖股', tip: '近一年自然涨停 ' + ztN + ' 次 · 最大连板 ' + (g ? g.maxStreak : '—') + ' 板 → 涨停池梯队策略：断板即走、轻仓试错；勿中线持有、勿越跌越补' };
+      return { key: 'qingxu', label: '题材情绪', tip: '近一年自然涨停 ' + ztN + ' 次（ATR% ' + atrTxt + '）→ 四指标打分：≥62 买 · 2日破MA5/一票否决离场；勿用趋势跟踪（利润回吐实证近九成）' };
+    }
+    if (atrAvg == null) return null;
+    /* ② 无涨停基因 → 按 ATR% 分档 */
+    if (atrAvg < 2)
+      return { key: 'lanou', label: '价值蓝筹', tip: 'ATR% 均值 ' + atrTxt + ' <2%（涨停 ' + ztN + ' 次）→ 长周期 MA60/120 + 股息/网格；工作台全部短线卡在这类票上失真' };
+    if (atrAvg <= 5.5) {
+      if (midChg == null) return null;
+      if (midChg > 0.3)
+        return { key: 'baima', label: '趋势白马', tip: 'ATR% ' + atrTxt + ' · EMA20 向上（20日 +' + midChg.toFixed(1) + '%）→ ATR 通道：回踩中轨买 + 离场线（EMA20−1×ATR）持有，以周计；勿用短线打分（南微医学实证：会被洗、少赚 6pp）' };
+      if (midChg >= -0.3)
+        return { key: 'xiangti', label: '箱体震荡', tip: 'ATR% ' + atrTxt + ' · EMA20 走平（20日 ' + midChg.toFixed(1) + '%）→ 网格高抛低吸或观望；勿追突破（假突破反复止损）' };
+      return { key: 'weak', label: '下行弱势', tip: 'ATR% ' + atrTxt + ' · EMA20 向下（20日 ' + midChg.toFixed(1) + '%）→ 观望：趋势策略不接下跌刀，等中轨走平转上再说' };
+    }
+    return { key: 'wild', label: '高波乱流', tip: 'ATR% 均值 ' + atrTxt + ' >5.5 但无涨停基因 → 波动大且无情绪节奏，轻仓或跳过' };
+  } catch (eP) { return null; }
+}
+/* 名称格徽标（结果对象缺数据 → 空串，绝不渲染空壳）；r.__psn 会话缓存（重绘不重算） */
+function personaTagHtml(r) {
+  try {
+    if (!r || !r.ok) return '';
+    if (!r.__psn) r.__psn = personaOf(r);
+    var p = r.__psn; if (!p) return '';
+    var s = PSN_STYLE[p.key] || PSN_STYLE.xiangti;
+    return '<span class="psn-tag" style="background:' + s.bg + ';color:' + s.fg + ';border:1px solid ' + s.bd + '" title="' + escapeHtml(p.tip) + '">' + escapeHtml(p.label) + '</span>';
+  } catch (eT) { return ''; }
 }
 function stockHead(ctx){
   var s = stockHeadView(ctx);
@@ -12697,7 +12794,9 @@ function renderSingle() {
     var chgCls = ind.chgToday >= 0 ? 'up' : 'down';
     return '<tr class="batch-row' + (open ? ' open' : '') + '" data-idx="' + escapeHtml(r.token) + '">' +
       '<td><span class="caret">' + (open ? '▼' : '▶') + '</span>' + escapeHtml(r.quote.name || r.code) +
-      ' <span style="color:var(--dim)">' + r.code + '</span></td>' +
+      ' <span style="color:var(--dim)">' + r.code + '</span>' +
+      /* ★ 2026-10-01（用户要求）：股票性格标签（提示该股适配哪套策略） */
+      personaTagHtml(r) + '</td>' +
       /* ★ 2026-09-29（用户要求）：行业列紧跟股票名 */
       '<td class="sec-cell">' + secOfTxt(null, r) + '</td>' +
       '<td>' + ind.price.toFixed(2) + '</td>' +
@@ -12965,6 +13064,8 @@ function watchBatchBody() {
       ' title="勾选后点上方「🗑 删除选中」批量取消自选，或「📤 导出 txt」把勾选的票存成文件"></td>' +
       '<td><span class="caret">' + (open ? '▼' : '▶') + '</span>' + escapeHtml(r.quote.name || r.code) +
       ' <span style="color:var(--dim)">' + r.code + '</span>' +
+      /* ★ 2026-10-01（用户要求）：股票性格标签（紧跟行业标签前，股票自身属性提示该用哪把策略尺子） */
+      personaTagHtml(r) +
       (r.gene && r.gene.boardName ? '<br><span style="font-size:10.5px;color:#5b8cff">🏷 ' + escapeHtml(r.gene.boardName) + '</span>' : '') +
       ' <button type="button" class="wl-x" data-act="del" data-code="' + escapeHtml(r.code) + '" title="取消自选">✕</button></td>' +
       /* ★ 2026-09-29（用户要求）：行业列紧跟股票名 */
