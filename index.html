@@ -786,6 +786,7 @@
           <option value="chgAsc" data-page-node-id="P6szVXwtKs1Pelif45aSxH">涨幅 ↑</option>
           <option value="flowDesc" data-page-node-id="njXl9W7H9aQjUguqwuHsFO">主力净流入 ↓</option>
           <option value="flowAsc" data-page-node-id="EIHCN3HNxetJD0zPbfukkh">主力净流出 ↓</option>
+          <option value="amtDesc">成交额 ↓</option>
           <option value="ztDesc" data-page-node-id="gWDPcyJZ7yxue26Mpk6GvX">涨停家数 ↓</option>
           <option value="dtDesc" data-page-node-id="HpdrtPY48STGF1A0rNVq7y">跌停家数 ↓</option>
           <option value="stageDesc" data-page-node-id="VkccTTuzm8uT3hwqf4AqhO">阶段家数 ↓</option>
@@ -1253,7 +1254,7 @@ var BOARD_FS = {
   industry: 'm:90+t:2+f:!50',
   concept:  'm:90+t:3+f:!50'
 };
-var BOARD_FIELDS = 'f12,f14,f2,f3,f62,f104,f105,f128,f140,f136,f207,f208';
+var BOARD_FIELDS = 'f12,f14,f2,f3,f6,f62,f104,f105,f128,f140,f136,f207,f208';
 var STOCK_FIELDS = 'f12,f13,f14,f2,f3,f5,f6,f7,f8,f10,f20,f21,f24,f25,f62,f100';
 
 function emUrl(host, fs, fields, pn, pz, fid, cb, po) {
@@ -1462,6 +1463,7 @@ async function getBoards(type) {
       return {
         code: d.f12, name: d.f14, index: d.f2, chg: num(d.f3),
         flow: num(d.f62), upCount: d.f104, downCount: d.f105,
+        amount: num(d.f6),
         leadName: d.f128 || '', leadCode: d.f140 || '', leadChg: num(d.f136),
         leadDownName: d.f207 || '', leadDownCode: d.f208 || ''
       };
@@ -6068,6 +6070,7 @@ function sortBoards(list) {
   else if (m === 'chgAsc') arr.sort(function (a, b) { return (a.chg === null ? 999 : a.chg) - (b.chg === null ? 999 : b.chg); });
   else if (m === 'flowDesc') arr.sort(function (a, b) { return (b.flow === null ? -1e18 : b.flow) - (a.flow === null ? -1e18 : a.flow); });
   else if (m === 'flowAsc') arr.sort(function (a, b) { return (a.flow === null ? 1e18 : a.flow) - (b.flow === null ? 1e18 : b.flow); });
+  else if (m === 'amtDesc') arr.sort(function (a, b) { return (b.amount || 0) - (a.amount || 0); });
   else if (m === 'ztDesc') arr.sort(function (a, b) { return (boardZTOf(b.code).zt || -1) - (boardZTOf(a.code).zt || -1); });
   else if (m === 'dtDesc') arr.sort(function (a, b) { return (boardZTOf(b.code).dt || -1) - (boardZTOf(a.code).dt || -1); });
   else if (m === 'name') arr.sort(function (a, b) { return String(a.name).localeCompare(String(b.name), 'zh'); });
