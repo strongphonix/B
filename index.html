@@ -1011,7 +1011,7 @@
   <div class="view" id="view-bt">
     <div class="card">
       <div class="card-title">🕘 买点回溯 · 多策略对比 · 近 N 个交易日触发买入信号的股票 ·「当天尾盘收盘价买入」走势统计
-        <span style="font-size:11.5px;font-weight:400;color:var(--dim)">—— 四策略同轨对比：同池 / 同买入口径（尾盘收盘价）/ 同离场规则（连续2日破MA5·一票否决）/ 同剔除规则（当日买点 · 买点日涨停）；窗口可选 10 / 20 / 60 / 100 个交易日（默认 100）；可「✍ 手动输入」指定个股（代码或名称，多个混排）；统计完成后附策略胜率对比与 T+1 深亏归因</span></div>
+        <span style="font-size:11.5px;font-weight:400;color:var(--dim)">—— 四策略同轨对比：同池 / 同买入口径（尾盘收盘价）/ 同离场规则（四条：⓪盘中止损5% / 连续2日破MA5·一票否决 / 最大浮盈回撤7% / 跌破买价5%，各自回放一遍后<b>取盈亏最大的一条</b>离场）/ 同剔除规则（当日买点 · 买点日涨停）；窗口可选 10 / 20 / 60 / 100 个交易日（默认 100）；可「✍ 手动输入」指定个股（代码或名称，多个混排）；统计完成后附策略胜率对比与 T+1 深亏归因</span></div>
       <div class="ztp-toolbar">
         <label style="font-size:12.5px"><input type="checkbox" id="btSrcZt" checked> 📈 涨停池近10日并集</label>
         <label style="font-size:12.5px"><input type="checkbox" id="btSrcWl" checked> ⭐ 自选股</label>
@@ -1046,7 +1046,7 @@
         <span class="ztp-status" id="btCodesInfo" data-page-node-id="BtCodesInfo20261001Aa01"></span>
       </div>
       <div id="btSummary"></div>
-      <div id="btResult"><div class="loading">点「▶ 开始统计」开始：逐只拉日K（腾讯前复权 260 根）→ 按所选<b>窗口</b>（默认近 100 个交易日）逐日回放所选策略（四指标 / 12维复盘 / MA5 终极 / 量价时空 v2）→ 对每个买点做「尾盘收盘价买入」的前向收益统计（T+1~T+5 / 最大浮盈浮亏 / 最终盈亏 / 离场信号）；买点日收盘涨停（封板）与「买点日 = 最新交易日（当天刚触发）」的信号自动剔除；四个策略同一条离场规则（连续2日破MA5 / 一票否决），保证同轨可比。点击结果行可展开该股完整详情；统计完成后附「策略胜率对比」「T+1 深亏归因」「盈亏两端多因子对比」。并发 4；约 200 只需 1~3 分钟（取决于行情通道）；<b>「买入后第二天涨跌」= 表里 T+1 列</b>（买点日次日收盘相对买入价的涨跌，涨红跌绿）。</div></div>
+      <div id="btResult"><div class="loading">点「▶ 开始统计」开始：逐只拉日K（腾讯前复权 260 根）→ 按所选<b>窗口</b>（默认近 100 个交易日）逐日回放所选策略（四指标 / 12维复盘 / MA5 终极 / 量价时空 v2）→ 对每个买点做「尾盘收盘价买入」的前向收益统计（T+1~T+5 / 最大浮盈浮亏 / 最终盈亏 / 离场信号）；买点日收盘涨停（封板）与「买点日 = 最新交易日（当天刚触发）」的信号自动剔除；四条同一套离场规则（四条：⓪ 盘中止损 5%（盘中触发）/ ① 连续2日破MA5·一票否决 / ② 最大浮盈回撤7% / ③ 跌破买价5% —— <b>每条各自回放一遍，取最终盈亏最大的那条离场</b>），保证同轨可比。点击结果行可展开该股完整详情；统计完成后附「策略胜率对比」「T+1 深亏归因」「盈亏两端多因子对比」。并发 4；约 200 只需 1~3 分钟（取决于行情通道）；<b>「买入后第二天涨跌」= 表里 T+1 列</b>（买点日次日收盘相对买入价的涨跌，涨红跌绿）。</div></div>
       <details style="margin-top:10px"><summary style="cursor:pointer;font-size:12.5px;color:#9fb4ff">📖 统计口径（点击展开）</summary>
         <div class="note" style="font-size:12px;color:#8d99b8;line-height:1.9;padding:8px 2px">
           <b>买点判定：</b>按<b>所选窗口</b>（10 / 20 / 60 / 100 个交易日，默认 100）逐日回放（s4kBuyDay 单日回放，只用该日及之前的数据，无未来函数）——当日四指标总分 ≥ 62（买入档；≥76 记「重仓」）且未触发一票否决 → 记一次买点。同一只股票多日连续触发会逐日各记一行（每天都满足 = 每天都在给出买入信号）。<br>
@@ -1054,17 +1054,21 @@
           <b>窗口上限 250：</b>日K只取 260 根，再往回数就会把「K线起点」误当成「没买点」，所以窗口最大 250。<br>
           <b>买入假设：</b>买点日<b>尾盘以收盘价买入</b>；收益 = 后续收盘价 ÷ 买入价 − 1。T+N = 买点后第 N 个交易日收盘。<br>
           <b>离场即截断：</b>触发离场后不再统计盈亏——T+N、最大浮盈/浮亏全部只算到离场日（含）。<br>
+          <b>离场策略（四条，各自回放一遍 → 取盈亏最大的一条离场）：</b>每个买点后面，四条策略<b>各跑一遍完整回放</b>，各自得出自己的离场日与成交价，再比较最终盈亏 —— <b>取盈利最大 / 亏损最小的那条</b>作为该笔的实际离场口径（<b>事后择优</b>：离场当天并不知道哪条最优，所以这是纪律化执行的<b>收益上界</b>，不是实盘可达结果）。<br>
+          四条判据：⓪ <b>盘中止损 5%</b>——当日<b>最低价</b> ≤ 买价 × 0.95 即离场，<b>不看收盘</b>，成交价 = 止损价（跳空低开时按开盘价成交）；① <b>连续 2 日收盘跌破 MA5 / 一票否决</b>（s4kGuards 同口径），成交价 = 当日收盘；② <b>最大浮盈回撤 7%</b>——峰值浮盈取买点次日起<b>区间最高价</b>（与「最大浮盈」列同源），当日浮盈按<b>收盘价</b>确认，两者相差 ≥ 7 个百分点即离场；③ <b>跌破买入价 5%</b>——收盘价 ≤ 买价 × 0.95（收盘确认口径）。<br>
+          择优细节：只比较<b>已触发</b>的策略（四条全不触发 → 持有至今）；盈亏相同时取<b>更早</b>的离场日，再相同按 ⓪①②③ 记一条；表格「持有状态」列标 <b>择优 N 选 1</b>，鼠标悬停可看四条策略各自的结果（★ = 选中）。
           <b>最终盈亏：</b>已离场 → 离场日收盘盈亏；未离场（持有至今）→ 最大浮盈（未触发离场按区间最高点估算，理想成交）；买点=今日（无后续K线）→ 不可判定，不进汇总分母。<br>
           <b>盈亏比：</b>所有获利股票的平均盈利 ÷ 所有亏损股票的平均亏损（按最终盈亏），≥1 为正期望区。<br>
-          <b>盈亏两端多因子对比：</b>按最终盈亏分成盈利组 / 亏损组，对比生命周期（当前，judgeStage 同引擎）、ATR%（买点日，atrcCalc 同引擎）、换手率（最新实时快照）、所属行业（涨停池 hybk）。<br>
+          <b>盈亏两端多因子对比：</b>按最终盈亏分成盈利组 / 亏损组，对比生命周期（当前，judgeStage 同引擎）、ATR%（买点日，atrcCalc 同引擎）、换手率（最新实时快照）、所属行业（涨停池 hybk）、<b>KDJ（买点日，kdjSeries 同源）</b>、<b>MACD（买点日，12/26/9，柱 = 2×(DIF−DEA)）</b>、<b>买点量能（买点日成交 ÷ 前 5 日均量）</b>、<b>ATR 通道位置（买点日，(收盘−中轨)÷ATR + 相对入场轨四分区）</b>；末列给出组间差（盈利组 − 亏损组）。<br>
+          <b>四因子取「买点日」口径：</b>KDJ / MACD 是递推因果量 → 全序列第 N 项 ≡ 截到该日重算（无未来函数）；量能只比买点日及之前（买点之后的量是未来信息，不进因子）。各因子只统计该因子有值的笔，缺失不进分母。<br>
           <b>最大浮盈 / 浮亏：</b>买点次日起至统计截断日（离场日或最新），区间最高价 / 最低价对买入价的收益（理想成交价，实际做不到——只用于衡量「买点之后最多给过多少空间 / 最深套过多深」）。<br>
           <b>涨停剔除：</b>买点日<b>收盘涨停（封板）</b>的信号不计入——尾盘按收盘价根本买不进，且「封板次日惯性溢价」会让胜率虚高。阈值与 secZTStat 板性口径同源（主板 9.8% / 双创 19.8% / 北交所 29.7%），剔除数量在汇总条与状态栏披露。<br>
           <b>当日买点剔除：</b>买点日 = <b>最新交易日（当天刚触发）</b>的信号不计入——还没有任何后续走势，T+1 / 浮盈浮亏 / 最终盈亏全是空，进表只是噪音；等下一交易日收盘后自然有 T+1 可看，届时重新点「开始统计」即可。剔除数量在汇总条与状态栏披露。<br>
-          <b>多策略口径：</b>四策略（四指标 / 12维复盘 / MA5 终极 / 量价时空 v2）同池、同买入口径（尾盘收盘价）、<b>同离场规则</b>（s4kGuards：连续 2 日收盘破 MA5 / 一票否决）、同剔除规则（当日买点 / 买点日涨停）——差异只在「哪一天算买点」这一个变量，对比才公平。各策略买入判据：四指标 = 总分 ≥62 且无否决；MA5 终极 = ①斜率向上 ②连续2日站线 ③dev 0~6% ④放量阳线 全满足；12维 = 加权评分 ≥65（A/B 档）且无闸门封顶；量价时空 v2 = 总分 ≥62（买入档）。<br>
+          <b>多策略口径：</b>四策略（四指标 / 12维复盘 / MA5 终极 / 量价时空 v2）同池、同买入口径（尾盘收盘价）、<b>同离场规则</b>（四条：⓪盘中止损5% / 连续2日破MA5·一票否决 / 最大浮盈回撤7% / 跌破买价5%，各自回放后取盈亏最大的一条）、同剔除规则（当日买点 / 买点日涨停）——差异只在「哪一天算买点」这一个变量，对比才公平。各策略买入判据：四指标 = 总分 ≥62 且无否决；MA5 终极 = ①斜率向上 ②连续2日站线 ③dev 0~6% ④放量阳线 全满足；12维 = 加权评分 ≥65（A/B 档）且无闸门封顶；量价时空 v2 = 总分 ≥62（买入档）。<br>
           <b>回放数据诚实原则：</b>12维与量价时空的历史回放只用日K可重构的数据——大盘情绪（MOOD）、板块置信度、换手率、分时数据<b>历史不可考</b>：12维环境闸门不阻断（如实标「未取到」）、量价时空时维度按参考总分判定（行内标「参考」）、分时急拉维恒 0 分；缺失不冒充。<br>
           <b>T+1 深亏归因：</b>对 T+1 收盘亏损 &gt; 5% 的信号逐笔归因（主因单一、辅因并列，全部用日K可重构特征）：高开低走（次日高开 &gt;2% 后回落）/ 隔夜低开（开盘低于买价 2%+）/ 冲高回落（盘中一度浮盈 ≥1% 后跳水）/ 放量杀跌（次日量 ≥ 买点日 1.5 倍）/ 阴跌·趋势逆转；辅因：买点日涨幅 ≥7%（追高）、买点日尾盘走弱（收在日内下 1/3）、高波动（ATR% ≥5）、当前阶段属风险/下跌族。<br>
           <b>点击行展开详情：</b>点击结果任意一行 → 展开该股完整详情（与详情页同一套 analyzeStock 引擎：阶段 / 四指标 / KDJ / 涨停基因 / 主力参与…），约 5–10 秒，会话内缓存，再次点击收起。<br>
-          <b>持有状态：</b>与 s4kGuards 同口径——买入后出现「连续 2 日收盘跌破 MA5」或一票否决 → 记离场信号日；未触发 → 持有至今。<br>
+          <b>持有状态：</b>买入后<b>四条离场策略各回放一遍</b>——⓪ <b>盘中止损 5%</b>（当日最低价 ≤ 买价 × 0.95，盘中触发，成交价 = 止损价 / 跳空按开盘价）；① 连续 2 日收盘跌破 MA5 或一票否决（s4kGuards 同口径）；② 最大浮盈回撤 7%（峰值按区间最高价、当日按收盘价，相差 ≥7 个百分点）；③ 收盘价跌破买入价 5%。各得出一个离场日与成交价后，<b>取最终盈亏最大的那条</b>（盈利最大 / 亏损最小；盈亏相同取更早的一天）作为该笔离场口径；四条全不触发 → 持有至今。<br>
           <b>诚实降级：</b>日K不足 / 取数失败 → 该股跳过并在状态栏计数；上市不足 T+N 天的列显示「—」，不硬算；汇总只对「有值」的行取均值，缺失不进分母。
         </div>
       </details>
@@ -8877,6 +8881,42 @@ var ATRC_RULE = {
   pullLook: 20,      /* 回踩的方向判定回看根数：EMA20 相对 20 日前上行 = 趋势仍在 */
   pullFlatPct: 0.3,  /* 回踩的震荡过滤：20 日变化绝对值 < 0.3% → 无趋势，不做回踩 */
   pullCountHint: 3,  /* 第 3 次及以后回踩 → 卡片提示胜率递减（67%→58%→48%→42%） */
+
+  /* ══ ★ 2026-10-02（用户要求）：适配性两道闸 —— 先答「这只票适不适合用 ATR 通道交易」，再谈信号 ══
+     ── 来源：2026-10-02 全网三遍交叉验证（①ATR/Keltner 机制与适用边界 ②A 股制度扭曲与趋势性筛子
+        ③深度金融检索：波动率门槛 / 流动性分层 / 市值板块属性）──
+        决定性事实：**58 个期货品种的 ATR 通道突破回测里只有 28 个取得正收益**，近一半累计收益为负 ——
+        ATR 通道**不是普适工具**，它只对「波动够大且稳定 + 方向能持续」的品种有效。故必须加适配性闸门。
+     ── 闸① ATR% 甜区 ──
+        ⚠️⚠️ **判据用的是 ATR14%（ATR14 ÷ 收盘价），不是单日 TR%**（用户 2026-10-02 明确纠正）。
+        单日 TR 会被一根巨震/跳空污染（今天 TR 大不代表这只票波动率高），14 根 TR 的均值才是波动率水平。
+        卡片额外显示「今日 TR%」仅供对照，**不参与任何判定**。
+        甜区 2%~5%：< 1.5% 通道太窄、趋势利润盖不住摩擦成本；> 6.5% 涨跌停/一字板把 ATR 本身搞失真
+        （封板日 TR 被压小、开板日被撑爆）+ 假突破暴涨 → 本策略不适用。
+     ── 闸② 趋势持续性 ──
+        **主判据 ADX(adxN)**：样本要求低（2×N 根）、口径标准可复现。ADX ≥ 25 趋势成立（Wilder 经典阈值），
+        < 20 按震荡处理（通道突破多为假突破）。多头还要求 +DI > −DI（有趋势且方向对）。
+        **Hurst 只作参考、不参与判定**：单窗口 R/S 法在 n=60 上有**系统性上偏**（随机序列也常算出 >0.5），
+        不能当硬阈值用 —— 广发金工实测 A 股指数主要在 0.6~0.8、用 0.64 划分趋势/震荡，那是**指数**口径，
+        个股噪声更大。故本卡只显示、在 < 0.5 时提示"均值回归特征"。
+     ── 闸门形态与开关 ──
+        gateOn  = false → 两闸完全不参与（回到 2026-09-27 定稿），用于「过滤前 vs 过滤后」对比。
+        gateHard= false（默认，**软闸**）→ 不适配时买入降级为「观望」并写明被哪道闸拦下（信号仍可见、可统计）；
+                  true（**硬闸**）→ 不适配时直接判「本策略不适用」，连信号都不给。
+        ⚠️ 为什么默认软闸：2026-09-27 的教训是「加门槛 → 买入信号极稀有」（用户当时的原话）。
+           硬过滤会重演该问题，且看不见被拦下了多少笔 → 无法评估过滤效果。软闸两者兼得。
+     ── ⚠️ 与 2026-09-27「ATR% 不作为买入门槛」的关系（别读成把取消的东西加回来）──
+        当年取消的是 **ATR% ≥ X 的单向最低门槛**（越高越好）→ 人为制造信号稀有。
+        本次加的是 **ATR% 落在 [2,5] 的双向甜区**（太高太低都不行）—— 是「适配性」不是「优越性」。 */
+  gateOn: true,          /* 总开关：false = 两闸不参与（过滤前基线） */
+  gateHard: false,       /* true = 硬过滤（不适配 → 直接判不适用）；false = 软闸（买入降级为观望，仍可统计） */
+  atrPctSweet: [2.0, 5.0], /* 闸① 甜区（含端点） */
+  atrPctOk: [1.5, 6.5],    /* 闸① 可接受区间（含端点）：区间内但不在甜区 → warn */
+  adxN: 14,                /* 闸② ADX 周期（Wilder 经典 14） */
+  adxTrend: 25,            /* ADX ≥ 25 → 趋势成立 */
+  adxWeak: 20,             /* 20 ≤ ADX < 25 → 灰色区（warn） */
+  dirDI: true,             /* 多头额外要求 +DI > −DI（有趋势还不够，方向必须对） */
+  hurstN: 60,              /* Hurst 回看根数（R/S 简化法，只显示不判定） */
   /* ★ 2026-09-27（用户要求）：买卖点**发生在哪一天 / 距今几个交易日** —— 逐日回溯窗口与分级阈值。
      ⚠️ 分级与四指标**故意不同**：四指标是短线打分（3 日窗口、>7 日钝化），本策略是趋势跟踪
      （持仓常以周计，靠 2N 移动止损管理，不是靠"几天内必须走"）→ 阈值放宽到 3 / 10，
@@ -8927,6 +8967,164 @@ function atrcATR(k, i, n) {
 function atrcPullTol(mid, atr) {
   if (!(mid > 0)) return 0;
   return Math.max(ATRC_RULE.pullTolK * atr, ATRC_RULE.pullTolPct / 100 * mid);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ★ 2026-10-02：适配性两道闸的计算层（ATR% 甜区 / 趋势持续性）
+   ⚠️ 三个函数全部只读 klines[0..i] 与 closes[0..i]（无未来），与 atrcCalc 同源。
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ADX(adxN) —— Wilder 原版（不是简单均值）：+DM/−DM/TR 各自 Wilder 平滑 → DI → DX → ADX 再平滑一次。
+   返回 { adx, pdi, mdi }；样本不足（< 2×N 根）→ 全 null（闸门降级为 warn，绝不臆造数字）。
+   ⚠️ 为什么用 ADX 而不是 Hurst 作主判：ADX 只要 2N 根、口径标准化、可复现；
+      Hurst 单窗口 R/S 在 n=60 上系统性上偏，个股噪声更大 —— 只配当参考。 */
+function atrcADX(klines, i, n) {
+  var out = { adx: null, pdi: null, mdi: null };
+  if (!klines || i == null || i < 2) return out;
+  if (n == null) n = ATRC_RULE.adxN;
+  if (i < 2 * n) return out;                      /* DX 序列至少要有 n 个才能起算 ADX */
+  var tr = [], pdm = [], mdm = [], m;
+  for (m = 1; m <= i; m++) {
+    var k = klines[m], p = klines[m - 1];
+    var h = k.high, l = k.low, pc = p.close;
+    if (!(h > 0) || !(l > 0) || !(pc > 0)) { tr.push(0); pdm.push(0); mdm.push(0); continue; }
+    tr.push(Math.max(h - l, Math.abs(h - pc), Math.abs(l - pc)));
+    var upM = h - p.high, dnM = p.low - l;
+    pdm.push((upM > dnM && upM > 0) ? upM : 0);
+    mdm.push((dnM > upM && dnM > 0) ? dnM : 0);
+  }
+  if (tr.length < 2 * n) return out;
+  var str = 0, sp = 0, sm = 0, q;
+  for (q = 0; q < n; q++) { str += tr[q]; sp += pdm[q]; sm += mdm[q]; }   /* 首值 = 前 n 项和 */
+  var dxs = [];
+  for (q = n; q < tr.length; q++) {
+    /* ⚠️ Wilder 平滑的标准形是 New = Old + (Cur − Old)/n（= Old×(n−1)/n + Cur/n），
+       **当前项必须除以 n**。漏掉这个 /n 会让稳态值放大 n 倍 —— DI 因为是比值会自行抵消看不出来，
+       但第二层平滑出来的 ADX 会整个跑飞（实测单调上涨序列算出 1386 而不是 100）。 */
+    str = str + (tr[q] - str) / n;
+    sp = sp + (pdm[q] - sp) / n;
+    sm = sm + (mdm[q] - sm) / n;
+    var pdi = str > 0 ? 100 * sp / str : 0, mdi = str > 0 ? 100 * sm / str : 0;
+    var s = pdi + mdi;
+    dxs.push(s > 0 ? 100 * Math.abs(pdi - mdi) / s : 0);
+  }
+  if (dxs.length < n) return out;
+  var adx = 0;
+  for (q = 0; q < n; q++) adx += dxs[q];
+  adx /= n;                                       /* 首值 = 前 n 个 DX 的简单均值（Wilder 起算惯例） */
+  for (q = n; q < dxs.length; q++) adx = adx + (dxs[q] - adx) / n;
+  out.adx = adx;
+  out.pdi = str > 0 ? 100 * sp / str : 0;
+  out.mdi = str > 0 ? 100 * sm / str : 0;
+  return out;
+}
+
+/* Hurst（R/S 简化法）—— 对数收益序列的「重标极差」：H>0.5 长记忆（趋势可持续）、≈0.5 随机游走、<0.5 均值回归。
+   ⚠️ 只作参考、不参与闸门判定：单窗口 R/S 对小样本**系统性上偏**（随机序列也常算出 0.55~0.6），
+      阈值 0.64 是广发金工在**指数**上标定的，个股噪声更大。样本不足 / 收益恒 0 → 返回 null（诚实留白）。 */
+function atrcHurst(closes, i, n) {
+  if (n == null) n = ATRC_RULE.hurstN;
+  if (!closes || i == null) return null;
+  var lo = i - n + 1;
+  if (lo < 1 || i >= closes.length) return null;
+  var r = [], m, mean = 0;
+  for (m = lo; m <= i; m++) {
+    var a = closes[m - 1], b = closes[m];
+    if (!(a > 0) || !(b > 0)) return null;
+    var v = Math.log(b / a);
+    r.push(v); mean += v;
+  }
+  var N = r.length;
+  if (N < 20) return null;
+  mean /= N;
+  var sd = 0, q;
+  for (q = 0; q < N; q++) sd += (r[q] - mean) * (r[q] - mean);
+  sd = Math.sqrt(sd / N);
+  if (!(sd > 0)) return null;
+  var dev = 0, mx = -Infinity, mn = Infinity;
+  for (q = 0; q < N; q++) {
+    dev += r[q] - mean;
+    if (dev > mx) mx = dev;
+    if (dev < mn) mn = dev;
+  }
+  var rs = (mx - mn) / sd;
+  if (!(rs > 0)) return null;
+  return Math.log(rs) / Math.log(N);
+}
+
+/* 闸① ATR14% 甜区。⚠️ p = ATR14 ÷ 收盘价 × 100（**不是单日 TR%**）—— 用户 2026-10-02 明确纠正的口径点。
+   返回 { state: pass|warn|fail, txt, why } */
+function atrcAtrGate(r) {
+  var R = ATRC_RULE;
+  var o = { state: 'warn', txt: '', why: '', pct: null };
+  var p = (r && r.atrPct != null && isFinite(r.atrPct)) ? r.atrPct : null;
+  o.pct = p;
+  if (p == null) { o.txt = '数据缺失'; o.why = 'ATR14 未算出 → 不参与判定，降级为提示'; return o; }
+  var sw = R.atrPctSweet, ok = R.atrPctOk;
+  if (p >= sw[0] && p <= sw[1]) {
+    o.state = 'pass'; o.txt = '甜区（' + sw[0] + '%~' + sw[1] + '%）';
+    o.why = 'ATR14 占价 ' + p.toFixed(2) + '% —— 通道宽度与趋势利润匹配，是本策略的甜区';
+  } else if (p >= ok[0] && p <= ok[1]) {
+    o.state = 'warn';
+    o.txt = (p < sw[0] ? '偏窄' : '偏高');
+    o.why = (p < sw[0]
+      ? 'ATR14 占价 ' + p.toFixed(2) + '%（< 甜区下沿 ' + sw[0] + '%）：通道太窄，趋势利润容易盖不住摩擦成本，突破多为噪声'
+      : 'ATR14 占价 ' + p.toFixed(2) + '%（> 甜区上沿 ' + sw[1] + '%）：波动偏大，止损要放宽、仓位宜减半');
+  } else {
+    o.state = 'fail';
+    o.txt = (p < ok[0] ? '过窄 · 不适用' : '失真 · 不适用');
+    o.why = (p < ok[0]
+      ? 'ATR14 占价仅 ' + p.toFixed(2) + '%（< ' + ok[0] + '%）：通道窄到突破频繁却都是噪声，趋势利润覆盖不了摩擦成本 → 本策略不适用'
+      : 'ATR14 占价 ' + p.toFixed(2) + '%（> ' + ok[1] + '%）：涨跌停/一字板已把 ATR 本身搞失真（封板日 TR 被压小、开板日被撑爆），跳空与假突破暴涨 → 本策略不适用');
+  }
+  return o;
+}
+
+/* 闸② 趋势持续性：ADX 主判 + Hurst 参考（Hurst 不参与 state 判定）。 */
+function atrcTrendGate(r) {
+  var R = ATRC_RULE;
+  var o = { state: 'warn', txt: '', why: '', adx: null, pdi: null, mdi: null, hurst: null };
+  var a = (r && r.adx != null && isFinite(r.adx)) ? r.adx : null;
+  o.adx = a; o.pdi = r.pdi; o.mdi = r.mdi; o.hurst = r.hurst;
+  if (a == null) {
+    o.txt = '数据不足';
+    o.why = 'ADX' + R.adxN + ' 需 ' + (2 * R.adxN) + ' 根以上日K → 不参与判定，降级为提示';
+    return o;
+  }
+  var dTxt = 'ADX' + R.adxN + ' ' + a.toFixed(1);
+  if (a >= R.adxTrend) {
+    if (R.dirDI && !(r.pdi > r.mdi)) {
+      o.state = 'warn'; o.txt = '有趋势但方向向下';
+      o.why = dTxt + '（≥ ' + R.adxTrend + '）趋势强度够，但 −DI ' + (r.mdi || 0).toFixed(1) +
+        ' ≥ +DI ' + (r.pdi || 0).toFixed(1) + ' → 方向朝下，本策略只做多，不接';
+    } else {
+      o.state = 'pass'; o.txt = '趋势成立';
+      o.why = dTxt + '（≥ ' + R.adxTrend + '）+DI ' + (r.pdi || 0).toFixed(1) + ' > −DI ' + (r.mdi || 0).toFixed(1) + ' → 趋势有强度且方向朝上';
+    }
+  } else if (a >= R.adxWeak) {
+    o.state = 'warn'; o.txt = '趋势偏弱';
+    o.why = dTxt + '（' + R.adxWeak + ' ≤ ADX < ' + R.adxTrend + '）处于灰色区 → 突破多为假突破，宜等回踩确认';
+  } else {
+    o.state = 'fail'; o.txt = '无趋势（震荡）';
+    o.why = dTxt + '（< ' + R.adxWeak + '）属震荡市 —— ATR 通道在震荡市会被反复洗出（58 品种回测里近一半负收益就来自这类行情）→ 本策略不适用';
+  }
+  return o;
+}
+
+/* 综合闸门：两闸都不通过才 fail；任一 warn → warn；全部 pass → pass。
+   返回 { on, state, blocked, atrPct, trend, txt, why }。on=false 时 blocked 恒 false（过滤前基线）。 */
+function atrcGate(r) {
+  var g1 = atrcAtrGate(r), g2 = atrcTrendGate(r), R = ATRC_RULE;
+  var st = 'pass';
+  if (g1.state === 'fail' || g2.state === 'fail') st = 'fail';
+  else if (g1.state === 'warn' || g2.state === 'warn') st = 'warn';
+  var txt = st === 'pass' ? '✓ 适配 —— 两闸全过'
+    : (st === 'warn' ? '⚠️ 勉强适配 —— 有闸处于边缘区' : '✗ 不适配 —— 有闸未过');
+  var why = [];
+  if (g1.state !== 'pass') why.push('① ATR14%：' + g1.why);
+  if (g2.state !== 'pass') why.push('② 趋势持续性：' + g2.why);
+  return { on: !!R.gateOn, state: st, blocked: !!R.gateOn && st === 'fail',
+    atrPct: g1, trend: g2, txt: txt, why: why.join('；') || '两闸均通过' };
 }
 
 /* 主计算：通道三轨 + 位置 + 宽度。返回 { ok, why, mid, up, lo, atr, atrPct, widthPct, pos, ... } */
@@ -8987,7 +9185,12 @@ function atrcCalc(klines, i) {
   var trendUp = trendPct != null && trendPct > 0;
   var flatLong = trendPct != null && Math.abs(trendPct) < ATRC_RULE.pullFlatPct;
   var stabilize = klines[i].open > 0 ? (c > klines[i].open) : null;  /* 收阳企稳（等企稳 K，不接飞刀） */
-  return { ok: true, i: i, c: c, cYes: cYes, mid: mid, up: up, lo: lo, atr: atr,
+  /* ★ 2026-10-02 适配性两道闸的输入：ADX(14) / Hurst(60) / ATR14% 甜区。
+     ⚠️ 全部只用 klines[0..i]（无未来）；任一项算不出 → 该项降级为 warn，闸门不臆造数字。 */
+  var adxO = { adx: null, pdi: null, mdi: null }, hurst = null;
+  try { adxO = atrcADX(klines, i, ATRC_RULE.adxN); } catch (eA) {}
+  try { hurst = atrcHurst(closes, i, ATRC_RULE.hurstN); } catch (eH) {}
+  var self = { ok: true, i: i, c: c, cYes: cYes, mid: mid, up: up, lo: lo, atr: atr,
     atrPct: atr / c * 100, widthPct: (up - lo) / mid * 100, pos: pos,
     upIn: upIn, loIn: loIn, upInY: upInY, exUp: c > up, exDown: c < lo,
     stopLine: stopLine, stopLineY: stopLineY, atMid: atMid, stabilize: stabilize,
@@ -8995,7 +9198,12 @@ function atrcCalc(klines, i) {
     trendRecent: trendRecent, pullCount: pullCount,
     midLook: midLook, trendPct: trendPct, trendUp: trendUp, flatLong: flatLong,
     upY: upY, loY: loY, midY: midY, midPrev: midPrev, slopePct: slopePct, flat: flat,
-    tr: atrcTR(klines, i), gap: klines[i].open - cYes, chgDay: cYes > 0 ? (c / cYes - 1) * 100 : 0 };
+    tr: atrcTR(klines, i), gap: klines[i].open - cYes, chgDay: cYes > 0 ? (c / cYes - 1) * 100 : 0,
+    adx: adxO.adx, pdi: adxO.pdi, mdi: adxO.mdi, hurst: hurst,
+    /* ⚠️ 单日 TR% 仅供卡片对照展示，**不参与任何判定** —— 判据恒为 ATR14%（14 根 TR 均值占价） */
+    trPct: (c > 0 && isFinite(atrcTR(klines, i))) ? atrcTR(klines, i) / c * 100 : null };
+  try { self.gate = atrcGate(self); } catch (eG) { self.gate = { on: false, state: 'warn', blocked: false, txt: '', why: '' }; }
+  return self;
 }
 
 /* 策略信号：把"通道突破"翻成可执行的买卖结论，并套上 A 股三条硬约束。
@@ -9009,13 +9217,26 @@ function atrcSignal(r, code) {
   if (sealed) notes.push('今日封板（涨幅 ' + r.chgDay.toFixed(2) + '% ≥ ' + zt + '%−' + ATRC_RULE.ztPad + '）：10%/20% 是天花板不是市场给的幅度，一字板还买不到 → 本日不产生新信号，等开板那天的实际幅度');
   if (gapSpike) notes.push('今日跳空缺口 ' + (r.gap > 0 ? '+' : '') + r.gap.toFixed(2) + '（|今开−昨收| = ' + Math.abs(r.gap).toFixed(2) + ' > ' + ATRC_RULE.gapK + '×ATR = ' + (ATRC_RULE.gapK * r.atr).toFixed(2) + '）：幅度是跳出来的不是走出来的，追价成本被抬高 → 当根不追，等回踩确认');
 
+  /* ★ 2026-10-02 适配性两道闸：先答「这只票适不适合用 ATR 通道交易」，再谈信号。
+     ⚠️ 只拦**买入**：已在仓的离场 / 持有纪律不受闸门影响 —— 闸门回答的是"能不能开仓"，不是"该不该跑"。 */
+  var gate = r.gate || null;
+  if (gate && gate.on && gate.blocked) {
+    if (ATRC_RULE.gateHard) {
+      notes.push('适配性闸门（硬过滤）：' + gate.why);
+      return { act: 'na', actTxt: '⚪ 本策略不适用（适配性闸门未过）', tone: 'dim',
+        why: '本股未通过适配性闸门 → ATR 通道策略对它不适用（不是"今天没信号"，是"这把尺子量不了这只票"）：' + gate.why,
+        notes: notes, gate: gate };
+    }
+    notes.push('适配性闸门未过：' + gate.why);
+  }
+
   var brokeInY = (r.upInY != null) ? (r.cYes > r.upInY) : false;       /* 昨日已在入场轨之上 */
   var brokeUp = (r.upInY != null) && !brokeInY && r.c > r.upIn;        /* ★ 今日**新**站上入场轨（1.5×ATR） */
   var brokeDown = (r.loY != null) && !(r.cYes < r.loY) && r.c < r.lo;  /* 跌破破位轨（2×ATR）→ 破位 */
   var cutStop = (r.stopLineY != null) && r.cYes >= r.stopLineY && r.c < r.stopLine;  /* ★ 新跌破止损/离场线 */
 
   /* ② T+1：所有出场结论都标注"最早下一交易日执行" */
-  var act, actTxt, tone, why, kind = null;
+  var act, actTxt, tone, why, kind = null, gateBlockedBuy = false;
   /* ★ 回踩入场四条件（缺一不可，全部有三遍验证支撑）：趋势已确立 + 回到中轨成本带 + 缩量 + 收阳企稳 + 中轨向上 */
   var pullOk = !!(r.trendRecent && r.atMid && r.volShrink && r.stabilize && r.trendUp && !r.flatLong);
   if (pullOk) {
@@ -9067,6 +9288,16 @@ function atrcSignal(r, code) {
     act = 'hold'; actTxt = '⚪ 通道内 · 持有观察'; tone = 'warn';
     why = '价格在破位轨与入场轨之间（' + (r.pos === 'upper' ? '上半区' : '下半区') + '）→ 无新信号，按既定止损持有';
   }
+  /* ★ 软闸：不适配 → 买入降级为「观望」（信号仍可见、可统计）。
+     ⚠️ 为什么默认不硬过滤：2026-09-27 的教训就是"加门槛 → 买入信号极稀有"，硬过滤会重演；
+        且硬过滤看不见被拦下了多少笔 → 无法评估「过滤前 vs 过滤后」。软闸两者兼得。 */
+  if (gate && gate.on && gate.blocked && act === 'buy') {
+    act = 'watch'; tone = 'warn';
+    actTxt = '⚪ 信号成立但标的不适配 · 不执行';
+    why = '通道信号本身成立（' + (kind === 'pull' ? '回踩中轨缩量企稳' : '收盘新站上入场轨') +
+      '），但本股未通过适配性闸门 → ' + gate.why + '。闸门只拦开仓，已在仓的头寸照原纪律管理。';
+    gateBlockedBuy = true;   /* ★ 供 atrcSigRun 统计「被闸门拦下了几笔」→ 过滤前/后对比 */
+  }
   if (act === 'exit') notes.push('T+1 约束：A 股当日买入不能卖 → 出场信号最早**下一交易日**开盘执行');
   /* ★ 回踩次数递减提示（20EMA 回踩实证：第1次 67% → 第2次 58% → 第3次 48% → 第4次 42%） */
   if (act === 'buy' && kind === 'pull' && r.pullCount >= ATRC_RULE.pullCountHint) {
@@ -9085,8 +9316,13 @@ function atrcSignal(r, code) {
     stopPct = (r.c - stop) / r.c * 100;
     target = r.c + 2 * (r.c - stop);
   }
+  /* 边缘区（warn）：不拦，但给敞口建议 —— 高波动放宽止损、低波动别指望大利润 */
+  if (gate && gate.on && gate.state === 'warn' && (act === 'buy' || act === 'hold')) {
+    notes.push('适配性闸门处于边缘区：' + gate.why + ' → 不是不执行，而是仓位宜减半、止损按 ATR 相应放宽');
+  }
   return { act: act, actTxt: actTxt, tone: tone, why: why, stop: stop, stopPct: stopPct,
-    target: target, notes: notes, sealed: sealed, gapSpike: gapSpike, kind: kind };
+    target: target, notes: notes, sealed: sealed, gapSpike: gapSpike, kind: kind, gate: gate,
+    gateBlockedBuy: gateBlockedBuy };
 }
 
 /* 日期 'YYYY-MM-DD' → 'MM-DD（周X）'；解析不了就原样回显（与 s4kBuyAgeInfo 同款写法，绝不臆造） */
@@ -9111,7 +9347,7 @@ function atrcDateTxt(ds) {
 function atrcSigRun(klines, code) {
   var R = ATRC_RULE;
   var out = { ok: false, why: '', buy: null, exit: null, last: null, scanned: 0,
-    bars: (klines && klines.length) || 0, win: 0 };
+    bars: (klines && klines.length) || 0, win: 0, gateBlocked: 0 };
   if (!klines || klines.length < R.emaN + R.atrN + 1) { out.why = '日K不足，无法回溯信号'; return out; }
   var i = klines.length - 1;
   var scan = Math.max(1, Math.floor(R.sigScan || 45));
@@ -9122,6 +9358,7 @@ function atrcSigRun(klines, code) {
     out.scanned++;
     if (!r || !r.ok) continue;
     var g = atrcSignal(r, code);
+    if (g.gateBlockedBuy) out.gateBlocked++;       /* ★ 被适配性闸门拦下的买入笔数（过滤前 vs 过滤后的差额） */
     if (g.act === 'buy' && !out.buy) {
       out.buy = { idx: t, days: i - t, date: klines[t].date || '', price: r.c, up: r.up, mid: r.mid,
         upIn: r.upIn, kind: g.kind, atr: r.atr, actTxt: g.actTxt, stop: g.stop, target: g.target };
@@ -9206,17 +9443,64 @@ function atrcCardHtml(ind, pre) {
   var g = atrcSignal(r, ind.code);
   var posTxt = { above: '入场轨之上', upper: '上半区（中轨~入场轨）', lower: '下半区（入场轨~中轨）', below: '入场轨之下' }[r.pos] || '—';
 
-  /* ① 结论（置顶） */
-  h += '<div class="' + g.tone + '" style="font-size:14px;font-weight:800;text-align:left">' + g.actTxt + '</div>' +
-    '<div class="stage-desc" style="text-align:left;margin-top:2px">' + esc(g.why) + '</div>';
-
-  /* ② 买卖点位置（★ 2026-09-27 用户要求：信号**具体发生在哪一天、距今几个交易日**，格式对标四指标「距买点」）
-     逐日回放（atrcSigRun）→ 最近一次买入 / 最近一次离场，各报 日期 + 天数 + 触发读数 + 分级提示。 */
+  /* 逐日回放（atrcSigRun）—— 提前算好：①-b 闸门要引用它的 gateBlocked（过滤前 vs 过滤后） */
   var sig = null;
   try {
     sig = (ind && ind.__atrcSig) ? ind.__atrcSig : atrcSigRun(ind.klines, ind.code);
     if (ind) ind.__atrcSig = sig;                        /* 挂在 ind 上缓存：同一 ind 只回放一遍 */
   } catch (eSig) { sig = null; }
+
+  /* ① 结论（置顶） */
+  h += '<div class="' + g.tone + '" style="font-size:14px;font-weight:800;text-align:left">' + g.actTxt + '</div>' +
+    '<div class="stage-desc" style="text-align:left;margin-top:2px">' + esc(g.why) + '</div>';
+
+  /* ①-b ★ 2026-10-02 适配性两道闸：先答「这只票适不适合用 ATR 通道交易」，再谈信号。
+     放结论正下方 —— 这是"这把尺子能不能量这只票"的前置判断，逻辑上先于具体买卖点。 */
+  var gt = r.gate;
+  if (gt && gt.on) {
+    var gIcon = { pass: '✓', warn: '⚠️', fail: '✗' }[gt.state] || '—';
+    var gCls = { pass: 'up', warn: 'warn', fail: 'down' }[gt.state] || '';
+    var gRow = function (name, sub, val, st, why) {
+      var ic = { pass: '✓', warn: '⚠️', fail: '✗' }[st] || '—';
+      var cl = { pass: 'up', warn: 'warn', fail: 'down' }[st] || '';
+      /* ⚠️ 用 flex 分块而**不用 table.rules**：四列表格在 360~375px 窄屏下 min-content 会顶破卡片
+         （布局套件实测超宽 3.6px）。flex + flex-wrap 天然可收窄，且不受 `td:first-child{nowrap}` 影响。 */
+      return '<div style="margin-top:5px;padding:6px 8px;border:1px solid var(--line);border-radius:8px">' +
+        '<div style="display:flex;gap:8px;align-items:baseline;flex-wrap:wrap">' +
+        '<b style="font-size:12px">' + name + '</b>' +
+        '<span class="mono" style="font-size:12px">' + val + '</span>' +
+        '<span class="' + cl + '" style="font-size:12px;font-weight:600">' + ic + ' ' +
+        (st === 'pass' ? '通过' : (st === 'warn' ? '边缘' : '未过')) + '</span></div>' +
+        '<div style="font-size:10.5px;color:var(--dim);margin-top:2px">' + sub + '</div>' +
+        '<div style="font-size:11px;margin-top:2px">' + esc(why) + '</div></div>';
+    };
+    h += '<div style="margin-top:6px;text-align:left">' +
+      '<b style="font-size:12px">🎚 适配性闸门</b>' +
+      '<span style="font-size:11px;color:var(--dim)">（本股适不适合用 ATR 通道交易 —— ' +
+      (ATRC_RULE.gateHard ? '硬过滤：未过直接判不适用' : '软闸：未过则买入降级为观望') + '）</span>' +
+      gRow('① ATR' + ATRC_RULE.atrN + '% 甜区', 'ATR' + ATRC_RULE.atrN + ' ÷ 收盘价（⚠️ 不是单日 TR%）',
+        (gt.atrPct.pct == null ? '—' : gt.atrPct.pct.toFixed(2) + '%'), gt.atrPct.state, gt.atrPct.why) +
+      gRow('② 趋势持续性', 'ADX' + ATRC_RULE.adxN + ' 主判 · Hurst 只作参考',
+        (gt.trend.adx == null ? '—' : 'ADX ' + gt.trend.adx.toFixed(1) + '（+DI ' +
+          (gt.trend.pdi || 0).toFixed(1) + ' / −DI ' + (gt.trend.mdi || 0).toFixed(1) + '）' +
+          (gt.trend.hurst == null ? '' : ' · H ' + gt.trend.hurst.toFixed(2))),
+        gt.trend.state, gt.trend.why) +
+      '<div class="stage-desc" style="text-align:left;margin-top:2px">综合：<b class="' + gCls + '">' + gIcon + ' ' + esc(gt.txt) + '</b>' +
+      (gt.state === 'pass' ? '' : '<br>' + esc(gt.why)) +
+      '<br><span style="font-size:11px">⚠️ 判据恒为 <b>ATR' + ATRC_RULE.atrN + '%（' + ATRC_RULE.atrN +
+      ' 根 TR 的<b>均值</b> ÷ 收盘价）</b>，<b>不是单日 TR%</b>' +
+      (r.trPct == null ? '' : '（今日单日 TR ' + r.trPct.toFixed(2) + '% 仅供对照 —— 单日值会被单根巨震污染，不参与判定）') +
+      '。闸门<b>只拦开仓</b>，已在仓头寸的离场/持有纪律不受影响。</span>' +
+      (sig && sig.ok && sig.gateBlocked ? '<br><span style="font-size:11px">★ 过滤影响：近 ' + ATRC_RULE.sigScan +
+        ' 个交易日窗口内，有 <b>' + sig.gateBlocked + '</b> 笔买入信号被闸门拦下' +
+        (sig.buy ? '；当前放行的最近买点 = ' + atrcDateTxt(sig.buy.date) : '；窗口内已无放行买点') +
+        '（⚠️ 不写"过滤前共 N 笔"——放行的买点也可能有多笔，这里只统计被拦下的；' +
+        '把 <code>ATRC_RULE.gateOn</code> 置 false 可看过滤前完整基线）。</span>' : '') +
+      '</div></div>';
+  }
+
+  /* ② 买卖点位置（★ 2026-09-27 用户要求：信号**具体发生在哪一天、距今几个交易日**，格式对标四指标「距买点」）
+     逐日回放（atrcSigRun）→ 最近一次买入 / 最近一次离场，各报 日期 + 天数 + 触发读数 + 分级提示。 */
   if (sig && sig.ok) {
     var buyInfo = atrcSigAgeInfo(sig.buy, 'buy');
     var exitInfo = atrcSigAgeInfo(sig.exit, 'exit');
@@ -9331,7 +9615,8 @@ function atrcCardHtml(ind, pre) {
     '② 封板日 —— 幅度被规则截断在 10%/20%，不是市场真实意愿，且一字板买不到；' +
     '③ 消息冲击 —— 一根柱子跨过通道，而 ATR 还用着旧波动估计，通道显得异常窄；' +
     '④ 本策略<b>不测方向</b>，只测波动 —— 用它抄底/猜顶不在能力范围内；' +
-    '⑤ <b>ATR% 过小（&lt;5%，与表格 ATR% 列同档）时通道很窄，突破会频繁但多是噪声</b>，可对照本卡「ATR' + ATRC_RULE.atrN + '（占现价）」一行自行判断；' +
+    '⑤ <b>标的适配性</b> —— ATR 通道<b>不是普适工具</b>：波动率过高（涨跌停把 ATR 搞失真）或过低（通道窄到全是噪声）、' +
+    '以及无趋势的震荡市，都会让它失效 → 已由上方<b>🎚 适配性闸门</b>统一拦截（不再靠人工对照 ATR% 列判断）；' +
     '⑥ 加速拉升的龙头<b>根本不回踩中轨</b> → 路径①会整段踏空（这是"回踩优先"的结构性代价，路径②用于补足）。<br>' +
     '<b>★ 为什么改成双轨 + 回踩（2026-09-27 重构，用户反馈"买入信号太稀有"）</b>：' +
     '旧口径只有 ±2×ATR 一条通道，买入必须是"收盘新站上 +2×ATR 上轨"—— ATR%≈3% 的普通股需 6% 以上乖离、' +
@@ -9343,8 +9628,25 @@ function atrcCardHtml(ind, pre) {
     '500 只 10 年海龟类统计 40.2%~40.9%）；回踩 20EMA 企稳胜率约 <b>55%~68%</b>，' +
     '且<b>随回踩次数递减：第 1 次 67%(1.8R) → 第 2 次 58% → 第 3 次 48% → 第 4 次 42%</b>（本卡已按此给出仓位提示）。' +
     '⚠️ 中文自媒体流传的"回踩胜率 85%~89%、追突破 38%"经第三遍检索判定为<b>营销性夸大、口径不可复现，本卡不采信</b>。<br>' +
-    '<b>买卖门槛说明</b>：<b>ATR%（波动占股价）不参与本策略的买入门槛</b> —— 它只是表格「ATR%」列的弹性过滤器，' +
-    '与本卡是两把独立的尺子；把它并入条件会人为制造"信号稀有"（2026-09-27 用户明确取消该条件）。<br>' +
+    '<b>★ 适配性两道闸（2026-10-02 新增，先答"这只票适不适合"再谈信号）</b>：' +
+    '① <b>ATR' + ATRC_RULE.atrN + '% 甜区</b> —— 判据是 <b>ATR' + ATRC_RULE.atrN + ' ÷ 收盘价</b>（' + ATRC_RULE.atrN +
+    ' 根 TR 的<b>均值</b>），<b>不是单日 TR%</b>（单日值会被一根巨震/跳空污染，不代表波动率水平）。' +
+    '甜区 <b>' + ATRC_RULE.atrPctSweet[0] + '%~' + ATRC_RULE.atrPctSweet[1] + '%</b>：低于 ' + ATRC_RULE.atrPctOk[0] +
+    '% 通道窄到突破全是噪声、趋势利润盖不住摩擦成本；高于 ' + ATRC_RULE.atrPctOk[1] +
+    '% 涨跌停与一字板已把 ATR 本身搞失真（封板日 TR 被压小、开板日被撑爆）。' +
+    '② <b>趋势持续性</b> —— 主判 <b>ADX' + ATRC_RULE.adxN + ' ≥ ' + ATRC_RULE.adxTrend + '</b>（&lt; ' + ATRC_RULE.adxWeak +
+    ' 按震荡处理）且 <b>+DI &gt; −DI</b>（方向对）；Hurst（R/S, n=' + ATRC_RULE.hurstN +
+    '）<b>只显示不判定</b> —— 单窗口 R/S 对小样本系统性上偏，0.64 那条阈值是在<b>指数</b>上标定的，个股噪声更大。' +
+    '<br><b>为什么要这两道闸</b>：58 个期货品种的 ATR 通道突破回测里<b>仅 28 个取得正收益</b>、近一半累计为负 —— ' +
+    'ATR 通道<b>不是普适工具</b>，只对"波动够大且稳定 + 方向能持续"的品种有效。<br>' +
+    '<b>闸门形态</b>：默认<b>软闸</b>（不适配 → 买入降级为"⚪ 信号成立但标的不适配 · 不执行"，信号仍可见可统计）；' +
+    '<code>ATRC_RULE.gateHard = true</code> 切硬过滤（不适配 → 直接判"本策略不适用"）；' +
+    '<code>ATRC_RULE.gateOn = false</code> 完全关闭（回到 2026-09-27 定稿，用于<b>过滤前 vs 过滤后</b>对比）。' +
+    '<b>闸门只拦开仓</b>，已在仓头寸的离场 / 持有纪律不受影响。<br>' +
+    '<b>⚠️ 与 2026-09-27「ATR% 不作为买入门槛」的关系（别读成把取消的东西加回来）</b>：' +
+    '当年取消的是 <b>ATR% ≥ X 的单向最低门槛</b>（越高越好 → 人为制造信号稀有）；' +
+    '本次加的是 <b>ATR% 落在 [' + ATRC_RULE.atrPctSweet[0] + ', ' + ATRC_RULE.atrPctSweet[1] +
+    '] 的双向甜区</b>（太高太低都不行）—— 是<b>适配性</b>不是<b>优越性</b>。<br>' +
     '纯技术量化模型，极端行情失效，不构成投资建议。</div></details></div>';
   return h;
 }
@@ -17115,7 +17417,7 @@ function powSyncCold() {
    · 逐日回放只用该日及之前的数据（s4kBuyDay 内部 slice(0, t+1)），无未来函数；
    · 买入假设 = 买点日尾盘收盘价；T+N = 买点后第 N 个交易日收盘价收益；「至今」= 最新交易日收盘价收益；
    · 最大浮盈/浮亏 = 买点次日起至今 区间最高价/最低价 对买入价的收益（理想成交价，只衡量"给过多少空间"）；
-   · 离场信号 = 买入后首个「连续 2 日收盘跌破 MA5 或一票否决」的交易日（复用 s4kBuyDay().hold，s4kGuards 同口径）；
+   · 离场信号 = **四条离场策略各自回放后择优**的那一天（取最终盈亏最大 / 亏损最小；相同取更早）：⓪ 盘中止损 5%（当日最低价 ≤ 买价×0.95，盘中触发，成交价 = 止损价 / 跳空低开按开盘价）；① 连续 2 日收盘跌破 MA5 或一票否决（复用 s4kBuyDay().hold，s4kGuards 同口径）；② 最大浮盈回撤 7%（峰值 = 区间最高价浮盈，当日浮盈按收盘价，相差 ≥7 个百分点）；③ 收盘价跌破买入价 5%（收盘确认口径）；
    · 股票池 = 📈涨停池近10日并集 + ⭐自选（复用 ZTPL / wlGet，未拉过则先拉）；日K 腾讯前复权 260 根，会话内缓存；
      逐日回放每只约 10 次 s4kCalc/kdjState（各 O(n)），批量并发 4 —— 约 200 只 1~3 分钟（取决于行情通道）。 */
 var BT = { running: false, stop: false, done: false, rows: [], failN: 0,
@@ -17332,6 +17634,188 @@ function btT1Reason(r) {
   return { main: main, aux: aux };
 }
 
+/* ================= 买点四因子（2026-10-02 用户口径 · 盈亏两端多因子对比用）=================
+   新增对比维度：KDJ / MACD / 买点附近量能 / ATR 通道位置。四条纪律：
+   ① **全部取买点日口径**：KDJ/MACD 是递推指标 → 全序列算一次再按索引取 t2，与「截到 t2 重算」逐值相等
+      （因果量，无未来函数；与 btScanStock 里 MA5 前缀共享数组同构，只是省掉逐日切片开销）。
+   ② **量能只比买点日及之前**（vol ÷ 前 5 日均量，不含当日）——买点之后的量是未来信息，绝不能进因子。
+   ③ **K/D 初值 50、EMA 用前 n 根 SMA 起算**（与平台 kdjSeries / atrcEMA 同口径），不另造一套参数。
+   ④ 任一因子算不出 → 该笔该因子为 null，**不进分母、也不冒充 0**（数据缺口约定）。 */
+function btEMA(vals, n) {
+  var out = [], buf = [], prev = null, k = 2 / (n + 1), i, j, s;
+  for (i = 0; i < vals.length; i++) {
+    var v = vals[i];
+    if (v == null || !isFinite(v)) { out.push(prev); continue; }   /* 前导空值跳过，不污染递推 */
+    buf.push(v);
+    if (prev == null) {
+      if (buf.length < n) { out.push(null); continue; }
+      s = 0;
+      for (j = buf.length - n; j < buf.length; j++) s += buf[j];
+      prev = s / n;                                                /* 首值 = 前 n 个有效值 SMA（atrcEMA 同源） */
+    } else {
+      prev = (v - prev) * k + prev;
+    }
+    out.push(prev);
+  }
+  return out;
+}
+/* MACD 序列（12 / 26 / 9，柱 = 2×(DIF−DEA)，通达信·同花顺通用口径） */
+function btMacdSeries(klines) {
+  var closes = [], i;
+  for (i = 0; i < klines.length; i++) closes.push(klines[i].close);
+  var e12 = btEMA(closes, 12), e26 = btEMA(closes, 26), dif = [], dea, bar = [];
+  for (i = 0; i < closes.length; i++) dif.push((e12[i] != null && e26[i] != null) ? (e12[i] - e26[i]) : null);
+  dea = btEMA(dif, 9);
+  for (i = 0; i < closes.length; i++) bar.push((dif[i] != null && dea[i] != null) ? 2 * (dif[i] - dea[i]) : null);
+  return { dif: dif, dea: dea, bar: bar, n: closes.length };
+}
+/* 买点日 MACD 快照：交叉（DIF 上穿/下穿 DEA）+ 距最近交叉几根 + 柱值 + 是否在零轴上。
+   柱值按**收盘价归一**（bar ÷ close × 100）——DIF 绝对值随股价量级变化，跨股横比必须归一。 */
+function btMacdAt(M, i) {
+  if (!M || i == null || i >= M.n || M.dif[i] == null || M.dea[i] == null) return null;
+  var cross = '', cb = -1, t, a0, a1;
+  for (t = i; t >= 1; t--) {
+    a0 = (M.dif[t - 1] != null && M.dea[t - 1] != null) ? (M.dif[t - 1] - M.dea[t - 1]) : null;
+    a1 = (M.dif[t] != null && M.dea[t] != null) ? (M.dif[t] - M.dea[t]) : null;
+    if (a0 == null || a1 == null) break;
+    if (a0 <= 0 && a1 > 0) { cross = 'gold'; cb = i - t; break; }
+    if (a0 >= 0 && a1 < 0) { cross = 'dead'; cb = i - t; break; }
+  }
+  return { dif: M.dif[i], dea: M.dea[i], bar: M.bar[i], cross: cross, crossBars: cb,
+    above0: M.dif[i] > 0, red: M.bar[i] > 0 };
+}
+/* 买点日 KDJ 快照（D 值 + 低位/中位/高位 + 金叉/死叉/多头/空头，与 kdjState 同口径）
+   ★ 起算点与 kdjState 同源（S.n < KDJ_RULE.minBars 不出值），别在样本开头给出"K/D 初值 50"的伪读数。 */
+function btKdjAt(S, i) {
+  if (!S || i == null || i >= S.n || S.n < KDJ_RULE.minBars) return null;
+  if (S.D[i] == null || !isFinite(S.D[i])) return null;
+  var zone = (S.D[i] < KDJ_RULE.lowMax) ? 'low' : ((S.D[i] > KDJ_RULE.highMin) ? 'high' : 'mid');
+  var cross = '', cb = -1, t, a0, a1;
+  for (t = i; t >= 1; t--) {
+    a0 = S.K[t - 1] - S.D[t - 1]; a1 = S.K[t] - S.D[t];
+    if (a0 <= 0 && a1 > 0) { cross = 'gold'; cb = i - t; break; }
+    if (a0 >= 0 && a1 < 0) { cross = 'dead'; cb = i - t; break; }
+  }
+  var sig = (cross && cb >= 0 && cb <= KDJ_RULE.freshBars) ? cross : ((S.K[i] >= S.D[i]) ? 'bull' : 'bear');
+  return { k: S.K[i], d: S.D[i], j: S.J[i], zone: zone, cross: cross, crossBars: cb, sig: sig };
+}
+/* 买点日量能：当日成交 ÷ 前 5 日均量（不含当日，与平台 volRatio 同口径） */
+function btVolX(klines, i, n) {
+  n = n || 5;
+  var v = (klines[i] && klines[i].volume != null) ? Number(klines[i].volume) : null;
+  if (v == null || !(v > 0)) return null;
+  var s = 0, c = 0, m;
+  for (m = i - n; m < i; m++) {
+    if (m < 0) continue;
+    var vv = Number(klines[m].volume);
+    if (vv > 0) { s += vv; c++; }
+  }
+  return (c > 0 && s > 0) ? v / (s / c) : null;
+}
+/* 四因子一次性求解（买点日口径）。ac = 调用方已算好的 atrcCalc 结果（复用，不重复计算） */
+function btBuyFactors(klines, t2, ac, kdjS, macdS) {
+  var o = { kdjD: null, kdjZone: '', kdjSig: '', kdjCross: '',
+    macdBar: null, macdBarPct: null, macdAbove0: null, macdRed: null, macdCross: '', macdCrossBars: null,
+    volX5: null, atrPosN: null, atrPos: '' };
+  var kd = null, mcd = null;
+  try { kd = btKdjAt(kdjS || kdjSeries(klines), t2); } catch (eK) { kd = null; }
+  if (kd) { o.kdjD = kd.d; o.kdjZone = kd.zone; o.kdjSig = kd.sig; o.kdjCross = kd.cross; }
+  try { mcd = btMacdAt(macdS || btMacdSeries(klines), t2); } catch (eM) { mcd = null; }
+  if (mcd) {
+    o.macdBar = mcd.bar; o.macdAbove0 = mcd.above0; o.macdRed = mcd.red;
+    o.macdCross = mcd.cross; o.macdCrossBars = (mcd.crossBars >= 0 ? mcd.crossBars : null);
+    var c0 = (klines[t2] && klines[t2].close > 0) ? klines[t2].close : null;
+    o.macdBarPct = (c0 && mcd.bar != null && isFinite(mcd.bar)) ? (mcd.bar / c0 * 100) : null;
+  }
+  try { o.volX5 = btVolX(klines, t2, 5); } catch (eV) {}
+  /* ATR 通道位置：距中轨几个 ATR（(收盘−中轨)÷ATR）+ 相对入场轨（中轨 ±1.5×ATR）的四分区
+     —— 与 ATR 通道卡同源（atrcCalc），轨道基准是**入场轨**不是破位轨，别读成买卖线。 */
+  var a = ac;
+  if (!a || !a.ok) { try { a = atrcCalc(klines, t2); } catch (eA) { a = null; } }
+  if (a && a.ok && a.atr > 0 && a.mid > 0 && klines[t2] && klines[t2].close != null) {
+    o.atrPosN = (klines[t2].close - a.mid) / a.atr;
+    o.atrPos = a.pos || '';
+  }
+  return o;
+}
+
+/* ★ 2026-10-02（用户要求）：离场策略共 **4 条**；**每条独立回放一遍，取"结果最好"的那条离场**
+   —— 用户口径原话：「所有的离场策略，可以获得最大盈利、最小亏损的自动匹配哪个策略离场」。
+   即：每条策略各自算出自己的离场日 + 成交价 → 比较最终盈亏 → 取**盈亏最大**（盈利最大 / 亏损最小）的一条。
+   ⚠ 这是**事后择优（best-of-exits）**口径，是纪律化执行的**收益上界**，不是实盘可达结果 ——
+      实盘在离场当天并不知道哪条策略事后最优。页面口径说明里已明确标注「事后择优 · 上界」。
+   四条策略（判据不变，只是不再「命中即停」，而是各跑各的完整回放）：
+   ⓪ 盘中止损 5% —— 当日最低价 ≤ 买价 × 0.95 即离场（盘中触发，不看收盘）。
+      成交价：跳空低开（开盘已低于止损价）→ 按开盘价成交；否则按止损价成交。
+   ① 连续 2 日收盘跌破 MA5 / 一票否决 —— s4kGuards 同口径（与详情页四指标纪律同一把尺子），成交价 = 当日收盘
+   ② 最大浮盈回撤 7% —— 峰值浮盈取「买点次日起区间最高价」（与结果表「最大浮盈」列同源），
+      当日浮盈按**收盘价**确认；两者相差 ≥ 7 个百分点即离场（收盘确认，盘中插针不算）
+   ③ 跌破买入价 5% —— 收盘价 ≤ 买价 × 0.95（收盘确认口径，盘中插针不算）
+      注：日K完整时 ⓪ 恒先于 ③ 触发（收盘价 ≥ 最低价），但择优下 ③ 仍会作为候选参与比较
+      （两者成交价不同：③ 按收盘、⓪ 按止损价/开盘价 → 收盘价可能更高 → ③ 反而更优，这正是择优的意义）。
+   择优规则：先比最终盈亏 r（大者胜）→ r 相同取**更早**离场日（资金效率）→ 再相同按 ⓪>①>②>③ 记一条。
+   参数集中在这里，改口径只改这里（BT_EXIT.intraPct / ddPct / stopPct）。 */
+var BT_EXIT = { intraPct: 5, ddPct: 7, stopPct: 5 };
+
+/* 四条离场策略**各自独立**回放一遍 → 候选集（每条只记自己**首次**命中那一天）。
+   days = s4kBuyDay 逐日结果（可选，① 用；缺失则 ① 不参与）。
+   无未来函数：只用到第 s 日及之前的开高低收与第 s 日的持有状态（peak 也是截至当日的累计最高）。 */
+function btExitCands(klines, t2, buy, days) {
+  var out = { cands: [], peak: null };
+  if (!klines || !(buy > 0)) return out;
+  var n = klines.length, peak = null, got = {};
+  var stopPx = buy * (1 - BT_EXIT.intraPct / 100);
+  for (var s = t2 + 1; s < n; s++) {
+    var k = klines[s]; if (!k) continue;
+    var o = k.open, h = k.high, l = k.low, c = k.close;
+    /* ⓪ 盘中止损（盘中触发，不看收盘） */
+    if (!got.a && l != null && isFinite(l) && l <= stopPx) {
+      got.a = true;
+      out.cands.push({ rank: 0, why: '盘中止损' + BT_EXIT.intraPct + '%', day: s,
+        px: (o != null && isFinite(o) && o <= stopPx) ? o : stopPx });
+    }
+    if (h != null && isFinite(h)) { var hp = (h / buy - 1) * 100; if (peak == null || hp > peak) peak = hp; }
+    /* ① s4kGuards 持有状态中断（收盘口径） */
+    if (!got.b && days && days[s] && !days[s].hold) {
+      got.b = true;
+      out.cands.push({ rank: 1, why: days[s].veto ? '一票否决' : '连续2日破MA5', day: s, px: c });
+    }
+    /* ② 回撤 / ③ 破买价（同为收盘确认，独立判断 —— 不再互斥） */
+    if (c != null && isFinite(c)) {
+      var cp = (c / buy - 1) * 100;
+      if (!got.c && peak != null && peak - cp >= BT_EXIT.ddPct) {
+        got.c = true; out.cands.push({ rank: 2, why: '浮盈回撤' + BT_EXIT.ddPct + '%', day: s, px: c });
+      }
+      if (!got.d && cp <= -BT_EXIT.stopPct) {
+        got.d = true; out.cands.push({ rank: 3, why: '跌破买价' + BT_EXIT.stopPct + '%', day: s, px: c });
+      }
+    }
+  }
+  out.peak = peak;
+  return out;
+}
+
+/* 离场择优：在四条策略的候选中取「最终盈亏最大」的一条（盈利最大 / 亏损最小）。
+   返回 { day, why, px, peak, cands, best }；四条全不触发 → day = -1（持有至今）。 */
+function btExitScan(klines, t2, buy, days) {
+  var out = { day: -1, why: '', px: null, peak: null, cands: [], best: null };
+  var C = btExitCands(klines, t2, buy, days);
+  out.cands = C.cands; out.peak = C.peak;
+  var best = null;
+  for (var i = 0; i < C.cands.length; i++) {
+    var cd = C.cands[i];
+    var r = (cd.px != null && isFinite(cd.px) && buy > 0) ? (cd.px / buy - 1) * 100 : null;
+    cd.r = r;
+    if (r == null) continue;
+    if (best == null) { best = cd; continue; }
+    if (r > best.r + 1e-9) best = cd;                                             /* 盈亏更大 → 换 */
+    else if (Math.abs(r - best.r) <= 1e-9 &&
+      (cd.day < best.day || (cd.day === best.day && cd.rank < best.rank))) best = cd;  /* 同收益 → 更早 / 优先级高 */
+  }
+  if (best) { out.day = best.day; out.why = best.why; out.px = best.px; out.best = best; }
+  return out;
+}
+
 /* 单只回放：近 BT_WIN 个交易日逐日回放 → 每个买点一行前向统计（多策略：每个策略命中各记一行）。
    返回 null = 数据不足（s4kCalc 起算点之前，无法回放）；返回 [] = 可回放但窗口内无买点。 */
 function btScanStock(klines, meta, skip, strats, win) {
@@ -17346,6 +17830,10 @@ function btScanStock(klines, meta, skip, strats, win) {
   /* 共享前缀数组：MA5/10/20 为因果量（只依赖当日及之前数据）→ 全序列计算一次，逐日取值与逐日前缀等价 */
   var closesB = klines.map(function (k) { return k.close; });
   var pre = { closes: closesB, ma5: calcMA(closesB, 5), ma10: calcMA(closesB, 10), ma20: calcMA(closesB, 20) };
+  /* 四因子序列：KDJ / MACD 全量算一次（因果递推量 → 第 t2 项 ≡ 截到 t2 重算，避免逐买点重复切片） */
+  var fxK = null, fxM = null;
+  try { fxK = kdjSeries(klines); } catch (eFK) { fxK = null; }
+  try { fxM = btMacdSeries(klines); } catch (eFM) { fxM = null; }
   for (var t2 = i0; t2 < n; t2++) {
     var isToday = (t2 === n - 1);
     var buy = klines[t2].close;
@@ -17380,12 +17868,10 @@ function btScanStock(klines, meta, skip, strats, win) {
     var prevC = (t2 > 0 && klines[t2 - 1].close != null) ? klines[t2 - 1].close : null;
     var dayChg = (prevC && isFinite(prevC) && prevC > 0) ? (klines[t2].close / prevC - 1) * 100 : null;
     if (dayChg != null && dayChg >= boardOf(meta.code).zt) { if (skip) skip.n++; continue; }
-    /* 离场日 = 买入后首个 !hold 日（统一 s4kGuards 口径 —— 四个策略同一条离场规则，才有同轨对比）；
+    /* 离场日 = **四条离场策略各自回放后择优**的那一天（2026-10-02 用户口径：取最大盈利 / 最小亏损的一条）；
        全部统计一律截断在离场日（含）——2026-09-30 用户口径：触发离场后不再统计盈亏。 */
-    var exitDay = -1, exitWhy = '';
-    for (var s = t2 + 1; s < n; s++) {
-      if (days[s] && !days[s].hold) { exitDay = s; exitWhy = days[s].veto ? '一票否决' : '连续2日破MA5'; break; }
-    }
+    var ex = btExitScan(klines, t2, buy, days);
+    var exitDay = ex.day, exitWhy = ex.why;
     var cap = exitDay < 0 ? n - 1 : exitDay;
     var closeAt = function (k) { var x = t2 + k; return (x <= cap && klines[x] && klines[x].close != null) ? klines[x].close : null; };
     var pct = function (x) { return (x == null || !isFinite(x)) ? null : (x / buy - 1) * 100; };
@@ -17396,11 +17882,24 @@ function btScanStock(klines, meta, skip, strats, win) {
       if (l != null && isFinite(l) && (lo == null || l < lo)) lo = l;
     }
     var mh = pct(hi), ml = pct(lo);
-    /* 最终盈亏：已离场 = 离场日收盘盈亏；未离场 = 最大浮盈（未触发离场按区间最高点估算，理想成交） */
-    var rFinal = exitDay >= 0 ? pct(klines[exitDay].close) : mh;
-    /* 因子：ATR%（买点日，atrcCalc 同源） */
-    var ap = null;
-    try { var ac = atrcCalc(klines, t2); if (ac && ac.ok && ac.atrPct != null) ap = ac.atrPct; } catch (eA) {}
+    /* 最终盈亏：已离场 = **择优策略**的离场成交价盈亏（⓪ 盘中止损按止损价/跳空开盘价成交，①②③ 按当日收盘价）；
+       未离场 = 最大浮盈（未触发离场按区间最高点估算，理想成交）。 */
+    var exitPx = (exitDay >= 0 && ex.px != null && isFinite(ex.px)) ? ex.px : (exitDay >= 0 ? klines[exitDay].close : null);
+    var rFinal = exitDay >= 0 ? pct(exitPx) : mh;
+    /* 离场候选明细（四条策略各自的结果，供表格 title 展示"为什么选这条"） */
+    var exitAll = '';
+    try {
+      exitAll = (ex.cands || []).map(function (cd) {
+        return cd.why + ' ' + (klines[cd.day] && klines[cd.day].date ? klines[cd.day].date : ('T+' + (cd.day - t2))) +
+          ' ' + (cd.r == null ? '—' : (cd.r > 0 ? '+' : '') + cd.r.toFixed(2) + '%') + (cd === ex.best ? '★' : '');
+      }).join(' / ');
+    } catch (eEA) { exitAll = ''; }
+    /* 因子：ATR%（买点日，atrcCalc 同源）+ KDJ / MACD / 买点量能 / ATR 通道位置（四因子，买点日口径） */
+    var ap = null, acx = null;
+    try { acx = atrcCalc(klines, t2); if (acx && acx.ok && acx.atrPct != null) ap = acx.atrPct; } catch (eA) { acx = null; }
+    var fx = null;
+    try { fx = btBuyFactors(klines, t2, acx, fxK, fxM); } catch (eF) { fx = {}; }
+    if (!fx) fx = {};
     /* T+1 特征（深亏归因用）：t2 < n-1 ⇒ T+1 必存在 */
     var k1 = klines[t2 + 1];
     var rng0 = (klines[t2].high != null && klines[t2].low != null) ? (klines[t2].high - klines[t2].low) : null;
@@ -17418,14 +17917,92 @@ function btScanStock(klines, meta, skip, strats, win) {
         maxHi: mh, maxLo: ml,
         rFinal: rFinal,
         atrPct: ap, stage: meta.stage || '', turnover: meta.turnover,
+        kdjD: fx.kdjD, kdjZone: fx.kdjZone || '', kdjSig: fx.kdjSig || '',
+        macdBarPct: fx.macdBarPct, macdAbove0: fx.macdAbove0, macdRed: fx.macdRed,
+        macdCross: fx.macdCross || '', macdCrossBars: fx.macdCrossBars,
+        volX5: fx.volX5, atrPosN: fx.atrPosN, atrPos: fx.atrPos || '',
         holding: exitDay < 0,
         exit: exitDay < 0 ? '' : ((klines[exitDay].date || '') + '·' + exitWhy),
+        exitAll: exitAll, exitN: (ex.cands || []).length,
         t1Gap: t1Gap, t1CloseGap: pct(k1.close), t1Hi: t1Hi, t1VolX: t1VolX,
         buyChg: dayChg, buyPos: (rng0 > 0) ? (buy - klines[t2].low) / rng0 : null
       });
     }
   }
   return rows;
+}
+
+/* ================= 止盈口径对比（2026-10-02 用户要求：分批止盈 vs 一直持仓到离场） =================
+   两条腿共用**同一套**入场（四指标买点 s4kBuyDay ≥62 且 !veto）与**同一套**离场（四条策略择优 btExitScan），
+   唯一变量是「卖出方式」，对比才有意义：
+   · hold（一直持仓到离场）：全仓持有到 exitDay，按离场成交价**一次**卖出 —— 收益 = 工作台现有 rFinal 口径。
+   · tp（分批止盈 · R 驱动融资线）：+1R 减 50%（**融资点**：减 50% × 1R = 剩余 50% × 1R，剩余仓位打回
+     初始止损时净额为 0，融资线 f = 1/(1+m) 在 m=1 时的解）→ +2R 再减**剩余的一半** →
+     剩下 25% 沿用同一条离场规则。
+   1R = 初始止损距离 = BT_TP.rPct（%，默认与工作台盘中止损 BT_EXIT.intraPct 同幅）——与离场端同一把尺子，
+   止盈档位按 R 计价而非固定百分比 → 跨股（不同波动率）可比。
+   成交价口径（与离场端 ⓪ 盘中止损**对称**）：跳空高开越过目标价 → 按**开盘价**成交；否则按**目标价**成交。
+   无未来函数：逐日推进，只用第 s 日及之前的开/高；离场日与成交价沿用 btExitScan（择优=事后上界口径）。
+   ⚠ 未离场（持有至今）笔：holdR/tpR 与工作台同口径（按区间最高价，理想成交）；holdMark/tpMark 是
+     市值口径（按末根收盘价）——前者保证"唯一变量是卖出方式"，后者是更保守的真实可变现口径。 */
+var BT_TP = { rPct: 5, cut1: 0.5, cut2: 0.5 };
+
+/* 单笔买点的两种止盈口径模拟。返回 { holdR, tpR, diff, holdMark, tpMark, legs, exitDay, exitWhy, peak } */
+function btTpSim(klines, t2, buy, days) {
+  var out = { holdR: null, tpR: null, diff: null, holdMark: null, tpMark: null, legs: [],
+    exitDay: -1, exitWhy: '', peak: null, tp1: null, tp2: null, wRest: 1 };
+  if (!klines || !(buy > 0) || t2 == null || t2 < 0 || t2 >= klines.length) return out;
+  var ex = btExitScan(klines, t2, buy, days);
+  var n = klines.length, cap = ex.day < 0 ? n - 1 : ex.day;
+  out.exitDay = ex.day; out.exitWhy = ex.why; out.peak = ex.peak;
+  var R = (BT_TP && BT_TP.rPct > 0) ? BT_TP.rPct : BT_EXIT.intraPct;
+  var tp1 = buy * (1 + R / 100), tp2 = buy * (1 + 2 * R / 100);
+  out.tp1 = tp1; out.tp2 = tp2;
+  var pctOf = function (x) { return (x == null || !isFinite(x) || !(buy > 0)) ? null : (x / buy - 1) * 100; };
+  var exitPxW = (ex.day >= 0) ? ((ex.px != null && isFinite(ex.px)) ? ex.px
+    : (klines[ex.day] ? klines[ex.day].close : null)) : null;
+  out.holdR = (ex.day >= 0) ? pctOf(exitPxW) : ex.peak;
+  /* 逐日推进找两档止盈（盘中触及即成交；离场日当天也判 —— 盘中先到止盈价就先成交） */
+  var leg1 = null, leg2 = null;
+  for (var s = t2 + 1; s <= cap; s++) {
+    var k = klines[s]; if (!k) continue;
+    var o = k.open, h = k.high;
+    if (h == null || !isFinite(h)) continue;
+    if (!leg1 && h >= tp1) leg1 = { day: s, date: k.date || '', px: (o != null && isFinite(o) && o > tp1) ? o : tp1 };
+    if (!leg2 && h >= tp2) leg2 = { day: s, date: k.date || '', px: (o != null && isFinite(o) && o > tp2) ? o : tp2 };
+  }
+  var c1 = (BT_TP && BT_TP.cut1 != null) ? BT_TP.cut1 : 0.5;
+  var c2 = (BT_TP && BT_TP.cut2 != null) ? BT_TP.cut2 : 0.5;
+  var w1 = leg1 ? c1 : 0, w2 = leg2 ? (1 - c1) * c2 : 0;
+  var wRest = 1 - w1 - w2;
+  out.wRest = wRest;
+  /* 剩余仓位：沿用同一条离场规则；未离场时与 hold 腿同口径（区间最高价），保证只比"卖出方式" */
+  var restPx = null, restMark = null;
+  var lastC = (klines[n - 1] && klines[n - 1].close != null) ? klines[n - 1].close : null;
+  var markPx = (ex.day >= 0) ? exitPxW : lastC;
+  if (wRest > 1e-9) {
+    restPx = (ex.day >= 0) ? exitPxW : ((ex.peak != null && isFinite(ex.peak)) ? buy * (1 + ex.peak / 100) : null);
+    restMark = markPx;
+  }
+  out.holdMark = pctOf(markPx);
+  var pr1 = leg1 ? pctOf(leg1.px) : null, pr2 = leg2 ? pctOf(leg2.px) : null;
+  var prR = pctOf(restPx), prM = pctOf(restMark);
+  /* 加权合成（权重和恒 = 1）：任一条腿缺价 → 该口径整体为 null（不拿 0 冒充）。
+     ⚠ 无档位触发时 wRest = 1 → tpR 直接等于剩余腿收益 ≡ holdR（两腿必须相同，否则是 bug）。 */
+  var mix = function (rest) {
+    var s = 0, bad = false;
+    if (w1 > 0) { if (pr1 == null) bad = true; else s += w1 * pr1; }
+    if (w2 > 0) { if (pr2 == null) bad = true; else s += w2 * pr2; }
+    if (wRest > 1e-9) { if (rest == null) bad = true; else s += wRest * rest; }
+    return bad ? null : s;
+  };
+  out.tpR = mix(prR);
+  out.tpMark = mix(prM);
+  if (out.holdR != null && out.tpR != null) out.diff = out.tpR - out.holdR;
+  if (leg1) out.legs.push({ tag: '+1R', w: w1, day: leg1.day, date: leg1.date, px: leg1.px, r: pr1 });
+  if (leg2) out.legs.push({ tag: '+2R', w: w2, day: leg2.day, date: leg2.date, px: leg2.px, r: pr2 });
+  if (wRest > 1e-9) out.legs.push({ tag: '剩余', w: wRest, day: ex.day, date: (ex.day >= 0 && klines[ex.day]) ? (klines[ex.day].date || '') : (klines[n - 1] ? (klines[n - 1].date || '') : ''), px: restPx, r: prR });
+  return out;
 }
 
 /* 日K：腾讯前复权 260 根（与涨停池「分析全部」同通道），会话内缓存 —— 重复渲染 / 换排序不重拉 */
@@ -17495,6 +18072,19 @@ function btRender() {
     chip('最终胜率', fins.length ? (finWinN + '/' + fins.length + '（' + (finWinN / fins.length * 100).toFixed(0) + '%）') : '—') +
     chip('盈亏比', plr == null ? '—' : plr.toFixed(2), plr == null ? '' : (plr >= 1 ? 'up' : 'dn'),
       '所有获利股票的平均盈利 ÷ 所有亏损股票的平均亏损（按最终盈亏）；≥1 为正期望区') +
+    /* ★ 2026-10-02：离场策略择优 → 让用户一眼看到"哪条策略最常被选中" */
+    (function () {
+      var cnt = {}, tot = 0;
+      BT.rows.forEach(function (r) {
+        if (r.holding) return;
+        var w = String(r.exit || '').split('·')[1] || '未知';
+        cnt[w] = (cnt[w] || 0) + 1; tot++;
+      });
+      if (!tot) return '';
+      var keys = Object.keys(cnt).sort(function (a, b) { return cnt[b] - cnt[a]; });
+      return chip('离场策略分布', keys.map(function (k) { return k + ' ' + cnt[k]; }).join(' / '), '',
+        '四条离场策略各自回放一遍，取最终盈亏最大的那条离场（事后择优 · 收益上界）；共 ' + tot + ' 笔已离场');
+    })() +
     chip('最大浮盈', fmt(his.length ? Math.max.apply(null, his) : null), 'up') +
     chip('最大浮亏', fmt(los.length ? Math.min.apply(null, los) : null), 'dn') +
     '</div>';
@@ -17521,9 +18111,11 @@ function btRender() {
       '<td>' + btPct(r.r1) + '</td><td>' + btPct(r.r2) + '</td><td>' + btPct(r.r3) + '</td><td>' + btPct(r.r5) + '</td>' +
       '<td>' + btPct(r.maxHi) + '</td><td>' + btPct(r.maxLo) + '</td>' +
       '<td>' + btPct(r.rFinal) + '</td>' +
-      '<td style="font-size:11.5px">' + (r.holding
+      '<td style="font-size:11.5px" title="' + esc(r.exitAll || (r.holding ? '四条离场策略全未触发 → 持有至今' : '')) + '">' + (r.holding
         ? '<span class="up">持有至今</span>'
-        : '<span class="dn">离场 ' + esc(r.exit) + '</span>') + '</td>' +
+        : '<span class="dn">离场 ' + esc(r.exit) + '</span>' +
+          /* 多条候选 → 标出「几条里择优」+ 选中原因，鼠标悬停看四条各自的结果 */
+          (r.exitN > 1 ? ' <span class="badge b-r" style="font-size:10px">择优 ' + r.exitN + ' 选 1</span>' : '')) + '</td>' +
       '</tr>';
     if (BT.open && BT.open[r.code]) {
       h += '<tr class="batch-detail" data-btd="' + esc(r.code) + '"><td colspan="15">' + btDetailInner(r.code) + '</td></tr>';
@@ -17531,12 +18123,12 @@ function btRender() {
   });
   h += '</tbody></table></div>' +
     '<div class="note" style="font-size:11.5px;color:var(--muted);margin-top:8px">买点 = 各策略当日买入判据命中（见下方口径说明）；同一只股票多日连续触发逐日各记一行，多策略同日命中各记一行。买入价 = 买点日收盘价。' +
-    '<b>离场即截断：</b>触发离场后不再统计盈亏——T+N、最大浮盈/浮亏全部只算到离场日（含）；' +
-    '<b>最终盈亏</b> = 已离场 → 离场日收盘盈亏，未离场（持有至今）→ 最大浮盈（未触发离场按区间最高点估算，理想成交）。' +
+    '<b>离场即截断：</b>触发离场后不再统计盈亏——T+N、最大浮盈/浮亏全部只算到离场日（含）；最终盈亏 = <b>离场成交价</b>对买入价的收益（⓪ 盘中止损按止损价成交、跳空低开按开盘价成交，①②③ 按当日收盘价）；' +
+    '<b>最终盈亏</b> = 已离场 → 离场成交价盈亏（四条策略择优后的那条），未离场（持有至今）→ 最大浮盈（未触发离场按区间最高点估算，理想成交）。' +
     '<b>盈亏比</b> = 所有获利股票的平均盈利 ÷ 所有亏损股票的平均亏损（按最终盈亏）。' +
     '买点日收盘涨停（封板）的信号已剔除——尾盘按收盘价买不进，且会虚高胜率' + (BT.skipZtN > 0 ? ('（本次剔除 ' + BT.skipZtN + ' 条）') : '') + '。' +
     '买点日 = 最新交易日（当天刚触发）的信号已剔除——还没有任何后续走势，等下一交易日收盘后自然有 T+1 可看' + (BT.skipTodayN > 0 ? ('（本次剔除 ' + BT.skipTodayN + ' 条）') : '') + '。' +
-    '离场信号 = 买入后首个「连续 2 日收盘跌破 MA5 或一票否决」日（s4kGuards 同口径，四策略同轨）；点击任意一行可展开该股完整详情。' +
+    '<b>离场择优：</b>四条离场策略（⓪ 盘中止损 5%（当日最低价 ≤ 买价×0.95，盘中触发）/ ① 连续 2 日收盘跌破 MA5 或一票否决 / ② 最大浮盈回撤 7% / ③ 收盘跌破买入价 5%）各自回放一遍，取<b>最终盈亏最大</b>的那条离场（盈利最大 / 亏损最小；盈亏相同取更早的一天）——<b>事后择优</b>，是纪律化执行的<b>收益上界</b>，不是实盘可达结果；四条全不触发 → 持有至今。表格「持有状态」列标「择优 N 选 1」，悬停可看四条各自的结果（★ = 选中）；汇总条「离场策略分布」看哪条最常被选中；四策略同轨。点击任意一行可展开该股完整详情。' +
     (BT.failN ? ('另有 ' + BT.failN + ' 只日K取数失败未计入。') : '') + '</div>';
   box.innerHTML = sum + h + btStratCompare() + btBadT1Section() + btFactorSection();
 }
@@ -17626,13 +18218,64 @@ function btBadT1Section() {
   return h;
 }
 
-/* 盈亏两端 · 多因子对比（2026-09-30 用户口径）：按最终盈亏分成盈利组 / 亏损组，
-   对比生命周期（当前，judgeStage 同源）、ATR%（买点日，atrcCalc 同源）、换手率（最新快照，腾讯 a[38]）、所属行业（涨停池 hybk） */
+/* 盈亏两端 · 多因子对比（2026-09-30 用户口径 + 2026-10-02 四因子扩展）：按最终盈亏分成盈利组 / 亏损组。
+   因子 8 项：生命周期（当前，judgeStage 同源）、ATR%（买点日，atrcCalc 同源）、换手率（最新快照，腾讯 a[38]）、
+   所属行业（涨停池 hybk）、KDJ（买点日，kdjSeries 同源）、MACD（买点日，12/26/9，柱 = 2×(DIF−DEA)）、
+   买点量能（买点日成交 ÷ 前 5 日均量）、ATR 通道位置（买点日，(收盘−中轨)÷ATR + 相对入场轨四分区）。
+   ★ 全部因子取**买点日**口径（KDJ/MACD 是递推因果量 → 全序列第 t2 项 ≡ 截到 t2 重算），量能只比买点日及之前。 */
+var BT_FX_KDJ_ZONE = { low: '低位 D<30', mid: '中位', high: '高位 D>70' };
+var BT_FX_KDJ_SIG = { gold: '金叉', dead: '死叉', bull: '多头', bear: '空头' };
+var BT_FX_ATR_POS = { above: '上轨上方', upper: '上半区', lower: '下半区', below: '下轨下方' };
+/* 均值：只有该因子有值的笔进分母（缺失不冒充 0） */
+function btFxMean(arr, key) {
+  var s = 0, c = 0, i, v;
+  for (i = 0; i < arr.length; i++) {
+    v = arr[i][key];
+    if (v != null && isFinite(v)) { s += v; c++; }
+  }
+  return c ? s / c : null;
+}
+/* 布尔因子占比（macdRed / macdAbove0 …）：null 视为该笔缺失，不进分母 */
+function btFxRate(arr, key) {
+  var c = 0, tot = 0, i, v;
+  for (i = 0; i < arr.length; i++) {
+    v = arr[i][key];
+    if (v == null || v === '') continue;
+    tot++;
+    if (v === true || v === 1 || v === '1') c++;
+  }
+  return tot ? { p: c / tot * 100, c: c, n: tot } : null;
+}
+/* 分桶分布 → { txt（前 3 桶「标签 N（P%）」）, top（最大桶显示名）, n }；全缺失 → '—' */
+function btFxDist(arr, getKey, labelOf) {
+  var m = {}, order = [], i, k, tot = 0;
+  for (i = 0; i < arr.length; i++) {
+    k = getKey(arr[i]);
+    if (k == null || k === '') continue;
+    k = String(k);
+    if (m[k] == null) { m[k] = 0; order.push(k); }
+    m[k]++; tot++;
+  }
+  if (!tot) return { txt: '—', top: '', n: 0 };
+  var list = order.slice().sort(function (a, b) { return m[b] - m[a] || (a < b ? -1 : 1); });
+  var lab = function (x) { return (labelOf && labelOf[x]) ? labelOf[x] : x; };
+  return {
+    txt: list.slice(0, 3).map(function (x) { return lab(x) + ' ' + m[x] + '（' + (m[x] / tot * 100).toFixed(0) + '%）'; }).join('、'),
+    top: lab(list[0]), n: tot
+  };
+}
+/* 组间差（数值）：Δ = 盈利组 − 亏损组，涨红跌绿（与全站口径一致） */
+function btFxDelta(a, b, fmt) {
+  if (a == null || b == null) return '<span style="color:var(--dim)">—</span>';
+  var d = a - b;
+  return '<span class="mono ' + (d > 0 ? 'up' : (d < 0 ? 'dn' : 'flat')) + '">' + fmt(d) + '</span>';
+}
+function btFxSign2(v, d) { return (v > 0 ? '+' : '') + v.toFixed(d == null ? 2 : d); }
 function btFactorSection() {
   var win = BT.rows.filter(function (r) { return r.rFinal != null && r.rFinal > 0; });
   var los = BT.rows.filter(function (r) { return r.rFinal != null && r.rFinal < 0; });
   if (!win.length && !los.length) return '';
-  var mean = function (a) { return a.length ? a.reduce(function (x, y) { return x + y; }, 0) / a.length : null; };
+  var stageZone = function (k) { return (typeof ZONE_OF_STAGE !== 'undefined' && ZONE_OF_STAGE[k]) ? ZONE_OF_STAGE[k] : ''; };
   var dist = function (arr, key, zoneOf) {
     var m = {};
     arr.forEach(function (r) { var k = String(r[key] || '').trim() || '未知'; m[k] = (m[k] || 0) + 1; });
@@ -17642,25 +18285,105 @@ function btFactorSection() {
     }).sort(function (a, b) { return b.n - a.n; }).slice(0, 3)
       .map(function (x) { return x.label + ' ' + x.n + '（' + x.p.toFixed(0) + '%）'; }).join('、') || '—';
   };
-  var stageZone = function (k) { return (typeof ZONE_OF_STAGE !== 'undefined' && ZONE_OF_STAGE[k]) ? ZONE_OF_STAGE[k] : ''; };
-  var col = function (arr) {
-    return {
-      stage: dist(arr, 'stage', stageZone),
-      atr: (function () { var v = mean(arr.map(function (r) { return r.atrPct; }).filter(function (x) { return x != null && isFinite(x); })); return v == null ? '—' : v.toFixed(2) + '%'; })(),
-      turn: (function () { var v = mean(arr.map(function (r) { return r.turnover; }).filter(function (x) { return x != null && isFinite(x); })); return v == null ? '—' : v.toFixed(2) + '%'; })(),
-      ind: dist(arr, 'hybk', null)
-    };
+  var pct2 = function (v, d) { return v == null ? '—' : v.toFixed(d == null ? 2 : d) + '%'; };
+  /* 单因子：返回 { w, l, d }（盈利组串 / 亏损组串 / 差异串） */
+  var numRow = function (key, fmtV, fmtD) {
+    var a = btFxMean(win, key), b = btFxMean(los, key);
+    return { w: fmtV(a), l: fmtV(b), d: btFxDelta(a, b, fmtD) };
   };
-  var W = col(win), L = col(los);
+  var distRow = function (getKey, labelOf) {
+    var W = btFxDist(win, getKey, labelOf), L = btFxDist(los, getKey, labelOf);
+    var d = (!W.top || !L.top) ? '<span style="color:var(--dim)">—</span>'
+      : '<span style="font-size:11px">' + esc(W.top) + '<span style="color:var(--dim)"> → </span>' + esc(L.top) + '</span>';
+    return { w: W.txt, l: L.txt, d: d };
+  };
+  /* —— 逐因子 —— */
+  var stageLab = function (r) { return (r.stage && String(r.stage).trim()) ? String(r.stage).trim() + (stageZone(String(r.stage).trim()) ? '·' + stageZone(String(r.stage).trim()) : '') : ''; };
+  var F = [];
+  F.push({ n: '生命周期（当前）', r: distRow(stageLab, null) });
+  F.push({ n: 'ATR%（买点日，均值）', r: numRow('atrPct', pct2, function (v) { return btFxSign2(v) + 'pp'; }) });
+  F.push({ n: '换手率（最新，均值）', r: numRow('turnover', pct2, function (v) { return btFxSign2(v) + 'pp'; }) });
+  F.push({ n: '所属行业（前3）', r: distRow(function (r) { return String(r.hybk || '').trim() || '未知'; }, null) });
+  /* KDJ（买点日）：D 值均值 + 位置分桶 + 金叉占比 */
+  var kdjCell = function (arr) {
+    var d = btFxMean(arr, 'kdjD');
+    var z = btFxDist(arr, function (r) { return r.kdjZone; }, BT_FX_KDJ_ZONE);
+    var sg = btFxDist(arr, function (r) { return r.kdjSig; }, BT_FX_KDJ_SIG);
+    var gold = arr.filter(function (r) { return r.kdjSig === 'gold'; }).length;
+    var parts = [];
+    parts.push('D ' + (d == null ? '—' : d.toFixed(0)));
+    if (z.txt !== '—') parts.push(z.txt.split('、')[0]);
+    parts.push('金叉 ' + gold + '（' + (arr.length ? (gold / arr.length * 100).toFixed(0) : '0') + '%）');
+    var t = parts.join(' · ');
+    return t + (sg.txt !== '—' ? '<span style="color:var(--dim);font-size:11px"> ｜ ' + sg.txt + '</span>' : '');
+  };
+  var kdjN = function (arr) { return arr.filter(function (r) { return r.kdjSig; }).length; };
+  F.push({
+    n: 'KDJ（买点日）', r: {
+      w: win.length ? kdjCell(win) : '—', l: los.length ? kdjCell(los) : '—',
+      d: btFxDelta(btFxMean(win, 'kdjD'), btFxMean(los, 'kdjD'), function (v) { return btFxSign2(v, 1) + '（D 值）'; })
+    }, note: kdjN(win) + kdjN(los) ? '' : '（本轮无 KDJ 数据）'
+  });
+  /* MACD（买点日）：红柱占比 / 零轴上占比 / 柱值归一均值 / 近 5 根内金叉占比 */
+  var macdCell = function (arr) {
+    var red = btFxRate(arr, 'macdRed'), ab0 = btFxRate(arr, 'macdAbove0');
+    var bp = btFxMean(arr, 'macdBarPct');
+    var g5 = arr.filter(function (r) { return r.macdCross === 'gold' && r.macdCrossBars != null && r.macdCrossBars <= 5; }).length;
+    var tot = arr.filter(function (r) { return r.macdCross != null && r.macdCross !== ''; }).length || arr.length;
+    return '红柱 ' + (red ? red.p.toFixed(0) + '%' : '—') +
+      ' · 零轴上 ' + (ab0 ? ab0.p.toFixed(0) + '%' : '—') +
+      ' · 柱/价 ' + (bp == null ? '—' : btFxSign2(bp) + '%') +
+      ' · 近5根金叉 ' + (arr.length ? (g5 / tot * 100).toFixed(0) + '%' : '—');
+  };
+  F.push({
+    n: 'MACD（买点日）', r: {
+      w: win.length ? macdCell(win) : '—', l: los.length ? macdCell(los) : '—',
+      d: btFxDelta(btFxMean(win, 'macdBarPct'), btFxMean(los, 'macdBarPct'), function (v) { return btFxSign2(v) + 'pp（柱/价）'; })
+    }
+  });
+  /* 买点附近量能：买点日成交 ÷ 前 5 日均量（不含当日）+ ≥1.5× 占比 */
+  var volCell = function (arr) {
+    var v = btFxMean(arr, 'volX5');
+    var big = arr.filter(function (r) { return r.volX5 != null && isFinite(r.volX5) && r.volX5 >= 1.5; }).length;
+    var n = arr.filter(function (r) { return r.volX5 != null; }).length;
+    return '均值 ' + (v == null ? '—' : v.toFixed(2) + '×') + ' · ≥1.5× ' + (n ? (big / n * 100).toFixed(0) + '%' : '—');
+  };
+  F.push({
+    n: '买点量能（买点日 ÷ 前5日均量）', r: {
+      w: win.length ? volCell(win) : '—', l: los.length ? volCell(los) : '—',
+      d: btFxDelta(btFxMean(win, 'volX5'), btFxMean(los, 'volX5'), function (v) { return btFxSign2(v) + '×'; })
+    }
+  });
+  /* ATR 通道位置（买点日）：距中轨几个 ATR + 相对入场轨四分区 */
+  var atrCell = function (arr) {
+    var v = btFxMean(arr, 'atrPosN');
+    var z = btFxDist(arr, function (r) { return r.atrPos; }, BT_FX_ATR_POS);
+    return '距中轨 ' + (v == null ? '—' : btFxSign2(v) + '×ATR') + (z.txt !== '—' ? ' · ' + z.txt.split('、')[0] : '');
+  };
+  F.push({
+    n: 'ATR通道位置（买点日）', r: {
+      w: win.length ? atrCell(win) : '—', l: los.length ? atrCell(los) : '—',
+      d: btFxDelta(btFxMean(win, 'atrPosN'), btFxMean(los, 'atrPosN'), function (v) { return btFxSign2(v) + '×ATR'; })
+    }
+  });
+  var body = F.map(function (f) {
+    return '<tr><td>' + esc(f.n) + '</td>' +
+      '<td style="font-size:11.5px">' + f.r.w + '</td>' +
+      '<td style="font-size:11.5px">' + f.r.l + '</td>' +
+      '<td style="font-size:11.5px">' + (f.r.d || '—') + '</td></tr>';
+  }).join('');
   return '<details style="margin-top:10px"><summary style="cursor:pointer;font-size:12.5px;color:#9fb4ff">🔍 盈亏两端 · 多因子对比（盈利组 ' + win.length + ' 笔 vs 亏损组 ' + los.length + ' 笔，按最终盈亏分组）</summary>' +
-    '<div style="overflow-x:auto"><table class="batch-table"><thead><tr><th>因子</th><th>盈利组（' + win.length + ' 笔）</th><th>亏损组（' + los.length + ' 笔）</th></tr></thead><tbody>' +
-    '<tr><td>生命周期（当前）</td><td>' + W.stage + '</td><td>' + L.stage + '</td></tr>' +
-    '<tr><td>ATR%（买点日，均值）</td><td>' + W.atr + '</td><td>' + L.atr + '</td></tr>' +
-    '<tr><td>换手率（最新，均值）</td><td>' + W.turn + '</td><td>' + L.turn + '</td></tr>' +
-    '<tr><td>所属行业（前3）</td><td>' + W.ind + '</td><td>' + L.ind + '</td></tr>' +
+    '<div style="overflow-x:auto"><table class="batch-table"><thead><tr><th>因子</th><th>盈利组（' + win.length + ' 笔）</th><th>亏损组（' + los.length + ' 笔）</th><th>⚖ 组间差（盈 − 亏）</th></tr></thead><tbody>' +
+    body +
     '</tbody></table></div>' +
     '<div class="note" style="font-size:11.5px;color:var(--muted);margin-top:8px">分组 = 最终盈亏 &gt; 0（盈利组）/ &lt; 0（亏损组），不可判定（买点今日、无后续K线）不参与。' +
-    '生命周期 = 该股当前阶段（judgeStage 同引擎）；ATR% 取买点日（atrcCalc 同引擎）；换手率 = 最新实时快照（腾讯 a[38]，统计完成后批量补齐）；行业来自涨停池 hybk（自选股可能缺失，记「未知」）。</div></details>';
+    '生命周期 = 该股当前阶段（judgeStage 同引擎）；ATR% 取买点日（atrcCalc 同引擎）；换手率 = 最新实时快照（腾讯 a[38]，统计完成后批量补齐）；行业来自涨停池 hybk（自选股可能缺失，记「未知」）。' +
+    '<br><b>四因子（2026-10-02 新增，全部取买点日口径）：</b>' +
+    'KDJ = kdjSeries 同源（D 值 + 低位&lt;30 / 中位 / 高位&gt;70 + 金叉/死叉按 freshBars=3 窗口）；' +
+    'MACD = 12/26/9，柱 = 2×(DIF−DEA)（通达信/同花顺通用口径），柱值按<b>收盘价归一</b>（柱÷价×100）才可比，零轴上 = DIF&gt;0，「近5根金叉」= 交叉发生在买点前 5 根内；' +
+    '买点量能 = 买点日成交 ÷ <b>前 5 日均量（不含当日）</b>，与平台 volRatio 同口径，只比买点日及之前（不碰未来数据）；' +
+    'ATR 通道位置 = (买点日收盘 − EMA20 中轨) ÷ ATR14（几个 ATR），四分区按<b>入场轨（中轨 ±1.5×ATR）</b>划分 —— 轨道位置只是「买在什么位置」的描述，<b>不是买卖信号</b>。' +
+    '<br>各因子只统计该因子有值的笔（缺失不进分母），括号内为组内占比；组间差 = 盈利组均值 − 亏损组均值（涨红跌绿）。样本量有限时差异不具统计显著性，只作方向性参考。</div></details>';
 }
 
 /* 行点击 → 个股完整详情：与详情页同一套 analyzeStock + buildResultHTML（结果会话内缓存，收起再展开不重拉） */
