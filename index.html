@@ -5693,6 +5693,93 @@ function srZoneScan(bars, opt) {
   return out;
 }
 
+/* ===== ★ 2026-10-06（用户反馈「生命周期阶段顺序混乱」）：阶段序列两级平滑 =====
+   排查结论（2026-10-06）：judgeStage 是**逐日独立分类器**——没有状态机、没有迟滞，
+   每天只按当日指标快照打标签。2↔3（上升后段 vs 分配震荡）与 4↔1（下跌停滞 vs 新基）
+   两组边界判据本质上重叠（都是「价格贴长期均线 ± 横盘」），指标噪声会让边界日 1~2 天内反复翻转，
+   图上就出现「2→3→2→3」「4→1→4→1」的碎带。实测（24 只真实股 × 70 日）：raw 族级翻转 119 次，
+   其中近半是 <3 天的碎段。
+   注意：**不能**强行按 1→2→3→4 单调排序 —— 温斯坦体系本身允许合法回摆
+   （3 可回 2 再积累、4 可稳成 1、1 失败可回 4，参考图 Alternate path 三条都画了）；
+   真正该去掉的是**持续期 < minRun 的噪声翻转**。
+   算法（两级，单程扫描，确定性，无振荡 —— 第一版「逐段并入前段」在交替序列上互相吸收不收敛，已废弃）：
+     Pass 1（族级迟滞，用户看到的混乱在族粒度）：维护在位族 cur。逐段：
+       ① 族段 ≥ minRun → 该 regime 确认，cur 切换；
+       ② 族段 < minRun（噪声）→ 有在位族则整段改写为 cur（新族须连续 minRun 天才被承认）；
+          窗口开头无在位族 → 向前找第一个 ≥minRun 的族借用；整窗皆短 → 保留原族（无据可依不硬改）。
+     Pass 2（段内子码众数）：每个族段内取「本族原始码的众数」（平票取先出现者）作该段子码
+       —— 族级 regime 保住了，子码不再因 p2a/p2b 逐日抖动而碎化；
+       借族段（段内无本族原始码）→ 取全窗距段中心最近的本族原始日。
+     null 段（数据不足）如实跳过、不改写。前瞻只用于「窗口开头无在位者」的借码，无未来函数语义问题
+     （实盘第 t 天 = 只用 t 日及之前序列跑同一算法，口径一致）。
+   minRun 默认 3 个交易日：1~2 天的翻转视为噪声，≥3 天的 regime 变化如实显示。 */
+function stageSeqSmooth(raw, minRun) {
+  minRun = minRun || 3;
+  var n = raw.length;
+  var famRaw = raw.map(function (c) { return c ? String(c).slice(0, 2) : null; });
+  /* ---- Pass 1：族级迟滞 ---- */
+  var fam = new Array(n), i = 0, cur = null;
+  while (i < n) {
+    if (famRaw[i] == null) { fam[i] = null; i++; continue; }   /* 数据不足：诚实留白，在位族不被动摇 */
+    var j = i;
+    while (j < n && famRaw[j] === famRaw[i]) j++;
+    var L = j - i;
+    if (L >= minRun) {                                          /* ① regime 确认 */
+      cur = famRaw[i];
+      for (var k = i; k < j; k++) fam[k] = famRaw[i];
+      i = j;
+    } else {                                                    /* ② 噪声段 */
+      var fill = cur;
+      if (fill == null) {                                       /* 开头无在位族：向前借第一个 ≥minRun 的族 */
+        var k2 = j;
+        while (k2 < n) {
+          var j2 = k2;
+          while (j2 < n && famRaw[j2] === famRaw[k2]) j2++;
+          if (famRaw[k2] != null && (j2 - k2) >= minRun) { fill = famRaw[k2]; break; }
+          k2 = j2;
+        }
+      }
+      if (fill == null) fill = famRaw[i];                       /* 整窗皆短：保留原族，不硬改 */
+      for (var k3 = i; k3 < j; k3++) fam[k3] = fill;
+      cur = fill;
+      i = j;
+    }
+  }
+  /* ---- Pass 2：段内子码众数 ---- */
+  var out = new Array(n).fill(null);
+  for (var s = 0; s < n;) {
+    if (fam[s] == null) { s++; continue; }
+    var e = s;
+    while (e < n && fam[e] === fam[s]) e++;
+    var cnt = {}, first = {};
+    for (var t = s; t < e; t++) {
+      var c = raw[t];
+      if (c != null && String(c).slice(0, 2) === fam[s]) {
+        cnt[c] = (cnt[c] || 0) + 1;
+        if (first[c] == null) first[c] = t;
+      }
+    }
+    var keys = Object.keys(cnt), best = null;
+    if (keys.length) {
+      keys.sort(function (a, b) { return cnt[b] - cnt[a] || first[a] - first[b]; });   /* 众数 → 平票取先出现 */
+      best = keys[0];
+    } else {
+      /* 借族段（段内无本族原始码）：取全窗距段中心最近的本族原始日 */
+      var bd = Infinity, mid = (s + e - 1) / 2;
+      for (var t2 = 0; t2 < n; t2++) {
+        var c2 = raw[t2];
+        if (c2 != null && String(c2).slice(0, 2) === fam[s]) {
+          var d = Math.abs(t2 - mid);
+          if (d < bd) { bd = d; best = c2; }
+        }
+      }
+    }
+    for (var t3 = s; t3 < e; t3++) out[t3] = best;
+    s = e;
+  }
+  return out;
+}
+
 function renderChart(ind, focus) {
   var kl = (ind && ind.klines) ? ind.klines : [];
   var n = kl.length;
@@ -5729,16 +5816,72 @@ function renderChart(ind, focus) {
   var __bvi0 = (__box && __box.ok) ? Math.max(0, __box.winStart - start) : 0;
   var __bvi1 = (__box && __box.ok) ? Math.min(ks.length - 1, __box.winEnd - start) : 0;
 
+  /* ===== ★ 2026-10-06（用户要求「不同生命周期用不同背景色标识，顶部注明所处阶段」）=====
+     逐日「时点对齐」判定生命周期阶段 —— 与 2026-10-06 核验报告同一口径（**当日阶段**，绝不用当前阶段）：
+       对可见窗内每一天 t：computeIndicators(kl.slice(0, t+1)) → judgeStage → stage 码（p1a…p4b）。
+     ① 无未来函数：slice(0, t+1) 只喂当日及之前的数据（与探针 / 回测管道逐字同口径）；
+     ② 结果按 (kl.length, start, 末根日期) 缓存在 ind.__stageBands —— 点击 K 线重渲染（focus 变化）不重算；
+     ③ computeIndicators / judgeStage 定义在本卡之前（真页面全局可用）；单测沙箱缺桩时整段跳过（诚实留白）；
+     ④ 两层数据：__stageOfDay[可见下标] = 阶段码；__stageSegs = 连续同码段（画标签 / 族界用）。
+     ⑤ 族色按全站 A 股口径（**涨红跌绿**），非参考图的美股绿涨红跌：
+         阶段1 积累 = 蓝 #5b8cff（中性·观察）／ 阶段2 上升 = 红 #ff5252（多头）
+         阶段3 分配 = 橙 #f5a623（警示）／ 阶段4 下跌 = 绿 #26c281（空头）。 */
+  var STAGE_FAM = {
+    p1: { f: '1', name: '积累', col: '#5b8cff' },
+    p2: { f: '2', name: '上升', col: '#ff5252' },
+    p3: { f: '3', name: '分配', col: '#f5a623' },
+    p4: { f: '4', name: '下跌', col: '#26c281' }
+  };
+  function stageFamOf(code) { return (code && STAGE_FAM[String(code).slice(0, 2)]) || null; }
+  function stageSubOf(code) { return code ? String(code).slice(1).toUpperCase() : ''; }
+  var __stageOfDay = null, __stageSegs = null;
+  try {
+    var __skey = kl.length + '|' + start + '|' + String((kl[n - 1] && kl[n - 1].date) || '');
+    var __sc = (ind && ind.__stageBands && ind.__stageBands.key === __skey) ? ind.__stageBands : null;
+    if (__sc) {
+      __stageOfDay = __sc.arr;                             /* 缓存命中：点击 K 线重渲染零重算 */
+    } else if (typeof computeIndicators === 'function' && typeof judgeStage === 'function') {
+      var __stageRaw = [];
+      for (var __si = 0; __si < ks.length; __si++) {
+        var __st = null;
+        try {
+          var __indT = computeIndicators(kl.slice(0, start + __si + 1), null, __klCode || (ind && ind.code) || '');
+          if (__indT) { var __sj = judgeStage(__indT, {}); if (__sj && __sj.stage) __st = String(__sj.stage); }
+        } catch (eSj) { __st = null; }                     /* 单日判定失败只缺那一天，不带崩整图 */
+        __stageRaw.push(__st);
+      }
+      /* ★ 2026-10-06 用户反馈「阶段顺序混乱」：原始逐日序列做最小持续期平滑（<3 天的边界噪声
+         翻转并入在位阶段，迟滞确认），背景带 / 顶部标签 / 悬停统一用平滑后口径；
+         原始序列另存 raw，排查对照用（诚实两套都留）。 */
+      __stageOfDay = stageSeqSmooth(__stageRaw, 3);
+      if (ind) ind.__stageBands = { key: __skey, arr: __stageOfDay, raw: __stageRaw };
+    }
+    /* 连续同码分段（null 也成段，画带时如实跳过 —— 前面数据不足的日子不硬猜） */
+    if (__stageOfDay) {
+      __stageSegs = [];
+      for (var __gi = 0; __gi < __stageOfDay.length;) {
+        var __gj = __gi;
+        while (__gj < __stageOfDay.length && __stageOfDay[__gj] === __stageOfDay[__gi]) __gj++;
+        __stageSegs.push({ code: __stageOfDay[__gi], i0: __gi, i1: __gj - 1 });
+        __gi = __gj;
+      }
+    }
+  } catch (eStageBand) { __stageOfDay = null; __stageSegs = null; }
+
   /* 画布尺寸：1130 宽 ≈ 卡片内容区（1180 − 40 padding − 2 border）的满宽，
-     比旧版 880 更饱满；高度含价格面板 234 + 买点轨 + 量能面板 68 + **KDJ 副图 68** + 刻度/日期。 */
-  var W = 1130, H = 476;
-  var padL = 58, padR = 64, padT = 14;
-  var priceT = padT, priceB = 248;
-  var volT = 282, volB = 350;
+     高度含 **阶段标签带 26（2026-10-06 新增）** + 价格面板 234 + 买点轨 + 量能面板 68 + KDJ 副图 68 + 刻度/日期。
+     ★ 2026-10-06（用户要求「不同生命周期用不同背景色标识，顶部注明所处阶段」）：
+     顶部新增 26px「生命周期阶段标签带」（padT 14→40，两行：族名行 y≈25.5 + 子阶段行 y≈36.5），
+     画布与下方全部面板**整体下移 26px**，各面板自身高度不变（价格 234 / 量能 68 / KDJ 68）。
+     背景 = 族色整列半透明铺色（从标签带顶一直铺到 KDJ 面板底，同参考图整列着色）。 */
+  var W = 1130, H = 502;
+  var padL = 58, padR = 64, padT = 40;
+  var priceT = padT, priceB = 274;
+  var volT = 308, volB = 376;
   /* ★ 2026-10-03（用户要求「量能下，增加一行，指标 kdj」）：量能面板之下再挂一个 KDJ 副图。
      几何与量能面板一致（高 68、间距 14），日期刻度与底部提示整体下移一个面板的高度。 */
-  var kdjT = 364, kdjB = 432;
-  var dateY = 454;
+  var kdjT = 390, kdjB = 458;
+  var dateY = 480;
   var plotL = padL, plotR = W - padR;
 
   /* ---- 价格刻度（含均线极值，避免线跑出画布）---- */
@@ -5794,12 +5937,15 @@ function renderChart(ind, focus) {
     var k = ks[idx], c = chgOf(idx);
     /* ★ 2026-10-04：悬停明细同步标注当日是否涨停 / 跌停（与蜡烛颜色同一判定函数，不另写一套） */
     var _tk = klLimitTickOf(kl, start + idx, __klCode, __klName);
+    /* ★ 2026-10-06：悬停明细同步标注**当日**所处生命周期阶段（与背景带同一份时点对齐判定，不另算） */
+    var __tsF = stageFamOf(__stageOfDay ? __stageOfDay[idx] : null);
     return String(k.date) + '　开 ' + k.open.toFixed(2) + '　高 ' + k.high.toFixed(2) + '　低 ' + k.low.toFixed(2) +
       '　收 ' + k.close.toFixed(2) + '（' + (c >= 0 ? '+' : '') + c.toFixed(2) + '%）　量 ' + fmtWan(k.volume) +
       (_tk === 'zt' ? '　【涨停封板】' : (_tk === 'dt' ? '　【跌停封底】' : (_tk === 'zb' ? '　【涨停炸板】' : ''))) +
       ((__kjRowOk && idx < __kjRowK.length)
         ? ('　K ' + __kjRowK[idx].toFixed(1) + ' / D ' + __kjRowD[idx].toFixed(1) + ' / J ' + __kjRowJ[idx].toFixed(1))
-        : '');
+        : '') +
+      (__tsF ? '　【阶段' + stageSubOf(__stageOfDay[idx]) + ' · ' + __tsF.name + '】' : '');
   }
 
   /* ===== ★ 2026-10-03（用户要求「量能下，增加一行，指标 kdj」）：KDJ 副图的数据与取值 =====
@@ -5848,6 +5994,50 @@ function renderChart(ind, focus) {
   svg += '<rect x="' + plotL + '" y="' + priceT + '" width="' + (plotR - plotL) + '" height="' + (priceB - priceT) + '" rx="4" fill="#ffffff" fill-opacity="0.016"/>';
   svg += '<rect x="' + plotL + '" y="' + volT + '" width="' + (plotR - plotL) + '" height="' + (volB - volT) + '" rx="4" fill="#ffffff" fill-opacity="0.012"/>';
   svg += '<rect x="' + plotL + '" y="' + kdjT + '" width="' + (plotR - plotL) + '" height="' + (kdjB - kdjT) + '" rx="4" fill="#ffffff" fill-opacity="0.012"/>';
+
+  /* ===== ★ 2026-10-06（用户要求）：生命周期阶段背景带 =====
+     画在网格 / 蜡烛之下（紧跟面板底色），不抢主体：
+     ① 族级合并段（连续同族）→ 整列半透明铺色（从标签带顶 y=14 一直铺到 KDJ 面板底 kdjB，同参考图整列着色）；
+     ② 族界竖虚线（后一族的左界，族色描边）—— 相邻族的颜色分界一眼可辨；
+     ③ 顶部第一行 = 族名标签（宽 ≥92px 出全名「阶段2 · 上升」，≥16px 只出族号「2」，再窄不挤）；
+     ④ 顶部第二行 = 子阶段标签（1A / 2 / 2B…，逐同码段标注；段宽 <26px 不标，不硬挤）。
+     判定数据来自上方 __stageOfDay（时点对齐、无未来函数）；数据不足的日子如实留空。 */
+  if (__stageSegs && __stageSegs.length) {
+    var __famBands = [];
+    __stageSegs.forEach(function (sg) {
+      var fam = stageFamOf(sg.code);
+      if (!fam) return;
+      var lastB = __famBands[__famBands.length - 1];
+      if (lastB && lastB.f === fam.f) { lastB.i1 = sg.i1; return; }   /* 同族跨子阶段 → 合并成一条色带 */
+      __famBands.push({ f: fam.f, name: fam.name, col: fam.col, i0: sg.i0, i1: sg.i1 });
+    });
+    __famBands.forEach(function (b) {
+      var bx0 = Math.max(plotL, X(b.i0) - step / 2), bx1 = Math.min(plotR, X(b.i1) + step / 2);
+      if (bx1 - bx0 < 0.5) return;
+      svg += '<rect x="' + bx0.toFixed(1) + '" y="14" width="' + (bx1 - bx0).toFixed(1) + '" height="' + (kdjB - 14) +
+        '" fill="' + b.col + '" fill-opacity="0.055"/>';
+      if (bx0 > plotL + 1) {
+        svg += '<line x1="' + bx0.toFixed(1) + '" y1="14" x2="' + bx0.toFixed(1) + '" y2="' + kdjB +
+          '" stroke="' + b.col + '" stroke-opacity="0.3" stroke-width="1" stroke-dasharray="3 4"/>';
+      }
+      var fcx = (bx0 + bx1) / 2;
+      if (bx1 - bx0 >= 92) {
+        svg += '<text x="' + fcx.toFixed(1) + '" y="25.5" fill="' + b.col + '" fill-opacity="0.92" font-size="10.5" ' +
+          'font-weight="600" text-anchor="middle">' + escapeHtml('阶段' + b.f + ' · ' + b.name) + '</text>';
+      } else if (bx1 - bx0 >= 16) {
+        svg += '<text x="' + fcx.toFixed(1) + '" y="25.5" fill="' + b.col + '" fill-opacity="0.92" font-size="10.5" ' +
+          'font-weight="600" text-anchor="middle">' + b.f + '</text>';
+      }
+    });
+    __stageSegs.forEach(function (sg) {
+      var fam = stageFamOf(sg.code);
+      if (!fam) return;
+      var sx0 = Math.max(plotL, X(sg.i0) - step / 2), sx1 = Math.min(plotR, X(sg.i1) + step / 2);
+      if (sx1 - sx0 < 26) return;
+      svg += '<text x="' + ((sx0 + sx1) / 2).toFixed(1) + '" y="36.5" fill="' + fam.col + '" fill-opacity="0.78" ' +
+        'font-size="9.5" text-anchor="middle" font-family="' + M + '">' + escapeHtml(stageSubOf(sg.code)) + '</text>';
+    });
+  }
 
   /* 横向网格 + 左侧价格刻度（顶/底实线，中间虚线） */
   for (var g = 0; g <= 4; g++) {
