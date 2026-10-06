@@ -523,6 +523,9 @@
   /* ★ 2026-10-04（用户要求）：涨跌停 K 线图例 —— 竖长实体（比 .sh 默认 8×8 更高更窄），
      与其余形状（方块 / 菱形 / 三角 / 星 / 六边 / 双柱 / 箭头 / 横带）两两不同。 */
   .kl-chip .sh-cnd { width:7px; height:12px; border-radius:1px; }
+  /* ★ 2026-10-06（用户要求「自动画出支撑压力位」）：关键位图例 —— **细横线**（间距 2px 比 .sh-bar 的
+     5px 横带更细，形状即语义：图上画的就是一条横贯全宽的水平线 + 淡色区间带）。 */
+  .kl-chip .sh-hline { height:2px; width:14px; border-radius:1px; }
   .kl-chip.up b { color:var(--up); }
   .kl-chip.down b { color:var(--down); }
   .kl-hint { font-size:11px; color:var(--dim); margin-left:auto; }
@@ -1366,20 +1369,29 @@
 <!-- ======================= 视图：智能选股（全市场榜单预筛 × 七因子阈值过滤） ======================= -->
   <div class="view" id="view-pick" data-page-node-id="qFSfCmkEfHdFrOC5o3J9zu">
     <div class="card" data-page-node-id="o7nF034yXxWbHKMxJHJAyp">
-      <div class="card-title" data-page-node-id="dqdK26SSkZqHrpHFSwgFR6">🎯 智能选股 —— 全市场榜单预筛 × 可勾选选股条件（F1~F7，默认全启用）
-        <span style="font-size:11.5px;font-weight:400;color:var(--dim)" data-page-node-id="uiiwrjfc0hHiOgAa7aLUPI">选股流水线（2026-10-04 起，原「板块先行」两策略——主力净流入前 N 板块 / 涨停家数前 N 板块——已按用户要求取消）：① 榜单预筛 = 沪深A股 日内涨幅榜前 A ∪ 成交额榜前 B（剔除 ST/退市；通道：东财 clist 首选，本机不可达自动切新浪 hs_a 榜单，状态栏标注实际来源）→ ② 逐股跑平台同一套分析引擎（260 根前复权日K → 生命周期阶段 / KDJ / dev / 四指标 / ATR% / MA5斜率，结果并入全局缓存）→ ③ 可勾选选股条件过滤（F1~F7，每个条件前的 ✓ 可单独启用/停用；全部满足才入选；任一启用因子取不到数据 → 不入选并计入「数据不足」，绝不按 0 冒充）→ ④ 入选表（表头点击排序、再点反向；行点击展开完整分析；勾选后点「⭐ 加自选」批量加入）。改阈值后重跑即可——已分析的股票直接复用缓存，第二次秒级。</span></div>
-      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px" data-page-node-id="nRJCiKwIpqwBcmgrv130EN">
-        <label style="font-size:12.5px;color:var(--muted)" data-page-node-id="07eb7RqFjLDfCD5naZXNph">涨幅榜前 <input class="ctl" id="pickTopChg" type="number" min="1" max="1000" value="300" style="width:60px" data-page-node-id="0TnNNae0Pbi1XEBdwKuZsI"></label>
-        <label style="font-size:12.5px;color:var(--muted)">∪ 成交额榜前 <input class="ctl" id="pickTopAmt" type="number" min="0" max="1000" value="200" style="width:60px"></label>
-        <span style="color:var(--line)">｜</span>
-        <label style="font-size:12.5px;color:var(--muted)" title="勾选=启用 F1；取消=本轮跳过 MA5斜率 条件。F1：ind.ma5SlopePct（MA5 今日较昨日的百分比变化），与页面 MA5斜率 列同源"><input type="checkbox" id="pickF1On" checked> F1 MA5斜率≥ <input class="ctl" id="pickSlopeMin" type="number" step="0.1" min="-99" max="99" value="0" style="width:56px"> %</label>
-        <label style="font-size:12.5px;color:var(--muted)" title="勾选=启用 F2；取消=本轮跳过。F2：ma5UpDaysOf（MA5 斜率连续为正的交易日数，1=翻上当天），≤ N = 只选刚翻上不久的票"><input type="checkbox" id="pickF2On" checked> F2 斜率往上天数≤ <input class="ctl" id="pickUpDaysMin" type="number" min="0" max="250" value="1" style="width:48px"></label>
-        <label style="font-size:12.5px;color:var(--muted)" title="勾选=启用 F3；取消=本轮跳过。F3：mom20Of（近 20 个交易日累计涨幅）。默认 −20~+6 与平台 S7 闸门口径一致"><input type="checkbox" id="pickF3On" checked> F3 20日动量 <input class="ctl" id="pickMomMin" type="number" step="1" min="-1000" max="10000" value="-20" style="width:56px"> ~ <input class="ctl" id="pickMomMax" type="number" step="1" min="-1000" max="10000" value="6" style="width:56px"> %</label>
-        <label style="font-size:12.5px;color:var(--muted)" title="勾选=启用 F4；取消=本轮跳过。F4：ATR14% = 近 14 日真实波幅均值 ÷ 现价（与 ATR% 列同源）。默认 2~12"><input type="checkbox" id="pickF4On" checked> F4 ATR% <input class="ctl" id="pickAtrMin" type="number" step="0.5" min="0" max="100" value="2" style="width:48px"> ~ <input class="ctl" id="pickAtrMax" type="number" step="0.5" min="0" max="100" value="12" style="width:48px"></label>
-        <label style="font-size:12.5px;color:var(--muted)" data-page-node-id="4wfc1wjLBDl2jiuYdIvhk8" title="勾选=启用 F6；取消=本轮跳过。F6：s4kTotal 四指标打分（满分100），与个股详情卡同一引擎；填 0 = 不限"><input type="checkbox" id="pickF6On" checked> F6 四指标≥ <input class="ctl" id="pickS4kMin" type="number" min="0" max="100" value="60" style="width:56px" data-page-node-id="5UGcVQ0W3KMVgHSrCsFr7U"> 分</label>
-        <label style="font-size:12.5px;color:var(--muted)" title="勾选=启用 F7；取消=本轮跳过。F7：统计近 10 根日K 中收盘涨停次数（板制档位：主板10%/双创20%/北交所30%/ST按5%）。范围 [min,max] = 只选近期涨停次数落在区间内的票（排除过度炒作连板 / 或指定下限筛连板强势）"><input type="checkbox" id="pickF7On" checked> F7 10日涨停 <input class="ctl" id="pickZtCntMin" type="number" min="0" max="10" value="0" style="width:40px"> ~ <input class="ctl" id="pickZtCntMax" type="number" min="0" max="10" value="2" style="width:40px"> 次</label>
+      <div class="card-title" data-page-node-id="dqdK26SSkZqHrpHFSwgFR6">🎯 智能选股 —— 榜单预筛 × 可勾选选股条件（F1~F7 + F8 流通市值 + F9 成交额 + F10 量比 + F11 波动率 + 10日涨幅排名）
+        <span style="font-size:11.5px;font-weight:400;color:var(--dim)" data-page-node-id="uiiwrjfc0hHiOgAa7aLUPI">选股流水线（2026-10-04 起，原「板块先行」两策略——主力净流入前 N 板块 / 涨停家数前 N 板块——已按用户要求取消）：① 榜单预筛 = 「涨幅榜前 A」∪「成交额榜前 B」取并集（剔除 ST/退市；东财 clist 首选，本机不可达自动切新浪 hs_a 榜单）。② 逐股跑平台同一套分析引擎（260 根前复权日K → 阶段/KDJ/dev/四指标/ATR%/MA5斜率/10日涨幅，并入全局缓存）。③ 选股条件过滤：F1~F7 每个 ✓ 可单独启用/停用；F8 流通市值[min,max]亿、F9 成交额[min,max]亿（取自榜单快照）、F10 量比[min,max]倍（快照优先·缺→日K近似，主升浪启动共识区 2~5）、F11 波动率[min,max]%（近20日日收益率标准差；与 F4 ATR 同为波动率口径，建议二选一启用）、10日涨幅排名前 N（分析后按近10日涨幅降序取前 N）。全部满足才入选；任一启用因子取不到数据 → 不入选并计入「数据不足」，绝不按 0 冒充。④ 入选表（表头点击排序、再点反向；行点击展开完整分析；勾选后点「⭐ 加自选」批量加入）。改阈值后重跑即可——已分析的股票直接复用缓存，第二次秒级。</span></div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+        <span style="font-size:12px;color:var(--accent);font-weight:600">榜单预筛</span>
+        <label style="font-size:12.5px;color:var(--muted)" title="日内涨幅榜前 N（东财 clist 首选，本机不可达自动切新浪 hs_a 榜单）">涨幅榜前 <input class="ctl" id="pickTopChg" type="number" min="1" max="1000" value="300" style="width:56px"> 只</label>
+        <label style="font-size:12.5px;color:var(--muted)" title="成交额榜前 N">∪ 成交额榜前 <input class="ctl" id="pickTopAmt" type="number" min="0" max="1000" value="200" style="width:56px"> 只</label>
+        <span style="color:var(--dim);font-size:11.5px">两池并集（去重剔ST）作为逐股分析候选</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+        <span style="font-size:12px;color:var(--accent);font-weight:600">选股条件（✓ 可单独启用/停用；F8/F9 取自榜单快照，涨幅排名 需逐股日K·分析后过滤）</span>
+        <label style="font-size:12.5px;color:var(--muted)" title="勾选=启用 F1；取消=跳过。F1：ind.ma5SlopePct（MA5 今日较昨日的百分比变化），与页面 MA5斜率 列同源"><input type="checkbox" id="pickF1On" checked> F1 MA5斜率≥ <input class="ctl" id="pickSlopeMin" type="number" step="0.1" min="-99" max="99" value="0" style="width:56px"> %</label>
+        <label style="font-size:12.5px;color:var(--muted)" title="勾选=启用 F2；取消=跳过。F2：ma5UpDaysOf（MA5 斜率连续为正的交易日数，1=翻上当天）。范围 [min,max] 天 = 只选翻上且不超过 max 天的票"><input type="checkbox" id="pickF2On" checked> F2 斜率往上天数 <input class="ctl" id="pickUpDaysMin" type="number" min="0" max="250" value="0" style="width:44px"> ~ <input class="ctl" id="pickUpDaysMax" type="number" min="0" max="250" value="1" style="width:44px"> 天</label>
+        <label style="font-size:12.5px;color:var(--muted)" title="勾选=启用 F3；取消=跳过。F3：mom20Of（近 20 个交易日累计涨幅）。默认 −20~+6 与平台 S7 闸门口径一致"><input type="checkbox" id="pickF3On" checked> F3 20日动量 <input class="ctl" id="pickMomMin" type="number" step="1" min="-1000" max="10000" value="-20" style="width:56px"> ~ <input class="ctl" id="pickMomMax" type="number" step="1" min="-1000" max="10000" value="6" style="width:56px"> %</label>
+        <label style="font-size:12.5px;color:var(--muted)" title="勾选=启用 F4；取消=跳过。F4：ATR14% = 近 14 日真实波幅均值 ÷ 现价（与 ATR% 列同源）。默认 2~12"><input type="checkbox" id="pickF4On" checked> F4 ATR% <input class="ctl" id="pickAtrMin" type="number" step="0.5" min="0" max="100" value="2" style="width:48px"> ~ <input class="ctl" id="pickAtrMax" type="number" step="0.5" min="0" max="100" value="12" style="width:48px"></label>
+        <label style="font-size:12.5px;color:var(--muted)" data-page-node-id="4wfc1wjLBDl2jiuYdIvhk8" title="勾选=启用 F6；取消=跳过。F6：s4kTotal 四指标打分（满分100），与个股详情卡同一引擎；填 0 = 不限"><input type="checkbox" id="pickF6On" checked> F6 四指标≥ <input class="ctl" id="pickS4kMin" type="number" min="0" max="100" value="60" style="width:56px" data-page-node-id="5UGcVQ0W3KMVgHSrCsFr7U"> 分</label>
+        <label style="font-size:12.5px;color:var(--muted)" title="勾选=启用 F7；取消=跳过。F7：统计近 10 根日K 中收盘涨停次数（板制档位：主板10%/双创20%/北交所30%/ST按5%）。范围 [min,max] = 只选近期涨停次数落在区间内的票"><input type="checkbox" id="pickF7On" checked> F7 10日涨停 <input class="ctl" id="pickZtCntMin" type="number" min="0" max="10" value="0" style="width:40px"> ~ <input class="ctl" id="pickZtCntMax" type="number" min="0" max="10" value="2" style="width:40px"> 次</label>
+        <label style="font-size:12.5px;color:var(--muted)" title="勾选=启用 F8；取消=跳过。流通市值（亿元，来自东财 f21 / 腾讯 floatMarket），范围 [min,max] 亿（默认 0~100000 = 不限）"><input type="checkbox" id="pickF8On"> F8 流通市值 <input class="ctl" id="pickCapMin" type="number" min="0" max="100000" value="0" style="width:52px"> ~ <input class="ctl" id="pickCapMax" type="number" min="0" max="100000" value="100000" style="width:64px"> 亿</label>
+        <label style="font-size:12.5px;color:var(--muted)" title="勾选=启用 F9；取消=跳过。F9：当日成交额（亿元，取自榜单快照：东财 f6 / 新浪 amount），范围 [min,max] 亿（默认 0~100000 = 不限）"><input type="checkbox" id="pickF9On"> F9 成交额 <input class="ctl" id="pickAmtMin" type="number" step="0.1" min="0" max="100000" value="0" style="width:52px"> ~ <input class="ctl" id="pickAmtMax" type="number" step="0.1" min="0" max="100000" value="100000" style="width:64px"> 亿</label>
+        <label style="font-size:12.5px;color:var(--muted)" title="勾选=启用 F10；取消=跳过。F10 量比 = 当日量 ÷ 前5日均量（不含当日，与平台「量能倍数」同口径；快照优先东财 f10，缺失用日K近似）。★ 2026-10-05 全网三源核验：0.8~1.5 正常 / 1.5~2.5 温和放量 / 2.5~5 明显放量·突破有效率高 / >8 过热；主升浪启动共识区 ≈ 2~5（2~3 启动信号、3~5 蓄势起爆），默认 2~5，可自主填写"><input type="checkbox" id="pickVrOn"> F10 量比 <input class="ctl" id="pickVrMin" type="number" step="0.1" min="0" max="100" value="2" style="width:44px"> ~ <input class="ctl" id="pickVrMax" type="number" step="0.1" min="0" max="100" value="5" style="width:44px"> 倍</label>
+        <label style="font-size:12.5px;color:var(--muted)" title="勾选=启用 F11；取消=跳过。F11 波动率 = 近 20 日日收益率标准差（%），年化参考 ×√250。★ 2026-10-05 全网三轮交叉核验（ivolatility/太平洋证券研报/兴证全球田朋/雪球股性/volatilitybox）：A股个股年化波动率中位数≈40%（<20% 仅占 2%、>50% 占近 30%）；僵尸股 10~20%（年化）≈日std <1.3%、活跃题材股 30~50% ≈ 1.9~3.2%；>4%（年化 >63%）噪音淹没结构、止损易被扫。默认 1~4%。⚠️ 与 F4 ATR%（日内振幅+跳空口径）同概念不同度量、高度相关 → 建议二选一启用"><input type="checkbox" id="pickVolOn"> F11 波动率 <input class="ctl" id="pickVolMin" type="number" step="0.1" min="0" max="100" value="1" style="width:44px"> ~ <input class="ctl" id="pickVolMax" type="number" step="0.1" min="0" max="100" value="4" style="width:44px"> %</label>
+        <label style="font-size:12.5px;color:var(--muted)" title="勾选=启用「10日涨幅排名前 N」；分析后按近10日涨幅降序取前 N 只（需逐股日K，分析后过滤）。N=取前多少只"><input type="checkbox" id="pickR10On"> 📈 10日涨幅排名 前 <input class="ctl" id="pickR10N" type="number" min="1" max="2000" value="50" style="width:52px"> 只</label>
         <label style="font-size:12.5px;color:var(--muted)" title="勾选 = 触发一票否决（⛔）的股票即使总分达标也不入选（仅当 F6 启用时有效）"><input type="checkbox" id="pickNoVeto" checked> 剔除一票否决</label>
-        <span style="color:var(--dim);font-size:11.5px">（每个条件前的 ✓ 可单独启用/停用，取消勾选 = 本轮跳过该条件）</span>
+        <span style="color:var(--dim);font-size:11.5px">（每个条件前的 ✓ 可单独启用/停用；F8/F9/涨幅排名 默认未启用，按需勾选）</span>
       </div>
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
         <label style="font-size:12.5px;color:var(--muted)" title="勾选=启用 F5；取消=本轮跳过阶段筛选（即接受任意阶段）"><input type="checkbox" id="pickF5On" checked> F5 生命周期阶段∈</label>
@@ -1394,7 +1406,7 @@
         <button class="btn ghost" id="pickCopy" disabled style="opacity:.5" title="把下方 Markdown 分析报告复制到剪贴板" data-page-node-id="4nAKH4iEkcGQeGpKpUzlkC">📋 复制Markdown报告</button>
         <span class="pick-status" id="pickStatus" style="color:var(--dim);font-size:12px" data-page-node-id="RhBKGNlvnVX1IpOAAXgXDk"></span>
       </div>
-      <div id="pickResult" data-page-node-id="tKLvyAByOD5lee8KC0QYP5"><div class="loading" data-page-node-id="tKCrRVjfbvA7rEkf4bJOky">本工作区为「手动选股」：设置上方阈值后，点击 <b>🚀 开始选股</b> 才执行（首次进入不再自动开跑）。选股流水线：① 涨幅榜前 300 ∪ 成交额榜前 200 预筛（剔除 ST/退市，约几百只）→ ② 逐股分析（抓 260 根日K，并发 4，可随时点「■ 停止」）→ ③ 可勾选选股条件过滤（F1 MA5斜率 / F2 斜率往上天数 / F3 20日动量 / F4 ATR% / F5 生命周期阶段 / F6 四指标分数 / F7 10日涨停次数，每个条件前的 ✓ 可单独启用/停用）→ ④ 入选表（表头点击排序）。已分析过的股票直接复用全局缓存、秒出。</div></div>
+      <div id="pickResult" data-page-node-id="tKLvyAByOD5lee8KC0QYP5"><div class="loading" data-page-node-id="tKCrRVjfbvA7rEkf4bJOky">本工作区为「手动选股」：设置上方阈值后，点击 <b>🚀 开始选股</b> 才执行（首次进入不再自动开跑）。选股流水线：① 榜单预筛（涨幅榜前 / 成交额榜前，取并集，剔除 ST/退市，约几百只）→ ② 逐股分析（抓 260 根日K，并发 4，可随时点「■ 停止」）→ ③ 选股条件过滤（F1 MA5斜率 / F2 斜率往上天数[min,max] / F3 20日动量 / F4 ATR% / F5 生命周期阶段 / F6 四指标分数 / F7 10日涨停次数 / F8 流通市值[min,max]亿 / F9 成交额[min,max]亿 / F10 量比[min,max]倍（主升浪启动共识区 2~5）/ F11 波动率[min,max]%（20日日收益率标准差，与 F4 ATR 建议二选一）/ 10日涨幅排名前N；每个条件前的 ✓ 可单独启用/停用；F8/F9 取自榜单快照，F10 快照优先·缺→日K近似，涨幅排名 需逐股日K·分析后过滤）→ ④ 入选表（表头点击排序）。已分析过的股票直接复用全局缓存、秒出。</div></div>
     </div>
   </div>
 
@@ -2442,7 +2454,7 @@ async function fetchEastMoney(sym) {
   if (!arr || !arr.length) throw new Error('东财K线为空');
   var klines = arr.map(function (line) {
     var p = line.split(',');
-    return { date: p[0], open: +p[1], close: +p[2], high: +p[3], low: +p[4], volume: +p[5] };
+    return { date: p[0], open: +p[1], close: +p[2], high: +p[3], low: +p[4], volume: +p[5], amount: (p[6] != null && isFinite(+p[6])) ? +p[6] : null };
   }).filter(function (k) { return k.date && isFinite(k.close) && k.close > 0; });
   var quote = null;
   if (qres && qres.data && qres.data.f58) {
@@ -4661,6 +4673,89 @@ function vpKdjFoldHtml(f) {
         · ok 对象        → 常显结论条（承接强 / 一般 / 偏弱 / 弱 / 失效）+ 折叠区六维明细。
    配色：本面板 A 股口径（pro 红承接强 / warn 黄承接一般 / neu 灰承接偏弱 / con 绿承接弱或失效）。
    ========================================================================== */
+/* ★ 2026-10-06（用户要求「在 k 线下方的详情中增加显示盈亏比」）：理论盈亏比条。
+   回答「以这一天的收盘价买入，向上空间 ÷ 向下空间 = 几比几」。
+   口径**完全复用既有 SRPS 引擎 srpJudge**（同一函数、同一参数），零重复实现：
+     · 压力 R = 最近**有效**压力位（由近到远扫描、命中即止，防挑远期高点美化盈亏比；
+       距现价不足 max(1×ATR, 3%) 的"贴脸压力"顺延，最多 3 道，逐道披露，且最近那一道加"⚠ 上方压制"警示）
+     · 支撑 S = 最近**有效**支撑位（距现价不足 max(1×ATR, 1%) 的"贴脸支撑"顺延 —— 否则分母趋零、盈亏比虚高）
+     · 止损价 = 结构支撑下方 max(0.5×ATR, 0.5%) 缓冲；结构不可用则改用波动率止损（Pb − 1.5×ATR）
+     · 理论盈亏比 rr = (R − Pb) ÷ (Pb − 止损价)，Pb = 该日收盘
+     · 阈值按「情绪档 × 板性（±10%/±20%/±30%）× 高波动」自适应，面板给出计算式
+   评价根 = **被点击的这一根 K 线**（调用方传 kl.slice(0, 该根 + 1)，只看它及之前的数据 → 无未来函数）。
+   三态与 KDJ / 承接力条同纪律：
+     · 未传（undefined）→ 整个区块不出现（向后兼容旧调用点与老测试的三参调用）
+     · null / !ok / na → 诚实出「数据不足」条（不猜、不硬算）
+     · 正常对象 → 出读数条（达标 / 不达标 / 禁止新开仓 / 创新高 / 结构无效 / 上方空间不足 / 止损过远 七态）
+   配色沿用本面板 A 股口径（红偏多 · 绿偏空 · 黄谨慎 · 灰无读数）。
+   分层定位：只做空间结构描述，不计分、不改四指标、不进钉钉推送、不发买卖指令。 */
+function vpRrHtml(r) {
+  if (r === undefined) return '';
+  var K = '<span class="kk">盈亏比</span>';
+  if (!r) {
+    return '<div class="vp-cj neu">' + K + '<span class="kv">数据不足</span>' +
+      '<div class="kd">盈亏比测算未运行或日K不足 → 本轮不做测算（不猜、不硬算）。</div></div>';
+  }
+  if (r.na) {
+    return '<div class="vp-cj neu">' + K + '<span class="kv">数据不足</span>' +
+      '<div class="kd">' + escapeHtml(r.why || '日K不足') +
+      ' → 本轮未做盈亏比测算。理论盈亏比 = (R − Pb) ÷ (Pb − 止损价)，需要足够的左侧日K才能定位有效压力 R 与支撑 S。</div></div>';
+  }
+  var tip = '理论盈亏比（以该日收盘价买入测算）\n' +
+    '压力 R = ' + (r.R ? r.R.v.toFixed(2) + '（' + r.R.label + '）' : '—') + '\n' +
+    '支撑 S = ' + (r.S ? r.S.v.toFixed(2) + '（' + r.S.label + '）' : '—') + '\n' +
+    '止损价 = ' + (r.execStop != null ? r.execStop.toFixed(2) : '—') +
+    (r.stopSrc === 'vol' ? '（波动率止损：结构支撑过近/缺失 → Pb − 1.5×ATR20）' : '（结构支撑下方缓冲 max(0.5×ATR, 0.5%)）') + '\n' +
+    '理论盈亏比 = (R − Pb) ÷ (Pb − 止损价)，Pb = 该日收盘 ' + (+r.pb).toFixed(2) + '\n' +
+    '板性 ' + ((r.limit && r.limit.label) || '—') + ' · 结构止损容忍上限 ' + (r.limit ? (r.limit.stopCap * 100).toFixed(0) + '%' : '—') +
+    ' · ATR20 ' + (r.atr != null ? r.atr.toFixed(3) : '—') + (r.atrPct != null ? '（' + (r.atrPct * 100).toFixed(2) + '%）' : '') + '\n' +
+    '★ 最小风险距离 = max(1×ATR, 1%)（更近的支撑在日内噪音内即被打穿，不作为防守）\n' +
+    '★ 最小有效目标空间 = max(1×ATR, 3%)（更近的压力日内即可触及，不作为可操作目标）\n' +
+    '评价根 = 被点击的这一根 K 线（只用它及之前的数据，无未来函数）\n' +
+    '支撑 / 压力是价格区间不是单点，±0.5% 波动属正常噪音；收盘有效跌破止损价才触发。\n' +
+    '本读数只做空间结构描述，不计分、不改四指标、不进钉钉推送、不构成买卖建议。';
+  var cls, kv, kn, kd;
+  if (r.flag === 'new_high') {
+    cls = 'warn'; kv = '创新高 · 无静态盈亏比'; kn = 'R 缺失';
+    kd = escapeHtml(r.why || '左侧无有效压力 → 创新高结构') +
+      ' → 不做固定止盈目标，改移动跟踪止盈（20 日均线 / 波段低点随价格新高同步上移）。';
+  } else if (r.flag === 'invalid') {
+    cls = 'con'; kv = '结构无效'; kn = 'S 不在现价下方';
+    kd = escapeHtml(r.why || '支撑无效') + ' → 硬性约束不过，直接过滤，不参与盈亏比校验。';
+  } else if (r.flag === 'tight') {
+    cls = 'warn'; kv = '上方空间不足'; kn = '不宜新开仓';
+    kd = escapeHtml(r.why || '近处压力过密') +
+      '<br><span class="dim">A股口径：压力空间 &lt;3% → 放弃；3%~5% → 仓位减半；&gt;5% → 正常。本条属第一档。</span>';
+  } else if (r.flag === 'wide_risk') {
+    cls = 'con'; kv = '止损过远'; kn = '买点不佳';
+    kd = escapeHtml(r.why || '结构止损超出板性容忍上限') +
+      '<br><span class="dim">建议：缩仓或另择买点；本工具不会把止损挪近来"凑"盈亏比（挪近必被噪音扫掉）。</span>';
+  } else {
+    var ok = (r.flag === 'pass');
+    cls = ok ? 'pro' : (r.ban ? 'con' : 'warn');
+    kv = (r.rr == null ? '—' : r.rr.toFixed(2)) + ' : 1';
+    kn = '阈值 ' + escapeHtml(r.thrTxt || '—') + (ok ? ' 达标' : (r.ban ? ' 禁开仓' : ' 不达标'));
+    kd = '压力 R <b>' + (r.R ? r.R.v.toFixed(2) : '—') + '</b>' +
+      (r.R ? '（距现价 ' + (((r.R.v / r.pb - 1) * 100) >= 0 ? '+' : '') + ((r.R.v / r.pb - 1) * 100).toFixed(1) + '%）' : '') +
+      (r.skippedR && r.skippedR.length ? '<span class="dim">（已顺延 ' + r.skippedR.length + ' 道贴脸压力）</span>' : '') +
+      '　支撑 S <b>' + (r.S ? r.S.v.toFixed(2) : '—') + '</b>' +
+      (r.S ? '（' + ((r.S.v / r.pb - 1) * 100).toFixed(1) + '%）' : '') +
+      (r.tooNearS && r.tooNearS.length ? '<span class="dim">（已顺延 ' + r.tooNearS.length + ' 道贴脸支撑）</span>' : '') +
+      '<br>盈利空间 ' + (r.R ? (r.R.v - r.pb).toFixed(2) : '—') + (r.targetPct != null ? '（+' + (r.targetPct * 100).toFixed(1) + '%）' : '') +
+      '　亏损空间 ' + (r.execStop != null ? (r.pb - r.execStop).toFixed(2) : '—') + (r.riskPct != null ? '（−' + (r.riskPct * 100).toFixed(1) + '%）' : '') +
+      (r.execStop != null ? '　执行止损 ' + r.execStop.toFixed(2) : '') +
+      '<br>情绪档「' + escapeHtml(r.phase || '未就绪') + '」× ' + escapeHtml(r.limit ? r.limit.label : '板性—') +
+      ' → 最低阈值 ' + escapeHtml(r.thrTxt || '需人工核对') +
+      ' → <b>' + (ok ? '达标，保留候选' : (r.ban ? '禁止新开仓档，不计算校验' : '不达标，剔除该标的')) + '</b>' +
+      (r.nearBlock ? '<br><b style="color:#f59e0b">⚠ 上方压制</b>：+' + (r.nearBlock.distPct * 100).toFixed(1) +
+        '% 处另有一道压力（' + escapeHtml(r.nearBlock.label) + ' ' + r.nearBlock.v.toFixed(2) + '）—— 太近不作目标，但上行大概率提前受阻' : '') +
+      (r.thrNote ? '<br>' + escapeHtml(r.thrNote) : '');
+  }
+  return '<div class="vp-cj ' + cls + '" title="' + escapeHtml(tip).replace(/\n/g, '&#10;') + '">' +
+    K + '<span class="kv">' + escapeHtml(kv) + '</span>' +
+    '<span class="kn">' + kn + '</span>' +
+    '<div class="kd">' + kd + '</div></div>';
+}
 function vpCjHtml(f) {
   if (!f || !f.ok) {
     var why = (f && f.why) ? f.why : '该 K 线取不到可用的日K 序列（缓存未命中 / 样本过短）';
@@ -4711,7 +4806,7 @@ function vpCjFoldHtml(f) {
      量价与 KDJ 是两个维度，各自给一行结论，互不覆盖；两者都只描述，买卖仍只认四指标打分。
    ★ 2026-10-04（用户要求）：第 9 参 cj = wsChengjieOf(全量 kl, 所点全量下标) —— **承接力条**
      （承接强 / 一般 / 偏弱 / 弱 / 失效），三态与 KDJ / dbl 完全同纪律：未传不出现 / null 出「数据不足」/ 对象出结论条。 */
-function vpPanelHtml(x, sigs, adv, kf, kj, dbl, vpat, wscan, cj) {
+function vpPanelHtml(x, sigs, adv, kf, kj, dbl, vpat, wscan, cj, rr) {
   if (!x) return '';
   var chgCls = x.chg >= 0 ? 'up' : 'down';
   var r5txt = (x.r5 != null) ? ('×' + (+x.r5).toFixed(2)) : '—';
@@ -4743,6 +4838,10 @@ function vpPanelHtml(x, sigs, adv, kf, kj, dbl, vpat, wscan, cj) {
      承接 = 抛盘出现时下方是否有足够买盘接住筹码；判定器 wsChengjieOf 只吃日 K 可判维度，
      分时 / 盘口 / Level-2 / 大盘对比在明细里明示「未纳入」并写明原因（诚实留白）。 */
   var cjBlock = (cj === undefined) ? '' : vpCjHtml(cj);
+  /* ★ 2026-10-06（用户要求）：理论盈亏比条（第 10 参 rr）—— 与 KDJ / 承接力同纪律的三态：
+     未传（undefined）→ 区块不出现（向后兼容旧调用点 / 老测试）；null 或 na → 诚实「数据不足」条；对象 → 正常读数条。
+     放在风险/利多清单正下方（见下方 return 的拼装顺序）：盈亏比是「看完多空证据之后紧接着要问的那个数」。 */
+  var rrBlock = (rr === undefined) ? '' : vpRrHtml(rr);
   /* ★ 2026-10-04（用户要求）：当日「倍量形态 × 倍量位置」（术语统一后的两维口径 · 参考层）。
      dbl 三态：未传（undefined）→ 区块不出现（向后兼容旧调用点/测试）；null 或 !ok → 诚实「数据不足」条；对象 → 正常形态条。
      vpat（第 7 参）同理：volPatOf 的多形态识别 + 量价九宫格，未传则不出现。 */
@@ -4770,8 +4869,17 @@ function vpPanelHtml(x, sigs, adv, kf, kj, dbl, vpat, wscan, cj) {
     '核验要点：<b>放量不跌</b> = 承接成功 · <b>缩量回调 / 低点逐步抬高</b> = 真稳固 · ' +
     '<b>缩量上涨</b> 只是没人卖、不等于有资金主动承接 · <b>有承接 ≠ 会涨</b>。' +
     '分时与均价线 / 盘口挂撤单（假托单）/ 内外盘与大单消化率 / 与大盘对比 —— 属分时与 Level-2 数据，' +
-    '本工作台（日 K 单文件）无法计算 → 诚实留白，须人工看分时图对照。</div>';
-  return vpVerdictHtml(v) + vpKeysHtml(v) + kdjBlock + cjBlock + dblBlock + vpatBlock + wsBlock +
+    '本工作台（日 K 单文件）无法计算 → 诚实留白，须人工看分时图对照。</div>' +
+    '<div class="vp-foot">理论盈亏比条：判定取 <b>srpJudge</b>（SRPS 引擎，与个股详情页「📏 支撑压力与理论盈亏比」卡同一函数、同一参数、同一评价根，零重复实现）——' +
+    '<b>理论盈亏比 = (R − Pb) ÷ (Pb − 止损价)</b>，Pb = <b>被点击这一根的收盘价</b>，评价根 = 被点击的这一根（只用它及之前的数据，无未来函数）。' +
+    '压力 R 由近到远扫描、命中即止（防挑远期高点美化盈亏比），但<b>距现价不足 max(1×ATR20, 3%) 的"贴脸压力"顺延</b>（最多 3 道，逐道披露）——' +
+    '这类位在 A 股日内波动里就能摸到，扣手续费/滑点后无可操作空间；' +
+    '支撑同理：<b>距现价不足 max(1×ATR20, 1%) 的"贴脸支撑"顺延</b>（否则分母趋零、盈亏比虚高），结构支撑全不可用时改用<b>波动率止损</b>（Pb − 1.5×ATR20）。' +
+    '止损价 = 结构支撑下方 max(0.5×ATR20, 0.5%×Pb) 缓冲，<b>收盘有效跌破才触发</b>（±0.5% 属正常噪音）。' +
+    '阈值按 <b>情绪档 × 板性（主板 ±10% / 双创 ±20% / 北交所 ±30%）× 高波动</b> 自适应并给出计算式。' +
+    '七态：达标 / 不达标 / 禁止新开仓 / 创新高结构（无静态盈亏比）/ 结构无效 / <b>上方空间不足</b> / <b>止损过远·买点不佳</b>。' +
+    '本读数是<b>开仓时刻的静态空间测算，不是行情预测</b>，只做结构描述，不计分、不改四指标、不进钉钉推送、不构成买卖建议。</div>';
+  return vpVerdictHtml(v) + vpKeysHtml(v) + rrBlock + kdjBlock + cjBlock + dblBlock + vpatBlock + wsBlock +
     '<div class="vp-top">' +
       '<span class="vp-date">' + escapeHtml(x.date) + '</span>' +
       '<span class="vp-tag combo">' + escapeHtml(x.combo) + '</span>' +
@@ -5222,7 +5330,370 @@ function klLimitTickOf(kl, i, code, name) {
   return '';
 }
 
-function renderChart(ind) {
+/* ==========================================================================
+   ★ 2026-10-06（用户要求）：「K 线图自动标注支撑 / 压力关键位」—— 少而精，不密集划线
+   --------------------------------------------------------------------------
+   方法论（用户提供的 7 篇中文财经文章 + 全网公开量化资料，2026-10-06 归纳；来源见文末 SRZ_SRC）：
+     · 支撑 / 压力的本质不是价格的属性，而是「一群人的成本记忆 / 成交密集区 / 共识区」——
+       位置之所以起作用，是因为「有多少人会在这里同时做同一件事」（熊猫教练 / 八哥 / 金嘟手记 / 大时代观盘）。
+     · 经典五判据（中洲证券 5 法）：① 套牢区↔获利区（历史高低点）② 均线系统（周期越大越强：
+       20 < 60 < 120 < 250）③ 趋势线 / 摆动拐点 ④ 心理价位（整数关口）⑤ 通道 / 缺口。
+     · 量化实现共识（TradingView Confluence / MQL5 三法对比 / DXPA / MTF Key Levels / pomegra）：
+       · 单一方法首测命中 50~70%；两个独立方法共振 72~80%；三个 82~88%；四个以上 90%+ →
+         **「一个位如果拿不出 ≥2 个彼此独立的理由，就不该画在图上」**；
+       · 分形枢轴必须**右侧确认**后才算（未完成的摆动点不参与 —— 非重绘原则）；
+       · 邻近候选按 **ATR 容差聚类合并成一个区间**（不是一条精确的线）；
+       · 强弱由四项决定：触碰次数 / 量能密集度 / 反应幅度（拐点后走了多少 ATR）/ 新近程度；
+       · 成交量剖面 POC / 高量节点（HVN）是最强单因子（S&P500 首测 68~78%）；
+       · 跳空缺口：向上跳空 = 支撑、向下跳空 = 压力；放量「突破型」缺口最强，「衰竭型」最弱；
+       · 「只保留 3~5 条」（DXPA / MTF Key Levels 原话：图上 15~20 条线 = 支持位「到处都是又哪里都不是」）。
+
+   ★ 用户硬约束（原话）：「不要密集划线，利用策略、算法判断结论后，只在最重要的位置进行划线。」
+     因此本引擎的**设计目标不是「找全」而是「只留 2~4 条」**，四道去密闸门缺一不可：
+       ① 独立证据闸：每条必须 ≥ SRZ.minReasons(2) 个彼此独立的证据维度，否则直接不画；
+       ② 共振分闸：score ≥ SRZ.minScore(46)；
+       ③ 最小间距闸：逐条入选时，与已选任一条价格距离 < max(1.15×ATR20, 2.2%) 者一律淘汰
+          （这条是「不密集」的核心 —— 靠得太近的位，多画一条只会制造噪音）；
+       ④ 硬上限：最多 SRZ.maxN(4) 条，且**强制保留现价下方最近支撑 + 上方最近压力各 1 条**
+          （只有这两条是当下真正可操作的），剩余名额才给全局最强位。
+     另外距现价 > SRZ.maxDist(22%) 的位不画 —— 图上看不出来的位没有可用性。
+     纯函数、无未来函数（窗口只到末根）、零额外网络请求、vm 可测。
+
+   数据来源（2026-10-06 检索）：熊猫教练《理解支撑压力位的原理和作用》；八哥《支撑压力位有什么用？》；
+   中洲证券《压力位和支撑位到底怎么判断》；金嘟手记《看懂支撑位和压力位》；大时代观盘《分清真支撑和假支撑》；
+   刘老哥《交易市场的关键位置怎么找？》；TradingView Confluence Zones / MTF Confluence Key Levels；
+   MQL5《Detecting S/R Automatically: 3 Methods Compared》；DXPA《The Confluence System》；
+   Pomegra《What Makes a Support or Resistance Level Strong》；掘金《Python 成交量剖面》；
+   开源证券《上证跳空缺口回补概率统计》（向上跳空 305 次样本、长期回补率 92.7%，但短期不确定）。
+   ========================================================================== */
+var SRZ = {
+  ENABLE: true,
+  win: 120,            /* 分析窗口：最近 120 根日K（约半年）。更久远的位在日K图上已无意义 */
+  pivotN: 3,           /* 分形枢轴确认：左右各 3 根（未确认的摆动点不参与） */
+  bins: 36,            /* 成交量剖面价格分箱数 */
+  vpSteps: 6,          /* 每根 K 线的 [低,高] 区间摊分成的档数（成交量按档均摊） */
+  tolATR: 0.55,        /* 「同一区域」聚类容差 = 0.55 × ATR20 */
+  tolPctMin: 0.012,    /* 容差下限 1.2% 价格（低价股 ATR 太小会让容差失去意义） */
+  minGapATR: 1.15,     /* ★ 最终两条线的最小间距 = 1.15 × ATR20 */
+  minGapPct: 0.022,    /* 最小间距下限 2.2% 价格（防低价股画成一堆平行线） */
+  maxN: 4,             /* ★ 硬上限 4 条（用户：不要密集划线） */
+  /* ★ 2026-10-06（用户：划线「只需要针对最近的交易日长度覆盖有效支撑、压力即可，不需要满屏划长线」）：
+     关键位只画在最近 spanBars 根 K 线上（虚线 + 区间带同宽），不再从最左端满屏拉到最右端。
+     34 根 ≈ 7 周，足够看清「现价附近这条位最近在不在起作用」；越早期的历史不参与，视觉噪音自然消失。 */
+  spanBars: 34,
+  minScore: 46,        /* 共振分门槛（0~100） */
+  minReasons: 2,       /* ★ 至少 2 个独立证据，否则不画 */
+  maxDist: 0.22,       /* 距现价 >22% 的位不画（图上也看不出来） */
+  touchTolATR: 0.7,    /* 「触碰」判定容差 = 0.7 × ATR（比聚类容差略宽） */
+  wTouch: 0.30, wVP: 0.26, wPivot: 0.18, wMA: 0.12, wRnd: 0.04, wGap: 0.10,
+  atrN: 20, maPeriods: [20, 60, 120, 250]
+};
+
+/* ATR(n)：与全站 atr14Of / srpAtr 同口径 —— TR = max(高−低, |高−前收|, |低−前收|) 的 n 日均值 */
+function srzAtr(bars, n, i) {
+  if (i == null || i < n || i >= bars.length) return null;
+  var s = 0, t, pc;
+  for (t = i - n + 1; t <= i; t++) {
+    pc = bars[t - 1].close;
+    s += Math.max(bars[t].high - bars[t].low, Math.abs(bars[t].high - pc), Math.abs(bars[t].low - pc));
+  }
+  return s / n;
+}
+
+/* MA(n)：末根的 n 日均值（＝当前这一段周期的平均持仓成本线） */
+function srzMa(bars, n, i) {
+  if (i == null || i < n - 1 || i >= bars.length) return null;
+  var s = 0, t;
+  for (t = i - n + 1; t <= i; t++) s += bars[t].close;
+  return s / n;
+}
+
+/* 心理关口步长：按股价量级选「整数」粒度（<2 用 0.1、2~5 用 0.2、5~10 用 0.5、…） */
+function srzRoundStep(p) {
+  if (!(p > 0)) return 1;
+  if (p < 2) return 0.1;
+  if (p < 5) return 0.2;
+  if (p < 10) return 0.5;
+  if (p < 20) return 1;
+  if (p < 50) return 2;
+  if (p < 100) return 5;
+  if (p < 200) return 10;
+  if (p < 500) return 20;
+  return 50;
+}
+
+/* 分形枢轴：左右各 n 根都比它低（高）/ 高（低）才算。
+   右侧未确认的摆动点一律不算（非重绘原则：宁可晚 3 根才承认，也不画一个还没成立的拐点）。 */
+function srzPivots(bars, i0, i1, n) {
+  var highs = [], lows = [], i, j, isH, isL;
+  for (i = i0 + n; i <= i1 - n; i++) {
+    isH = true; isL = true;
+    for (j = i - n; j <= i + n; j++) {
+      if (j === i) continue;
+      if (bars[j].high >= bars[i].high) isH = false;
+      if (bars[j].low <= bars[i].low) isL = false;
+      if (!isH && !isL) break;
+    }
+    if (isH) highs.push({ i: i, p: bars[i].high });
+    if (isL) lows.push({ i: i, p: bars[i].low });
+  }
+  return { highs: highs, lows: lows };
+}
+
+/* 摆动点的「反应幅度」：拐点之后价格反向走了多少（绝对值，调用方除以 ATR 归一）。
+   方法论依据：拐点之所以重要，是因为它后面跟着一段真实的反向行情 ——
+   「拐点聚集了更多的人，就像高速公路的服务区」（刘老哥）+ TradingView 的 reaction analysis。 */
+function srzReaction(bars, i, i1, isHigh) {
+  var end = Math.min(i1, i + 30), best = 0, t;
+  for (t = i + 1; t <= end; t++) {
+    if (!bars[t]) continue;
+    if (isHigh) best = Math.max(best, bars[i].high - bars[t].low);
+    else best = Math.max(best, bars[t].high - bars[i].low);
+  }
+  return best;
+}
+
+/* 成交量剖面（Volume Profile）：把每根 K 线的成交量按 [低,高] 区间均摊到价格档。
+   产出：每档成交量（HVN=高量节点 → 最强支撑压力候选）、窗口总成交量、最大档量、每档被多少根 K 线覆盖。
+   口径来源：掘金《如何用 Python 找到股票的支撑位和压力位——成交量剖面》+ 财云量化《筹码分布》。 */
+function srzVolProfile(bars, i0, i1, lo, hi, bins, steps) {
+  var out = { ok: false, total: 1, bins: [], lo: lo, hi: hi, maxBin: 0 };
+  var span = hi - lo;
+  if (!(span > 0) || bins < 2) return out;
+  var b, i, k, v, l, h, seg, per, s, t, pr, bi, b0, b1, bb;
+  for (b = 0; b < bins; b++) out.bins.push({ lo: lo + span * b / bins, hi: lo + span * (b + 1) / bins, vol: 0, cnt: 0 });
+  out.total = 0;
+  for (i = i0; i <= i1; i++) {
+    k = bars[i]; if (!k) continue;
+    v = (k.volume > 0) ? k.volume : 0;
+    out.total += v;
+    l = Math.min(k.low, k.high); h = Math.max(k.low, k.high);
+    if (!isFinite(l) || !isFinite(h)) continue;
+    seg = Math.max(1, steps | 0); per = v / seg;
+    for (s = 0; s < seg; s++) {
+      t = (seg === 1) ? 0.5 : s / (seg - 1);
+      pr = l + (h - l) * t;
+      bi = Math.floor((pr - lo) / span * bins);
+      if (bi < 0) bi = 0; if (bi >= bins) bi = bins - 1;
+      out.bins[bi].vol += per;
+    }
+    b0 = Math.floor((l - lo) / span * bins); b1 = Math.floor((h - lo) / span * bins);
+    if (b0 < 0) b0 = 0; if (b1 >= bins) b1 = bins - 1;
+    for (bb = b0; bb <= b1; bb++) out.bins[bb].cnt++;
+  }
+  if (!(out.total > 0)) out.total = 1;
+  out.bins.forEach(function (x) { if (x.vol > out.maxBin) out.maxBin = x.vol; });
+  out.ok = true;
+  return out;
+}
+
+/* 跳空缺口：向上跳空 → 缺口**下沿**是支撑；向下跳空 → 缺口**上沿**是压力。
+   · 已回补的缺口不再作为关键位（回补即结构失效）；只保留最近 2 个未回补缺口（再多也不重要）。
+   · 跳空当日量 ≥ 前 20 日均量 ×1.5 → 放量「突破型」缺口，支撑/压力最强（无量的普通缺口最弱）。 */
+function srzGaps(bars, i0, i1) {
+  var out = [], i, a, b2, up, dn, vAvg, c, t, strong, edge, filled, q;
+  for (i = Math.max(1, i0); i <= i1; i++) {
+    a = bars[i - 1]; b2 = bars[i];
+    if (!a || !b2 || !isFinite(a.high) || !isFinite(a.low) || !isFinite(b2.low) || !isFinite(b2.high)) continue;
+    up = b2.low > a.high * 1.002;
+    dn = b2.high < a.low * 0.998;
+    if (!up && !dn) continue;
+    vAvg = 0; c = 0;
+    for (t = Math.max(0, i - 20); t < i; t++) { vAvg += (bars[t].volume || 0); c++; }
+    vAvg = c ? vAvg / c : 0;
+    strong = vAvg > 0 && (b2.volume || 0) >= vAvg * 1.5;
+    edge = up ? a.high : a.low;
+    filled = false;
+    for (q = i + 1; q <= i1; q++) {
+      if (!bars[q]) continue;
+      if (up) { if (bars[q].low <= edge) { filled = true; break; } }
+      else { if (bars[q].high >= edge) { filled = true; break; } }
+    }
+    if (filled) continue;
+    out.push({ i: i, p: edge, up: up, strong: strong });
+  }
+  out.sort(function (x, y) { return y.i - x.i; });
+  return out.slice(0, 2);
+}
+
+/* 均线权重：周期越大，筹码沉淀越厚、作用力越强（文章原话：年线 > 60 日 > 20 日） */
+function srzMaWeight(n) {
+  if (n >= 250) return 1.4;
+  if (n >= 120) return 1.1;
+  if (n >= 60) return 0.85;
+  return 0.6;
+}
+
+/* ===== 主引擎：从最近 SRZ.win 根日K 里挑出 2~4 个最重要的支撑 / 压力关键位 =====
+   返回 { ok, zones:[{p,lo,hi,role,score,stars,reasons,...}], atr, i0, i1, pb, scanned, why }
+   纯函数；无未来函数（窗口右端 = 末根）；vm 可测。 */
+function srZoneScan(bars, opt) {
+  var R = SRZ, out = { ok: false, why: '', zones: [], atr: null, i0: 0, i1: 0, pb: null, scanned: 0 };
+  if (R.ENABLE === false) { out.why = '关键位标注已关闭'; return out; }
+  if (!bars || !bars.length) { out.why = '无日K数据'; return out; }
+  var n = bars.length;
+  if (n < 60) { out.why = '日K不足 60 根（现有 ' + n + ' 根）'; return out; }
+  var i1 = n - 1, i0 = Math.max(0, n - R.win), pb = bars[i1].close;
+  if (!(pb > 0)) { out.why = '现价无效'; return out; }
+  var atr = srzAtr(bars, R.atrN, i1);
+  if (!(atr > 0)) atr = pb * 0.02;
+  out.atr = atr; out.i0 = i0; out.i1 = i1; out.pb = pb; out.scanned = i1 - i0 + 1;
+
+  var tol = Math.max(atr * R.tolATR, pb * R.tolPctMin);           /* 聚类容差 */
+  var touchTol = Math.max(atr * R.touchTolATR, pb * R.tolPctMin);  /* 触碰判定容差（略宽） */
+
+  /* ① 窗口价格区间 + 成交量剖面 */
+  var lo = Infinity, hi = -Infinity, i;
+  for (i = i0; i <= i1; i++) { if (bars[i].low < lo) lo = bars[i].low; if (bars[i].high > hi) hi = bars[i].high; }
+  if (!(hi > lo)) { out.why = '窗口内振幅为 0'; return out; }
+  var vp = srzVolProfile(bars, i0, i1, lo, hi, R.bins, R.vpSteps);
+
+  /* ② 分形枢轴  ③ 均线现值  ④ 整数关口  ⑤ 未回补缺口 */
+  var pv = srzPivots(bars, i0, i1, R.pivotN);
+  var mas = [];
+  R.maPeriods.forEach(function (P) { var v = srzMa(bars, P, i1); if (v != null && v > 0) mas.push({ n: P, v: v }); });
+  var step = srzRoundStep(pb), rnds = [], rv;
+  for (rv = Math.floor(lo / step) * step; rv <= hi + step * 0.5; rv += step) if (rv > 0) rnds.push(rv);
+  var gaps = srzGaps(bars, i0, i1);
+
+  /* ---- 候选池 ---- */
+  var cands = [];
+  pv.highs.forEach(function (q) { cands.push({ p: q.p, src: 'pH', i: q.i }); });
+  pv.lows.forEach(function (q) { cands.push({ p: q.p, src: 'pL', i: q.i }); });
+  vp.bins.forEach(function (b) {
+    if (vp.maxBin > 0 && b.vol / vp.maxBin >= 0.55) cands.push({ p: (b.lo + b.hi) / 2, src: 'vp', i: i1 });
+  });
+  mas.forEach(function (q) { cands.push({ p: q.v, src: 'ma', i: i1, per: q.n }); });
+  rnds.forEach(function (q) { cands.push({ p: q, src: 'rnd', i: i1 }); });
+  gaps.forEach(function (q) { cands.push({ p: q.p, src: 'gap', i: q.i, gap: q }); });
+  if (!cands.length) { out.why = '窗口内无任何候选（振幅 / 成交量异常）'; return out; }
+
+  /* ---- 聚类：价格升序；与「当前簇均值」距离 ≤ tol 才并入（避免单链把半个图拉成一簇）---- */
+  cands.sort(function (a, b) { return a.p - b.p; });
+  var groups = [], cur = null;
+  cands.forEach(function (c) {
+    if (!cur || Math.abs(c.p - cur.mean) > tol) {
+      cur = { items: [c], mean: c.p, min: c.p, max: c.p };
+      groups.push(cur);
+    } else {
+      cur.items.push(c);
+      cur.min = Math.min(cur.min, c.p); cur.max = Math.max(cur.max, c.p);
+      cur.mean = (cur.mean * (cur.items.length - 1) + c.p) / cur.items.length;
+    }
+  });
+
+  /* ---- 逐簇打分：0~100 共振分 ---- */
+  var coverPct = Math.min(60, (2 * tol / (hi - lo)) * 100);   /* 容差带占窗口价格幅度的百分比 */
+  var zones = [];
+  groups.forEach(function (g) {
+    var p = g.mean;
+    if (!(p > 0)) return;
+
+    /* (a) 触碰：价位落在该日 [低,高]±容差 内即算一次；新近的触碰权重更高（时间衰减 0.45~1） */
+    var touchN = 0, touchW = 0, j, b, age;
+    for (j = i0; j <= i1; j++) {
+      b = bars[j]; if (!b) continue;
+      if (p < b.low - touchTol || p > b.high + touchTol) continue;
+      touchN++;
+      age = (i1 - j) / Math.max(1, i1 - i0);
+      touchW += 1 - 0.55 * age;
+    }
+
+    /* (b) 量能密集：位附近 ±tol 覆盖到的价格档成交量 ÷ 窗口总量，再除以「均匀分布下的期望占比」
+           → vpX = 相对均量的密集倍数（1.0 = 与均量持平，≥2.2 = 明显堆量）。 */
+    var vNear = 0;
+    vp.bins.forEach(function (bb) { if (p >= bb.lo - tol && p <= bb.hi + tol) vNear += bb.vol; });
+    var sharePct = vp.total > 0 ? vNear / vp.total * 100 : 0;
+    var vpX = coverPct > 0 ? sharePct / coverPct : 0;
+
+    /* (c) 摆动拐点：簇内枢轴个数 + 平均反应幅度（ATR 倍数，封顶 3） */
+    var pvN = 0, reacSum = 0, reacCnt = 0, rr;
+    g.items.forEach(function (x) {
+      if (x.src !== 'pH' && x.src !== 'pL') return;
+      pvN++;
+      rr = srzReaction(bars, x.i, i1, x.src === 'pH');
+      reacSum += Math.min(3, rr / atr); reacCnt++;
+    });
+    var reacAvg = reacCnt ? reacSum / reacCnt : 0;
+
+    /* (d) 均线共振：容差内的均线条数（按周期加权） */
+    var maHit = 0, maW = 0, maNames = [];
+    mas.forEach(function (q) {
+      if (Math.abs(q.v - p) <= tol) { maHit++; maW += srzMaWeight(q.n); maNames.push('MA' + q.n); }
+    });
+
+    /* (e) 整数关口 / (f) 未回补缺口 */
+    var rndNear = Infinity;
+    rnds.forEach(function (q) { var d2 = Math.abs(q - p); if (d2 < rndNear) rndNear = d2; });
+    var gHit = null;
+    g.items.forEach(function (x) { if (x.src === 'gap' && !gHit) gHit = x.gap; });
+
+    /* 各维度归一化到 0~1 */
+    var fTouch = Math.min(1, touchW / 5);
+    var fVP = Math.min(1, vpX / 2.2);
+    var fPivot = Math.min(1, 0.5 * Math.min(1, pvN / 2) + 0.5 * Math.min(1, reacAvg / 2.2));
+    var fMA = Math.min(1, maW / 1.95);
+    var fRnd = (rndNear <= touchTol) ? 1 : ((rndNear <= touchTol * 2) ? 0.45 : 0);
+    var fGap = gHit ? (gHit.strong ? 1 : 0.6) : 0;
+
+    /* 独立证据清单（不足 SRZ.minReasons 条 → 这条位不画） */
+    var reasons = [];
+    if (touchN >= 2 && fTouch >= 0.35) reasons.push('触碰 ' + touchN + ' 次' + (touchN >= 5 ? '（反复测试）' : ''));
+    if (fVP >= 0.35) reasons.push('量能密集 ' + vpX.toFixed(1) + '×');
+    if (pvN >= 1 && reacAvg >= 0.8) reasons.push(pvN >= 2 ? (pvN + ' 个摆动拐点共振') : ('摆动拐点（后反向 ' + reacAvg.toFixed(1) + '×ATR）'));
+    if (maHit >= 1) reasons.push(maNames.join('+') + ' 共振');
+    if (fRnd >= 0.45) reasons.push('整数关口');
+    if (gHit) reasons.push(gHit.strong ? (gHit.up ? '放量向上跳空' : '放量向下跳空') : '跳空缺口');
+
+    var raw = R.wTouch * fTouch + R.wVP * fVP + R.wPivot * fPivot + R.wMA * fMA + R.wRnd * fRnd + R.wGap * fGap;
+    var score = Math.round(raw * 100);
+    /* 三因子以上共振 → 额外加成（公开统计：3 个独立方法共振命中率 82~88%，显著高于单因子 50~70%） */
+    if (reasons.length >= 3) score = Math.min(100, score + 6);
+
+    var halfW = Math.max(tol * 0.75, (g.max - g.min) * 0.6 + tol * 0.35);
+    zones.push({
+      p: p, lo: Math.max(p - halfW, 0.001), hi: p + halfW,
+      role: (p < pb) ? 'sup' : 'res',
+      score: score, stars: 1, touchN: touchN, sharePct: sharePct, vpX: vpX, pvN: pvN,
+      reacAvg: reacAvg, maHit: maHit, gapUp: gHit ? gHit.up : null, gapStrong: gHit ? gHit.strong : false,
+      reasons: reasons, reasonN: reasons.length,
+      distPct: (p - pb) / pb
+    });
+  });
+
+  /* ---- 门槛 + 去密选线 ---- */
+  var pool = zones.filter(function (z) {
+    return z.score >= R.minScore && z.reasonN >= R.minReasons && Math.abs(z.distPct) <= R.maxDist;
+  });
+  if (!pool.length) {
+    out.why = '窗口内无满足「≥' + R.minReasons + ' 个独立证据 且 共振分 ≥' + R.minScore + '」的关键位 → 不强行划线';
+    return out;
+  }
+  pool.sort(function (a, b) { return b.score - a.score || a.p - b.p; });
+  var gapMin = Math.max(atr * R.minGapATR, pb * R.minGapPct);
+  var chosen = [];
+  function tryPush(z) {
+    if (!z) return false;
+    if (chosen.indexOf(z) >= 0) return false;
+    for (var k = 0; k < chosen.length; k++) if (Math.abs(chosen[k].p - z.p) < gapMin) return false;
+    chosen.push(z); return true;
+  }
+  /* ① 现价下方最近的有效支撑（当下唯一下方可操作的位） */
+  var supPool = pool.filter(function (z) { return z.role === 'sup'; }).sort(function (a, b) { return b.p - a.p; });
+  for (var s = 0; s < supPool.length; s++) { if (tryPush(supPool[s])) break; }
+  /* ② 现价上方最近的有效压力 */
+  var resPool = pool.filter(function (z) { return z.role === 'res'; }).sort(function (a, b) { return a.p - b.p; });
+  for (var r = 0; r < resPool.length; r++) { if (tryPush(resPool[r])) break; }
+  /* ③ 剩余名额给全局最强位 */
+  for (var m = 0; m < pool.length && chosen.length < R.maxN; m++) tryPush(pool[m]);
+  /* ④ 按价格降序输出（图上从上到下） */
+  chosen.sort(function (a, b) { return b.p - a.p; });
+  chosen.forEach(function (z) { z.stars = z.score >= 74 ? 3 : (z.score >= 58 ? 2 : 1); });
+  out.ok = true; out.zones = chosen; out.gapMin = gapMin; out.tol = tol;
+  return out;
+}
+
+function renderChart(ind, focus) {
   var kl = (ind && ind.klines) ? ind.klines : [];
   var n = kl.length;
   if (!n) return '';
@@ -5230,6 +5701,20 @@ function renderChart(ind) {
   var ks = kl.slice(start);
   var m5 = (ind.ma5 || []).slice(start), m10 = (ind.ma10 || []).slice(start), m20 = (ind.ma20 || []).slice(start);
   var uid = 'kl' + (++__KL_SEQ) + '_';
+
+  /* ★ 2026-10-06（用户要求）：「支撑压力线显示方法改为，点击每一根 k 线自动显示对应的支撑压力位，
+     不点击 k 线默认显示最近交易日 k 线对应的支撑压力位」。
+     ---------------------------------------------------------------
+     · focus = 关键位判定的**基准根**全量下标。语义 = 「把那一根当作当前价」，于是：
+         - srZoneScan 只读 kl[0..focus]（窗口右端 = 基准根）→ **天然无未来函数**：
+           基准根之后的行情（含用户此刻看到的最新价）一律不参与，否则就是拿未来数据标历史；
+         - 每条位的 sup / res 角色、距现价百分比 distPct 都相对**基准根收盘价**重新判定；
+         - 覆盖区间（虚线 + 区间带）右端也收在基准根那一列的 x 上 —— 图上直接看得出「基准是哪一根」。
+     · 不传 focus（页面默认渲染）= 最近交易日 n-1，**与旧版逐像素一致**（走 kl 原数组，零拷贝）。
+     · 越界自动夹紧；基准根历史不足 60 根时 srZoneScan 会如实返回 why（图例 chip 显示原因，不硬画）。 */
+  var __focusEnd = (focus != null && isFinite(focus)) ? Math.max(0, Math.min(n - 1, Math.floor(focus))) : (n - 1);
+  var __focusVi = __focusEnd - start;                    /* 基准根在可见窗口内的下标（可能 <0，见下方夹紧） */
+  var __focusDefault = (__focusEnd >= n - 1);            /* true = 最近交易日口径（默认态 / 点最后一根） */
 
   /* ★ 2026-10-04（用户要求「涨停或跌停 k 线请用特殊的颜色」）：涨跌停 K 线专属色所需的两个入参 ——
      code 用于板制档位（88/300/301=20%、北交所=30%、其余 10%），name 用于 ST 判定（ST 主板 5%）。
@@ -5262,6 +5747,20 @@ function renderChart(ind) {
   [m5, m10, m20].forEach(function (arr) {
     arr.forEach(function (v) { if (v != null && isFinite(v)) { lo = Math.min(lo, v); hi = Math.max(hi, v); } });
   });
+  /* ★ 2026-10-06（用户要求「自动画出支撑压力位」）：先算关键位，并把它的区间并入价格刻度 ——
+     否则「高于 70 日窗口最高价」的压力位会被映射到面板之外（画不出来 / 画到框外）。
+     算法与四道去密闸门见 srZoneScan / SRZ 注释。零额外网络请求（只用已取到的 ind.klines）。
+     ★ 2026-10-06 第二批（用户要求「点击每一根 k 线自动显示对应的支撑压力位」）：
+     基准根 = __focusEnd（默认最近交易日）→ 只把 kl[0..__focusEnd] 交给引擎（见顶部 __focusEnd 注释）。 */
+  var __srz = null;
+  try { __srz = srZoneScan(__focusDefault ? kl : kl.slice(0, __focusEnd + 1), {}); } catch (eSrz) { __srz = null; }
+  if (ind) ind.__srZones = __srz;
+  if (__srz && __srz.ok && __srz.zones.length) {
+    __srz.zones.forEach(function (z) {
+      if (isFinite(z.lo) && z.lo > 0) lo = Math.min(lo, z.lo);
+      if (isFinite(z.hi)) hi = Math.max(hi, z.hi);
+    });
+  }
   if (!isFinite(lo) || !isFinite(hi)) return '';
   var hiRaw = hi, loRaw = lo;
   var span = (hi - lo) || 1;
@@ -5466,8 +5965,11 @@ function renderChart(ind) {
       /* 热区高度覆盖到 KDJ 副图底部（kdjB）：在副图上悬停/点击同一列，仍然命中这一天 */
       '<rect class="hit" x="' + (cx - step / 2).toFixed(1) + '" y="' + priceT + '" width="' + step.toFixed(1) +
         '" height="' + (kdjB - priceT) + '" fill="transparent"/>' +
-      '<line x1="' + cx.toFixed(1) + '" y1="' + Y(k.high).toFixed(1) + '" x2="' + cx.toFixed(1) + '" y2="' + Y(k.low).toFixed(1) +
+      '<line class="kw" x1="' + cx.toFixed(1) + '" y1="' + Y(k.high).toFixed(1) + '" x2="' + cx.toFixed(1) + '" y2="' + Y(k.low).toFixed(1) +
         '" stroke="' + col + '" stroke-width="1" stroke-opacity="0.92"/>' +
+        /* ↑ class="kw"（K线 wick）：影线的语义标记。原先影线没有任何标记，单测只能拿
+           stroke-opacity="0.92" 这个「偶然唯一」的属性值来数它 —— 2026-10-06 支撑压力位
+           虚线用了同值后立刻撞车（_test_klchart 影线 70→73）。加 class 后按语义计数，不再脆弱。 */
       '<rect class="kb" x="' + (cx - bw / 2).toFixed(1) + '" y="' + top.toFixed(1) + '" width="' + bw.toFixed(1) +
         '" height="' + bh.toFixed(1) + '" rx="0.9" fill="' + col + '"' +
         (isLast ? ' stroke="#ffffff" stroke-width="1.2"' : '') + '/>' +
@@ -5688,6 +6190,88 @@ function renderChart(ind) {
     svg += '</g>';
   }
 
+  /* ===== ★ 2026-10-06（用户要求）：支撑 / 压力关键位 =====
+     只画 srZoneScan 选出的那 2~4 条「≥2 个独立证据」的位 —— 用户明确要求
+     「不要密集划线，利用策略、算法判断结论后，只在最重要的位置进行划线」。
+     ★ 2026-10-06 第二批（用户要求「点击每一根 k 线自动显示对应的支撑压力位，
+     不点击 k 线默认显示最近交易日 k 线对应的支撑压力位」）：本组线的**基准根 = __focusEnd**
+     （默认最近交易日；点击某根后 = 那一根）—— 引擎只吃 kl[0..__focusEnd]，覆盖区间右端也收在基准根那一列。
+     视觉语言（刻意与图上其它元素区分 · 2026-10-06 第二批按用户要求再降噪）：
+       · 淡色区间带（fill-opacity 0.03，几乎不可见）—— 强调「关键位是一段区间，不是一条精确的线」；
+       · 水平虚线（stroke-opacity 0.42~0.58 = **半透明**，压在蜡烛上仍能看清蜡烛）+ 线宽 1.00~1.24 随 ★ 微差；
+       · **只标注纯股价数字**（无「压力 / 支撑」字样、无 ★、无共振分），且标签锚在**线段左端**（不与右侧
+         「末根收盘价签」抢位置）；角色由**颜色**表达，强弱由**线宽微差**表达，完整依据收进 <title> 悬停可读。
+     颜色：压力 = 橙红 #ff7849 · 支撑 = 青绿 #14b8a6（图上唯一未被占用的两组语义色；图例横线图标给映射）。 */
+  if (__srz && __srz.ok && __srz.zones.length) {
+    var SRZ_COL = { res: '#ff7849', sup: '#14b8a6' };
+    var __srzTolPct = Math.max(__srz.atr * SRZ.tolATR, __srz.pb * SRZ.tolPctMin) / __srz.pb * 100;
+    var __srzGapPct = Math.max(__srz.atr * SRZ.minGapATR, __srz.pb * SRZ.minGapPct) / __srz.pb * 100;
+    svg += '<g class="srz">';
+    /* ★ 2026-10-06（用户：不要满屏划长线）：只覆盖最近 spanBars 根 —— 起点 = 基准根往前 spanBars−1 根，
+       区间带与虚线共用这一段宽度。图不够长时回落最左端（不越界）。
+       ★ 2026-10-06 第二批（用户要求「点击每一根 k 线自动显示对应的支撑压力位」）：
+       覆盖区间的**右端 = 基准根那一列**（默认态基准根 = 最近交易日 → 右端 = 最右端，与旧版逐像素一致）
+       ⇒ 图上直接看得出「本次关键位是以哪一根 K 线为基准算出来的」。
+       基准根太靠左（覆盖不足 4 根）时回落为「右端窗口」，避免画出一条零宽度的线。 */
+    var __srzSpan = Math.min(ks.length, Math.max(4, SRZ.spanBars | 0));
+    var __srzEndVi = (__focusVi >= 0 && __focusVi < ks.length) ? __focusVi : (ks.length - 1);
+    var __srzStartVi = Math.max(0, __srzEndVi - __srzSpan + 1);
+    if (__srzEndVi - __srzStartVi + 1 < 4) {
+      __srzEndVi = ks.length - 1; __srzStartVi = Math.max(0, __srzEndVi - __srzSpan + 1);
+    }
+    var __srzX0 = X(__srzStartVi), __srzX1 = X(__srzEndVi);
+    var __srzCov = __srzEndVi - __srzStartVi + 1;                     /* 实际覆盖根数（tip 如实写明） */
+    var __focusDate = (kl[__focusEnd] && kl[__focusEnd].date) ? String(kl[__focusEnd].date) : '';
+    __srz.zones.forEach(function (z) {
+      var col = SRZ_COL[z.role] || '#8c9eff';
+      var y = Y(z.p);
+      if (!isFinite(y)) return;
+      var yT = Y(z.hi), yB = Y(z.lo);
+      var bandT = Math.min(Math.max(Math.min(yT, yB), priceT), priceB);
+      var bandB = Math.min(Math.max(Math.max(yT, yB), priceT), priceB);
+      var roleTxt = (z.role === 'res') ? '压力' : '支撑';
+      var starTxt = (z.stars >= 3) ? '★★★' : ((z.stars === 2) ? '★★' : '★');
+      /* ★ 2026-10-06 第二批（用户：还是干扰、颜色已代表支撑压力、不要角色文字、改半透明）：
+         ① 线宽 1.65~2.65 → 1.00~1.24（比"末根收盘虚线"w=1 只粗一点点）；
+         ② 透明度 0.60~0.96 → 0.42~0.58（**明确半透明**：压在蜡烛上仍能看清蜡烛本身）；
+         ③ 强弱不再靠"粗/亮"表达，只留极小的线宽微差（★ 数），文字标签一律不再出现角色名。 */
+      var sw = 1.0 + 0.12 * z.stars;
+      var op = 0.42 + 0.08 * z.stars;
+      var tip = roleTxt + '位 ' + z.p.toFixed(2) + '（区间 ' + z.lo.toFixed(2) + ' ~ ' + z.hi.toFixed(2) + '）　共振分 ' + z.score + '/100 ' + starTxt +
+        '\n距基准根收盘 ' + (z.distPct >= 0 ? '+' : '') + (z.distPct * 100).toFixed(1) + '%' +
+        '\n依据（' + z.reasonN + ' 个独立证据）：' + z.reasons.join(' · ') +
+        '\n算法：截至基准根的最近 ' + __srz.scanned + ' 根日K · ATR20 ' + __srz.atr.toFixed(2) + ' · 容差带 ±' + __srzTolPct.toFixed(1) + '%' +
+        ' · 彼此间距 ≥' + __srzGapPct.toFixed(1) + '% · 最多 ' + SRZ.maxN + ' 条（刻意不密集）' +
+        '\n基准根：' + (__focusDate || '—') + '（收盘 ' + __srz.pb.toFixed(2) + '）' +
+        (__focusDefault ? ' → 最近交易日（默认）' : ' → 点击选定（只用该日及之前的行情，无未来函数）') +
+        '\n绘制范围：基准根往前 ' + __srzCov + ' 个交易日（不画满屏长线，减少对 K 线观察的干扰）' +
+        '\n⚠️ 支撑/压力是「区域」不是精确点位，仅为结构参考，不构成买卖建议。';
+      svg += '<g><title>' + escapeHtml(tip) + '</title>';
+      if (bandB - bandT > 0.8) {
+        svg += '<rect x="' + __srzX0.toFixed(1) + '" y="' + bandT.toFixed(1) + '" width="' + (__srzX1 - __srzX0).toFixed(1) +
+          '" height="' + (bandB - bandT).toFixed(1) + '" fill="' + col + '" fill-opacity="0.03"/>';
+      }
+      svg += '<line x1="' + __srzX0.toFixed(1) + '" y1="' + y.toFixed(1) + '" x2="' + __srzX1.toFixed(1) + '" y2="' + y.toFixed(1) +
+        '" stroke="' + col + '" stroke-width="' + sw.toFixed(2) + '" stroke-opacity="' + op.toFixed(2) + '" stroke-dasharray="12 8"/>';
+      /* ★ 2026-10-06 第二批（用户：不要「压力/支撑」文字；股价改到**线段左侧**；整体半透明）：
+         标签只剩「纯股价」——角色已由颜色表达（橙红=压力 / 青绿=支撑，见图例横线图标），
+         强弱已由线宽微差表达；角色名 / ★ / 共振分 / 依据全部收进 <title> 悬停查看，图上不再占用像素。
+         位置：锚在**线段左端**（x = __srzX0 + 4，text-anchor=start）—— 与右侧「末根收盘价签」彻底分开，
+         不再挤在同一处；纵向仍按「压力在线上 / 支撑在线下」错开，越界自动翻转。
+         半透明：文字 fill-opacity 0.78 + 描边 stroke-opacity 0.5（描边只为压住蜡烛底色，不抢视线）。 */
+      var lbl = z.p.toFixed(2);
+      var lblY = (z.role === 'res') ? (y - 3.2) : (y + 11.2);
+      if (lblY < priceT + 8) lblY = y + 11.2;          /* 顶上没位置 → 翻到线下 */
+      if (lblY > priceB - 2.5) lblY = y - 3.2;         /* 底下没位置 → 翻到线上 */
+      svg += '<text x="' + (__srzX0 + 4).toFixed(1) + '" y="' + lblY.toFixed(1) + '" fill="' + col + '" font-size="9.5" font-weight="700" ' +
+        'text-anchor="start" font-family="' + M + '" fill-opacity="0.78" ' +
+        'stroke="#0b1226" stroke-width="2.6" stroke-opacity="0.5" paint-order="stroke" ' +
+        'stroke-linejoin="round">' + escapeHtml(lbl) + '</text>';
+      svg += '</g>';
+    });
+    svg += '</g>';
+  }
+
   /* 末根收盘价：横虚线 + 右侧价签（颜色随当日涨跌） */
   var last = ks[ks.length - 1];
   var lastChg = chgOf(ks.length - 1);
@@ -5811,9 +6395,48 @@ function renderChart(ind) {
      ★ 2026-10-04：vpRows 提前到 head 之前算 —— 默认态「量能」chip 的 ×5日均量 取末行 r5。 */
   var vpRows = [];
   for (var _pi = 0; _pi < ks.length; _pi++) vpRows.push(vpRawOf(kl, start + _pi));
+  /* ★ 2026-10-06 第二批（用户要求「点击每一根 k 线自动显示对应的支撑压力位」）：
+     缓存里补 ind 引用 —— 点击后要按新基准根**整图重绘**（关键位区间参与价格刻度，刻度变了 Y 映射就变），
+     而重绘只能从 ind 起（klines / MA 数组都在它上面）。只存引用不复制，LRU 上限 24 条。 */
   var __ent = { kl: kl, start: start, code: (ind && ind.code) ? ind.code : '',
     ma5: ind.ma5 || null, ma10: ind.ma10 || null, ma20: ind.ma20 || null,
+    ind: ind || null,
     vr: (ind.volRatio != null && isFinite(ind.volRatio)) ? ind.volRatio : null };
+  /* ★ 2026-10-06（用户要求「自动画出支撑压力位」）：图例补「压力位 / 支撑位」横线图标 + 本次实际画了几条。
+     只在真的画了线时列这两枚图标；没画时用一枚说明 chip 如实给出原因（不静默消失 —— 与全站诚实留白纪律一致）。 */
+  var __srzChips = '';
+  /* ★ 2026-10-06 第二批（用户要求「点击每一根 k 线自动显示对应的支撑压力位，不点击默认最近交易日」）：
+     图例明示「本次关键位以哪一根为基准根」—— 与图上覆盖区间右端一一对应，用户可自证基准是哪一根。 */
+  var __srzBasisChip = '<span class="kl-chip" title="' + escapeHtml(
+    '关键位基准根 = ' + (__focusDate || '—') + '（该日收盘 ' + ((__srz && __srz.pb) ? __srz.pb.toFixed(2) : '—') + '）\n' +
+    (__focusDefault ? '当前为默认口径：最近交易日。' : '当前为**点击选定**口径：把该日当作"当前价"，只用该日及之前的行情重算（无未来函数）。') +
+    '\n点击图中任意一根 K 线 → 支撑/压力关键位即以那一根为基准重算，覆盖区间右端也收在那一列；\n' +
+    '再点一次同一根不重算；页面重新渲染后回到「最近交易日」默认口径。') +
+    '">基准 <b>' + escapeHtml(__focusDate || '—') + '</b>' + (__focusDefault ? '（最近交易日）' : '（点击选定）') + '</span>';
+  if (__srz && __srz.ok && __srz.zones.length) {
+    var __srzList = __srz.zones.map(function (z) {
+      return (z.role === 'res' ? '压力 ' : '支撑 ') + z.p.toFixed(2) +
+        '（' + z.score + '分 ' + z.reasons.join(' · ') + '）';
+    }).join('\n');
+    var __srzGapPctC = Math.max(__srz.atr * SRZ.minGapATR, __srz.pb * SRZ.minGapPct) / __srz.pb * 100;
+    __srzChips = __srzBasisChip +
+      '<span class="kl-chip"><i class="sh sh-hline" style="color:#ff7849"></i>压力位</span>' +
+      '<span class="kl-chip"><i class="sh sh-hline" style="color:#14b8a6"></i>支撑位</span>' +
+      '<span class="kl-chip" title="' + escapeHtml('本次自动标出 ' + __srz.zones.length + ' 条关键位（上限 ' + SRZ.maxN +
+        ' 条 · 刻意不密集）：\n' + __srzList + '\n\n口径：以 ' + (__focusDate || '—') + ' 为基准根，回看 ' + __srz.scanned +
+        ' 根日K；每一条都必须 ≥' + SRZ.minReasons +
+        ' 个彼此独立的证据（触碰次数 / 量能密集 / 摆动拐点 / 均线共振 / 整数关口 / 未回补缺口）；' +
+        '按共振分排序，与已选任一条距离 < ' + __srzGapPctC.toFixed(1) + '% 者直接淘汰；' +
+        '并强制保留基准根收盘价下方最近支撑 + 上方最近压力各 1 条。★ 越多 = 共振越强。\n' +
+        '鼠标悬停图上线条可看该位的完整依据。支撑/压力是区间不是精确点位，仅供结构参考。') + '">关键位 <b>' +
+        __srz.zones.length + '</b> 条</span>';
+  } else {
+    __srzChips = __srzBasisChip +
+      '<span class="kl-chip" title="' + escapeHtml('未画关键位：' + ((__srz && __srz.why) || '数据不足') +
+        (__focusDefault ? '' : '\n（当前基准根 = ' + (__focusDate || '—') + '：该日之前的历史不足 60 根时引擎无法定关键位 —— 诚实留白，不硬画）')) +
+      '">关键位 <b>—</b></span>';
+  }
+
   var head = '<div class="kl-head">' +
     /* ★ 2026-10-04（用户要求）：当日徽标组 .kl-dayset —— 默认=最新一根；点击某根 K 线后整组联动为该日数据。
        数据取自 ind.ma5/ma10/ma20 数组与该日 K 线本体（与图上曲线同源同口径），不另起算法；
@@ -5861,15 +6484,19 @@ function renderChart(ind) {
        只描述均线结构方向，不是买卖信号。 */
     '<span class="kl-chip"><i class="sh sh-mup" style="color:#ff5252"></i><b>MA5 斜率上拐</b></span>' +
     '<span class="kl-chip"><i class="sh sh-mdn" style="color:#26c281"></i><b>MA5 斜率下拐</b></span>' +
+    /* ★ 2026-10-06（用户要求「自动画出支撑压力位」）：关键位图例（横线图标 + 本次条数） */
+    __srzChips +
     '<span class="kl-chip"><i class="sh sh-bar" style="color:#8c9eff"></i>箱体 ' + escapeHtml(__boxShort) + '</span>' +
     '</div>';
   /* 量价信号不预计算（见 __KL_CACHE 注释）：只登记 klines 引用 + 窗口起点 + 代码（进阶结构需板块涨跌停幅度），点击时按需算那一根。
-     ★ 2026-10-04：缓存补 ma5/ma10/ma20 数组 + 实时量比 vr —— 点击日徽标组直接复用（与图上曲线同源同口径）。 */
+     ★ 2026-10-04：缓存补 ma5/ma10/ma20 数组 + 实时量比 vr —— 点击日徽标组直接复用（与图上曲线同源同口径）。
+     ★ 2026-10-06 第二批：chart-wrap 挂 data-focus = 本次关键位的基准根全量下标 —— 点击处理器据此判断
+       「是否需要用新基准根重绘」（同根不重绘；页面重新渲染即回到默认的最近交易日口径）。 */
   __KL_CACHE[uid] = __ent;
   __KL_ORDER.push(uid);
   while (__KL_ORDER.length > __KL_CAP) { delete __KL_CACHE[__KL_ORDER.shift()]; }
   return head + '<div class="chart-wrap" data-vp="' + escapeHtml(JSON.stringify(vpRows)) +
-    '" data-uid="' + uid + '">' + svg + '</div>';
+    '" data-uid="' + uid + '" data-focus="' + __focusEnd + '">' + svg + '</div>';
 }
 
 /* ★ 2026-10-04（用户要求）：K 线图顶部「当日徽标组」—— 默认=最新一根；点击某根 K 线后整组切换为该日数据。
@@ -5893,6 +6520,41 @@ function klDaysetHtml(ent, gidx, kj, raw, kjChipHtml) {
   }
   var vol = isFinite(kD.volume) ? kD.volume : null;
   var r5v = (raw && raw.r5 != null) ? raw.r5 : null;
+  /* ★ 2026-10-05（用户要求「量能后显示20日动量、量比」）：
+     ① 20日动量 chip = 该日收盘 ÷ 20个交易日前收盘 − 1（与「20日动量」列 mom20Of 同口径：kl[i−20] 对 kl[i]，
+        只用该日及之前数据，无未来函数）；该日之前不足 20 根 → chip 消失（诚实缺省）；红涨绿跌着色；
+        历史日标签加「(至该日)」（与本组「区间(至该日)」同一约定）。
+     ② 量比 chip 从「仅最新一根」放开 —— 历史日无实时快照，改用该日「当日量÷前5日均量·不含当日」的日K近似
+        （raw.r5，与 F10 缺快照时的兜底同口径），标签标「(近似)」；最新一根仍优先东财 f10 实时快照。 */
+  var mom20v = null, momBase = (gidx >= 20 && kl[gidx - 20]) ? kl[gidx - 20].close : null;
+  if (momBase > 0 && isFinite(kD.close) && isFinite(momBase)) mom20v = (kD.close - momBase) / momBase * 100;
+  var vrChip = '';
+  if (isLast && ent.vr != null) {
+    vrChip = '<span class="kl-chip" title="量比（实时口径）：当日量 ÷ 前5日均量（不含当日）；取东财 f10 快照">量比 <b>' + (+ent.vr).toFixed(2) + '</b></span>';
+  } else if (r5v != null) {
+    vrChip = '<span class="kl-chip" title="量比（日K近似）：该日量 ÷ 该日前5日均量（不含当日）；历史日无实时快照，用日K近似（诚实缺省不硬算）">量比(近似) <b>' + (+r5v).toFixed(2) + '</b></span>';
+  }
+  /* ★ 2026-10-05（用户要求「点击每一根 K 线，在 KDJ 前显示 ATR% 数值」）：
+     ATR% chip = 该日及其前 13 根（共 14 根）真实波幅均值 ÷ 该日收盘 × 100。
+     · TR 口径与页面「ATR%」列 atr14Of 完全同源：TR = max(当日高−低, |高−前收|, |低−前收|)；
+     · 分母改用「该日收盘」（原列用最新价）—— 历史日若拿最新价当分母，会被当前股价水平扭曲、逐日不可比；
+     · 窗口 [gidx−13, gidx] 只读该日及之前，无未来函数；不足 14 根时按实际根数均值（与 atr14Of 同策略）；
+     · 分档沿用 atr14Band：<5 波动太低(灰) · 5~12 刚刚好(绿) · 12~15 偏高(橙) · >15 太大(红)；
+     · 历史日标签加「(至该日)」（与本组 20日动量 / 区间 同一约定）；完全算不出 → 值显示「—」（诚实留白不硬算）。 */
+  var atrPct = null, am, aSum = 0, aCnt = 0;
+  for (am = Math.max(1, gidx - 13); am <= gidx; am++) {
+    var kb = kl[am], kp = kl[am - 1];
+    if (!kb || !kp || !isFinite(kb.high) || !isFinite(kb.low) || !isFinite(kp.close)) continue;
+    aSum += Math.max(kb.high - kb.low, Math.abs(kb.high - kp.close), Math.abs(kb.low - kp.close)); aCnt++;
+  }
+  if (aCnt > 0 && isFinite(kD.close) && kD.close > 0) atrPct = aSum / aCnt / kD.close * 100;
+  var atrBand = atr14Band(atrPct);
+  var atrChip = '<span class="kl-chip" title="ATR(14) 百分比 = 该日及其前 13 根的真实波幅(TR)均值 ÷ 该日收盘 × 100（TR = max(当日高−低, |高−前收|, |低−前收|)；与页面的 ATR 百分比列同源，分母改用该日收盘以保证逐日可比）&#10;' +
+    (atrPct != null ? ('该日读数 ' + atrPct.toFixed(2) + '% → ' + atrBand.label) : '该日及之前 K 线不足 14 根，无法计算（诚实留白不硬算）') + '&#10;' +
+    '分档：<5% 波动太低 · 5~12% 刚刚好 · 12~15% 偏高 · >15% 波动太大&#10;' +
+    '只用该日及之前的数据，无未来函数；波动率只描述风险大小，不构成买卖依据">' +
+    (isLast ? 'ATR%' : 'ATR%(至该日)') + ' <b style="color:' + atrBand.color + '">' +
+    (atrPct != null ? atrPct.toFixed(2) + '%' : '—') + '</b></span>';
   var kjCls = 'na', kjSt = '';
   if (kj && kj.ok) {
     if (kj.signal === 'gold') { kjCls = 's-gold'; kjSt = '金叉·' + kdjZoneTxt(kj.zone); }
@@ -5914,7 +6576,11 @@ function klDaysetHtml(ent, gidx, kj, raw, kjChipHtml) {
     (isFinite(hiD) ? hiD.toFixed(2) : '—') + ' / ' + (isFinite(loD) ? loD.toFixed(2) : '—') + '</b></span>' +
     '<span class="kl-chip">量能 <b>' + (vol != null ? fmtWan(vol) + '手' : '—') + '</b>' +
     (r5v != null ? ' <em style="font-style:normal;color:#9fb4ff">· 前5日均量×' + (+r5v).toFixed(2) + '</em>' : '') + '</span>' +
-    (isLast && ent.vr != null ? '<span class="kl-chip">量比 <b>' + (+ent.vr).toFixed(2) + '</b></span>' : '') +
+    /* ★ 2026-10-05（用户指定位置）：量能之后 → 20日动量 → 量比 → ATR% → KDJ */
+    (mom20v != null ? '<span class="kl-chip ' + (mom20v >= 0 ? 'up' : 'down') + '" title="20日动量 = 该日收盘 ÷ 20个交易日前收盘 − 1（与「20日动量」列 mom20Of 同口径；只用该日及之前数据，无未来函数）">' +
+      (isLast ? '20日动量' : '20日动量(至该日)') + ' <b>' + (mom20v >= 0 ? '+' : '') + mom20v.toFixed(2) + '%</b></span>' : '') +
+    vrChip +
+    atrChip +
     kjChip;
 }
 
@@ -7552,7 +8218,7 @@ function buildResultHTML(quote, ind, sr, compact, source, gene, cap, rec, open8,
   /* ★ 2026-09-28（用户要求）：支撑压力 + 现价理论盈亏比 —— 顶部徽标 + 下方测算卡共用同一份判定
      （SRPS 区块口径：只扫左侧K线、由近到远、命中即止；创新高走移动止盈分支；不进钉钉推送）。 */
   var srp = null;
-  try { srp = srpJudge(ind.klines); } catch (eSrp) { srp = null; }
+  try { srp = srpJudge(ind.klines, null, ind.code); } catch (eSrp) { srp = null; }
   /* ★ 2026-09-30（用户要求）：KDJ 金叉质量评价（六维量化 · 满分 100）—— 顶部徽标 + 下方卡片
      共用同一份判定（纯计算，零额外网络请求）。压力位复用上面刚算好的 srp.R（黑名单4 用）；
      srp 拿不到 → press=null → 黑名单4 不触发（缺失不当利好也不当利空）。 */
@@ -15416,24 +16082,73 @@ function waveCardHtml(ind, pre) {
 /* ==== SRPS-BEGIN ==== */
 /* 支撑压力自动识别 + 空间型理论盈亏比（2026-09-28 · 《支撑压力自动识别+空间型理论盈亏比》策略落地）
    ── 顶部徽标（renderSrpTop）+ 下方测算卡（srpCardHtml）共用同一份 srpJudge 结果，零额外网络请求 ──
-   口径（紧贴策略文档，3 轮交叉核验版）：
-   · Pb = 现价（最新收盘）；R = 买点上方最近第一道有效压力上沿；S = 买点下方第一道有效支撑下沿；
-     理论盈亏比 = (R − Pb) / (Pb − S)，硬性约束 Pb − S > 0。
+   口径（紧贴策略文档 + ★ 2026-10-06「符合A股、不同条件」修正版 · 全网三轮交叉核验）：
+   · Pb = 现价（最新收盘）；R = 买点上方最近一道**有效**压力上沿；S = 买点下方最近一道**有效**支撑下沿；
+     理论盈亏比 = (R − Pb) / (Pb − 止损价)，硬性约束 Pb − 止损价 > 0。
    · 只扫买点左侧 50 根日K，**由近到远、命中即止**（防挑远期高点美化盈亏比）；绝不用未来K线。
    · 压力优先级：①平台高点(5~8根 高点波幅<3% 且放量) → ②筹码峰(无API跳过，如实披露) →
-     ③大阴线实体顶(实体≥3% 取开盘价) → ④关键均线(20/60日线在买点上方) → ⑤显著局部高点(±3根极值+上影≥2.5%，剔无量毛刺)。
-   · 支撑优先级：①平台低点 → ②波段起涨低点(摆动低点) → ③关键均线 → ④ATR兜底(S = Pb − 1.5×ATR20)。
+     ③大阴线实体顶(实体≥3% 取开盘价) → ④显著局部高点(±3根极值+上影≥2.5%，剔无量毛刺) →
+     ★ ⑤显著局部高点（普通摆动高点兜底：修正「有明确反弹高点却因上影不够而被跳过、只能取远期位」）。
+   · 支撑优先级：①平台低点 → ②波段起涨低点(摆动低点) → ③关键均线 → ④波动率止损(S = Pb − 1.5×ATR20)。
+
+   ── ★ 2026-10-06 修正（用户：「搜索全网，交叉核验3遍，符合A股，不同条件下，修正盈亏比的计算方法」）──
+   修正依据（三轮检索 · 多源一致结论）：
+     ① 【结构封顶 + 最小 R 过滤】ATR 目标必须被"最近的结构障碍"封顶：真实可及目标 = 结构压力位，
+        而不是理论 ATR 目标（DayTrader's Diary / MQL5 / Strifor 三方一致）；
+     ② 【A股空间分级】压力位到买入价空间 <3% → 放弃；3%~5% → 仓位减半；>5% → 正常（A股实战口径）；
+     ③ 【止损三法】固定比例（主板短线 −5%~−7%、双创 −6%~−8%、北交所更严）/ 技术位（支撑下方
+        0.5%~3% 容错）/ ATR（1.5~2×ATR）；成熟做法是三者结合、取"结构位 + ATR 缓冲"；
+     ④ 【板性差异】±10% / ±20% / ±30% / ST ±5% 决定单笔风险上限与目标可达性，不能一刀切；
+     ⑤ 【保本胜率】保本胜率 = 1/(1+盈亏比) → 阈值本质是对胜率的对冲：情绪越差要求越高。
+   落地的三条硬规矩（本文件的修正核心）：
+     A. **最小风险距离** riskMin = max(1.0×ATR20, 1%×Pb)：结构支撑距现价近于此值 = 在日内噪音内
+        就会被打穿，不构成有效防守 → **顺延下一道支撑**；都没有则改用**波动率止损**（Pb − 1.5×ATR）。
+        （修掉「支撑贴脸 → 盈亏比分母趋零 → rr 虚高到 19.45 的假达标」）
+     B. **最小有效目标空间** tgtMin = max(1.0×ATR20, 3%×Pb)：距现价近于此值的压力在 A 股日内波动里
+        就能摸到，扣掉手续费/滑点后不构成可操作目标 → 判为「贴脸压力」**顺延**（最多 3 道，
+        且被跳过的位全部记入 skipped 如实披露，最近那一道再加「⚠ 上方压制」警示 —— 顺延不等于它不存在）；
+        仍受 farPct(15%) 上限约束。（修掉 rr≈0.4 的虚低）
+     C. **板性止损上限** stopCap（主板 8% / 双创 12% / 北交所 15%）：结构止损一旦超过该上限
+        → 新状态 **wide_risk「止损过远 · 买点不佳」**，不入盈亏比校验（应缩仓或另择买点，
+        **不允许"把止损挪近"来自欺欺人**——挪近必然被噪音扫掉）。
+   · 止损价 = 结构支撑 − max(0.5×ATR20, 0.5%×Pb)（支撑下方缓冲，防假刺破；原文固定 0.5% 在高波动票上必被扫）。
+     **收盘有效跌破才触发**（±0.5% 属正常噪音），盘中瞬间刺破不触发。
    · 找不到 R 或 R 距 Pb >15% → 创新高分支：不算固定盈亏比，改 3 项硬性前置校验 + 移动跟踪止盈。
-   · 阈值联动情绪周期（本页 MOOD.phase 四档映射策略五档）：冰点期→启动期档 2.5（本页无主升档，
-     2.0 档不可达，如实披露）；回暖/分歧期→分歧震荡档 2.5；高潮期→鱼尾衰竭档禁开；退潮期→冰点退潮档禁开；
-     MOOD 未就绪 → 阈值「需人工核对」，不据此过滤（缺失不当 0）。
+   · 上级候选全被判为「贴脸压力」→ 新状态 **tight「上方空间不足」**：3% / 1×ATR 内即封顶，
+     不给虚假盈亏比，直接提示不宜新开仓（对应 A 股"空间不足放弃买入"口径）。
+   · 阈值联动情绪周期 × 板性（不再全市场一刀切）：
+     冰点期 3.0（胜率最低 → 对冲要求最高）· 回暖/分歧期 2.5 · 高潮期/退潮期 禁开 ·
+     板性修正：双创 ×0.9 / 北交所 ×0.85（±20%/±30% 日内空间大、目标更易达成）·
+     高波动（ATR20 ≥ 4.5%）再 ×0.9 · 结果归到 0.25 档并夹在 [1.5, 3.0]；
+     面板会输出完整计算式，MOOD 未就绪 → 阈值「需人工核对」，不据此过滤（缺失不当 0）。
    · 分层纪律：本卡 = 空间结构测算层 —— 理论盈亏比是开仓时刻静态测算、不是行情预测；候选过滤参考，
      不发买卖指令、不参与四指标打分、**不进钉钉推送**。开仓后本次交易 R/S 固定记录，禁止事后修改。 */
 var SRP_RULE = {
   scan: 50, plateauMin: 5, plateauMax: 8, plateauRng: 0.03, volWin: 20,
   bearBody: 0.03, shadow: 0.025, swingN: 3, atrN: 20, atrMult: 1.5,
-  farPct: 0.15, execPad: 0.005, rrStart: 2.5, rrMain: 2.0, volDivThr: 0.9, minBars: 60
+  farPct: 0.15, execPad: 0.005, rrStart: 2.5, rrMain: 2.0, volDivThr: 0.9, minBars: 60,
+  /* ★ 2026-10-06 修正新增 —— A 股口径的止损 / 目标 / 阈值三条硬规矩 */
+  stopPadATR: 0.5,      /* 结构止损缓冲 = max(0.5×ATR20, 0.5%×Pb)（支撑下方） */
+  stopPadPct: 0.005,
+  riskMinATR: 1.0,      /* A. 最小风险距离 ATR 系数（止损比这更近 = 必被日内噪音扫掉） */
+  riskMinPct: 0.010,
+  tgtMinATR: 1.0,       /* B. 最小有效目标空间 ATR 系数（近于此的压力 = 贴脸压力，不算目标） */
+  tgtMinPct: 0.03,
+  tgtSkipMax: 3,        /*   最多顺延 3 道贴脸压力（防"挑远期高点美化盈亏比"），且逐道披露 */
+  rrFloor: 1.5, rrCeil: 3.0
 };
+/* ★ 2026-10-06 新增：A股板性 —— 涨跌幅限制决定「单笔风险上限」与「目标可达性」，不能一刀切。
+   主板 ±10% / 创业板与科创板 ±20% / 北交所 ±30% / ST ±5%（ST 需外部传入名称，本函数只按代码判板性，
+   ST 的 ±5% 由其自身止损纪律另计，面板如实披露"按代码判定的板性"）。
+   stopCap = 该板性下单笔结构止损的容忍上限（超过即判 wide_risk：买点下方无有效防守）。 */
+function srpLimitOf(code) {
+  var c = String(code == null ? '' : code).replace(/^(sh|sz|bj)/i, '').replace(/[^0-9]/g, '');
+  if (/^(688|689)/.test(c)) return { pct: 0.20, stopCap: 0.12, label: '科创板 ±20%' };
+  if (/^(300|301)/.test(c)) return { pct: 0.20, stopCap: 0.12, label: '创业板 ±20%' };
+  if (/^(4|8|920)/.test(c)) return { pct: 0.30, stopCap: 0.15, label: '北交所 ±30%' };
+  if (!c) return { pct: 0.10, stopCap: 0.08, label: '主板 ±10%（按默认值：未传代码）' };
+  return { pct: 0.10, stopCap: 0.08, label: '主板 ±10%' };
+}
 function srpMa(bars, n, i) {
   if (i == null || i < n - 1 || i >= bars.length) return null;
   var s = 0;
@@ -15500,8 +16215,13 @@ function srpShadowPct(b) {
 /* 最近压力 R（伪代码同构：候选 = 显著摆动高点 ∪ 大阴线，均 high>Pb，由近到远；
    逐候选按优先级 ①平台 → ③大阴线 → ⑤长上影 试判，命中即 return；
    ④均线为独立兜底（当前 MA20/60 在买点上方，取更近一道）；②筹码峰无API跳过。 */
-function srpFindR(bars, pb) {
+function srpFindR(bars, pb, atr) {
   var R = SRP_RULE, n = bars.length, buy = n - 1, cands = [], i;
+  if (atr == null) atr = srpAtr(bars, R.atrN, buy);          /* atr 可省：不传则内部自算（保持两参调用可用） */
+  /* ★ 修正 B：最小有效目标空间 —— 见顶部口径说明。
+     ★ 注：远期上限（farPct 15%）由 srpJudge 统一判（>15% → 创新高分支），本函数不自行截断，
+     以保证"有明确大阴线/平台在远期"这一事实能被上层如实识别。 */
+  var minTgt = Math.max((atr || 0) * R.tgtMinATR, pb * R.tgtMinPct);
   for (i = Math.max(1, buy - R.scan); i <= buy - 1; i++) {
     var b = bars[i];
     if (!(b.high > pb)) continue;
@@ -15509,51 +16229,115 @@ function srpFindR(bars, pb) {
     if (srpSwingHigh(bars, i, buy) || bear) cands.push(i);
   }
   cands.sort(function (a, b2) { return b2 - a; });            /* 由近到远（下标大 = 离买点近） */
+  var skipped = [], stop = '';
   for (var c = 0; c < cands.length; c++) {
     i = cands[c];
-    var bar = bars[i];
+    var bar = bars[i], hit = null, isSwing = srpSwingHigh(bars, i, buy);
     var pl = srpPlateau(bars, i, 'hi', buy);                  /* ① 平台高点（最高权重） */
-    if (pl) return { v: pl.hi, type: 'platform', label: '平台高点上沿', i: i, band: pl };
-    if (bar.close < bar.open && bars[i - 1].close > 0 && (bar.open - bar.close) / bars[i - 1].close >= R.bearBody && bar.open > pb)
-      return { v: bar.open, type: 'bear', label: '大阴线实体顶部（开盘价）', i: i };
-    if (srpSwingHigh(bars, i, buy) && srpShadowPct(bar) >= R.shadow && !srpIsVolSpike(bars, i))
-      return { v: bar.high, type: 'swing', label: '显著局部高点（长上影）', i: i };
+    if (pl) hit = { v: pl.hi, type: 'platform', label: '平台高点上沿', i: i, band: pl };
+    else if (bar.close < bar.open && bars[i - 1].close > 0 && (bar.open - bar.close) / bars[i - 1].close >= R.bearBody && bar.open > pb)
+      hit = { v: bar.open, type: 'bear', label: '大阴线实体顶部（开盘价）', i: i };
+    else if (isSwing && srpShadowPct(bar) >= R.shadow && !srpIsVolSpike(bars, i))
+      hit = { v: bar.high, type: 'swing', label: '显著局部高点（长上影）', i: i };
+    else if (isSwing && !srpIsVolSpike(bars, i))               /* ★ ⑤ 修正：普通摆动高点兜底（仍受"无量毛刺"过滤） */
+      hit = { v: bar.high, type: 'swing2', label: '显著局部高点（摆动高点）', i: i };
+    if (!hit) continue;
+    if (hit.v - pb < minTgt) {                                /* ★ 贴脸压力 → 顺延（有上限） */
+      if (skipped.length >= R.tgtSkipMax) { stop = 'skipMax'; break; }
+      skipped.push({ v: hit.v, type: hit.type, label: hit.label, i: i, distPct: hit.v / pb - 1 });
+      continue;
+    }
+    hit.skipped = skipped;
+    hit.minTgt = minTgt;
+    return hit;
   }
   var c20 = srpMa(bars, 20, buy), c60 = srpMa(bars, 60, buy), ma = [];   /* ④ 关键均线兜底 */
   if (c20 != null && c20 > pb) ma.push({ v: c20, type: 'ma20', label: '20日均线压力（当前）', i: buy - 1 });
   if (c60 != null && c60 > pb) ma.push({ v: c60, type: 'ma60', label: '60日均线压力（当前）', i: buy - 1 });
-  if (ma.length) { ma.sort(function (a, b2) { return a.v - b2.v; }); return ma[0]; }
+  ma.sort(function (a, b2) { return a.v - b2.v; });                       /* 取更低者 = 更近的一道 */
+  for (var m = 0; m < ma.length; m++) {
+    if (ma[m].v - pb < minTgt) {                                          /* 近于最小有效空间 → 也不作目标 */
+      if (skipped.length >= R.tgtSkipMax) break;
+      skipped.push({ v: ma[m].v, type: ma[m].type, label: ma[m].label, i: ma[m].i, distPct: ma[m].v / pb - 1 });
+      continue;
+    }
+    ma[m].skipped = skipped; ma[m].minTgt = minTgt;
+    return ma[m];
+  }
+  if (skipped.length) return { allSkipped: true, skipped: skipped, minTgt: minTgt, stopReason: stop || 'exhausted' };
   return null;
 }
 /* 最近支撑 S：候选 = 显著摆动低点（low<Pb）由近到远，逐个试 ①平台低点 → ②波段起涨低点；
    ③均线兜底（当前 MA20/60 在买点下方，取更高者=更近）；④ATR20 动态止损兜底。 */
-function srpFindS(bars, pb) {
-  var R = SRP_RULE, n = bars.length, buy = n - 1, cands = [], i;
+/* 最近有效支撑 S + 止损定价（★ 2026-10-06 修正 A）：
+   候选池 = ①平台低点下沿 / ②波段起涨低点（结构位，多空分界，比均线硬）∪ ③关键均线 MA20/MA60（动态支撑）。
+   优先级：**结构位优先于均线**；同一组内"价更高者 = 离现价更近者优先"（平台的优先级高于普通摆动低点）。
+   ★ 修正 A：**最小风险距离** minRisk = max(1.0×ATR20, 1%×Pb) —— 结构位距现价近于此值，
+   在日内噪音内就会被打穿，不构成有效防守 → 收进 tooNear 顺延。
+   ★ 选点次序（A股实战口径）：
+     ① 风险在板性上限内的**最近一道结构位** → 用它（止损 = 该位下方 max(0.5×ATR, 0.5%) 缓冲）；
+     ② 结构位都在上限外/没有 → 退到**最近一道关键均线**（同样要过上限）；超上限的进 overCap 备查；
+     ③ 都不可用 → **波动率止损** Pb − max(1.5×ATR20, 1%)（高波动/强势股的标准做法，
+        并把"结构参考位"记在 structRef 里如实披露，不假装结构位很近）；
+     ④ 波动率止损的风险也超过板性上限 → 由 srpJudge 判 wide_risk（该板性下无法控制单笔风险）。
+   返回：{ v, type, label, i, band?, src:'struct'|'vol', riskPct, tooNear:[], structRef? } | null */
+function srpFindS(bars, pb, atr, stopCap) {
+  var R = SRP_RULE, n = bars.length, buy = n - 1, i;
+  if (atr == null) atr = srpAtr(bars, R.atrN, buy);          /* atr 可省：不传则内部自算（保持两参调用可用） */
+  var minRisk = Math.max((atr || 0) * R.riskMinATR, pb * R.riskMinPct);
+  var pad = Math.max((atr || 0) * R.stopPadATR, pb * R.stopPadPct);
+  var struct = [], ma = [], tooNear = [], overCap = [];
   for (i = Math.max(1, buy - R.scan); i <= buy - 1; i++) {
-    if (bars[i].low < pb && srpSwingLow(bars, i, buy)) cands.push(i);
-  }
-  cands.sort(function (a, b2) { return b2 - a; });
-  for (var c = 0; c < cands.length; c++) {
-    i = cands[c];
+    if (!(bars[i].low < pb && srpSwingLow(bars, i, buy))) continue;
     var pl = srpPlateau(bars, i, 'lo', buy);                  /* ① 平台低点 */
-    if (pl) return { v: pl.lo, type: 'platform', label: '平台低点下沿', i: i, band: pl };
-    return { v: bars[i].low, type: 'swing', label: '波段起涨低点', i: i };   /* ② 候选即摆动低点 */
+    struct.push(pl ? { v: pl.lo, type: 'platform', label: '平台低点下沿', i: i, band: pl }
+                   : { v: bars[i].low, type: 'swing', label: '波段起涨低点', i: i });   /* ② 摆动低点 */
   }
-  var c20 = srpMa(bars, 20, buy), c60 = srpMa(bars, 60, buy), ma = [];
+  var c20 = srpMa(bars, 20, buy), c60 = srpMa(bars, 60, buy);   /* ③ 关键均线（动态支撑） */
   if (c20 != null && c20 < pb) ma.push({ v: c20, type: 'ma20', label: '20日均线支撑（当前）', i: buy - 1 });
   if (c60 != null && c60 < pb) ma.push({ v: c60, type: 'ma60', label: '60日均线支撑（当前）', i: buy - 1 });
-  if (ma.length) { ma.sort(function (a, b2) { return b2.v - a.v; }); return ma[0]; }
-  var atr = srpAtr(bars, R.atrN, buy);                        /* ④ ATR 动态止损兜底 */
-  if (atr != null && atr > 0) return { v: pb - R.atrMult * atr, type: 'atr', label: 'ATR20 动态止损（Pb−1.5×ATR）', i: buy - 1 };
+  /* 优先级：结构位（平台下沿 > 摆动低点；多空分界，比均线硬）> 关键均线；同一组内"更近（价更高）优先" */
+  struct.sort(function (a, b2) { return (b2.v - a.v) || ((a.type === 'platform' ? 0 : 1) - (b2.type === 'platform' ? 0 : 1)); });
+  ma.sort(function (a, b2) { return b2.v - a.v; });
+  function pick(list, grp) {
+    for (var q = 0; q < list.length; q++) {
+      var h = list[q];
+      if (pb - h.v < minRisk) { tooNear.push({ v: h.v, type: h.type, label: h.label, i: h.i, distPct: h.v / pb - 1 }); continue; }
+      h.stop = h.v - pad; h.riskPct = (pb - h.stop) / pb; h.src = 'struct'; h.grp = grp;
+      if (stopCap == null || h.riskPct <= stopCap) { h.tooNear = tooNear; return h; }
+      overCap.push(h);                                        /* 风险超板性上限 → 备选，但不作为最终防守 */
+    }
+    return null;
+  }
+  var hit = pick(struct, 1) || pick(ma, 2);
+  if (hit) return hit;
+  if (atr != null && atr > 0) {                               /* ④ 波动率止损（结构与均线都不可用时） */
+    var d = Math.max(R.atrMult * atr, pb * R.riskMinPct);
+    return { v: pb - d, type: 'atr', src: 'vol', label: 'ATR20 动态止损（Pb − ' + R.atrMult + '×ATR20）', i: buy - 1,
+      riskPct: d / pb, tooNear: tooNear, structRef: overCap.length ? overCap[0] : null };
+  }
+  if (overCap.length) return overCap[0];
   return null;
 }
 /* 情绪档 → 最低理论盈亏比（策略文档 §4；本页 MOOD 四档 → 策略五档映射，缺主升档如实披露） */
-function srpThrOf(phase) {
-  if (phase === '高潮期') return { v: null, txt: '禁止新开仓', note: '高潮期 = 鱼尾衰竭期档 → 不计算盈亏比，直接过滤买点', ban: true };
-  if (phase === '退潮期') return { v: null, txt: '禁止新开仓', note: '退潮期 = 冰点退潮期档 → 不计算盈亏比，直接过滤买点', ban: true };
-  if (phase === '冰点期') return { v: SRP_RULE.rrStart, txt: '2.5', note: '冰点期按「冰点启动期」档 2.5 执行；页面大盘情绪闸门另有否决，以更严者为准', ban: false };
-  if (phase === '回暖/分歧期') return { v: SRP_RULE.rrStart, txt: '2.5', note: '回暖/分歧期按「分歧震荡期」档 2.5 执行', ban: false };
-  return { v: null, txt: null, note: '情绪周期未就绪 → 阈值需人工核对，不据此过滤（缺失不当 0）', ban: false, unknown: true };
+function srpThrOf(phase, limit, atrPct) {
+  var R = SRP_RULE;
+  if (phase === '高潮期') return { v: null, txt: '禁止新开仓', note: '高潮期 = 鱼尾衰竭期档 → 不计算盈亏比，直接过滤买点', ban: true, base: null };
+  if (phase === '退潮期') return { v: null, txt: '禁止新开仓', note: '退潮期 = 冰点退潮期档 → 不计算盈亏比，直接过滤买点', ban: true, base: null };
+  var base, baseTxt;
+  if (phase === '冰点期') { base = 3.0; baseTxt = '冰点期档 3.0（胜率最低 → 对冲要求最高；页面大盘情绪闸门另有否决，以更严者为准）'; }
+  else if (phase === '回暖/分歧期') { base = 2.5; baseTxt = '回暖/分歧期档 2.5（分歧震荡 → 方向不明，维持高要求）'; }
+  else return { v: null, txt: null, note: '情绪周期未就绪 → 阈值需人工核对，不据此过滤（缺失不当 0）', ban: false, unknown: true, base: null };
+  /* ★ 板性修正：涨跌幅越宽 → 日内空间越大、目标越易达成 → 可放宽（保本胜率逻辑的反向补偿） */
+  var mult = 1, adjTxt;
+  if (limit && limit.pct >= 0.30) { mult = 0.85; adjTxt = '北交所 ±30% ×0.85'; }
+  else if (limit && limit.pct >= 0.20) { mult = 0.90; adjTxt = '双创 ±20% ×0.90'; }
+  else { mult = 1.00; adjTxt = '主板 ±10% ×1.00'; }
+  if (atrPct != null && atrPct >= 0.045) { mult *= 0.9; adjTxt += ' · 高波动 ATR≥4.5% ×0.90'; }
+  var v = Math.max(R.rrFloor, Math.min(R.rrCeil, Math.round(base * mult * 4) / 4));   /* 归到 0.25 档，夹在 [1.5, 3.0] */
+  return { v: v, txt: v.toFixed(2), ban: false, base: base, adjTxt: adjTxt,
+    note: '阈值 = ' + base.toFixed(2) + '（' + baseTxt.split('（')[0] + '）× ' + adjTxt + ' → ' + v.toFixed(2) +
+      '；保本胜率 ' + (1 / (1 + v) * 100).toFixed(0) + '%' };
 }
 function srpMoodPhase() {
   try { if (typeof MOOD !== 'undefined' && MOOD && MOOD.phase) return MOOD.phase; } catch (e0) {}
@@ -15571,23 +16355,85 @@ function srpVolDiv(bars, buy) {                              /* 20日均量 vs �
     div: newHigh && peak > 0 && v20 < peak * R.volDivThr };
 }
 /* 主判定（纯函数，vm 可测）。bars = ind.klines；phase = MOOD.phase（可省，内部探测）。 */
-function srpJudge(bars, phase) {
+function srpJudge(bars, phase, code) {
+  var R = SRP_RULE;
   var out = { ok: false, na: true, why: '', pb: null, R: null, S: null, rr: null, thr: null,
     thrTxt: '', thrNote: '', ban: false, flag: 'na', farPct: null, execStop: null,
-    nh: null, notes: [], scanned: 0, phase: phase != null ? phase : srpMoodPhase() };
-  if (!bars || bars.length < SRP_RULE.minBars) { out.why = '日K不足 ' + SRP_RULE.minBars + ' 根（现有 ' + (bars ? bars.length : 0) + '）'; return out; }
-  var R = SRP_RULE, buy = bars.length - 1, pb = bars[buy].close;
+    nh: null, notes: [], scanned: 0, phase: phase != null ? phase : srpMoodPhase(),
+    code: code != null ? String(code) : '', limit: null, atr: null, atrPct: null,
+    stopSrc: '', stopPad: null, riskPct: null, targetPct: null, skippedR: [], tooNearS: [], nearBlock: null,
+    thrBase: null, thrAdjTxt: '', barIdx: null };
+  if (!bars || bars.length < R.minBars) { out.why = '日K不足 ' + R.minBars + ' 根（现有 ' + (bars ? bars.length : 0) + '）'; return out; }
+  var buy = bars.length - 1, pb = bars[buy].close;
   if (!(pb > 0)) { out.why = '现价无效'; return out; }
-  out.na = false; out.ok = true; out.pb = pb; out.scanned = Math.min(R.scan, buy - 1);
+  out.na = false; out.ok = true; out.pb = pb; out.scanned = Math.min(R.scan, buy - 1); out.barIdx = buy;
+  out.limit = srpLimitOf(out.code);
+  var atr = srpAtr(bars, R.atrN, buy);
+  out.atr = atr; out.atrPct = (atr != null && atr > 0) ? atr / pb : null;
+  var minRisk = Math.max((atr || 0) * R.riskMinATR, pb * R.riskMinPct);
+  var minTgt = Math.max((atr || 0) * R.tgtMinATR, pb * R.tgtMinPct);
   out.notes.push('扫描窗口：买点左侧 ' + out.scanned + ' 根日K，由近到远、命中即止（防挑远期高点美化盈亏比）');
-  out.notes.push('筹码峰上沿（优先级2）：无筹码分布API → 跳过该规则，其余四级照常');
-  out.S = srpFindS(bars, pb);
+  out.notes.push('筹码峰上沿（优先级2）：无筹码分布API → 跳过该规则，其余各级照常');
+  out.notes.push('板性（按代码判定）：' + out.limit.label + ' → 结构止损容忍上限 ' + (out.limit.stopCap * 100).toFixed(0) + '%');
+  if (out.atrPct != null) out.notes.push('ATR20 = ' + atr.toFixed(3) + '（现价的 ' + (out.atrPct * 100).toFixed(2) + '%）→ 最小风险距离 '
+    + minRisk.toFixed(3) + '（max(1×ATR, 1%×Pb)）· 最小有效目标空间 ' + minTgt.toFixed(3) + '（max(1×ATR, 3%×Pb)）');
+
+  /* ① 支撑 + 止损定价（★ 修正 A：最小风险距离门 + 板性上限内的最近一道） */
+  out.S = srpFindS(bars, pb, atr, out.limit.stopCap);
   if (!out.S || !(out.S.v < pb)) { out.flag = 'invalid'; out.why = '支撑无效（S 不在买点下方）→ 硬性约束不过，直接过滤'; return out; }
-  out.execStop = pb > 0 ? out.S.v * (1 - R.execPad) : null;  /* 执行止损 = S 下方 0.5%（防假刺破；盈亏比仍用 S 原值） */
-  out.R = srpFindR(bars, pb);
+  out.tooNearS = out.S.tooNear || [];
+  if (out.tooNearS.length) out.notes.push('★ 最小风险距离生效：' + out.tooNearS.map(function (t) {
+    return t.label + ' ' + t.v.toFixed(2) + '（距现价 ' + (t.distPct * 100).toFixed(1) + '%，在日内噪音内）'; }).join('、') + ' → 判为无效防守，已顺延');
+  var pad = Math.max((atr || 0) * R.stopPadATR, pb * R.stopPadPct);
+  if (out.S.src === 'vol') {
+    out.stopSrc = 'vol';
+    out.execStop = out.S.v;
+    out.stopPad = null;
+    out.notes.push('★ 结构/均线支撑全部过近、缺失、或风险超出板性上限 → 改用波动率止损（' + out.S.label + '）'
+      + '，绝不用"贴脸支撑"当止损（否则分母趋零、盈亏比虚高）'
+      + (out.S.structRef ? '；结构参考位 ' + out.S.structRef.label + ' ' + out.S.structRef.v.toFixed(2)
+        + '（风险 ' + (out.S.structRef.riskPct * 100).toFixed(1) + '% > 上限 ' + (out.limit.stopCap * 100).toFixed(0) + '%，过远）' : ''));
+  } else {
+    out.stopSrc = 'struct';
+    out.stopPad = pad;
+    out.execStop = out.S.v - pad;
+    out.notes.push('止损价 = 结构支撑 ' + out.S.v.toFixed(2) + ' 下方缓冲 ' + pad.toFixed(3)
+      + '（max(0.5×ATR, 0.5%×Pb)，防假刺破；原文固定 0.5% 在高波动票上必被扫）');
+  }
+  var loss = pb - out.execStop, lossPct = loss / pb;
+  out.riskPct = lossPct;
+  if (!(loss > 0)) { out.flag = 'invalid'; out.why = '止损价不在买点下方 → 硬性约束不过，直接过滤'; return out; }
+  if (lossPct > out.limit.stopCap) {                          /* ★ 修正 C：板性止损上限 */
+    out.flag = 'wide_risk';
+    out.why = (out.stopSrc === 'vol' ? '波动率止损' : '结构止损') + ' ' + (lossPct * 100).toFixed(1)
+      + '%（' + (out.stopSrc === 'vol' ? 'Pb − 1.5×ATR20' : out.S.label + ' ' + out.S.v.toFixed(2) + ' − 缓冲')
+      + '）已超过 ' + out.limit.label + ' 容忍上限 ' + (out.limit.stopCap * 100).toFixed(0)
+      + '% → 该板性下无法把单笔风险控制在容忍范围内，买点不佳（应缩仓或另择买点；'
+      + '把止损挪近只会被日内噪音扫掉，本工具不这么做）';
+    out.notes.push('wide_risk：止损（含波动率止损）风险超过板性上限 → 不做盈亏比校验'
+      + '（A股实证：止损距离超上限属于"位置/波动问题"，不是参数问题）');
+    return out;
+  }
+
+  /* ② 压力 + 目标（★ 修正 B：最小有效目标空间门） */
+  out.R = srpFindR(bars, pb, atr);
+  if (out.R && out.R.allSkipped) {                            /* 上方近处全被贴脸压力封死 */
+    out.flag = 'tight';
+    out.skippedR = out.R.skipped;
+    out.why = '上方有效空间不足：' + out.R.skipped.map(function (t) {
+      return t.label + ' ' + t.v.toFixed(2) + '（+' + (t.distPct * 100).toFixed(1) + '%）'; }).join('、')
+      + ' 均近于最小有效目标空间 ' + (out.R.minTgt / pb * 100).toFixed(1) + '%（max(1×ATR, 3%)）；'
+      + '顺延已达 ' + R.tgtSkipMax + ' 道上限（不允许无限往后挑远期高点美化盈亏比）'
+      + ' → 上方空间被封，不给虚假盈亏比，不宜新开仓（A股口径：压力空间 <3% 放弃买入）';
+    out.notes.push('tight：近处压力在日内波动内即可触及 → 扣手续费/滑点后无可操作空间 → 直接放弃，而不是"硬算一个盈亏比"');
+    /* ★ 关键：必须把 R 清空 —— allSkipped 是"控制标记"不是"压力位对象"，
+       留着它会让卡片 / 面板按区间对象去读 .v（undefined）而抛异常。压力信息改由 skippedR 承载。 */
+    out.R = null;
+    return out;
+  }
   var far = out.R ? (out.R.v - pb) / pb : null;
   out.farPct = far;
-  if (!out.R || (far != null && far > R.farPct)) {           /* 创新高分支 */
+  if (!out.R || (far != null && far > R.farPct)) {            /* 创新高分支 */
     out.flag = 'new_high';
     if (out.R && far != null && far > R.farPct) out.why = '最近压力距现价 ' + (far * 100).toFixed(1) + '%（>15%）→ 近处无有效压力，按创新高结构处理';
     else out.why = '左侧 ' + out.scanned + ' 根内无有效压力 → 创新高结构，无历史套牢盘';
@@ -15598,21 +16444,30 @@ function srpJudge(bars, phase) {
         txt: (m5 != null && m10 != null && m20 != null) ? ('MA5 ' + m5.toFixed(2) + ' / MA10 ' + m10.toFixed(2) + ' / MA20 ' + m20.toFixed(2)) : '均线数据不足' },
       { k: '量价健康（无多周期量价顶背离）', ok: vd.ok ? !vd.div : null,
         txt: vd.ok ? (vd.div ? '创新高但 20 日均量仅为前期峰值 ' + (vd.v20 / vd.peak * 100).toFixed(0) + '%（顶背离）' : '20 日均量为前期峰值 ' + (vd.peak > 0 ? (vd.v20 / vd.peak * 100).toFixed(0) + '%' : '—') + '，未见顶背离') : '量能样本不足' },
-      { k: '客观结构止损 S 已确定', ok: out.S ? true : null, txt: out.S ? out.S.label + ' ' + out.S.v.toFixed(2) : '未找到' }
+      { k: '客观结构止损 S 已确定', ok: out.S ? true : null, txt: out.S ? (out.S.v.toFixed(2) + '（' + out.S.label + '）') : '未找到' }
     ];
     out.notes.push('创新高分支：不做固定止盈目标，开仓后以 20 日均线 / 波段低点作跟踪止损，价格新高同步上移、让利润奔跑');
     return out;
   }
-  var loss = pb - out.S.v;
-  out.rr = loss > 0 ? (out.R.v - pb) / loss : null;
-  var th = srpThrOf(out.phase);
+  out.rr = (out.R.v - pb) / loss;
+  out.targetPct = out.R.v / pb - 1;
+  out.skippedR = out.R.skipped || [];
+  out.nearBlock = out.skippedR.length ? out.skippedR[0] : null;   /* 最近的一道贴脸压力 = 上方压制 */
+  if (out.skippedR.length) out.notes.push('★ 最小有效目标空间生效：已顺延 ' + out.skippedR.length + ' 道贴脸压力（'
+    + out.skippedR.map(function (t) { return t.label + ' ' + t.v.toFixed(2) + '（+' + (t.distPct * 100).toFixed(1) + '%）'; }).join('、')
+    + '）—— 它们距现价不足 ' + (out.R.minTgt / pb * 100).toFixed(1) + '%（max(1×ATR, 3%)），不构成可操作目标；'
+    + '但上行大概率在最近那一道（+' + (out.nearBlock.distPct * 100).toFixed(1) + '%）提前受阻，结论里已加"上方压制"警示');
+  out.notes.push('理论盈亏比 = (R − Pb) ÷ (Pb − 止损价) = (' + out.R.v.toFixed(2) + ' − ' + pb.toFixed(2) + ') ÷ ('
+    + pb.toFixed(2) + ' − ' + out.execStop.toFixed(2) + ') = ' + out.rr.toFixed(2)
+    + '；目标空间 +' + (out.targetPct * 100).toFixed(1) + '% · 风险空间 −' + (lossPct * 100).toFixed(1) + '%');
+  var th = srpThrOf(out.phase, out.limit, out.atrPct);
   out.thr = th.v; out.thrTxt = th.txt; out.thrNote = th.note || ''; out.ban = !!th.ban;
+  out.thrBase = th.base; out.thrAdjTxt = th.adjTxt || '';
   if (th.ban) { out.flag = 'reject'; out.why = th.note; return out; }   /* 鱼尾/冰点退潮：禁止新开仓，不计算阈值校验 */
   if (th.unknown || th.v == null) { out.flag = 'unknown'; out.why = th.note; return out; }
   out.flag = (out.rr != null && out.rr >= th.v) ? 'pass' : 'reject';
-  if (out.flag === 'reject') out.why = '理论盈亏比 ' + (out.rr == null ? '—' : out.rr.toFixed(2)) + ' < 阈值 ' + th.txt + ' → 不进入候选买点队列';
-  out.notes.push('执行止损价 = S × ' + (1 - R.execPad) + '（S 下方 0.5% 防假刺破）；盈亏比计算仍用 S 原值');
-  out.notes.push('收盘有效跌破 S 才触发止损，盘中瞬间刺破不触发（±0.5% 属正常噪音）');
+  if (out.flag === 'reject') out.why = '理论盈亏比 ' + out.rr.toFixed(2) + ' < 阈值 ' + th.txt + '（' + (out.thrAdjTxt || '') + '）→ 不进入候选买点队列';
+  out.notes.push('收盘有效跌破止损价才触发，盘中瞬间刺破不触发（±0.5% 属正常噪音）');
   return out;
 }
 /* 两形态文案（坑12：徽标简洁 / 卡片自解释，tone 判定只写一份） */
@@ -15620,6 +16475,8 @@ function srpInfo(r) {
   if (!r) return null;
   if (r.na) return { na: true, headTop: '数据不足', head: '支撑压力：数据不足（' + (r.why || '日K不足') + '）', tone: '', tip: r.why || '日K不足，无法测算' };
   if (r.flag === 'invalid') return { na: false, headTop: '结构无效', head: '支撑压力：结构无效（' + (r.why || '') + '）', tone: 'down', tip: r.why };
+  if (r.flag === 'tight') return { na: false, headTop: '空间不足', head: '理论盈亏比不适用：上方有效空间不足（' + (r.why || '') + '）', tone: 'warn', tip: r.why };
+  if (r.flag === 'wide_risk') return { na: false, headTop: '止损过远', head: '买点不佳：结构止损超出板性容忍上限（' + (r.why || '') + '）', tone: 'down', tip: r.why };
   if (r.flag === 'new_high') {
     var bad = (r.nh || []).filter(function (x) { return x.ok === false; }).length;
     return { na: false, headTop: '新高·移动止盈', head: '创新高结构：无左侧历史压力，不做固定盈亏比 → 3 项前置校验' + (bad ? '（' + bad + ' 项未过）' : '') + ' + 移动跟踪止盈',
@@ -15651,7 +16508,7 @@ function renderSrpTop(r) {
 /* 测算卡（复用既有卡片样式，零新增 CSS；首列短标签，长文本放第二列） */
 function srpCardHtml(ind, r) {
   if (!ind || !ind.klines || !ind.klines.length) return '';
-  if (!r) { try { r = srpJudge(ind.klines); } catch (eSrpJ) { r = null; } }
+  if (!r) { try { r = srpJudge(ind.klines, null, ind.code); } catch (eSrpJ) { r = null; } }
   if (!r) return '';
   var info = srpInfo(r);
   var h = '<div class="card"><div class="card-title">📏 支撑压力与理论盈亏比（现价买入 · 空间结构测算）</div>';
@@ -15660,19 +16517,36 @@ function srpCardHtml(ind, r) {
     return h;
   }
   var pb = r.pb;
-  h += '<div class="stage-desc">买点 Pb = 现价 <b>' + pb.toFixed(2) + '</b>（最新收盘）。理论盈亏比 = (R − Pb) ÷ (Pb − S)；支撑 / 压力是<b>价格区间</b>不是单点，±0.5% 波动属正常噪音。</div>';
+  h += '<div class="stage-desc">买点 Pb = 现价 <b>' + pb.toFixed(2) + '</b>（最新收盘）。' +
+    '理论盈亏比 = (R − Pb) ÷ (Pb − <b>止损价</b>)；支撑 / 压力是<b>价格区间</b>不是单点，±0.5% 波动属正常噪音。</div>';
+  h += '<div class="stage-desc" style="color:var(--dim)">板性（按代码判定）<b>' + escapeHtml((r.limit && r.limit.label) || '—') + '</b>　结构止损容忍上限 <b>' +
+    (r.limit ? (r.limit.stopCap * 100).toFixed(0) + '%' : '—') + '</b>　ATR20 <b>' +
+    (r.atr != null ? r.atr.toFixed(3) : '—') + '</b>' + (r.atrPct != null ? '（' + (r.atrPct * 100).toFixed(2) + '%）' : '') +
+    '　★ 最小风险距离 = max(1×ATR, 1%)　★ 最小有效目标空间 = max(1×ATR, 3%)</div>';
   /* R / S 读数行 */
   function line(tag, obj, ref) {
-    if (!obj) return '<div class="stage-desc">· <b>' + tag + '</b>：—（' + (ref || '未找到') + '）</div>';
+    if (!obj || obj.v == null) return '<div class="stage-desc">· <b>' + tag + '</b>：—（' + (ref || '未找到') + '）</div>';
     var band = obj.band ? (obj.band.lo.toFixed(2) + ' ~ ' + obj.band.hi.toFixed(2)) : (obj.v * 0.995).toFixed(2) + ' ~ ' + (obj.v * 1.005).toFixed(2);
     var dist = ref != null ? ((obj.v / ref - 1) * 100) : null;
     return '<div class="stage-desc">· <b>' + tag + '</b> = <b style="color:#e2e8f0">' + obj.v.toFixed(2) + '</b>' +
       (dist != null ? '（距现价 ' + (dist > 0 ? '+' : '') + dist.toFixed(1) + '%）' : '') +
       '　' + escapeHtml(obj.label) + '　<span style="color:var(--dim)">区间 ' + band + ' · 第 ' + (obj.i + 1) + ' 根</span></div>';
   }
-  h += line('压力 R', r.R, r.flag === 'new_high' ? null : pb);
+  h += line('压力 R', r.R, (r.flag === 'new_high' || r.flag === 'tight') ? (r.flag === 'tight' ? '上方有效空间不足（近处压力过密，已按最小有效目标空间顺延）' : '未找到') : pb);
   h += line('支撑 S', r.S, pb);
-  if (r.execStop != null) h += '<div class="stage-desc">· <b>执行止损</b> = ' + r.execStop.toFixed(2) + '（S 下方 0.5% 防假刺破；<b>收盘有效跌破才触发</b>，盘中刺破不触发）</div>';
+  if (r.execStop != null) {
+    h += '<div class="stage-desc">· <b>执行止损</b> = <b style="color:#e2e8f0">' + r.execStop.toFixed(2) + '</b>' +
+      (r.riskPct != null ? '（风险空间 −' + (r.riskPct * 100).toFixed(1) + '%）' : '') +
+      '　' + (r.stopSrc === 'vol' ? '<span style="color:#f59e0b">波动率止损</span>：结构支撑全部过近/缺失 → 按 Pb − 1.5×ATR20 反推' :
+        '结构止损：' + escapeHtml((r.S && r.S.label) || '') + ' 下方缓冲 ' + (r.stopPad != null ? r.stopPad.toFixed(3) : '—') + '（max(0.5×ATR, 0.5%×Pb)）') +
+      '；<b>收盘有效跌破才触发</b>，盘中刺破不触发</div>';
+  }
+  if (r.skippedR && r.skippedR.length) h += '<div class="stage-desc">· <span style="color:#f59e0b">已顺延 ' + r.skippedR.length + ' 道贴脸压力</span>：' +
+    r.skippedR.map(function (t) { return escapeHtml(t.label) + ' ' + t.v.toFixed(2) + '（+' + (t.distPct * 100).toFixed(1) + '%）'; }).join('、') +
+    '　<span style="color:var(--dim)">距现价不足 max(1×ATR, 3%) → 日内即可触及，不构成可操作目标</span></div>';
+  if (r.tooNearS && r.tooNearS.length) h += '<div class="stage-desc">· <span style="color:#f59e0b">已顺延 ' + r.tooNearS.length + ' 道贴脸支撑</span>：' +
+    r.tooNearS.map(function (t) { return escapeHtml(t.label) + ' ' + t.v.toFixed(2) + '（' + (t.distPct * 100).toFixed(1) + '%）'; }).join('、') +
+    '　<span style="color:var(--dim)">距现价不足 max(1×ATR, 1%) → 在日内噪音内即被打穿，不构成有效防守</span></div>';
   /* 结论行 */
   if (r.flag === 'new_high') {
     h += '<div class="stage-desc" style="margin-top:6px"><b>创新高分支</b>：' + escapeHtml(r.why || '') + '。不做固定止盈目标、不做静态盈亏比校验，改 3 项硬性前置校验 + 移动跟踪止盈：</div>';
@@ -15682,6 +16556,12 @@ function srpCardHtml(ind, r) {
     });
   } else if (r.flag === 'invalid') {
     h += '<div class="stage-desc" style="margin-top:6px"><b style="color:#f0453a">✕ 结构无效</b>：' + escapeHtml(r.why || '') + '</div>';
+  } else if (r.flag === 'tight') {
+    h += '<div class="stage-desc" style="margin-top:6px"><b style="color:#f59e0b">⚠ 上方空间不足</b>：' + escapeHtml(r.why || '') + '</div>';
+    h += '<div class="stage-desc"><span style="color:var(--dim)">A股口径：压力位到买入价空间 &lt;3% → 放弃买入；3%~5% → 仓位减半；&gt;5% → 正常仓位。本条属第一档。</span></div>';
+  } else if (r.flag === 'wide_risk') {
+    h += '<div class="stage-desc" style="margin-top:6px"><b style="color:#f0453a">✕ 止损过远 · 买点不佳</b>：' + escapeHtml(r.why || '') + '</div>';
+    h += '<div class="stage-desc"><span style="color:var(--dim)">A股实证：止损距离落在买入价 −7%~−10% 才是"极佳止损点"；超过板性容忍上限说明买点位置不佳 → 缩仓或另择买点。</span></div>';
   } else {
     var cls = r.flag === 'pass' ? '#26c281' : (r.ban ? '#f0453a' : '#f59e0b');
     h += '<div class="stage-desc" style="margin-top:6px"><b style="color:' + cls + '">理论盈亏比 ' + (r.rr == null ? '—' : r.rr.toFixed(2)) + ' : 1</b>' +
@@ -15689,7 +16569,14 @@ function srpCardHtml(ind, r) {
       '　→ <b>' + (r.flag === 'pass' ? '达标，保留候选' : (r.ban ? '禁止新开仓档，不计算校验' : '不达标，剔除该标的')) + '</b>' +
       (r.thrNote ? '<br><span style="color:var(--dim)">' + escapeHtml(r.thrNote) + '</span>' : '') +
       (r.why && r.flag === 'reject' && !r.ban ? '<br><span style="color:var(--dim)">' + escapeHtml(r.why) + '</span>' : '') + '</div>';
-    h += '<div class="stage-desc">· 盈利空间 ' + (r.R ? (r.R.v - pb).toFixed(2) : '—') + '　亏损空间 ' + (r.S ? (pb - r.S.v).toFixed(2) : '—') + '（示例口径：Pb=10、R=12、S=9 → 2.0）</div>';
+    h += '<div class="stage-desc">· 盈利空间 ' + (r.R ? (r.R.v - pb).toFixed(2) : '—') +
+      (r.targetPct != null ? '（+' + (r.targetPct * 100).toFixed(1) + '%）' : '') +
+      '　亏损空间 ' + (r.execStop != null ? (pb - r.execStop).toFixed(2) : '—') +
+      (r.riskPct != null ? '（−' + (r.riskPct * 100).toFixed(1) + '%）' : '') +
+      '（示例口径：Pb=10、R=12、止损=9 → 2.0）</div>';
+    if (r.nearBlock) h += '<div class="stage-desc">· <b style="color:#f59e0b">⚠ 上方压制</b>：+' +
+      (r.nearBlock.distPct * 100).toFixed(1) + '% 处另有一道压力（' + escapeHtml(r.nearBlock.label) + ' ' + r.nearBlock.v.toFixed(2) +
+      '）—— 太近、不作目标，但<b>上行大概率在此提前受阻</b>，仓位与止盈计划须把它算进去。</div>';
   }
   /* 固定披露（策略文档 §7 风控补丁） */
   h += '<details style="margin-top:8px"><summary style="cursor:pointer;font-size:12px;color:#9fb4ff">📖 口径与风控补丁（点开看）</summary><div class="stage-desc">';
@@ -24559,20 +25446,30 @@ function ztpoolOnEnter() {
    🎯 智能选股 v4（2026-10-04 用户要求：原「板块先行」两策略（主力净流入前 N 板块 /
       涨停家数前 N 板块）取消，改为「全市场榜单预筛 × 七因子阈值过滤」）
    流水线：
-     ① 榜单预筛：沪深A股 日内涨幅榜前 A ∪ 成交额榜前 B（东财 clist · emListAll 翻页，
+     ① 榜单预筛（固定双池·取并集）：涨幅榜前 A ∪ 成交额榜前 B（东财 clist · emListAll 翻页，
         剔除 ST/退市）——取消「板块先行」，榜单本身就是全市场的预筛池
      ② 逐股分析：analyzeStock 同一引擎（260 根日K → 阶段/KDJ/dev/四指标/ATR%/MA5斜率，
         结果并入全局 ST.results 缓存，二次运行秒级）
-     ③ 可勾选选股条件过滤（F1~F7，每个条件前的 ✓ 可单独启用/停用；全部满足才入选；
+     ③ 可勾选选股条件过滤（F1~F9 + R10 10日涨幅排名，每个条件前的 ✓ 可单独启用/停用；全部满足才入选；
         任一启用因子取不到数据 → 不入选并计入「数据不足」，绝不按 0 冒充 —— 全站诚实留白纪律）：
           F1 MA5斜率         ≥ X%（ind.ma5SlopePct，与页面 MA5斜率 列同源）
-          F2 MA5斜率往上天数 ≤ N（ma5UpDaysOf，1=翻上当天；★ 2026-10-04 用户要求由 ≥ 改 ≤）
+          F2 MA5斜率往上天数 ∈ [min, max]（ma5UpDaysOf，1=翻上当天；★ 2026-10-04 用户要求由 ≥ 改 ≤；2026-10-05 再改单框 ≤N 为可填区间）
           F3 20日动量        ∈ [min, max]%（mom20Of；默认 −20~+6，与 S7 闸门口径一致）
           F4 ATR%            ∈ [min, max]（atr14Of，与 ATR% 列同源；默认 2~12）
           F5 生命周期阶段    ∈ 勾选集合（默认 1B/2/2A/2B；阶段只作筛选条件与描述，不发信号）
           F6 四指标总分      ≥ N 且无一票否决（s4kTotal；填 0 = 不限）
           F7 10日内涨停次数  ∈ [min, max]（近10根收盘涨停；板制档位：主板10%/双创20%/北交所30%/ST按5%；设 0~10 = 不限）
-     ④ 入选表 13 列（选/股票/行业/现价/涨跌幅/阶段/KDJ/dev/四指标/ATR%/MA5斜率/MA5斜率往上天数/10日涨停），
+          F8 流通市值          ∈ [min, max] 亿（榜单快照 floatCap÷1e8：东财 f21 / 新浪 nmc；默认 0~100000 = 不限）
+          F9 成交额            ∈ [min, max] 亿（榜单快照 amount÷1e8：东财 f6 / 新浪 amount；默认 0~100000 = 不限）
+          F10 量比             ∈ [min, max] 倍（当日量÷前5日均量·不含当日；快照优先东财 f10，缺→r.ind.volRatio 日K近似；
+                                ★ 2026-10-05 全网三源核验主升浪启动共识区 ≈ 2~5：2~3 启动信号、3~5 蓄势起爆、>8 过热；默认 2~5）
+          F11 波动率           ∈ [min, max] %（近 20 日日收益率标准差，样本口径 ÷(n−1)；年化参考 ×√250；仅日K 单路；
+                                ★ 2026-10-05 全网三轮交叉核验（ivolatility/太平洋证券/兴证全球/雪球股性/volatilitybox/Robeco）：
+                                A股个股年化中位数≈40%、僵尸股(年化10~20%)≈日std<1.3%、活跃题材股(30~50%)≈1.9~3.2%；
+                                过低=死水无弹性、过高=噪音淹没结构止损被扫；默认 1~4。
+                                ⚠️ 与 F4 ATR14%（日内振幅+跳空口径）同概念不同度量、高度相关 → 建议二选一启用）
+          R10 10日涨幅排名      前 N 只（分析后按近10日涨幅降序截断；需逐股日K·分析后过滤）
+     ④ 入选表 18 列（选/股票/行业/现价/涨跌幅/阶段/KDJ/dev/四指标/ATR%/MA5斜率/MA5斜率往上天数/10日涨停/流通市值/成交额/量比/波动率%/10日涨幅），
         表头点击排序（再点反向、缺失值恒沉底），行点击展开完整分析，勾选后「⭐ 加自选」批量加入。
    ⚠️ 本页只做选股与描述，不生成买卖信号；买卖决策仍以四指标打分为唯一依据。
    ========================================================================= */
@@ -24610,7 +25507,8 @@ function pickReadCfg() {
     topChg: iv('pickTopChg', 300, 1, 1000),
     topAmt: iv('pickTopAmt', 200, 0, 1000),
     slopeMin: iv('pickSlopeMin', 0, -99, 99),
-    upDaysMin: iv('pickUpDaysMin', 1, 0, 250),
+    upDaysMin: iv('pickUpDaysMin', 0, 0, 250),
+    upDaysMax: iv('pickUpDaysMax', 1, 0, 250),
     momMin: iv('pickMomMin', -20, -1000, 10000),
     momMax: iv('pickMomMax', 6, -1000, 10000),
     atrMin: iv('pickAtrMin', 2, 0, 100),
@@ -24619,8 +25517,19 @@ function pickReadCfg() {
     noVeto: !(el('pickNoVeto') && !el('pickNoVeto').checked),
     ztCntMin: iv('pickZtCntMin', 0, 0, 10),
     ztCntMax: iv('pickZtCntMax', 2, 0, 10),
+    capMin: iv('pickCapMin', 0, 0, 100000),
+    capMax: iv('pickCapMax', 100000, 0, 100000),
+    amtMin: iv('pickAmtMin', 0, 0, 100000),
+    amtMax: iv('pickAmtMax', 100000, 0, 100000),
+    vrMin: iv('pickVrMin', 2, 0, 100),
+    vrMax: iv('pickVrMax', 5, 0, 100),
+    volMin: iv('pickVolMin', 1, 0, 100),
+    volMax: iv('pickVolMax', 4, 0, 100),
+    r10On: cb('pickR10On'),
+    r10N: iv('pickR10N', 50, 1, 2000),
     f1On: cb('pickF1On'), f2On: cb('pickF2On'), f3On: cb('pickF3On'),
     f4On: cb('pickF4On'), f5On: cb('pickF5On'), f6On: cb('pickF6On'), f7On: cb('pickF7On'),
+    f8On: cb('pickF8On'), f9On: cb('pickF9On'), f10On: cb('pickVrOn'), f11On: cb('pickVolOn'),
     stages: stages
   };
 }
@@ -24648,7 +25557,43 @@ function pickZtCount(kl, code, name) {
   return n;
 }
 
-/* ---- 因子取值（六因子 + F7 10日涨停；全部来自平台既有引擎，缓存在结果对象 r._pickF 上） ---- */
+/* R10 取值：近 10 日涨幅（%） = 最新收盘 ÷ 10 根前收盘 − 1。需 ≥11 根日K。 */
+function pickChg10Of(ind) {
+  var kl = ind && ind.klines;
+  if (!kl || kl.length < 11) return null;
+  var a = kl[kl.length - 11].close, b = kl[kl.length - 1].close;
+  if (!(a > 0) || !(isFinite(b))) return null;
+  return (b / a - 1) * 100;
+}
+
+/* F11 取值：近 20 日「日收益率标准差」（%）。需 ≥21 根日K（20 个收益率）；样本标准差（÷(n−1)，文献无偏口径）；
+   简单收益率 close[t]/close[t−1]−1；年化参考 = ×√250（A股约 243 个交易日，√250≈15.81，√252 差异 <0.4%，
+   一致性比精确更重要 —— ivolatility/volatilitybox/Tradewink 三源一致口径）。
+   ★ 2026-10-05 全网三轮交叉核验（① ivolatility·Historical Volatility / ② 太平洋证券《低波动因子解析及改进》/
+   ③ 兴证全球基金田朋 + 雪球股性文 + 新浪财经研报 / ④ volatilitybox·tradeology ATR% 分档 / ⑤ Robeco Blitz 2021 A股研究）：
+   · A股个股年化波动率中位数 ≈ 40%（年化 <20% 仅占 2%、>50% 占近 30%）；
+   · 僵尸/呆滞股年化 10~20%（≈日std <1.3%）、活跃题材/情绪股 30~50%（≈日std 1.9~3.2%）；
+   · 低波动异象 = 长期反向因子（低波组合跑赢高波组合，A股 2000-2018 年化超额 12.9%）—— 但低波适合底仓、不适合短线进攻；
+   · 短线实战口径：过低 = 死水无弹性（不浪费行情的对称面是浪费资金效率）、过高 = 噪音淹没结构、止损被扫
+     （volatilitybox：ATR% >6% 多数交易者回避；平台 800 笔实测 ATR% 甜区 [2,5] ≈ 日std 1.2~3%）。
+   ⚠️ 与 F4（ATR14%，日内振幅+跳空口径）同概念不同度量、高度相关 → 建议二选一启用，避免对同一维度双重过滤。 */
+function pickVolOf(ind) {
+  var kl = ind && ind.klines;
+  if (!kl || kl.length < 21) return null;
+  var n = 20, i, rs = [], sum = 0;
+  for (i = kl.length - n; i < kl.length; i++) {
+    var p = kl[i - 1].close, c = kl[i].close;
+    if (!(p > 0) || !isFinite(c)) return null;
+    var rt = c / p - 1;
+    rs.push(rt); sum += rt;
+  }
+  var mean = sum / n, sum2 = 0;
+  for (i = 0; i < n; i++) { var d = rs[i] - mean; sum2 += d * d; }
+  var sd = Math.sqrt(sum2 / (n - 1));
+  return (isFinite(sd) && sd >= 0) ? sd * 100 : null;
+}
+
+/* ---- 因子取值（F1~F7 + F8 流通市值 + F9 成交额 + F10 量比 + F11 波动率 + R10 10日涨幅；全部来自平台既有引擎，缓存在结果对象 r._pickF 上） ---- */
 function pickFactors(code) {
   var r = ST.results && ST.results[code];
   if (!r || !r.ok || !r.ind) return null;
@@ -24672,6 +25617,21 @@ function pickFactors(code) {
   f.price = (r.quote && r.quote.price != null) ? r.quote.price : ((r.ind.price != null) ? r.ind.price : null);
   f.chg = (r.quote && r.quote.changePct != null) ? r.quote.changePct : null;
   f.ztCnt = pickZtCount(r.ind.klines, code, r.name || '');
+  /* ★ 2026-10-05 修复「选不出股票」：analyzeStock 返回对象**没有** floatCap 字段（旧代码 f.cap 恒 null
+     → F8 一开全站被「数据不足」淘汰）；且日K 通道多数不回 amount。F8/F9 改从榜单快照 PICK.byCode 取值：
+     东财 f21/f6、新浪 nmc(万元)/amount 均**锚定元** → ÷1e8 换算亿元。取不到 = null（诚实留白）。 */
+  var _bs = PICK.byCode ? PICK.byCode[code] : null;
+  f.cap = (_bs && _bs.floatCap != null && isFinite(_bs.floatCap)) ? _bs.floatCap / 1e8 : null;   /* F8：流通市值（亿元） */
+  f.amt = (_bs && _bs.amount != null && isFinite(_bs.amount)) ? _bs.amount / 1e8 : null;         /* F9：当日成交额（亿元） */
+  /* F10 量比：优先榜单快照（东财 f10 实时口径），缺失 → r.ind.volRatio（当日量÷前5日均量·不含当日，平台「量能倍数」同口径日K近似）。
+     ★ 2026-10-05 全网三源交叉核验（百度百科/科普中国/和讯/头条复盘+拉升起爆模型）：0.8~1.5 正常 · 1.5~2.5 温和放量 ·
+     2.5~5 明显放量（突破有效率高）· >8 过热；主升浪启动共识区 ≈ 2~5（2~3 启动信号、3~5 蓄势起爆）。 */
+  f.volR = (_bs && _bs.volRatio != null && isFinite(_bs.volRatio)) ? _bs.volRatio
+    : ((r.ind.volRatio != null && isFinite(r.ind.volRatio)) ? r.ind.volRatio : null);
+  f.chg10 = pickChg10Of(r.ind);           /* R10：近 10 日涨幅 % */
+  /* F11 波动率：近 20 日日收益率标准差（%）。快照无历史价 → 仅日K 单路；取不到 = null（诚实留白）。
+     核验来源与口径见 pickVolOf 注释；⚠️ 与 F4 ATR 同为波动率口径（振幅 vs 收盘），建议二选一启用。 */
+  f.vol = pickVolOf(r.ind);
   r._pickF = f;
   return f;
 }
@@ -24689,13 +25649,21 @@ function pickJudge(code, cfg) {
   if (cfg.f5On && !f.stage) return { ok: false, why: 'data' };
   if (cfg.f6On && !f.s4k) return { ok: false, why: 'data' };
   if (cfg.f7On && f.ztCnt == null) return { ok: false, why: 'data' };
+  if (cfg.f8On && f.cap == null) return { ok: false, why: 'data' };
+  if (cfg.f9On && f.amt == null) return { ok: false, why: 'data' };
+  if (cfg.f10On && f.volR == null) return { ok: false, why: 'data' };
+  if (cfg.f11On && f.vol == null) return { ok: false, why: 'data' };
   if (cfg.f1On && f.slope < cfg.slopeMin) return { ok: false, why: 'F1' };
-  if (cfg.f2On && f.upDays > cfg.upDaysMin) return { ok: false, why: 'F2' };   /* ★ 2026-10-04（用户要求）：F2 由 ≥ 改 ≤——只选翻上不超过 N 天的票 */
+  if (cfg.f2On && (f.upDays < cfg.upDaysMin || f.upDays > cfg.upDaysMax)) return { ok: false, why: 'F2' };   /* ★ 2026-10-05（用户要求）：F2 由「≤ N」改 [min,max] 区间 */
   if (cfg.f3On && (f.mom < cfg.momMin || f.mom > cfg.momMax)) return { ok: false, why: 'F3' };
   if (cfg.f4On && (f.atr < cfg.atrMin || f.atr > cfg.atrMax)) return { ok: false, why: 'F4' };
   if (cfg.f5On && cfg.stages.indexOf(f.stage) < 0) return { ok: false, why: 'F5' };
   if (cfg.f6On && cfg.s4kMin > 0 && (f.s4k.total < cfg.s4kMin || (cfg.noVeto && f.veto))) return { ok: false, why: 'F6' };
-  if (cfg.f7On && (f.ztCnt < cfg.ztCntMin || f.ztCnt > cfg.ztCntMax)) return { ok: false, why: 'F7' };   /* ★ 2026-10-04：F7 = 10日内涨停次数 ∈ [min,max]，越界排除 */
+  if (cfg.f7On && (f.ztCnt < cfg.ztCntMin || f.ztCnt > cfg.ztCntMax)) return { ok: false, why: 'F7' };   /* F7 = 10日内涨停次数 ∈ [min,max] */
+  if (cfg.f8On && (f.cap < cfg.capMin || f.cap > cfg.capMax)) return { ok: false, why: 'F8' };   /* ★ 2026-10-05（用户要求）：F8 = 流通市值 ∈ [min,max] 亿 */
+  if (cfg.f9On && (f.amt < cfg.amtMin || f.amt > cfg.amtMax)) return { ok: false, why: 'F9' };   /* ★ 2026-10-05（用户要求）：F9 由「成交额MA5斜率」改为 当日成交额 ∈ [min,max] 亿 */
+  if (cfg.f10On && (f.volR < cfg.vrMin || f.volR > cfg.vrMax)) return { ok: false, why: 'F10' };   /* ★ 2026-10-05（用户要求）：F10 量比 ∈ [min,max] 倍（主升浪启动共识区 2~5，可自主填写） */
+  if (cfg.f11On && (f.vol < cfg.volMin || f.vol > cfg.volMax)) return { ok: false, why: 'F11' };   /* ★ 2026-10-05（用户要求）：F11 波动率 = 20日日收益率标准差 ∈ [min,max]%（默认 1~4，核验口径见 pickVolOf 注释） */
   return { ok: true, why: '', f: f };
 }
 function pickSelected() {
@@ -24709,6 +25677,22 @@ function pickApplyFilter() {
     s.pass = j.ok; s.why = j.why;
     if (!j.ok) PICK.drop[j.why] = (PICK.drop[j.why] || 0) + 1;
   });
+  /* R10 排名截断（分析后过滤）：对「已通过勾选因子」的票按近10日涨幅降序取前 N，
+     其余标记为 R10 淘汰；10日涨幅取不到（data）的票无法证明进前 N → 计入 data（诚实留白）。 */
+  if (PICK.cfg.r10On) {
+    var ranked = PICK.uni.map(function (s) {
+      var f = pickFactors(s.code);
+      return { code: s.code, c: (f ? f.chg10 : null) };
+    }).filter(function (x) { return x.c != null; }).sort(function (a, b) { return b.c - a.c; });
+    var top = {};
+    ranked.slice(0, PICK.cfg.r10N).forEach(function (x) { top[x.code] = 1; });
+    PICK.uni.forEach(function (s) {
+      if (!s.pass) return;                 /* 已被因子淘汰，保留原 why */
+      var f = pickFactors(s.code);
+      if (f.chg10 == null) { s.pass = false; s.why = 'data'; PICK.drop.data = (PICK.drop.data || 0) + 1; }
+      else if (!top[s.code]) { s.pass = false; s.why = 'R10'; PICK.drop.R10 = (PICK.drop.R10 || 0) + 1; }
+    });
+  }
 }
 function pickStageTag(k) {
   var i = STAGE_KEYS.indexOf(k);
@@ -24750,6 +25734,11 @@ async function pickRun() {
   if (cfg.momMin > cfg.momMax) { pickStatus('F3：20日动量区间下限不能大于上限', true); return; }
   if (cfg.atrMin > cfg.atrMax) { pickStatus('F4：ATR% 区间下限不能大于上限', true); return; }
   if (cfg.ztCntMin > cfg.ztCntMax) { pickStatus('F7：10日涨停次数区间下限不能大于上限', true); return; }
+  if (cfg.upDaysMin > cfg.upDaysMax) { pickStatus('F2：斜率往上天数区间下限不能大于上限', true); return; }
+  if (cfg.capMin > cfg.capMax) { pickStatus('F8：流通市值区间下限不能大于上限', true); return; }
+  if (cfg.amtMin > cfg.amtMax) { pickStatus('F9：成交额区间下限不能大于上限', true); return; }
+  if (cfg.vrMin > cfg.vrMax) { pickStatus('F10：量比区间下限不能大于上限', true); return; }
+  if (cfg.volMin > cfg.volMax) { pickStatus('F11：波动率区间下限不能大于上限', true); return; }
   PICK.cfg = cfg;
   PICK.started = true;
   var run = ++PICK.runId;
@@ -24764,7 +25753,8 @@ async function pickRun() {
   if (b3) b3.disabled = true;
   if (b4) b4.disabled = true;
   if (b5) { b5.disabled = true; b5.style.opacity = '.5'; }
-  pickStatus('① 榜单预筛：涨幅榜前 ' + cfg.topChg + ' ∪ 成交额榜前 ' + cfg.topAmt + '…');
+  var _pre = '涨幅榜前 ' + cfg.topChg + ' ∪ 成交额榜前 ' + cfg.topAmt;
+  pickStatus('① 榜单预筛：' + _pre + '（取并集，剔除 ST/退市）…');
   pickRender();
   var failed = false;
   try {
@@ -24777,14 +25767,12 @@ async function pickRun() {
       try { chgL = await pickRankSina('changepercent', cfg.topChg); } catch (eS1) { chgL = null; }
     }
     if (PICK.stopFlag || run !== PICK.runId) return;
-    if (cfg.topAmt > 0) {
-      try { amtL = await emListAll(PICK_FS_ALL, PICK_FIELDS, { fid: 'f6', pz: 100, maxPages: Math.max(1, Math.ceil(cfg.topAmt / 100)) }); }
-      catch (eE2) { amtL = null; }
-      if (!amtL || !amtL.length) {
-        amtSrc = '新浪';
-        try { amtL = await pickRankSina('amount', cfg.topAmt); } catch (eS2) { amtL = null; }
-      }
-    } else { amtL = []; amtSrc = '停用'; }
+    try { amtL = await emListAll(PICK_FS_ALL, PICK_FIELDS, { fid: 'f6', pz: 100, maxPages: Math.max(1, Math.ceil(cfg.topAmt / 100)) }); }
+    catch (eE2) { amtL = null; }
+    if (!amtL || !amtL.length) {
+      amtSrc = '新浪';
+      try { amtL = await pickRankSina('amount', cfg.topAmt); } catch (eS2) { amtL = null; }
+    }
     if (PICK.stopFlag || run !== PICK.runId) return;
     var seen = {}, seq = 0;
     function feed(list, isSina) {
@@ -24805,6 +25793,9 @@ async function pickRun() {
     }
     feed(chgL, chgSrc === '新浪'); feed(amtL, amtSrc === '新浪');
     if (!PICK.uni.length) throw new Error('榜单预筛拿到 0 只（东财与新浪两通道均未返回候选）—— 行情站通道异常或字段变化');
+    /* ★ 2026-10-05：F8/F9 改从榜单快照（byCode）取值 → 复用旧分析缓存时必须清掉 _pickF，
+       否则上一轮的 cap/amt 会被缓存住，换榜后口径过期。 */
+    PICK.uni.forEach(function (s) { var r0 = ST.results[s.code]; if (r0 && r0._pickF) delete r0._pickF; });
     PICK.scanInfo = '涨幅榜(' + chgSrc + ') ' + (chgL || []).length + ' ∪ 成交额榜(' + amtSrc + ') ' + (amtL || []).length + ' → 去重剔ST后 ' + PICK.uni.length + ' 只';
     PICK.phase = 'analyze';
     pickStatus('② 逐股分析（260 根日K · 并发 4 · 可停止）：共 ' + PICK.uni.length + ' 只…');
@@ -24827,9 +25818,9 @@ async function pickRun() {
       var okN = PICK.uni.filter(function (s) { return pickHasResult(s.code); }).length;
       if (!failed && !PICK.stopFlag) {
         pickStatus('✅ 选股完成：' + PICK.scanInfo + ' ｜ 已分析 ' + okN + '/' + PICK.uni.length +
-          ' ｜ 七因子全部满足入选 <b style="color:var(--good)">' + pickSelected().length + '</b> 只（改阈值后重跑——缓存复用，秒级）');
+          ' ｜ 勾选条件全部满足入选 <b style="color:var(--good)">' + pickSelected().length + '</b> 只（改阈值后重跑——缓存复用，秒级）');
       } else if (PICK.stopFlag) {
-        pickStatus('⏹ 已停止：已分析 ' + okN + '/' + PICK.uni.length + '，七因子入选 ' + pickSelected().length +
+        pickStatus('⏹ 已停止：已分析 ' + okN + '/' + PICK.uni.length + '，勾选条件入选 ' + pickSelected().length +
           ' 只（再次点「🚀 开始选股」会复用已分析缓存继续）');
       }
       pickRender();
@@ -24892,7 +25883,12 @@ var PICK_COLS = [
   { k: 'atr',    txt: 'ATR%' },
   { k: 'slope',  txt: 'MA5斜率' },
   { k: 'updays', txt: 'MA5斜率往上天数' },
-  { k: 'ztcnt',  txt: '10日涨停' }
+  { k: 'ztcnt',  txt: '10日涨停' },
+  { k: 'cap',     txt: '流通市值' },
+  { k: 'amt',     txt: '成交额(亿)' },
+  { k: 'volr',    txt: '量比' },
+  { k: 'vol',     txt: '波动率%' },
+  { k: 'chg10',   txt: '10日涨幅' }
 ];
 function pickSortVal(s, k) {
   var f = pickFactors(s.code);
@@ -24910,6 +25906,11 @@ function pickSortVal(s, k) {
     case 'slope':  return f.slope;
     case 'updays': return f.upDays;
     case 'ztcnt':  return f.ztCnt;
+    case 'cap':     return f.cap;
+    case 'amt':     return f.amt;
+    case 'volr':    return f.volR;
+    case 'vol':     return f.vol;
+    case 'chg10':   return f.chg10;
   }
   return null;
 }
@@ -24936,12 +25937,12 @@ function pickDetailRow(s) {
     inner = '<div class="card"><div class="card-title">' + escapeHtml(s.name) + ' <span style="color:var(--dim)">' + s.code + '</span></div>' +
       '<div class="loading"><div class="spinner"></div><p>正在分析（抓 260 根前复权日K → 阶段 / KDJ / dev / 四指标 / ATR% / MA5斜率）…</p></div></div>';
   }
-  return '<tr class="batch-detail" data-detail="' + s.code + '"><td colspan="13">' + inner + '</td></tr>';
+  return '<tr class="batch-detail" data-detail="' + s.code + '"><td colspan="18">' + inner + '</td></tr>';
 }
 function pickDropTxt() {
-  var map = { data: '数据不足', F1: '斜率弱', F2: '往上天数超', F3: '动量越界', F4: 'ATR越界', F5: '阶段不符', F6: '四指标弱/否决', F7: '涨停过频' };
+  var map = { data: '数据不足', F1: '斜率弱', F2: '往上天数越界', F3: '动量越界', F4: 'ATR越界', F5: '阶段不符', F6: '四指标弱/否决', F7: '涨停过频', F8: '市值越界', F9: '成交额越界', F10: '量比越界', F11: '波动率越界', R10: '涨幅排名外' };
   var parts = [];
-  ['data', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7'].forEach(function (k) {
+  ['data', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'R10'].forEach(function (k) {
     if (PICK.drop[k]) parts.push((map[k] || k) + ' ' + PICK.drop[k]);
   });
   return parts.length ? parts.join(' · ') : '无';
@@ -24966,7 +25967,7 @@ function pickRender() {
   h += '<div class="pick-stat" style="font-size:12.5px;color:var(--muted);margin-bottom:10px;line-height:1.9">' + stat + '</div>';
   if (!PICK.started && PICK.phase === 'idle') {
     var _tc = (el('pickTopChg') || {}).value || 300, _ta = (el('pickTopAmt') || {}).value || 200;
-    h += '<div class="card" style="margin-top:12px"><div class="stage-desc">本工作区为「手动选股」：设置上方阈值后，点击 <b>🚀 开始选股</b> 才执行（首次进入不再自动开跑）。选股流水线：① 榜单预筛（涨幅榜前 ' + _tc + ' ∪ 成交额榜前 ' + _ta + '，剔除 ST/退市）→ ② 逐股分析（260 根前复权日K，并发 4）→ ③ 七因子阈值过滤 → ④ 入选表。已分析过的股票复用全局缓存，重跑秒级。</div></div>';
+    h += '<div class="card" style="margin-top:12px"><div class="stage-desc">本工作区为「手动选股」：设置上方阈值后，点击 <b>🚀 开始选股</b> 才执行（首次进入不再自动开跑）。选股流水线：① 榜单预筛（涨幅榜前 ' + _tc + ' ∪ 成交额榜前 ' + _ta + '，取并集，剔除 ST/退市）→ ② 逐股分析（260 根前复权日K，并发 4）→ ③ 选股条件过滤（F1~F7 + F8 流通市值 + F9 成交额 + F10 量比 + F11 波动率 + 10日涨幅排名；F8/F9 取自榜单快照，F10 快照优先·缺→日K近似，F11 需日K（20日日收益率标准差），涨幅排名 分析后过滤）→ ④ 入选表。已分析过的股票复用全局缓存，重跑秒级。</div></div>';
   }
   if (PICK.scanErr) h += '<div class="tip-box" style="margin-bottom:10px">⚠️ ' + escapeHtml(PICK.scanErr) + '</div>';
   /* 分析进度 */
@@ -25004,7 +26005,12 @@ function pickRender() {
         '<td>' + stockAtrHtml(r) + '</td>' +
         '<td class="' + (f.slope != null ? (f.slope > 0 ? 'up' : 'down') : '') + '">' + (f.slope != null ? fmtPct(f.slope) : '—') + '</td>' +
         '<td>' + (f.upDays != null ? '<span class="' + (f.upDays > 0 ? 'up' : 'down') + '">' + f.upDays + ' 天</span>' : '<span style="color:var(--dim)">—</span>') + '</td>' +
-        '<td>' + (f.ztCnt != null ? ((f.ztCnt > (PICK.cfg ? PICK.cfg.ztCntMax : 1e9) || f.ztCnt < (PICK.cfg ? PICK.cfg.ztCntMin : -1e9)) ? '<span style="color:#ff6a00;font-weight:600">' + f.ztCnt + ' 次</span>' : (f.ztCnt + ' 次')) : '<span style="color:var(--dim)">—</span>') + '</td></tr>' +
+        '<td>' + (f.ztCnt != null ? ((f.ztCnt > (PICK.cfg ? PICK.cfg.ztCntMax : 1e9) || f.ztCnt < (PICK.cfg ? PICK.cfg.ztCntMin : -1e9)) ? '<span style="color:#ff6a00;font-weight:600">' + f.ztCnt + ' 次</span>' : (f.ztCnt + ' 次')) : '<span style="color:var(--dim)">—</span>') + '</td>' +
+        '<td>' + (f.cap != null ? (f.cap >= 10000 ? (f.cap / 10000).toFixed(2) + ' 万亿' : f.cap.toFixed(0) + ' 亿') : '<span style="color:var(--dim)">—</span>') + '</td>' +
+        '<td class="mono">' + (f.amt != null ? f.amt.toFixed(2) : '<span style="color:var(--dim)">—</span>') + '</td>' +
+        '<td class="' + (f.volR != null ? (f.volR >= 2 ? 'up' : (f.volR < 1 ? 'down' : '')) : '') + '">' + (f.volR != null ? f.volR.toFixed(2) + '×' : '<span style="color:var(--dim)">—</span>') + '</td>' +
+        '<td class="' + (f.vol != null ? (f.vol > 4 ? 'up' : (f.vol < 1 ? 'down' : '')) : '') + '" title="F11：近 20 日日收益率标准差（%）；年化≈×√250。过高（>4%）噪音淹没结构、过低（<1%）死水无弹性；与 F4 ATR 同为波动率口径（振幅 vs 收盘）">' + (f.vol != null ? f.vol.toFixed(2) + '%' : '<span style="color:var(--dim)">—</span>') + '</td>' +
+        '<td class="' + (f.chg10 != null ? (f.chg10 > 0 ? 'up' : 'down') : '') + '">' + (f.chg10 != null ? fmtPct(f.chg10) : '—') + '</td></tr>' +
         (open ? pickDetailRow(s) : '');
     });
     h += '</tbody></table></div>';
@@ -25012,7 +26018,8 @@ function pickRender() {
     if (!_cfg.f1On) _off.push('F1'); if (!_cfg.f2On) _off.push('F2');
     if (!_cfg.f3On) _off.push('F3'); if (!_cfg.f4On) _off.push('F4');
     if (!_cfg.f5On) _off.push('F5'); if (!_cfg.f6On) _off.push('F6'); if (!_cfg.f7On) _off.push('F7');
-    h += '<div style="color:var(--dim);font-size:11.5px;margin-top:6px">口径：F1=MA5斜率≥' + _cfg.slopeMin + '%（ma5SlopePct）· F2=斜率往上天数≤' + _cfg.upDaysMin + '（ma5UpDaysOf）· F3=20日动量 ' + _cfg.momMin + '~' + _cfg.momMax + '%（mom20Of）· F4=ATR% ' + _cfg.atrMin + '~' + _cfg.atrMax + '（atr14Of）· F5=阶段∈{' + _cfg.stages.map(pickStageTag).join('/') + '}（描述性筛选，不发信号）· F6=四指标≥' + _cfg.s4kMin + '分' + (_cfg.s4kMin > 0 && _cfg.noVeto ? ' 且无一票否决' : '') + '（s4kTotal）· F7=10日涨停 ' + _cfg.ztCntMin + '~' + _cfg.ztCntMax + ' 次（近10根收盘涨停，板制档位按 boardOf）' + (_off.length ? '。本轮已停用：' + _off.join('/') + '（取消勾选）' : '') + '。20日动量值见展开详情与报告。本页只做选股与描述，买卖决策仍以四指标打分为唯一依据。</div>';
+    if (!_cfg.f8On) _off.push('F8'); if (!_cfg.f9On) _off.push('F9'); if (!_cfg.f10On) _off.push('F10'); if (!_cfg.f11On) _off.push('F11'); if (!_cfg.r10On) _off.push('涨幅排名');
+    h += '<div style="color:var(--dim);font-size:11.5px;margin-top:6px">口径：F1=MA5斜率≥' + _cfg.slopeMin + '%（ma5SlopePct）· F2=斜率往上天数 ' + _cfg.upDaysMin + '~' + _cfg.upDaysMax + ' 天（ma5UpDaysOf）· F3=20日动量 ' + _cfg.momMin + '~' + _cfg.momMax + '%（mom20Of）· F4=ATR% ' + _cfg.atrMin + '~' + _cfg.atrMax + '（atr14Of）· F5=阶段∈{' + _cfg.stages.map(pickStageTag).join('/') + '}（描述性筛选，不发信号）· F6=四指标≥' + _cfg.s4kMin + '分' + (_cfg.s4kMin > 0 && _cfg.noVeto ? ' 且无一票否决' : '') + '（s4kTotal）· F7=10日涨停 ' + _cfg.ztCntMin + '~' + _cfg.ztCntMax + ' 次（近10根收盘涨停，板制档位按 boardOf）' + (_cfg.f8On ? '· F8=流通市值 ' + _cfg.capMin + '~' + _cfg.capMax + ' 亿' : '') + (_cfg.f9On ? '· F9=成交额 ' + _cfg.amtMin + '~' + _cfg.amtMax + ' 亿（榜单快照：东财 f6 / 新浪 amount）' : '') + (_cfg.f10On ? '· F10=量比 ' + _cfg.vrMin + '~' + _cfg.vrMax + ' 倍（当日量÷前5日均量·不含当日）' : '') + (_cfg.f11On ? '· F11=波动率 ' + _cfg.volMin + '~' + _cfg.volMax + '%（20日日收益率标准差，年化≈×√250；与 F4 ATR 同为波动率口径建议二选一）' : '') + (_cfg.r10On ? '· 10日涨幅排名前 ' + _cfg.r10N + ' 只（分析后按近10日涨幅降序）' : '') + (_off.length ? '。本轮已停用：' + _off.join('/') + '（取消勾选）' : '') + '。20日动量/流通市值/成交额/10日涨幅值见展开详情与报告。本页只做选股与描述，买卖决策仍以四指标打分为唯一依据。</div>';
   } else if (done && !sel.length && n) {
     h += '<div class="card" style="margin-top:12px"><div class="stage-empty">③ 入选股票：<b>0 只</b> —— 预筛 ' + n + ' 只中无「勾选条件全部满足」的股票（淘汰分布：' + pickDropTxt() + '）。可放宽阈值后重跑（分析缓存复用，秒级）。</div></div>';
   }
@@ -25038,20 +26045,25 @@ function pickReportMd() {
   L.push('> **口径**：全市场榜单预筛（日内涨幅榜前 ' + cfg.topChg + ' ∪ 成交额榜前 ' + cfg.topAmt + '，剔除 ST/退市）→ 逐股平台同一套分析引擎 → 可勾选选股条件过滤（仅勾选项参与，取消勾选即跳过）。');
   var _rp = [];
   if (cfg.f1On) _rp.push('F1 MA5斜率≥' + cfg.slopeMin + '%（ma5SlopePct）');
-  if (cfg.f2On) _rp.push('F2 斜率往上天数≤' + cfg.upDaysMin + '（ma5UpDaysOf）');
+  if (cfg.f2On) _rp.push('F2 斜率往上天数 ' + cfg.upDaysMin + '~' + cfg.upDaysMax + ' 天（ma5UpDaysOf；1=翻上当天）');
   if (cfg.f3On) _rp.push('F3 20日动量 ' + cfg.momMin + '~' + cfg.momMax + '%（mom20Of）');
   if (cfg.f4On) _rp.push('F4 ATR% ' + cfg.atrMin + '~' + cfg.atrMax + '（atr14Of）');
   if (cfg.f5On) _rp.push('F5 阶段∈{' + cfg.stages.map(pickStageTag).join('/') + '}');
   if (cfg.f6On) _rp.push('F6 四指标≥' + cfg.s4kMin + '分' + (cfg.s4kMin > 0 && cfg.noVeto ? ' 且无一票否决' : '') + '（s4kTotal）');
   if (cfg.f7On) _rp.push('F7 10日内涨停次数 ' + cfg.ztCntMin + '~' + cfg.ztCntMax + ' 次（近10根收盘涨停；板制档位：主板10%/双创20%/北交所30%/ST按5%）');
+  if (cfg.f8On) _rp.push('F8 流通市值 ' + cfg.capMin + '~' + cfg.capMax + ' 亿（榜单快照：东财 f21 / 新浪 nmc）');
+  if (cfg.f9On) _rp.push('F9 成交额 ' + cfg.amtMin + '~' + cfg.amtMax + ' 亿（榜单快照：东财 f6 / 新浪 amount）');
+  if (cfg.f10On) _rp.push('F10 量比 ' + cfg.vrMin + '~' + cfg.vrMax + ' 倍（当日量÷前5日均量·不含当日；快照优先东财 f10，缺→日K近似；主升浪启动共识区 2~5）');
+  if (cfg.f11On) _rp.push('F11 波动率 ' + cfg.volMin + '~' + cfg.volMax + '%（近20日日收益率标准差，样本口径 ÷(n−1)；年化≈×√250；A股个股年化中位数≈40%，僵尸股<1.3%、活跃题材股1.9~3.2%（日std口径）；⚠️ 与 F4 ATR 同为波动率口径建议二选一启用）');
+  if (cfg.r10On) _rp.push('10日涨幅排名前 ' + cfg.r10N + ' 只（分析后按近10日涨幅降序截断；需逐股日K·分析后过滤）');
   L.push('> ' + (_rp.length ? _rp.join(' ｜ ') + '（' + _rp.length + ' 项启用）' : '（全部条件已停用）'));
   L.push('> 数据取于 ' + ts + '（盘中行情每分钟都在变）；阶段仅作描述性筛选，**买卖决策仍以四指标打分为唯一依据**。');
   L.push('> ⚠️ 技术纪律参考，非投资建议，独立决策、自负风险。');
   L.push('');
   L.push('## 入选股票清单（' + sel.length + ' 只 · 当前排序：' + (PICK_COLS.filter(function (c) { return c.k === PICK.sort.k; })[0] || {}).txt + ' ' + (PICK.sort.dir > 0 ? '升' : '降') + '序）');
   if (sel.length) {
-    L.push('| 代码 | 名称 | 行业 | 现价 | 涨跌幅 | 阶段 | KDJ | dev | 四指标 | ATR% | MA5斜率 | 往上天数 | 10日涨停 | 20日动量 |');
-    L.push('|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|');
+    L.push('| 代码 | 名称 | 行业 | 现价 | 涨跌幅 | 阶段 | KDJ | dev | 四指标 | ATR% | MA5斜率 | 往上天数 | 10日涨停 | 流通市值 | 成交额(亿) | 量比 | 波动率% | 10日涨幅 | 20日动量 |');
+    L.push('|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|');
     sel.forEach(function (s) {
       var f = pickFactors(s.code);
       var kdjT = (f.kdj && f.kdj.ok) ? ((f.kdj.signal === 'gold' ? '金叉' : (f.kdj.signal === 'dead' ? '死叉' : (f.kdj.side === 'bull' ? '多头' : '空头'))) + ' K' + Math.round(f.kdj.k)) : '—';
@@ -25059,7 +26071,7 @@ function pickReportMd() {
         ' | ' + (f.chg != null ? fmtPct(f.chg) : '—') + ' | ' + pickStageTag(f.stage) + ' | ' + kdjT +
         ' | ' + (f.dev != null ? f.dev.toFixed(1) + '%' : '—') + ' | ' + (f.s4k ? f.s4k.total : '—') +
         ' | ' + (f.atr != null ? f.atr.toFixed(1) + '%' : '—') + ' | ' + (f.slope != null ? fmtPct(f.slope) : '—') +
-        ' | ' + (f.upDays != null ? f.upDays : '—') + ' | ' + (f.ztCnt != null ? f.ztCnt : '—') + ' | ' + (f.mom != null ? fmtPct(f.mom) : '—') + ' |');
+        ' | ' + (f.upDays != null ? f.upDays : '—') + ' | ' + (f.ztCnt != null ? f.ztCnt : '—') + ' | ' + (f.cap != null ? f.cap.toFixed(0) + '亿' : '—') + ' | ' + (f.amt != null ? f.amt.toFixed(2) : '—') + ' | ' + (f.volR != null ? f.volR.toFixed(2) + '×' : '—') + ' | ' + (f.vol != null ? f.vol.toFixed(2) + '%' : '—') + ' | ' + (f.chg10 != null ? fmtPct(f.chg10) : '—') + ' | ' + (f.mom != null ? fmtPct(f.mom) : '—') + ' |');
     });
   } else {
     L.push('（无入选 —— 预筛 ' + PICK.uni.length + ' 只中无勾选条件全部满足的股票）');
@@ -25432,15 +26444,17 @@ function init() {
        评价根 = **被点击的这一根**：传 kl.slice(0, idx+1)（末根即所点根），只用它及之前的数据 → 无未来函数。
        press（上方压力位，黑名单4 用）取既有 srpJudge 的 R；拿不到 → 该条不触发（缺失不当利好也不当利空）。
        ★ 双层 try/catch：评价层任何异常都不能把点击面板打挂（降级为「数据不足」条）。 */
-    var kf = null, kj = null;
+    var kf = null, kj = null, srpSeg = null;
     if (ent && ent.kl && ent.kl.length) {
       try {
         var seg = ent.kl.slice(0, ent.start + i + 1);
         var press = null;
         try {
-          var srpV = srpJudge(seg);
-          if (srpV && srpV.R && isFinite(srpV.R.v) && srpV.R.v > 0) press = srpV.R.v;
-        } catch (eSrpV) { press = null; }
+          /* ★ 2026-10-06（用户要求「详情里显示盈亏比」）：这次 srpJudge(seg, null, ent.code) 本来只为取压力位 press
+             （KDJ 黑名单 4 用），现在把整份结果留到 srpSeg 复用给面板的「盈亏比条」—— 同一次计算、零重复、同一评价根。 */
+          srpSeg = srpJudge(seg, null, ent.code);
+          if (srpSeg && srpSeg.R && isFinite(srpSeg.R.v) && srpSeg.R.v > 0) press = srpSeg.R.v;
+        } catch (eSrpV) { srpSeg = null; press = null; }
         /* 所点根的 K/D/J（与图例徽标 / KDJ 副图同口径）；kdjState 阈值比 kdjFullJudge 低（12 vs 30 根），
            所以样本 12~29 根时：数值有、质量评价无 —— 两边各自诚实，不互相迁就。 */
         try { kj = kdjState(seg); } catch (eKjV) { kj = null; }
@@ -25488,14 +26502,46 @@ function init() {
        数据不足时 wsChengjieOf 返回 {ok:false}，面板如实出「数据不足」条（不静默隐藏、不硬算）。 */
     var cj = null;
     try { cj = (ent && ent.kl && ent.kl.length) ? wsChengjieOf(ent.kl, ent.start + i) : null; } catch (eCjV) { cj = null; }
-    panel.innerHTML = vpPanelHtml(x, sigs, adv, kf, kj, dbl, vpat, wscan, cj);
+    /* ★ 2026-10-06 第二批（用户要求）：「支撑压力线显示方法改为，点击每一根 k 线自动显示对应的支撑压力位，
+       不点击 k 线默认显示最近交易日 k 线对应的支撑压力位」。
+       —— 以所点 K 线为**基准根**（= 把那一根当作"当前价"）整图重绘关键位：
+        · 必须整图重绘、不能只换 <g class="srz">：关键位的区间会并入价格刻度（见 renderChart 里 lo/hi 的并入），
+          刻度一变 Y 映射就变 —— 只换线条会让线落在错的像素上；
+        · 重绘范围 = 卡内的 .kl-head + .chart-wrap 两段（.vp-panel 在它们**之后**，节点不被替换、引用保持有效）；
+        · data-focus 比对：同一根重复点击不重绘；点回最后一根 = 回到「最近交易日」默认口径；
+        · 只用 ent.ind + 全量下标 gidx —— renderChart 内部走 srZoneScan(kl.slice(0, gidx+1))，天然无未来函数；
+        · 重绘失败（缓存被 LRU 淘汰 / DOM 结构变了）不拖累面板 —— 面板结论本来就按所点根算，仍然正确。 */
+    var gidx = ent ? (ent.start + i) : null;
+    try {
+      var curFocus = wrap.getAttribute('data-focus');
+      curFocus = (curFocus == null || curFocus === '') ? NaN : parseInt(curFocus, 10);
+      if (ent && ent.ind && isFinite(gidx) && curFocus !== gidx) {
+        var tmp = document.createElement('div');
+        tmp.innerHTML = renderChart(ent.ind, gidx);
+        var headEl = card.querySelector('.kl-head'), wrapEl = card.querySelector('.chart-wrap');
+        if (headEl && wrapEl && headEl.parentNode && headEl.parentNode === wrapEl.parentNode) {
+          var par = headEl.parentNode;
+          while (tmp.firstChild) par.insertBefore(tmp.firstChild, headEl);
+          par.removeChild(headEl);
+          par.removeChild(wrapEl);
+          var nw = par.querySelector('.chart-wrap');
+          if (nw) { wrap = nw; cd = nw.querySelector('g.cd[data-i="' + i + '"]') || null; }
+        }
+      }
+    } catch (eSrzR) { /* 关键位重绘失败不拖累面板 */ }
+    panel.innerHTML = vpPanelHtml(x, sigs, adv, kf, kj, dbl, vpat, wscan, cj, srpSeg);
+    /* 徽标条联动必须在重绘**之后**：.kl-dayset 就住在 .kl-head 里，重绘会把整段换掉 */
     try {
       var ds = card.querySelector('.kl-dayset');
       if (ds && ent) ds.innerHTML = klDaysetHtml(ent, ent.start + i, kj, raw, null);
     } catch (eDsV) { /* 徽标条联动失败不拖累面板 */ }
-    var svgEl = wrap.querySelector('svg.chart');
-    if (svgEl) { var pv = svgEl.querySelector('g.cd.sel'); if (pv) pv.classList.remove('sel'); }
-    if (cd.classList) cd.classList.add('sel');
+    /* 选中标记同样在重绘之后：统一用当前 DOM 里的新节点（旧节点已脱离文档） */
+    try {
+      var svgEl = wrap ? wrap.querySelector('svg.chart') : null;
+      if (svgEl) { var pv = svgEl.querySelector('g.cd.sel'); if (pv) pv.classList.remove('sel'); }
+      var cdNow = wrap ? wrap.querySelector('g.cd[data-i="' + i + '"]') : null;
+      if (cdNow && cdNow.classList) cdNow.classList.add('sel');
+    } catch (eSelV) { /* 高亮失败不影响结论 */ }
   }, true);
 
   /* ★ 2026-10-04（用户要求「点击 K 线时显示满足策略的 K 线」）：策略命中清单回跳 —— 文档级一次委托。
@@ -25779,7 +26825,7 @@ function secEmBoardKline(bk, bars){
     if(!arr.length) throw new Error('板块K线为空');
     var klines = arr.map(function(line){
       var p = line.split(',');
-      return { date: p[0], open: +p[1], close: +p[2], high: +p[3], low: +p[4], volume: +p[5] };
+      return { date: p[0], open: +p[1], close: +p[2], high: +p[3], low: +p[4], volume: +p[5], amount: (p[6] != null && isFinite(+p[6])) ? +p[6] : null };
     }).filter(function(k){ return k.date && isFinite(k.close) && k.close > 0; });
     if(klines.length < 22) throw new Error('板块K线不足 22 根（' + klines.length + '）');
     return { klines: klines, source: '东财板块指数' };
