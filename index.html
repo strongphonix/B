@@ -506,10 +506,7 @@
   .kl-chip .sh { width:8px; height:8px; display:inline-block; flex:none; background:currentColor; }
   .kl-chip .sh-ring { background:transparent; border:1.6px solid currentColor; border-radius:50%; }   /* 威科夫弹簧：空心圆环（图上 circle）*/
   .kl-chip .sh-sq   { border-radius:1.6px; }                                                          /* 涨停回调 / 买点轨：方块（图上 rect）*/
-  .kl-chip .sh-dia  { clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%); }                             /* 2B 买点：菱形（图上四点 path）*/
-  .kl-chip .sh-x    { clip-path:polygon(17% 0,50% 33%,83% 0,100% 17%,67% 50%,100% 83%,83% 100%,50% 67%,17% 100%,0 83%,33% 50%,0 17%); }  /* 2B 卖点：叉（图上两斜线）*/
-  .kl-chip .sh-tu   { clip-path:polygon(50% 0,100% 100%,0 100%); }                                    /* 仙人指路：上三角（图上 ▲）*/
-  .kl-chip .sh-td   { clip-path:polygon(0 0,100% 0,50% 100%); }                                       /* 墓碑线：下三角（图上 ▼）*/
+  /* ★ 2026-10-12（用户要求删除 K 线 墓碑线 / 仙人指路 / 长上影判定）：.sh-tu / .sh-td 两形状类已随判定一并移除 */
   .kl-chip .sh-star { clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%); }  /* 涨停前兆：四角星（图上八角 path）*/
   /* ★ §90（2026-10-11 用户要求「四指标买点不用方块，可用五角星」）：五角星图标 —— 与四角星（涨停前兆）、
      方块（其余四策略买点轨）形状两两可分；图上信号轨 s4k 格同步画五角星 path（见 renderChart 信号轨）。 */
@@ -5768,10 +5765,10 @@ function renderChart(ind, focus) {
   /* ===== ★ 2026-10-04（用户要求「点击 K 线时显示满足策略的 K 线」）：策略命中扫描标记 =====
      逐根跑威科夫弹簧 / 涨停回调二波（无未来函数口径，与点击面板、命中清单同源同函数），
      命中根在图上直接标出。**每类标记一个专属形状**（2026-10-04 用户要求「不同标识用不同图形，不要全是圆圈」）：
-       下方 = 空心圆环（弹簧，实心 = 已确认）/ 实心紫菱形（2B 买点）/ 金方块（涨停回调低吸）/ **双柱图标（倍量形态：
+      下方 = 空心圆环（弹簧，实心 = 已确认）/ 金方块（涨停回调低吸）/ **双柱图标（倍量形态：
               蓝高矮双柱 = 左倍量「前长后短」、橙矮高双柱 = 右倍量「前短后长」—— 2026-10-04 用户要求新增）** /
               **红 ↑ 带杆向上箭头（MA5 斜率上拐 —— 2026-10-04 用户要求新增）**；
-       上方 = 红叉（2B 卖点）/ 黄▲ 上三角（仙人指路）/ 红▼ 下三角（墓碑线）/ 橙四角星（涨停前兆）/ 青六边形（转强质量）/
+      上方 = 橙四角星（涨停前兆）/ 青六边形（转强质量）/
               **绿 ↓ 带杆向下箭头（MA5 斜率下拐 —— 2026-10-04 用户要求新增）**。
      整段 try/catch 兜住，不许把图打挂。 */
   var __wsMarks = {};
@@ -5780,14 +5777,8 @@ function renderChart(ind, focus) {
       var _wt = start + _wsi, _wmk = null;
       try { var _wsp = wsSpringOf(kl, _wt); if (_wsp && _wsp.ok) { _wmk = _wmk || {}; _wmk.sp = _wsp; } } catch (eWs1) { }
       try { var _wzp = wsZtPullOf(kl, _wt); if (_wzp && _wzp.ok) { _wmk = _wmk || {}; _wmk.zp = _wzp; } } catch (eWs2) { }
-      /* ★ 2026-10-04：2B 买点（紫菱形）+ 长上影双形态（仙人指路黄▲ / 墓碑线红▼）—— 只标可执行的两形态，口径外不标 */
-      /* ★ 2026-10-04 用户口径：只有**引发 123 趋势改变**的 2B（mark=true，即当根 123 三条件全中）才上图标记；
-         未引发趋势改变的普通 2B（verdict='nq'）与伪 2B 一律**不上图**（用户原话「没有导致 123 法则中趋势改变的
-         2B 都不是高质量的 2B，不需要标记」）—— 判定与四因核查一字未减，完整保留在点击 K 线的「🎯 2B 买点判定」块里。 */
-      try { var _w2b = ws2bOf(kl, _wt); if (_w2b && _w2b.ok && _w2b.mark) { _wmk = _wmk || {}; _wmk.b2 = _w2b; } } catch (eWs3) { }
-      /* ★ 2026-10-04：2B 卖点（顶部反转 · 突破失败，**红叉**画在 K 线上方）—— 与买点镜像；同样只收「引发 123 趋势改变」的 */
-      try { var _w2bt = ws2bTopOf(kl, _wt); if (_w2bt && _w2bt.ok && _w2bt.mark) { _wmk = _wmk || {}; _wmk.b2t = _w2bt; } } catch (eWs3t) { }
-      try { var _wsh = wsShadowOf(kl, _wt); if (_wsh && _wsh.ok && _wsh.kind !== 'neutral') { _wmk = _wmk || {}; _wmk.sh = _wsh; } } catch (eWs4) { }
+      /* ★ 2026-10-12（用户要求删除 K 线 2B 买点 / 2B 卖点「引发 123 趋势改变」判定）：ws2bOf / ws2bTopOf 图上标记已整体移除 */
+      /* ★ 2026-10-12（用户要求删除 K 线 墓碑线 / 仙人指路 / 长上影判定）：wsShadowOf 图上标记已整体移除 */
       /* ★ 2026-10-04 第二批（20 图策略）：⑥ 涨停前兆共振 n≥3（橙四角星，上方）/ ⑦ 高质量转强 A（青六边形，上方）。
          ★ 2026-10-04 用户反馈：⑤「量价口诀」原画品红方块（K 线下方）→ 六条口诀覆盖了位置 × 量态 × 价态的
            绝大多数组合，图上几乎**每根 K 线都挂一个方块**（用户原话「大量重复标注」），视觉噪音远大于信息量。
@@ -5836,47 +5827,20 @@ function renderChart(ind, focus) {
         '" height="' + bh.toFixed(1) + '" rx="0.9" fill="' + col + '"' +
         (isLast ? ' stroke="#ffffff" stroke-width="1.2"' : '') + '/>' +
       (isLast ? '<circle cx="' + cx.toFixed(1) + '" cy="' + yC.toFixed(1) + '" r="2.8" fill="#ffffff" stroke="' + col + '" stroke-width="1.2"/>' : '') +
-      /* ★ 2026-10-04：策略命中标记（下方：2B 买点紫菱形 → 弹簧空心圆环 → 倍量双柱 → MA5 斜率上拐红↑；上方：2B 卖点红叉 → 长上影三角 → 涨停回调金方块 → 涨停前兆橙星 → 转强青六边形 → MA5 斜率下拐绿↓）。
+      /* ★ 2026-10-04：策略命中标记（下方：弹簧空心圆环 → 倍量双柱 → MA5 斜率上拐红↑；上方：涨停回调金方块 → 涨停前兆橙星 → 转强青六边形 → MA5 斜率下拐绿↓）。
          同一天多条命中时按序纵向堆叠（7.2px 一档），互不遮挡；每条带独立 <title> 悬停看明细。 */
       (function () {
         var mk = __wsMarks[idx];
         if (!mk) return '';
         var s2 = '', belowN = 0, aboveN = 0;
-        if (mk.b2) {
-          var b2y = Y(k.low) + 7.5 + (belowN++) * 7.2;
-          var b2Fill = (mk.b2.verdict === 'valid') ? '#a855f7' : 'none';
-          var b2Stroke = (mk.b2.verdict === 'invalid') ? '#8b93a7' : '#a855f7';
-          s2 += '<g class="ws-b2"><title>' + escapeHtml(String(k.date) + '　🎯 ' + mk.b2.verdictName + '　' + mk.b2.brief) + '</title>' +
-            '<path d="M' + cx.toFixed(1) + ' ' + (b2y - 3.6).toFixed(1) + ' L' + (cx + 3.3).toFixed(1) + ' ' + b2y.toFixed(1) +
-            ' L' + cx.toFixed(1) + ' ' + (b2y + 3.6).toFixed(1) + ' L' + (cx - 3.3).toFixed(1) + ' ' + b2y.toFixed(1) +
-            ' Z" fill="' + b2Fill + '" stroke="' + b2Stroke + '" stroke-width="1.2"/></g>';
-        }
-        /* ★ 2026-10-04：2B 卖点（顶部反转）—— **红叉**画在 K 线**上方**（买点=下方紫菱形 / 卖点=上方红叉，形状与侧别都不同，一眼可分）。
-           ★ 2026-10-04 用户要求：原「红菱形」与买点紫菱形同形、仅靠上下与颜色区分，不够好认 → 改为**叉（两斜线）**。
-           颜色：真 2B 卖点 = 红 #ef4444；伪 2B 卖点 = 灰 #8b93a7（待确认同样描红）。 */
-        if (mk.b2t) {
-          var b2ty = Y(k.high) - 7.5 - (aboveN++) * 7.2;
-          var b2tStroke = (mk.b2t.verdict === 'invalid') ? '#8b93a7' : '#ef4444';
-          var _xr = 3.1;
-          s2 += '<g class="ws-b2t"><title>' + escapeHtml(String(k.date) + '　🔻 ' + mk.b2t.verdictName + '　' + mk.b2t.brief) + '</title>' +
-            '<line x1="' + (cx - _xr).toFixed(1) + '" y1="' + (b2ty - _xr).toFixed(1) + '" x2="' + (cx + _xr).toFixed(1) + '" y2="' + (b2ty + _xr).toFixed(1) + '" stroke="' + b2tStroke + '" stroke-width="1.9" stroke-linecap="round"/>' +
-            '<line x1="' + (cx + _xr).toFixed(1) + '" y1="' + (b2ty - _xr).toFixed(1) + '" x2="' + (cx - _xr).toFixed(1) + '" y2="' + (b2ty + _xr).toFixed(1) + '" stroke="' + b2tStroke + '" stroke-width="1.9" stroke-linecap="round"/></g>';
-        }
+        /* ★ 2026-10-12（用户要求删除 2B 买点 / 2B 卖点）：.ws-b2 紫菱形 / .ws-b2t 红叉渲染已整体移除 */
         if (mk.sp) {
           var scy = Y(k.low) + 7.5 + (belowN++) * 7.2, sFill = (mk.sp.conf === true);
           s2 += '<g class="ws-sp"><title>' + escapeHtml(String(k.date) + '　🔄 ' + mk.sp.kindName + '　' + mk.sp.brief) + '</title>' +
             '<circle cx="' + cx.toFixed(1) + '" cy="' + scy.toFixed(1) + '" r="3.1" fill="' + (sFill ? '#38bdf8' : 'none') +
             '" stroke="' + (sFill ? '#e8f4ff' : '#38bdf8') + '" stroke-width="1.3"/></g>';
         }
-        if (mk.sh) {
-          var shy = Y(k.high) - 7.5 - (aboveN++) * 7.2, sUp = (mk.sh.kind === 'zhinan');
-          var sCol = sUp ? '#fbbf24' : '#ef4444';
-          var sPath = sUp
-            ? 'M' + cx.toFixed(1) + ' ' + (shy - 3.6).toFixed(1) + ' L' + (cx + 3.3).toFixed(1) + ' ' + (shy + 2.6).toFixed(1) + ' L' + (cx - 3.3).toFixed(1) + ' ' + (shy + 2.6).toFixed(1) + ' Z'
-            : 'M' + cx.toFixed(1) + ' ' + (shy + 3.6).toFixed(1) + ' L' + (cx + 3.3).toFixed(1) + ' ' + (shy - 2.6).toFixed(1) + ' L' + (cx - 3.3).toFixed(1) + ' ' + (shy - 2.6).toFixed(1) + ' Z';
-          s2 += '<g class="ws-sh"><title>' + escapeHtml(String(k.date) + '　🕯️ ' + mk.sh.kindName + '　' + mk.sh.brief) + '</title>' +
-            '<path d="' + sPath + '" fill="' + sCol + '" stroke="#0b1020" stroke-width="0.5"/></g>';
-        }
+        /* ★ 2026-10-12（用户要求删除 K 线 墓碑线 / 仙人指路 / 长上影判定）：.ws-sh 三角标记渲染已整体移除 */
         if (mk.zp) {
           var zcy = Y(k.high) - 7.5 - (aboveN++) * 7.2;
           s2 += '<g class="ws-zp"><title>' + escapeHtml(String(k.date) + '　🟨 ' + mk.zp.kindName + '　' + mk.zp.brief) + '</title>' +
@@ -6285,11 +6249,25 @@ function renderChart(ind, focus) {
       '">关键位 <b>—</b></span>';
   }
 
+  /* ★ 2026-10-12 性能修复（点击卡顿）：徽标组直接按**基准根**渲染 —— 点击重绘时 renderChart 出的
+     dayset 就是所点根的，点击处理器不必再算一遍覆盖（原：先画末根 → 处理器重算覆盖，同一次点击算两遍）。
+     默认口径（不传 focus / 点最后一根）与旧行为逐字一致：gidx = n-1、kdjState(全量) __kj、末行 raw、__kjChip。
+     非默认焦点根：KDJ 状态切到该根（kdjState 只喂该根及之前 → 无未来函数）、raw 取该根行、
+     KDJ chip 传 null 由 klDaysetHtml 按该根自建（__kjChip 是末根口径，不能冒充历史根）。 */
+  var __dsGidx = __focusEnd;
+  var __dsRaw = (__focusVi >= 0 && vpRows[__focusVi]) ? vpRows[__focusVi] : (vpRows[vpRows.length - 1] || null);
+  var __dsKj = __kj, __dsKjChip = __kjChip;
+  if (!__focusDefault) {
+    try { __dsKj = kdjState(kl.slice(0, __focusEnd + 1)); } catch (eDsKj) { __dsKj = __kj; }
+    __dsKjChip = null;
+  }
+
   var head = '<div class="kl-head">' +
     /* ★ 2026-10-04（用户要求）：当日徽标组 .kl-dayset —— 默认=最新一根；点击某根 K 线后整组联动为该日数据。
        数据取自 ind.ma5/ma10/ma20 数组与该日 K 线本体（与图上曲线同源同口径），不另起算法；
-       新增「量能」chip（成交量 + 量/前5日均量）；量比（实时口径）只对最新一根有意义 → 历史日该 chip 消失（诚实缺省）。 */
-    '<span class="kl-dayset">' + klDaysetHtml(__ent, n - 1, __kj, vpRows[vpRows.length - 1] || null, __kjChip) + '</span>' +
+       新增「量能」chip（成交量 + 量/前5日均量）；量比（实时口径）只对最新一根有意义 → 历史日该 chip 消失（诚实缺省）。
+       ★ 2026-10-12：gidx/ kj / raw 改按基准根 __focusEnd（见上方性能修复注释）——默认口径逐字不变。 */
+    '<span class="kl-dayset">' + klDaysetHtml(__ent, __dsGidx, __dsKj, __dsRaw, __dsKjChip) + '</span>' +
     '<span class="kl-hint">红涨绿跌（A 股口径）</span>' +
     /* ★ 2026-10-04（用户要求「涨停或跌停 k 线请用特殊的颜色」）：蜡烛专属色图例 —— 金 = 涨停 · 青 = 跌停。
        判定见 klLimitTickOf（收盘 = 该股当日涨 / 跌停价 + 封板 / 封底）；只在蜡烛上换色，量能柱仍按红涨绿跌。 */
@@ -6297,8 +6275,8 @@ function renderChart(ind, focus) {
     '<span class="kl-chip"><i class="sh sh-cnd" style="color:#00c8ff"></i><b>跌停 K 线</b></span>' +
     '<span class="kl-chip"><i class="sh sh-cnd" style="color:#ff6a00"></i><b>涨停炸板 K 线</b></span>' +
     /* ★ 2026-10-04（用户要求「不同的标识请用不同的图形，不要全是圆圈」）：图标 .sh-*（形状）替代 .dot（圆点），
-       形状与图上标记一一对应：弹簧=圆环 · 四指标买点=五角星（§90）· 其余买点轨=方块 · 2B买点=菱形 · 2B卖点=叉 ·
-       仙人指路=上三角 · 墓碑线=下三角 · 涨停前兆=四角星 · 转强质量=六边形 · 倍量形态=双柱（左倍量高矮 / 右倍量矮高）· 涨跌停 K 线=竖长实体。
+       形状与图上标记一一对应：弹簧=圆环 · 四指标买点=五角星（§90）· 其余买点轨=方块 ·
+       涨停前兆=四角星 · 转强质量=六边形 · 倍量形态=双柱（左倍量高矮 / 右倍量矮高）· 涨跌停 K 线=竖长实体。
        color 设在图标上（供 background:currentColor），不改 chip 文字色。 */
     '<span class="kl-chip" title="四指标买点（§90：总分 ≥50 即买点，一票否决除外）。五角星颜色按档位：≥76 红=重仓买入 · ≥62 橙=买入/加仓 · 50~61 黄=观察仓（轻仓试错）。"><i class="sh sh-star5" style="color:#ff9f43;width:11px;height:11px"></i>四指标买点</span>' +
     '<span class="kl-chip"><i class="sh sh-sq" style="color:#00cec9"></i>12维买点</span>' +
@@ -6308,13 +6286,7 @@ function renderChart(ind, focus) {
     /* ★ 2026-10-04（用户要求）：策略命中扫描图例 —— 圆环 = 弹簧（实心已确认 / 空心待确认）、方块 = 涨停回调低吸 */
     '<span class="kl-chip"><i class="sh sh-ring" style="color:#38bdf8"></i>威科夫弹簧</span>' +
     '<span class="kl-chip"><i class="sh sh-sq" style="color:#facc15"></i>涨停回调低吸</span>' +
-    /* ★ 2026-10-04：2B 买点（紫菱形，实心 = 真 2B / 空心 = 待确认）+ 长上影双形态（黄▲ 仙人指路 / 红▼ 墓碑线）。
-       ★ 2026-10-04 用户口径：紫菱形只画**引发 123 趋势改变**的 2B（未引发趋势改变的普通 2B 不上图）→ 图例同步注明。
-       ★ 2026-10-04 用户要求：2B 卖点由「红菱形」（与买点同形）改为**红叉**，买卖两侧一眼可分。 */
-    '<span class="kl-chip"><i class="sh sh-dia" style="color:#a855f7"></i>2B 买点（引发123趋势改变）</span>' +
-    '<span class="kl-chip"><i class="sh sh-x" style="color:#ef4444"></i>2B 卖点（顶部反转 · 引发123）</span>' +
-    '<span class="kl-chip"><i class="sh sh-tu" style="color:#fbbf24"></i>仙人指路</span>' +
-    '<span class="kl-chip"><i class="sh sh-td" style="color:#ef4444"></i>墓碑线</span>' +
+    /* ★ 2026-10-12（用户要求删除 K 线 2B 买点 / 2B 卖点「引发 123 趋势改变」判定）：紫菱形 / 红叉两枚图例 chip 已随判定器整体移除 */
     /* ★ 2026-10-04 第二批（20 图策略）：涨停前兆共振（橙星）/ 高质量转强（青六边形）。
        量价口诀的品红方块已按用户要求取消图上标注（避免每根 K 线重复挂方块），故图例不再列「量价口诀」——
        其判定仍在图下方面板的「📖 量价口诀」块中完整显示。 */
@@ -6359,17 +6331,30 @@ function renderChart(ind, focus) {
    · s4ActShort(act)：s4kAction 档位名 → 窄列短名（去 emoji）。
    · s4TierColor(total) / s4ActColor(act, total)：档位着色（A 股口径：买入红 / 观察黄 / 减仓清仓绿）；
      一票否决（veto）以动作为准 → 清仓绿，即使总分仍高。 */
+/* ★ 2026-10-12 性能修复（用户：点击每根 K 线卡顿）：s4 全序列缓存升级为「kl 数组引用级」WeakMap。
+   根因：renderChart 每次点击重绘都新建 __KL_CACHE 条目（新 uid → 新 ent 对象）→ ent.__s4all 缓存
+   每点一次就被作废一次 → 261 根 × s4kBuyDay（内含 KDJ 全序列重算）每点一次全跑一遍（实测 ~25ms/点击）。
+   修法：真缓存键 = kl 数组引用（WeakMap 挂函数自身属性 —— 测试沙箱只切函数体也自洽）+ 数据指纹
+   （根数+末根日期/收/量）—— 数据没变就命中；盘中刷新末根变化 → 指纹变 → 重算，不拿旧分冒充新数据。
+   ent 级字段照旧回填（老读者兼容）。 */
 function s4SeriesOf(ent) {
   try {
     if (!ent || !ent.kl || !ent.kl.length) return null;
-    if (ent.__s4all && ent.__s4allN === ent.kl.length) return ent.__s4all;
-    var kl = ent.kl, out = new Array(kl.length), i;
+    var kl = ent.kl;
+    if (!s4SeriesOf.__memo && typeof WeakMap === 'function') s4SeriesOf.__memo = new WeakMap();
+    var __memo = s4SeriesOf.__memo;
+    var __kEnd = kl[kl.length - 1] || {};
+    var __mk = kl.length + '|' + String(__kEnd.date || '') + '|' + __kEnd.close + '|' + __kEnd.volume;
+    var __hit = __memo ? __memo.get(kl) : null;
+    if (__hit && __hit.k === __mk) { ent.__s4all = __hit.v; ent.__s4allN = kl.length; return __hit.v; }
+    var out = new Array(kl.length), i;
     for (i = 0; i < kl.length; i++) {
       var d = null;
       try { d = s4kBuyDay(kl, i); } catch (eB) { d = null; }
       out[i] = d;
     }
     ent.__s4all = out; ent.__s4allN = kl.length;
+    if (__memo) __memo.set(kl, { k: __mk, v: out });
     return out;
   } catch (eS) { return null; }
 }
@@ -12809,7 +12794,8 @@ function dblVolHtml(d) {
      ③ 简化卡：倍量不破 / 下跌见倍量 / 倍量过左峰 / 涨停倍量阴；
      ④ 倍量本质三原则（散户意愿无法同步放量 → 倍量即主力行为）；
      ⑤《量与价》九宫格决策树（价涨/跌/平 × 量增/减/平）；
-     ⑥《主力放倍量三段进攻》；⑦《2B 法则》（假突破反转）。
+     ⑥《主力放倍量三段进攻》。
+     （⑦《2B 法则》（假突破反转）—— ★ 2026-10-12 已按用户要求整体删除：volPatOf B5 判定不再维护。）
 
    判定根 = 被点击的这一根 idx（只用 kl[0..idx]，**无未来函数**）；条件型形态（吸筹/出货分流）
    把「触发位」显式写成数字（支撑/压力/均线），由用户按后续走势自行确认，本台不代客决策。
@@ -12970,18 +12956,8 @@ function volPatOf(kl, idx) {
         d: '连续 ' + run + ' 根阳线（无涨停、以小 / 中阳为主）且段内含倍量 → 上涨趋势形成；随后若短暂缩量回调，说明上涨动能依旧（趋势延续）' });
     }
   }
-  /* B5 2B 买点（图⑦《2B 法则》）：假破前低后收回其最高价上方 */
-  var Lo = -1;
-  for (m = Math.max(2, i - 20); m <= i; m++) { if (Lo < 0 || kl[m].low < kl[Lo].low) Lo = m; }
-  if (Lo > 0 && Lo < i) {
-    var pLo = Infinity, hasPrior = false;
-    for (m = Math.max(1, i - 45); m <= Lo - 1; m++) { if (kl[m].low < pLo) { pLo = kl[m].low; hasPrior = true; } }
-    if (hasPrior && kl[Lo].low < pLo && k.close > kl[Lo].high) {
-      pats.push({ k: 'b2', n: '2B 买点（假突破反转）', t: 'up',
-        d: '先破前期低点 ' + pLo.toFixed(2) + ' 至 ' + kl[Lo].low.toFixed(2) + '（' + dte(Lo) + '）后未能持续，当根收盘 ' + k.close.toFixed(2) +
-          ' 收回其最高价 <b>' + kl[Lo].high.toFixed(2) + '</b> 上方 → 2B 法则买点成立（须配合均线支撑 / 黄金买点等综合使用，单一指标成功率有限）' });
-    }
-  }
+  /* B5 2B 买点（图⑦《2B 法则》· 假突破反转）—— ★ 2026-10-12 已按用户要求整体删除：
+     判定 push（k:'b2'）已移除，「倍量形态识别」面板不再显示该行；口径注记留档。 */
 
   return {
     ok: true, idx: i, date: (k.date || ''), vol: k.volume, isDbl: isDbl, r1: r1, r5: r5, red: red, chg: chg,
@@ -13020,17 +12996,11 @@ function volPatHtml(p) {
    ⚠️ 分层纪律：本模块**只描述、不计分** —— 不改 VPS 打分、不改四指标、不进钉钉推送、不发买卖指令。
    无未来函数纪律：判定只用 kl[0..i]；④「弹起确认」需要 i 之后的 K 线 → **只作事后回看标注**，
         显式输出「已确认 / 未确认 / 待确认（其后 K 线不足）」，绝不拿未来数据当预测。
-   ★ 2026-10-04 追加（用户提供《2B 法则失效四因 + 量能验证 + 风控》与《仙人指路 vs 墓碑线》）：
-        ③ 2B 买点 ws2bOf —— 直接给「真 2B / 待确认 2B / 普通 2B / 伪 2B」结论，四大失效原因逐条核查
-          （① 大级别逆势小级别 ② 形态不合格：磨蹭 / 过浅 / 反复刺破 ③ 基本面冲击须人工核查 ④ 主力二次诱空：
-          形态漂亮但收回段无量），量能验证用本台统一术语（破位 = 阴柱右倍量 / 收回 = 低位倍量阳线 / 回踩 = 左倍量缩量），
-          止损 = 前低下方；事后回看若再度跌破前低 → 2B 失效（123 反转条件未满足）。
-          ★ 2026-10-04 用户口径再加（标记门槛）：「标记的 2B 是导致趋势改变的 K 线，没有导致 123 法则中趋势改变的
-            2B 都不是高质量 2B、不需要标记」→ 当根 123 三条件（① 趋势线被突破 ② 不再创新低 ③ 收复破位整根失地）
-            全中才 mark=true、才上图紫菱形；只中 1~2 条 = 「普通 2B」只走面板、图上不画。顶部 2B 卖点（ws2bTopOf）完全镜像。
-        ④ 长上影双形态 wsShadowOf —— 仙人指路（低位 / 初中期 + 实体小 + 温和放量 1.5~3 倍，次日阳线反包上影线一半以上确认）
-          与墓碑线（高位 + 巨量 ≥3 倍 + 收盘近全天最低 + 下影极短，次日跌破本根最低价确认）；位置与量能矛盾 → 诚实标「口径外」。
-        两者同为参考层，不计分、不进推送、不发买卖指令（卡内 / 面板均明示）。
+   ★ 2026-10-12（用户要求删除 K 线 2B 买点「引发 123 趋势改变」与 2B 卖点「顶部反转 · 引发123」判定）：
+        ③ 2B 买点 ws2bOf / 顶部 2B 卖点 ws2bTopOf —— 已整体删除（判定器、B2_* 常量、图上紫菱形 / 红叉标记、
+          图例 chip、清单与面板判定行全移除）。
+        ④ 长上影双形态 wsShadowOf —— ★ 2026-10-12 已按用户要求整体删除（墓碑线 / 仙人指路 / 长上影判定、图上标记、图例、清单与面板行全移除）。
+        其余各路同为参考层，不计分、不进推送、不发买卖指令（卡内 / 面板均明示）。
    ★ 2026-10-04 追加第二批（用户提供 20 张图：量价口诀 6 条 / 涨停前一天 4 大 K 线信号 / 量价背离 4 信号 / 转强质量四维）：
         ⑤ 量价口诀 + 量价背离 wsVpOf —— 位置（长周期涨幅优先 + 20 日分位）× 量态（增/平/缩）× 价态（涨/平/跌）
           逐日映射六条口诀（高位无量拿 / 高位放量跑 / 低位放量跟 / 低位无量等 / 量增价升介入 / 量增价平转阴）
@@ -13065,27 +13035,8 @@ var WSCAN = {
   ZT_PULL_MAX: 50,     /* 回调幅度上限（对锚最高价 %，图：不宜超过二板涨幅的 50%） */
   ZT_WIN: 5,           /* 回调时间窗（交易日，图：3~5 日内选择方向） */
   ZT_SHRINK: 0.6,      /* 回调缩量：当根量 < 锚量 ×0.6 */
-  /* ---- 2B 买点（★ 2026-10-04 用户提供《2B 法则失效四因 + 量能验证 + 风控》· 直接给结论）----
-     结构：破前低 → 快速收回前低上方 = 2B 买点；止损放前低下方；再度跌破前低 = 2B 失效。 */
-  B2_LB: 20,           /* 前低回看窗：破位根之前 B2_LB 根最低价 = 「前低」 */
-  B2_FIND: 12,         /* 破位根搜索窗：近 B2_FIND 根内找「跌破前低」的破位根 */
-  B2_QUICK: 3,         /* 收回速度上限（交易日）：≤ = 干脆；> = 磨蹭（假 2B 嫌疑，用户原因②） */
-  B2_SHALLOW: 1.0,     /* 刺破幅度下限（%）：低于此 = 刺破过浅、诱空不足（用户原因②） */
-  B2_MULTI: 1,         /* 独立探底次数上限：> 此（即 ≥2 次） = 来回反复刺破、多空拉锯（用户原因②） */
-  B2_TREND_LB: 60,     /* 大级别（周/月线以日线近似）趋势回看窗 */
-  B2_TREND_DROP: 25,   /* 自长周期高点回落 ≥ 此（%）= 大级别下跌未走完（逆势小级别 2B，用户原因①） */
-  B2_CONFIRM: 3,       /* 事后回看窗：其后 B2_CONFIRM 根内未再破前低 → 记「未失效」 */
-  B2T_TREND_UP: 25,    /* 【2B 卖点】自长周期低点涨幅 ≥ 此（%）= 上升行情已有一定涨幅（顶部反转的前提） */
-  /* ---- 长上影双形态（仙人指路 / 墓碑线）---- */
-  SH_UP: 2,            /* 上影 ≥ 实体 ×2（用户口径：上影线长度至少是实体的 2 倍以上） */
-  SH_BODY: 0.5,        /* 仙人指路实体小：实体 ≤ 振幅 ×0.5 */
-  SH_LOWER: 0.15,      /* 下影极短或没有：下影 ≤ 振幅 ×0.15 */
-  SH_GAIN_HIGH: 30,    /* 长周期自低点涨幅 ≥ 此（%）→ 高位（用户口径：短期涨幅超 30% 大概率墓碑线） */
-  SH_GAIN_LOW: 15,     /* 长周期自低点涨幅 ≤ 此（%）→ 低位 / 初中期 */
-  SH_VOL_MILD: 1.5,    /* 仙人指路温和放量下限（对前 5 日均量） */
-  SH_VOL_MILD_HI: 3,   /* 仙人指路放量上限：超过则警惕（用户口径：单日放量 3 倍以上反而要警惕） */
-  SH_VOL_HUGE: 3,      /* 墓碑线巨量 / 天量下限（用户口径：3~5 倍） */
-  SH_CLOSE_LOW: 0.15,  /* 墓碑线：收盘接近全天最低（(close−low) / 振幅 ≤ 0.15） */
+  /* ★ 2026-10-12（用户要求删除 K 线 2B 买点 / 2B 卖点「引发 123 趋势改变」判定）：B2_* 十一枚常量已随 ws2bOf / ws2bTopOf 一并移除 */
+  /* ★ 2026-10-12（用户要求删除 K 线 墓碑线 / 仙人指路 / 长上影判定）：SH_* 八枚常量已随 wsShadowOf 一并移除 */
   MIN: 26              /* 最小样本 */
 };
 /* 区间振幅（%）：[a,b] 内最高 / 最低 */
@@ -13271,478 +13222,12 @@ function wsPosIn(kl, idx, lb) {
   if (!isFinite(hi) || !isFinite(lo) || hi <= lo || !isFinite(c)) return null;
   return (c - lo) / (hi - lo);
 }
-/* ==== 2B 买点完整判定（★ 2026-10-04 用户提供《2B 法则》失效四因 + 量能验证 + 风控）====
-   结构：破前低（破位根 low < 前 B2_LB 根最低价）→ 快速收回前低上方 = 2B 买点（评价根 = 被点击这一根）。
-   四条失效原因逐条核查：
-     ① 大级别趋势未走完（逆势小级别 2B）——本台以日线长周期（B2_TREND_LB 根）自高点回落幅度近似周/月线；
-     ② 形态不合格（假 2B）——收回磨蹭 / 刺破过浅 / 反复刺破（多空拉锯）；
-     ③ 基本面 / 消息冲击 —— K 线不可判定，固定输出「须人工核查」提示，绝不假装能判；
-     ④ 主力二次诱空 —— 形态漂亮但收回段全程无量（无低位倍量阳线）→ 诱多型 2B。
-   量能验证用本台统一术语：破位 = 阴柱右倍量（前短后长 · 一次性恐慌放量）；
-     收回 = 低位倍量阳线（主力进场承接）；回踩 = 左倍量（前长后短 · 缩量洗盘）。
-   风控：止损 = 前低下方；事后回看（仅标注用，不当预测）若再度跌破前低 → 2B 失效、放弃做多。
-   ★ 2026-10-04 用户口径（标记门槛）：「标记的 2B 是导致趋势改变的 K 线，没有导致 123 法则中趋势改变的 2B
-     都不是高质量 2B、不需要标记」→ 只有当根 123 三条件全中（trendChange=true）才 mark=true、才上图紫菱形；
-     未引发的（verdict='nq' 普通 2B）只在点击面板显示、图上不画菱形（判定器本身与四因核查一字未减）。
-   无未来函数纪律：形态与量能判定**只用 kl[0..i]**；conf 三态（ok / fail / null）用 i 之后的数据，
-     与威科夫弹簧 ④ 同纪律 —— 只作**事后回看标注**，绝不拿未来数据当预测。 */
-function ws2bOf(kl, i) {
-  if (!kl || !kl.length) return { ok: false, why: '无日K数据' };
-  i = (i == null || i < 0) ? kl.length - 1 : Math.min(i, kl.length - 1);
-  if (i < WSCAN.MIN - 1) return { ok: false, why: '样本不足（需 ≥' + WSCAN.MIN + ' 根，当前 ' + (i + 1) + ' 根）' };
-  var k = kl[i], m, q;
-  var dte = function (j) { return String((kl[j] && kl[j].date) || ''); };
-  /* ---- 找破位根 L：近 B2_FIND 根内**最近**一根「最低价跌破其前 B2_LB 根最低价」的根（含当根）---- */
-  var L = -1, priorLow = Infinity;
-  for (m = i; m >= Math.max(1, i - WSCAN.B2_FIND); m--) {
-    var pl = Infinity;
-    for (q = Math.max(0, m - WSCAN.B2_LB); q <= m - 1; q++) { if (kl[q] && isFinite(kl[q].low) && kl[q].low < pl) pl = kl[q].low; }
-    if (!isFinite(pl)) continue;
-    if (isFinite(kl[m].low) && kl[m].low < pl) { L = m; priorLow = pl; break; }
-  }
-  if (L < 0) return { ok: false, why: '近 ' + WSCAN.B2_FIND + ' 根内无「跌破前 ' + WSCAN.B2_LB + ' 根最低价（前低）」的破位根' };
-  /* ---- 收回：评价根收盘收回前低上方（未收回 = 2B 未成立）---- */
-  if (!(k.close > priorLow)) return { ok: false, why: '尚未收回前低上方（收盘 ' + k.close.toFixed(2) + ' ≤ 前低 ' + priorLow.toFixed(2) + '）→ 2B 未成立' };
-  /* ---- 唯一性：2B 买点 = 破位后**首次**收回前低上方的那一根（其后跟随根不是新的买点，避免图上连排标记）---- */
-  for (m = L + 1; m < i; m++) {
-    if (kl[m] && isFinite(kl[m].close) && kl[m].close > priorLow) {
-      return { ok: false, why: '本段 2B 的收回根是 ' + dte(m) + '（收盘已收回前低 ' + priorLow.toFixed(2) + ' 上方），本根属其后跟随，不是新的 2B 买点' };
-    }
-  }
-  var gapDays = i - L;
-  var piercePct = (priorLow > 0) ? (priorLow - kl[L].low) / priorLow * 100 : null;
-  var strongRecover = (k.close > kl[L].high);
-  /* 反复刺破 = 前低下方的「独立探底」次数（局部低点）：≥2 次 = 来回反复、多空拉锯。
-     注意不能简单数「low < 前低」的根数 —— 收回前的每一根都天然在前低下方（那是同一波下探），
-     会把所有慢速收回都误判成拉锯；按局部低点计数才对应「反复多次刺破」。 */
-  /* ★ 2026-10-04 全网核验修复【未来函数 · 已修】：原式 `m <= i` 且 nextL 取 `kl[m+1]` —— 当 m = i 时会读到
-     **i+1（评价根之后）** 的最低价来判断「i 是不是独立探底」，属于「用未来数据判定形态」（违反无未来函数纪律）。
-     改为只统计 `m < i` 的局部低点（此时 m+1 ≤ i，全在已知区间内）；评价根 i 本身因右侧未知**不计入** ——
-     宁少不多，绝不用未来数据。 */
-  var dips = 0;
-  for (m = L; m < i; m++) {
-    if (!kl[m] || !isFinite(kl[m].low) || kl[m].low >= priorLow) continue;
-    var prevL = (m > 0 && kl[m - 1] && isFinite(kl[m - 1].low)) ? kl[m - 1].low : Infinity;
-    var nextL = (kl[m + 1] && isFinite(kl[m + 1].low)) ? kl[m + 1].low : Infinity;
-    if (kl[m].low < prevL && kl[m].low <= nextL) dips++;
-  }
-  /* ★ 2026-10-04 图片口径补充（123/2B 法则）：「2B = 两次突破关键价位都未站稳」（Twice Breakout Rule）。
-     经典 Sperandeo 版只要求「破前低后未延续、随即升回」；用户提供的图片多一步「反弹之后价格**再次**跌破前期低点」。
-     这里检出**更早的那一次破位根 L1**：若 L1 与 L 之间存在像样的反弹（收红且高于前收），即认定「二次突破前低」
-     结构完整（质量加分，不是硬门槛 —— 两种口径并存，面板逐条说明）。 */
-  var L1 = -1, reboundAt = -1;
-  for (m = L - 1; m >= Math.max(1, L - WSCAN.B2_FIND); m--) {
-    var pl1 = Infinity;
-    for (q = Math.max(0, m - WSCAN.B2_LB); q <= m - 1; q++) { if (kl[q] && isFinite(kl[q].low) && kl[q].low < pl1) pl1 = kl[q].low; }
-    if (isFinite(kl[m].low) && isFinite(pl1) && kl[m].low < pl1) { L1 = m; break; }
-  }
-  if (L1 >= 0) { for (m = L1 + 1; m < L; m++) { if (kl[m] && isFinite(kl[m].close) && kl[m].close >= kl[m].open && kl[m].close > kl[m - 1].close) { reboundAt = m; break; } } }
-  var twiceBreak = (L1 >= 0 && reboundAt >= 0);
-  /* ---- 大级别（日线长周期近似）：自区间高点回落幅度 + 均线空头排列 ---- */
-  var lb = Math.min(i, WSCAN.B2_TREND_LB), hiT = -Infinity;
-  for (m = i - lb; m <= i; m++) { if (kl[m] && isFinite(kl[m].high) && kl[m].high > hiT) hiT = kl[m].high; }
-  var trendDrop = (isFinite(hiT) && hiT > 0) ? (hiT - k.close) / hiT * 100 : null;
-  var ma5b = vdblMAc(kl, i, 5), ma20b = vdblMAc(kl, i, 20), ma60b = vdblMAc(kl, i, 60);
-  var bearStack = (ma5b != null && ma20b != null && ma60b != null) ? (ma5b < ma20b && ma20b < ma60b) : null;
-  var maRepair = (ma5b != null && ma20b != null) ? (ma5b >= ma20b) : null;   /* 短均线已修复至 20 日线上方 → 可能见底 */
-  var adverse = (trendDrop != null && trendDrop >= WSCAN.B2_TREND_DROP);
-  /* ---- 量能验证（统一术语）---- */
-  var Lred = vdblRed(kl[L]);                            /* 破位根是否收阳 */
-  var Ldbl = vdblIsDbl(kl, L);                          /* 破位根是否倍量 */
-  var Lr1 = (L >= 1 && kl[L - 1] && kl[L - 1].volume > 0 && isFinite(kl[L].volume)) ? kl[L].volume / kl[L - 1].volume : null;
-  var runDn = 0;                                        /* 破位起连续「放量阴柱」（不断右倍量 → 抛压源源不断） */
-  for (m = L; m <= i; m++) { if (!vdblRed(kl[m]) && vdblIsDbl(kl, m)) runDn++; else break; }
-  var lowDblYang = -1;                                  /* 收回段内的「低位倍量阳线」（20 日分位 ≤40% 或 收盘仍贴前低 ≤×1.05） */
-  for (m = L; m <= i; m++) {
-    if (vdblRed(kl[m]) && vdblIsDbl(kl, m)) {
-      var pY = wsPosIn(kl, m, WSCAN.B2_LB);
-      var nearLow = (priorLow > 0 && isFinite(kl[m].close) && kl[m].close <= priorLow * 1.05);
-      if ((pY != null && pY <= 0.4) || nearLow) { lowDblYang = m; break; }
-    }
-  }
-  var vMax = 0, vMaxIdx = -1;                           /* 段内最大量 → 「左倍量（放量后缩量）」判定 */
-  for (m = L; m <= i; m++) { if (kl[m] && isFinite(kl[m].volume) && kl[m].volume > vMax) { vMax = kl[m].volume; vMaxIdx = m; } }
-  var leftShrink = (vMax > 0 && isFinite(k.volume) && vMaxIdx >= L && vMaxIdx < i && k.volume < vMax * 0.7);
-  /* ---- 123 法则联动 · 趋势改变三条件（★ 2026-10-04 用户口径：2B 必须是「导致趋势改变的 K 线」）----
-     用户口径原文：「标记的 2B 是导致趋势改变的 K 线；没有导致 123 法则中趋势改变的 2B 都不是高质量 2B、不需要标记」。
-     → 三条件从「信息展示」升级为**标记硬门槛**：3/3 全中才 mark=true、才上图；缺任一条只在点击面板显示、绝不上图。
-     图片三条件（① 价格突破下降趋势线 ② 下跌行情不再创新低 ③ 价格穿越短期反弹高点压力位）的日线近似，
-     全部只用 kl[0..i]，**无未来函数**：
-       ① 下降趋势线被突破 → 「收盘 > MA10」**或**「MA5 > MA10」（价格重回 10 日线上方 / 短期均线金叉）。
-          为什么两式取或：只用「MA5 > MA10 金叉」时，实测收回根几乎永远不满足（均线金叉总在收回之后若干根才出现）
-          → 会导致一个都不标；改用「价格已站上 MA10」作为等价近似（本台不拟合趋势线，口径明示）。
-       ② 不再创新低 → 破位根之后到当根，未再出现比**破位低点**更低的新低（逐根真实计数，不再硬编码 true）。
-          ⚠ 诚实说明：在本判定器的**锚点规则**下（破位锚点 = 最近一根跌破前低的根，B2_FIND 12 &lt; B2_LB 20），
-          任何比破位低点更低的新低都会被重新选为更近的锚点 → ② **结构上必然成立**，实测不会成为否决项。
-          保留逐条列示是为了与 123 原文三条件一致、并防后续重构时口径漂移（不是凑数的假门槛）。
-       ③ 穿越短期反弹高点压力位 → 当根收盘收复破位整根失地（收盘 > 破位根最高价）。 */
-  var ma10b2 = vdblMAc(kl, i, 10);
-  var c123_1 = (ma10b2 != null) ? ((isFinite(k.close) && k.close > ma10b2) || (ma5b != null && ma5b > ma10b2)) : null;
-  var c123_2 = true, nLowAt = -1;
-  for (m = L + 1; m <= i; m++) {
-    if (kl[m] && isFinite(kl[m].low) && kl[m].low < kl[L].low) { c123_2 = false; nLowAt = m; break; }
-  }
-  var c123_3 = strongRecover;                        /* = 收盘 > 破位根最高价（收复破位整根失地） */
-  /* 前波反弹高点 = 前低所在根 → 破位根之前 的最高价（趋势改变的**完全确认位**，仅提示、不参与本根门控） */
-  var pLi = -1, pLv = Infinity;
-  for (q = Math.max(0, L - WSCAN.B2_LB); q <= L - 1; q++) { if (kl[q] && isFinite(kl[q].low) && kl[q].low < pLv) { pLv = kl[q].low; pLi = q; } }
-  var tchgRef = kl[L].high;
-  if (pLi >= 0) { for (q = pLi; q <= L - 1; q++) { if (kl[q] && isFinite(kl[q].high) && kl[q].high > tchgRef) tchgRef = kl[q].high; } }
-  var n123 = (c123_1 === true ? 1 : 0) + (c123_2 === true ? 1 : 0) + (c123_3 === true ? 1 : 0);
-  var trendChange = (c123_1 === true && c123_2 === true && c123_3 === true);
-  var t123 = '① 趋势线被突破（收盘 ' + k.close.toFixed(2) + (ma10b2 != null ? (k.close > ma10b2 ? ' &gt; ' : ' ≤ ') + 'MA10 ' + ma10b2.toFixed(2) : '；MA10 数据不足') +
-    (ma5b != null && ma10b2 != null ? '，MA5 ' + ma5b.toFixed(2) + (ma5b > ma10b2 ? ' &gt; ' : ' ≤ ') + 'MA10' : '') + '；本台不拟合趋势线 → 用均线近似）' + (c123_1 === true ? ' ✅' : ' ⬜') +
-    '；② 不再创新低（破位低点 ' + kl[L].low.toFixed(2) + (c123_2 === true ? ' 之后未再创更低' : ' 已被 ' + dte(nLowAt) + ' 再度跌破') + '）' + (c123_2 === true ? ' ✅' : ' ⬜') +
-    '；③ 穿越短期反弹高点压力位（收盘 ' + k.close.toFixed(2) + (c123_3 ? ' &gt; ' : ' ≤ ') + '破位根最高 ' + kl[L].high.toFixed(2) + '）' + (c123_3 ? ' ✅' : ' ⬜');
-  var t123Txt = '123 法则联动 · 趋势改变三条件（共 ' + n123 + '/3 项）：' + t123 +
-    ' → ' + (trendChange
-      ? '<b>3/3 全中：该根即 123 趋势改变根</b>（2B 成立且引发趋势改变 → 高质量 2B，<b>上图标记</b>）'
-      : '<b>未达 3/3：趋势未改变</b> —— 该 2B 属下跌中继 / 试探性反弹，不算高质量 2B、<b>不作图上标记</b>（判定仍在本面板显示）') +
-    '；趋势改变完全确认位（前波反弹高点）' + (isFinite(tchgRef) ? tchgRef.toFixed(2) : '—') + '（收盘超越它 = 反转获完全确认，属后续观察位、不参与本根判定）';
-  /* ---- 四因核查清单 ---- */
-  var hard = [], warn = [], good = [];
-  if (adverse && maRepair !== true) hard.push('① 大级别（周/月线，本台以日线 ' + lb + ' 根近似）自区间高点已回落 ' + (trendDrop != null ? trendDrop.toFixed(1) + '%' : '—') +
-    (bearStack === true ? ' 且 MA5&lt;MA20&lt;MA60 空头排列' : ' 且 MA5 未修复至 MA20 上方') + '（阈值 ' + WSCAN.B2_TREND_DROP + '%）→ <b>逆势小级别 2B</b>：大趋势仍在往下，小周期 2B 只是下跌中继、不是底部反转（2B 硬性前提是原有下跌趋势末期出现明显背驰，本台无法自动判定背驰 → 视为否决，须人工确认）');
-  else if (adverse && maRepair === true) warn.push('① 大级别自区间高点已回落 ' + (trendDrop != null ? trendDrop.toFixed(1) + '%' : '—') + '（≥' + WSCAN.B2_TREND_DROP +
-    '%）但 MA5 已修复至 MA20 上方（可能见底）→ 仍须人工确认大周期（周/月线）是否出现明显背驰');
-  else if (trendDrop != null) good.push('大级别未显逆势（自长周期高点回落 ' + trendDrop.toFixed(1) + '%，MA5' + (maRepair === true ? ' ≥ ' : ' &lt; ') + 'MA20）');
-  if (gapDays > WSCAN.B2_QUICK) hard.push('② 收回磨蹭（' + gapDays + ' 个交易日才收回前低，须 ≤' + WSCAN.B2_QUICK + '）→ 假 2B：多空均衡而非空头衰竭，极易二次破位');
-  else good.push('收回干脆（' + (gapDays === 0 ? '当根即收回' : gapDays + ' 个交易日内收回') + '）');
-  if (piercePct != null && piercePct < WSCAN.B2_SHALLOW) hard.push('② 刺破过浅（' + piercePct.toFixed(2) + '% &lt; ' + WSCAN.B2_SHALLOW + '%）→ 诱空不足，非一次性诱空');
-  if (dips > WSCAN.B2_MULTI) hard.push('② 反复刺破前低（' + dips + ' 次独立探底 &gt; ' + WSCAN.B2_MULTI + '）→ 多空拉锯、不是一次性诱空，非标准 2B 结构');
-  if (runDn >= 2) hard.push('② 破位后连续 ' + runDn + ' 根放量阴柱（不断右倍量）→ 抛压源源不断，易二次破位');
-  if (!Lred && Ldbl) good.push('破位 = 阴柱右倍量（前短后长 · 一次性恐慌放量）');
-  else if (Lred) warn.push('破位根收阳（未收阴）→ 恐慌放量特征不足');
-  else warn.push('破位根未倍量（量 ' + vdblX(Lr1) + ' 前日）→ 恐慌放量不充分');
-  if (lowDblYang >= 0) good.push('收回段出现低位倍量阳线（' + dte(lowDblYang) + '）→ 主力资金进场承接');
-  else hard.push('④ 收回段全程无量 / 无低位倍量阳线 → 仅散户短线抄底，<b>诱多型 2B 高危</b>（形态漂亮但资金意图是出货，不是建仓）→ 无量弱反弹的 2B 直接放弃');
-  if (leftShrink) good.push('回踩形成左倍量（' + dte(vMaxIdx) + ' 放量后缩量至 ' + (k.volume / vMax).toFixed(2) + ' 倍）→ 浮筹清洗、主力锁仓');
-  if (twiceBreak) good.push('二次突破前低（' + dte(L1) + ' 首破 → ' + dte(reboundAt) + ' 反弹 → ' + dte(L) + ' 再破后失败收不回）→ 与用户图片《2B 法则》完全一致（两次突破关键价位都未站稳）');
-  else warn.push('仅一次破前低（经典 Sperandeo 版 2B 即成立，但用户图片口径的「反弹后二次跌破前低」未出现 → 结构强度略低）');
-  warn.push('③ 基本面 / 消息冲击（业绩暴雷 / 减持 / 行业利空）无法由 K 线判定 —— 若存在，技术形态直接失效，须人工核查');
-  /* ---- 事后回看（无未来函数纪律：只作标注，不当预测）---- */
-  var failAt = -1, m2;
-  for (m2 = i + 1; m2 < kl.length; m2++) { if (kl[m2] && isFinite(kl[m2].low) && kl[m2].low < priorLow) { failAt = m2; break; } }
-  var conf = (failAt >= 0) ? 'fail' : ((kl.length - 1 - i) >= WSCAN.B2_CONFIRM ? 'ok' : null);
-  if (conf === 'fail') hard.push('事后回看：' + dte(failAt) + ' 已再度跌破前低 ' + priorLow.toFixed(2) + ' → 2B 结构失效（123 反转条件无法满足，下跌趋势延续，放弃做多）');
-  else if (conf === 'ok') good.push('事后回看（其后 ' + WSCAN.B2_CONFIRM + ' 根内）未再跌破前低 → 结构未失效');
-  else warn.push('事后回看：其后 K 线不足 ' + WSCAN.B2_CONFIRM + ' 根，尚无法验证是否二次破位');
-  /* ---- 直接结论（★ 2026-10-04：新增「是否引发 123 趋势改变」硬门槛；mark = 是否上图标记）---- */
-  var verdict, verdictName, shortName, quality, mark;
-  if (hard.length) {
-    verdict = 'invalid'; shortName = '伪 2B'; quality = 'none'; mark = false;
-    verdictName = '伪 2B —— 易二次破位，放弃（硬伤 ' + hard.length + ' 项）';
-  } else if (!trendChange) {
-    verdict = 'nq'; shortName = '普通 2B'; quality = 'low'; mark = false;
-    verdictName = '普通 2B —— 未引发 123 趋势改变（' + n123 + '/3），非高质量 2B、不作图上标记';
-  } else if (good.length >= 3) {
-    verdict = 'valid'; shortName = '真 2B'; quality = 'high'; mark = true;
-    verdictName = '真 2B —— 引发 123 趋势改变（3/3），可小仓试错（止损前低下方）';
-  } else {
-    verdict = 'watch'; shortName = '待确认 2B'; quality = 'mid'; mark = true;
-    verdictName = '待确认 2B —— 已引发 123 趋势改变但条件不全，等放量 / 回踩确认';
-  }
-  var L1 = '破位根 ' + dte(L) + ' 最低 ' + kl[L].low.toFixed(2) + ' 跌破前低 <b>' + priorLow.toFixed(2) + '</b>（刺破 ' + (piercePct != null ? piercePct.toFixed(2) + '%' : '—') + '）→ ' +
-    (gapDays === 0 ? '当根即收回' : gapDays + ' 个交易日后收回') + '；当根收盘 ' + k.close.toFixed(2) +
-    (strongRecover ? '，收回破位根最高价 ' + kl[L].high.toFixed(2) + ' 上方（强收回）' : '，收回前低上方但未过破位根最高价 ' + kl[L].high.toFixed(2));
-  var L2 = '止损：<b>' + priorLow.toFixed(2) + '</b>（前低）下方 —— 再度跌破即 2B 失效，必须离场、不扛单';
-  var D = [L1, L2];
-  if (hard.length) D.push('<span style="color:#ff5252">🔴 硬伤 ' + hard.length + ' 项：</span>' + hard.join('；'));
-  if (warn.length) D.push('<span style="color:#ffb74d">🟠 风险 / 核查 ' + warn.length + ' 项：</span>' + warn.join('；'));
-  if (good.length) D.push('<span style="color:#26c281">🟢 确认 ' + good.length + ' 项：</span>' + good.join('；'));
-  D.push(t123Txt + '。定位：2B 是<b>提前预判反转的先行信号</b>（左侧试错），123 是趋势反转的确认信号 —— 2B 之后再破前低即代表 123 条件无法满足，放弃做多');
-  D.push(mark
-    ? '<span style="color:#26c281">🏷 图上标记：<b>已标记</b></span>（本根 = 引发 123 趋势改变的 K 线 → 图上画紫菱形）'
-    : '<span style="color:#ffb74d">🚫 图上标记：<b>不标记</b></span>（本根未引发 123 趋势改变 → 只在点击面板显示，图上不画菱形；用户口径：非高质量 2B 不需要标记）');
-  D.push('<span style="color:var(--dim)">口径与时点：本判定为<b>日线收盘后确认</b>（用到当根 OHLC 与收盘价），实际下单最早在<b>次日开盘</b>（A 股 T+1）—— 不构成「盘中就能买在收盘价」的假设。</span>');
-  return { ok: true, idx: i, date: k.date, verdict: verdict, verdictName: verdictName, shortName: shortName,
-    quality: quality, mark: mark, trendChange: trendChange, tchgRef: tchgRef, side: 'bottom',
-    L: L, priorLow: priorLow, gapDays: gapDays, piercePct: piercePct, dips: dips, strongRecover: strongRecover,
-    trendDrop: trendDrop, bearStack: bearStack, adverse: adverse, stop: priorLow, conf: conf, failAt: failAt,
-    L1: L1, reboundAt: reboundAt, twiceBreak: twiceBreak, n123: n123, c123_1: c123_1, c123_2: c123_2, c123_3: c123_3, t123Txt: t123Txt,
-    hard: hard, warn: warn, good: good,
-    brief: shortName + '（前低 ' + priorLow.toFixed(2) + '，止损其下' + (twiceBreak ? '，二次突破' : '') + (trendChange ? '，引发 123 趋势改变' : '，未引发 123 趋势改变') + '）',
-    detail: '<div style="margin-top:2px">' + D.join('</div><div style="margin-top:2px">') + '</div>' };
-}
-/* ==== 2B 卖点完整判定（顶部反转 · 突破失败）★ 2026-10-04 用户提供《123 法则和 2B 法则》图片 ====
-   图片原文「2B 法则 · 突破失败-顶部反转」：
-     (1) 价格前期处于上升行情中 (2) 价格再创新高，随后价格回调 (3) 回调之后价格再次涨破前期高点
-     (4) 涨势未能延续，价格下跌至前高下方 (5) 下跌时候是熊市量价关系
-   与底部版（ws2bOf）**完全镜像**：前高（前 B2_LB 根最高价）→ 突破根（当根最高价 > 前高）→ 跌回前高下方 = 2B 卖点。
-   ★ 原实现只有底部（买点）一个方向 —— 而用户提供的 5 张图里 2B 法则**两侧都画**（突破失败-底部反转 / 顶部反转），
-     缺顶部方向属**能力缺口**，本轮补齐。
-   止损 = 前高稍上处（图片「止损位设在前低稍下处」的空头镜像）；事后回看若再度上破前高 → 结构失效（涨势延续）。
-   四因核查镜像：① 大级别上升未走完（逆势小级别 2B）② 形态不合格（磨蹭 / 超出过浅 / 反复冲顶）
-     ③ 基本面（固定输出须人工核查）④ 诱多型（跌回段无量 → 不是出货，只是正常回调）。
-   无未来函数：形态与量能判定只用 kl[0..i]（独立冲顶计数亦只统计 m &lt; i）；conf 三态用 i 之后数据，仅作事后回看标注。
-   ★ 2026-10-04 用户口径（标记门槛）：只有**引发 123 趋势改变**的 2B 卖点才 mark=true、才上图红叉；
-     未引发的（verdict='nq' 普通 2B(顶)）只在点击面板显示、图上不画菱形。
-   分层纪律：参考层 · 不计分、不进钉钉推送、不发买卖指令。 */
-function ws2bTopOf(kl, i) {
-  if (!kl || !kl.length) return { ok: false, why: '无日K数据' };
-  i = (i == null || i < 0) ? kl.length - 1 : Math.min(i, kl.length - 1);
-  if (i < WSCAN.MIN - 1) return { ok: false, why: '样本不足（需 ≥' + WSCAN.MIN + ' 根，当前 ' + (i + 1) + ' 根）' };
-  var k = kl[i], m, q;
-  var dte = function (j) { return String((kl[j] && kl[j].date) || ''); };
-  /* ---- 找突破根 L：近 B2_FIND 根内**最近**一根「最高价突破其前 B2_LB 根最高价（前高）」的根（含当根）---- */
-  var L = -1, priorHigh = -Infinity;
-  for (m = i; m >= Math.max(1, i - WSCAN.B2_FIND); m--) {
-    var ph = -Infinity;
-    for (q = Math.max(0, m - WSCAN.B2_LB); q <= m - 1; q++) { if (kl[q] && isFinite(kl[q].high) && kl[q].high > ph) ph = kl[q].high; }
-    if (!isFinite(ph)) continue;
-    if (isFinite(kl[m].high) && kl[m].high > ph) { L = m; priorHigh = ph; break; }
-  }
-  if (L < 0) return { ok: false, why: '近 ' + WSCAN.B2_FIND + ' 根内无「突破前 ' + WSCAN.B2_LB + ' 根最高价（前高）」的突破根' };
-  /* ---- 跌回：评价根收盘跌回前高下方（未跌回 = 2B 卖点未成立）---- */
-  if (!(k.close < priorHigh)) return { ok: false, why: '尚未跌回前高下方（收盘 ' + k.close.toFixed(2) + ' ≥ 前高 ' + priorHigh.toFixed(2) + '）→ 2B 卖点未成立' };
-  /* ---- 唯一性：跌回前高下方的**首次**那一根（避免图上连排标记）---- */
-  for (m = L + 1; m < i; m++) {
-    if (kl[m] && isFinite(kl[m].close) && kl[m].close < priorHigh) {
-      return { ok: false, why: '本段 2B 的跌回根是 ' + dte(m) + '（收盘已跌回前高 ' + priorHigh.toFixed(2) + ' 下方），本根属其后跟随，不是新的 2B 卖点' };
-    }
-  }
-  var gapDays = i - L;
-  var exceedPct = (priorHigh > 0) ? (kl[L].high - priorHigh) / priorHigh * 100 : null;
-  var strongFall = (k.close < kl[L].low);
-  /* 独立冲顶 = 前高上方的局部高点次数（★ m &lt; i：只用已知区间，绝不用 i+1 的未来数据）*/
-  var peaks = 0;
-  for (m = L; m < i; m++) {
-    if (!kl[m] || !isFinite(kl[m].high) || kl[m].high <= priorHigh) continue;
-    var prevH = (m > 0 && kl[m - 1] && isFinite(kl[m - 1].high)) ? kl[m - 1].high : -Infinity;
-    var nextH = (kl[m + 1] && isFinite(kl[m + 1].high)) ? kl[m + 1].high : -Infinity;
-    if (kl[m].high > prevH && kl[m].high >= nextH) peaks++;
-  }
-  /* 二次突破（图片口径）：更早那次突破根 L1 + 其间回调（收阴且低于前收） */
-  var L1 = -1, pullbackAt = -1;
-  for (m = L - 1; m >= Math.max(1, L - WSCAN.B2_FIND); m--) {
-    var ph1 = -Infinity;
-    for (q = Math.max(0, m - WSCAN.B2_LB); q <= m - 1; q++) { if (kl[q] && isFinite(kl[q].high) && kl[q].high > ph1) ph1 = kl[q].high; }
-    if (isFinite(kl[m].high) && isFinite(ph1) && kl[m].high > ph1) { L1 = m; break; }
-  }
-  if (L1 >= 0) { for (m = L1 + 1; m < L; m++) { if (kl[m] && isFinite(kl[m].close) && kl[m].close < kl[m].open && kl[m].close < kl[m - 1].close) { pullbackAt = m; break; } } }
-  var twiceBreak = (L1 >= 0 && pullbackAt >= 0);
-  /* ---- 大级别（上升行情前提）：自长周期低点涨幅 + 均线多头排列 ---- */
-  var lb = Math.min(i, WSCAN.B2_TREND_LB), loT = Infinity;
-  for (m = i - lb; m <= i; m++) { if (kl[m] && isFinite(kl[m].low) && kl[m].low < loT) loT = kl[m].low; }
-  var trendUp2 = (isFinite(loT) && loT > 0) ? (k.close / loT - 1) * 100 : null;
-  var ma5t = vdblMAc(kl, i, 5), ma10t = vdblMAc(kl, i, 10), ma20t = vdblMAc(kl, i, 20), ma60t = vdblMAc(kl, i, 60);
-  var bullStack = (ma5t != null && ma20t != null && ma60t != null) ? (ma5t > ma20t && ma20t > ma60t) : null;
-  var maBroken = (ma5t != null && ma20t != null) ? (ma5t < ma20t) : null;
-  var elevated = (trendUp2 != null && trendUp2 >= WSCAN.B2T_TREND_UP);
-  /* ---- 量能验证（熊市量价关系 = 放量下跌）---- */
-  var Lred = vdblRed(kl[L]);                              /* 突破根是否收阳（诱多突破通常收阳）*/
-  var Ldbl = vdblIsDbl(kl, L);                            /* 突破根是否倍量（右倍量诱多）*/
-  var a5t = vdblAvgVol(kl, i - 5, i - 1);
-  var r5t = (a5t > 0 && isFinite(k.volume)) ? k.volume / a5t : null;
-  var runUp = 0;                                          /* 突破起连续「放量阳柱」（不断右倍量 → 买盘源源不断）*/
-  for (m = L; m <= i; m++) { if (vdblRed(kl[m]) && vdblIsDbl(kl, m)) runUp++; else break; }
-  var highDblYin = -1;                                    /* 跌回段内的「高位放量阴线」（主力出货特征）*/
-  for (m = L; m <= i; m++) {
-    if (!vdblRed(kl[m]) && vdblIsDbl(kl, m)) { highDblYin = m; break; }
-  }
-  var vMax2 = 0, vMaxIdx2 = -1;
-  for (m = L; m <= i; m++) { if (kl[m] && isFinite(kl[m].volume) && kl[m].volume > vMax2) { vMax2 = kl[m].volume; vMaxIdx2 = m; } }
-  var leftShrink2 = (vMax2 > 0 && isFinite(k.volume) && vMaxIdx2 >= L && vMaxIdx2 < i && k.volume < vMax2 * 0.7);
-  /* ---- 四因核查清单（与底部版镜像）---- */
-  var hard = [], warn = [], good = [];
-  if (elevated && maBroken !== true) hard.push('① 大级别（周/月线，本台以日线 ' + lb + ' 根近似）自区间低点已上涨 ' + (trendUp2 != null ? trendUp2.toFixed(1) + '%' : '—') +
-    (bullStack === true ? ' 且 MA5&gt;MA20&gt;MA60 多头排列' : ' 且 MA5 未跌破 MA20') + '（阈值 ' + WSCAN.B2T_TREND_UP + '%）→ 上升趋势仍在延续，属<b>逆势小级别 2B 卖点</b>：可能只是中途回调而非顶部反转（顶背离本台无法自动判定 → 须人工确认）');
-  else if (elevated && maBroken === true) warn.push('① 大级别自区间低点已上涨 ' + (trendUp2 != null ? trendUp2.toFixed(1) + '%' : '—') + '（≥' + WSCAN.B2T_TREND_UP +
-    '%）但 MA5 已跌破 MA20（短期拐头）→ 仍须人工确认大周期是否出现顶背离');
-  else if (trendUp2 != null) good.push('大级别未显过热（自长周期低点涨幅 ' + trendUp2.toFixed(1) + '%，MA5' + (maBroken === true ? ' &lt; ' : ' ≥ ') + 'MA20）');
-  if (gapDays > WSCAN.B2_QUICK) hard.push('② 跌回磨蹭（' + gapDays + ' 个交易日才跌回前高，须 ≤' + WSCAN.B2_QUICK + '）→ 假 2B：多空均衡而非买盘衰竭');
-  else good.push('跌回干脆（' + (gapDays === 0 ? '当根即跌回' : gapDays + ' 个交易日内跌回') + '）');
-  if (exceedPct != null && exceedPct < WSCAN.B2_SHALLOW) hard.push('② 超出过浅（' + exceedPct.toFixed(2) + '% &lt; ' + WSCAN.B2_SHALLOW + '%）→ 诱多不足，非一次性假突破');
-  if (peaks > WSCAN.B2_MULTI) hard.push('② 反复冲顶前高（' + peaks + ' 次独立冲顶 &gt; ' + WSCAN.B2_MULTI + '）→ 多空拉锯，不是一次性诱多');
-  if (runUp >= 2) hard.push('② 突破后连续 ' + runUp + ' 根放量阳柱（不断右倍量）→ 买盘源源不断，易二次上破前高');
-  if (Lred && Ldbl) good.push('突破 = 阳柱右倍量（诱多放量 · 一次性情绪高潮）');
-  else if (!Lred) warn.push('突破根收阴（未收阳）→ 诱多特征不足');
-  else warn.push('突破根未倍量 → 情绪高潮特征不充分');
-  if (highDblYin >= 0) good.push('跌回段出现高位放量阴线（' + dte(highDblYin) + '）→ 主力出货承接（熊市量价关系成立）');
-  else hard.push('④ 跌回段无高位放量阴线（全程缩量回落）→ 与「涨势未能延续 + 熊市量价关系」不符：缩量回落多为正常回调，<b>卖点不可靠</b>');
-  if (leftShrink2) good.push('冲高后形成左倍量（' + dte(vMaxIdx2) + ' 放量后缩量至 ' + (k.volume / vMax2).toFixed(2) + ' 倍）→ 承接衰竭');
-  if (twiceBreak) good.push('二次突破前高（' + dte(L1) + ' 首破 → ' + dte(pullbackAt) + ' 回调 → ' + dte(L) + ' 再破后失败）→ 与用户图片《2B 法则》完全一致');
-  else warn.push('仅一次突破前高（经典 Sperandeo 版 2B 即成立，但用户图片口径的「回调后二次涨破前高」未出现 → 结构强度略低）');
-  warn.push('③ 基本面 / 消息冲击（业绩超预期 / 利好兑现 / 行业变局）无法由 K 线判定 —— 若存在，技术形态直接失效，须人工核查');
-  /* ---- 事后回看（无未来函数纪律：只作标注）---- */
-  var failAt = -1, m2;
-  for (m2 = i + 1; m2 < kl.length; m2++) { if (kl[m2] && isFinite(kl[m2].high) && kl[m2].high > priorHigh) { failAt = m2; break; } }
-  var conf = (failAt >= 0) ? 'fail' : ((kl.length - 1 - i) >= WSCAN.B2_CONFIRM ? 'ok' : null);
-  if (conf === 'fail') hard.push('事后回看：' + dte(failAt) + ' 已再度上破前高 ' + priorHigh.toFixed(2) + ' → 2B 卖点失效（涨势延续，停止看空）');
-  else if (conf === 'ok') good.push('事后回看（其后 ' + WSCAN.B2_CONFIRM + ' 根内）未再上破前高 → 结构未失效');
-  else warn.push('事后回看：其后 K 线不足 ' + WSCAN.B2_CONFIRM + ' 根，尚无法验证是否二次上破');
-  /* ---- 123 法则联动 · 趋势改变三条件（顶部反转版，与底部完全镜像 —— ★ 用户口径：未引发趋势改变不上图）----
-     ① 上升趋势线被跌破 → 「收盘 < MA10」**或**「MA5 < MA10」（跌破 10 日线 / 短期均线死叉；本台不拟合趋势线）；
-     ② 不再创新高 → 突破根之后到当根，未再出现比**突破高点**更高的新高（逐根真实计数，不再硬编码 true）；
-     ③ 跌破前一波回调低点支撑 → 当根收盘跌破突破整根失地（收盘 < 突破根最低价）。全部只用 kl[0..i]。 */
-  var c123_1 = (ma10t != null) ? ((isFinite(k.close) && k.close < ma10t) || (ma5t != null && ma5t < ma10t)) : null;
-  var c123_2 = true, nHighAt = -1;
-  for (m = L + 1; m <= i; m++) {
-    if (kl[m] && isFinite(kl[m].high) && kl[m].high > kl[L].high) { c123_2 = false; nHighAt = m; break; }
-  }
-  var c123_3 = strongFall;
-  /* 前波回调低点 = 前高所在根 → 突破根之前 的最低价（趋势改变的**完全确认位**，仅提示、不参与本根门控） */
-  var pHi = -1, pHv = -Infinity;
-  for (q = Math.max(0, L - WSCAN.B2_LB); q <= L - 1; q++) { if (kl[q] && isFinite(kl[q].high) && kl[q].high > pHv) { pHv = kl[q].high; pHi = q; } }
-  var tchgRef = kl[L].low;
-  if (pHi >= 0) { for (q = pHi; q <= L - 1; q++) { if (kl[q] && isFinite(kl[q].low) && kl[q].low < tchgRef) tchgRef = kl[q].low; } }
-  var n123 = (c123_1 === true ? 1 : 0) + (c123_2 === true ? 1 : 0) + (c123_3 === true ? 1 : 0);
-  var trendChange = (c123_1 === true && c123_2 === true && c123_3 === true);
-  var t123 = '① 上升趋势线被跌破（收盘 ' + k.close.toFixed(2) + (ma10t != null ? (k.close < ma10t ? ' &lt; ' : ' ≥ ') + 'MA10 ' + ma10t.toFixed(2) : '；MA10 数据不足') +
-    (ma5t != null && ma10t != null ? '，MA5 ' + ma5t.toFixed(2) + (ma5t < ma10t ? ' &lt; ' : ' ≥ ') + 'MA10' : '') + '；本台不拟合趋势线 → 用均线近似）' + (c123_1 === true ? ' ✅' : ' ⬜') +
-    '；② 不再创新高（突破高点 ' + kl[L].high.toFixed(2) + (c123_2 === true ? ' 之后未再创更高' : ' 已被 ' + dte(nHighAt) + ' 再度上破') + '）' + (c123_2 === true ? ' ✅' : ' ⬜') +
-    '；③ 跌破回调低点支撑（收盘 ' + k.close.toFixed(2) + (c123_3 ? ' &lt; ' : ' ≥ ') + '突破根最低 ' + kl[L].low.toFixed(2) + '）' + (c123_3 ? ' ✅' : ' ⬜');
-  var t123Txt = '123 法则联动 · 趋势改变三条件（顶部反转 · 共 ' + n123 + '/3 项）：' + t123 +
-    ' → ' + (trendChange
-      ? '<b>3/3 全中：该根即 123 趋势改变根</b>（2B 卖点成立且引发趋势改变 → 高质量 2B 卖点，<b>上图标记</b>）'
-      : '<b>未达 3/3：趋势未改变</b> —— 该 2B 卖点属上升中继 / 正常回调，不算高质量 2B 卖点、<b>不作图上标记</b>（判定仍在本面板显示）') +
-    '；趋势改变完全确认位（前波回调低点）' + (isFinite(tchgRef) ? tchgRef.toFixed(2) : '—') + '（收盘跌破它 = 顶部反转获完全确认，属后续观察位、不参与本根判定）';
-  /* ---- 直接结论（★ 2026-10-04：新增「是否引发 123 趋势改变」硬门槛；mark = 是否上图标记）---- */
-  var verdict, verdictName, shortName, quality, mark;
-  if (hard.length) {
-    verdict = 'invalid'; shortName = '伪 2B(顶)'; quality = 'none'; mark = false;
-    verdictName = '伪 2B 卖点 —— 易二次上破，不作看空依据（硬伤 ' + hard.length + ' 项）';
-  } else if (!trendChange) {
-    verdict = 'nq'; shortName = '普通 2B(顶)'; quality = 'low'; mark = false;
-    verdictName = '普通 2B 卖点 —— 未引发 123 趋势改变（' + n123 + '/3），非高质量 2B 卖点、不作图上标记';
-  } else if (good.length >= 3) {
-    verdict = 'valid'; shortName = '真 2B(顶)'; quality = 'high'; mark = true;
-    verdictName = '真 2B 卖点 —— 引发 123 趋势改变（3/3），顶部反转结构成立（止损前高上方）';
-  } else {
-    verdict = 'watch'; shortName = '待确认 2B(顶)'; quality = 'mid'; mark = true;
-    verdictName = '待确认 2B 卖点 —— 已引发 123 趋势改变但条件不全，等放量阴线确认';
-  }
-  var L1txt = '突破根 ' + dte(L) + ' 最高 ' + kl[L].high.toFixed(2) + ' 突破前高 <b>' + priorHigh.toFixed(2) + '</b>（超出 ' + (exceedPct != null ? exceedPct.toFixed(2) + '%' : '—') + '）→ ' +
-    (gapDays === 0 ? '当根即跌回' : gapDays + ' 个交易日后跌回') + '；当根收盘 ' + k.close.toFixed(2) +
-    (strongFall ? '，已跌破突破根最低价 ' + kl[L].low.toFixed(2) + '（强跌回）' : '，跌回前高下方但未破突破根最低价 ' + kl[L].low.toFixed(2));
-  var D = [L1txt, '止损：<b>' + priorHigh.toFixed(2) + '</b>（前高）上方 —— 再度上破即 2B 失效、停止看空、不扛单',
-    t123Txt + '。定位：2B 是<b>提前预判反转的先行信号</b>（左侧试错），123 是趋势反转的确认信号'];
-  if (hard.length) D.push('<span style="color:#ff5252">🔴 硬伤 ' + hard.length + ' 项：</span>' + hard.join('；'));
-  if (warn.length) D.push('<span style="color:#ffb74d">🟠 风险 / 核查 ' + warn.length + ' 项：</span>' + warn.join('；'));
-  if (good.length) D.push('<span style="color:#26c281">🟢 确认 ' + good.length + ' 项：</span>' + good.join('；'));
-  D.push(mark
-    ? '<span style="color:#ff8a80">🏷 图上标记：<b>已标记</b></span>（本根 = 引发 123 趋势改变的 K 线 → 图上画红叉）'
-    : '<span style="color:#ffb74d">🚫 图上标记：<b>不标记</b></span>（本根未引发 123 趋势改变 → 只在点击面板显示，图上不画菱形；用户口径：非高质量 2B 不需要标记）');
-  D.push('<span style="color:var(--dim)">时点：日线<b>收盘后确认</b>，实际下单最早次日开盘（A 股 T+1、且做空受限 —— 本台仅作风险提示，不作开空指令）。</span>');
-  return { ok: true, idx: i, date: k.date, verdict: verdict, verdictName: verdictName, shortName: shortName, side: 'top',
-    quality: quality, mark: mark, trendChange: trendChange, tchgRef: tchgRef,
-    L: L, priorHigh: priorHigh, gapDays: gapDays, exceedPct: exceedPct, peaks: peaks, strongFall: strongFall,
-    trendUp2: trendUp2, bullStack: bullStack, elevated: elevated, stop: priorHigh, conf: conf, failAt: failAt,
-    L1: L1, pullbackAt: pullbackAt, twiceBreak: twiceBreak, n123: n123, c123_1: c123_1, c123_2: c123_2, c123_3: c123_3, t123Txt: t123Txt,
-    hard: hard, warn: warn, good: good,
-    brief: shortName + '（前高 ' + priorHigh.toFixed(2) + '，止损其上' + (twiceBreak ? '，二次突破' : '') + (trendChange ? '，引发 123 趋势改变' : '，未引发 123 趋势改变') + '）',
-    detail: '<div style="margin-top:2px">' + D.join('</div><div style="margin-top:2px">') + '</div>' };
-}
-/* ==== 长上影双形态：仙人指路（看涨试盘）/ 墓碑线（高位出货）（★ 2026-10-04 用户提供）====
-   共通：长上影（上影 ≥ 实体 ×2 且占振幅 ≥45%）、下影极短。
-   仙人指路 = 底部横盘 / 上涨初中期（20 日分位低 且 长周期涨幅 < SH_GAIN_HIGH）+ 实体小 + 温和放量 1.5~3 倍
-     （用户口径：单日放量 3 倍以上反而要警惕）；确认条件 = 次日收阳且收盘突破第一根上影线一半以上。
-   墓碑线 = 高位（20 日分位 ≥0.6 或 长周期自低点涨幅 ≥30%）+ 巨量 / 天量（≥3 倍）+ 收盘接近全天最低 + 下影极短；
-     确认条件 = 次日跌破本根最低价。
-   其余组合（位置与量能矛盾）→ 诚实标注「口径外」，交人工结合均线系统与大盘判断。 */
-function wsShadowOf(kl, i) {
-  if (!kl || !kl.length) return { ok: false, why: '无日K数据' };
-  i = (i == null || i < 0) ? kl.length - 1 : Math.min(i, kl.length - 1);
-  if (i < WSCAN.MIN - 1) return { ok: false, why: '样本不足（需 ≥' + WSCAN.MIN + ' 根）' };
-  var k = kl[i], m;
-  var dte = function (j) { return String((kl[j] && kl[j].date) || ''); };
-  var rng = k.high - k.low;
-  if (!(rng > 0)) return { ok: false, why: '当根无振幅' };
-  var top = Math.max(k.open, k.close), bot = Math.min(k.open, k.close);
-  var upper = k.high - top, lower = bot - k.low, body = top - bot;
-  if (!(upper >= WSCAN.SH_UP * body)) return { ok: false, why: '上影 ' + upper.toFixed(2) + ' < 实体 ' + body.toFixed(2) + ' ×' + WSCAN.SH_UP + ' → 非长上影' };
-  if (!(upper >= rng * 0.45)) return { ok: false, why: '上影仅占振幅 ' + (upper / rng * 100).toFixed(0) + '%（须 ≥45%）→ 长上影不主导' };
-  var a5 = vdblAvgVol(kl, i - 5, i - 1);
-  var r5 = (a5 > 0 && isFinite(k.volume)) ? k.volume / a5 : null;
-  var closeAt = (k.close - k.low) / rng;
-  var shortLower = (lower <= rng * WSCAN.SH_LOWER);
-  var lb = Math.min(i, WSCAN.B2_TREND_LB), hi2 = -Infinity, lo2 = Infinity;
-  for (m = i - lb; m <= i; m++) {
-    if (!kl[m]) continue;
-    if (isFinite(kl[m].high) && kl[m].high > hi2) hi2 = kl[m].high;
-    if (isFinite(kl[m].low) && kl[m].low < lo2) lo2 = kl[m].low;
-  }
-  var gain = (isFinite(lo2) && lo2 > 0) ? (k.close / lo2 - 1) * 100 : null;
-  /* ★ 2026-10-04 全网核验修复【自指窗口偏倚 · 已修】：原用 wsPosIn(kl, i, 20) —— 窗口**含当根**，而长上影
-     那根的 close 天然落在窗口中下部（上影被抛回），分位被系统性压低 → 自动判成「低位」→ **系统性偏向仙人指路**
-     （真墓碑线也可能被读成低位的仙人指路）。两处修：
-       ① 分位窗口改为 **不含当根**（只看 i 之前的 20 根）；
-       ② 位置主判据改用**长周期自低点累计涨幅 gain**（「涨了多少」），与用户提供的仙人指路标准原文一致
-          （「前期获利空间一般不超过 15%」「短期涨幅超 30% 大概率墓碑线」），20 日分位只作中位段细分兜底
-          —— 与 wsStrongOf 的修法同源（坑 72 / 75）。 */
-  var hiP = -Infinity, loP = Infinity, mP;
-  for (mP = Math.max(0, i - WSCAN.SUP_LB); mP <= i - 1; mP++) {
-    if (!kl[mP]) continue;
-    if (isFinite(kl[mP].high) && kl[mP].high > hiP) hiP = kl[mP].high;
-    if (isFinite(kl[mP].low) && kl[mP].low < loP) loP = kl[mP].low;
-  }
-  var pos = (isFinite(hiP) && isFinite(loP) && hiP > loP && isFinite(k.close)) ? (k.close - loP) / (hiP - loP) : null;
-  var posKey = (gain != null && gain >= WSCAN.SH_GAIN_HIGH) ? '高位'
-    : ((gain != null && gain <= WSCAN.SH_GAIN_LOW) ? '低位' : '中位');
-  var posHigh = (posKey === '高位') || (posKey === '中位' && pos != null && pos >= 0.88);
-  var volMild = (r5 != null && r5 >= WSCAN.SH_VOL_MILD && r5 <= WSCAN.SH_VOL_MILD_HI);
-  var volHuge = (r5 != null && r5 >= WSCAN.SH_VOL_HUGE);
-  /* ★ 2026-10-04 核验修复【漏条件 · 已补】：用户提供的仙人指路标准明确两条硬前提，原实现都没有 ——
-     ① 「收盘价依旧高于前一日收盘价」（原文：收盘保持 1%~3% 涨幅；跌破昨收且跌幅 >5% 不构成仙人指路）
-        → 补 closeUp；否则「大跌收阴的长上影」会被误判成仙人指路，与墓碑线的区分点直接丢失。
-     ② 「股价处于上升趋势 / 站稳 5 日与 10 日均线（均线多头），下降通道中的长上影不属仙人指路」
-        → 补 trendUp（MA5 ≥ MA10 且收盘 ≥ MA5）。 */
-  var prevC = (i >= 1 && kl[i - 1] && isFinite(kl[i - 1].close)) ? kl[i - 1].close : null;
-  var closeUp = (prevC != null && k.close > prevC);
-  var ma5s = vdblMAc(kl, i, 5), ma10s = vdblMAc(kl, i, 10);
-  var trendUp = (ma5s != null && ma10s != null) ? (ma5s >= ma10s && k.close >= ma5s) : null;
-  var gainHigh = (posKey === '高位');
-  var grave = posHigh && volHuge && closeAt <= WSCAN.SH_CLOSE_LOW && shortLower;
-  var zhinan = !posHigh && volMild && closeUp && (trendUp === true) && body <= rng * WSCAN.SH_BODY && shortLower;
-  /* 止损参考（用户标准：以仙人指路当日最低价 / 10 日线为静态止损）*/
-  var stopAt = (ma10s != null) ? Math.min(k.low, ma10s) : k.low;
-  var stopTxt = (ma10s != null && ma10s < k.low) ? ('MA10 ' + ma10s.toFixed(2)) : ('本根最低 ' + k.low.toFixed(2));
-  var kind, kindName, shortName;
-  if (grave) { kind = 'grave'; shortName = '墓碑线'; kindName = '墓碑线（高位出货 · 看跌）'; }
-  else if (zhinan) { kind = 'zhinan'; shortName = '仙人指路'; kindName = '仙人指路（上涨途中试盘 · 看涨待确认）'; }
-  else { kind = 'neutral'; shortName = '长上影'; kindName = '长上影（位置 / 量能口径外）'; }
-  /* 次日确认（事后回看，无未来函数纪律：只作标注）*/
-  var nxt = (i + 1 <= kl.length - 1) ? kl[i + 1] : null;
-  var conf = null, confTxt;
-  if (!nxt) confTxt = '⏳ 无次日 K 线，无法验证确认条件';
-  else if (kind === 'zhinan') {
-    var half = (top + k.high) / 2;
-    if (vdblRed(nxt) && nxt.close > half) { conf = 'ok'; confTxt = '✅ 次日（' + dte(i + 1) + '）收阳且收盘 ' + nxt.close.toFixed(2) + ' 突破第一根上影线一半以上（' + half.toFixed(2) + '）→ 形态确立，后市看涨'; }
-    else { conf = 'no'; confTxt = '⚠️ 次日（' + dte(i + 1) + '）未收阳 / 未突破上影线一半 ' + half.toFixed(2) + ' → 形态未确认（仙人指路必须等次日阳线反包确认）'; }
-  } else if (kind === 'grave') {
-    if (nxt.low < k.low) { conf = 'ok'; confTxt = '✅ 次日（' + dte(i + 1) + '）已跌破本根最低价 ' + k.low.toFixed(2) + ' → 顶部确认，后市看跌'; }
-    else if (nxt.close > k.high) { conf = 'no'; confTxt = '⚠️ 次日（' + dte(i + 1) + '）反包上影线顶端 ' + k.high.toFixed(2) + ' → 墓碑线被否（转强，须重估）'; }
-    else { conf = 'no'; confTxt = '· 次日（' + dte(i + 1) + '）未跌破本根最低价、也未反包 → 顶部未确认，按警戒持有观察'; }
-  } else confTxt = '· 口径外形态，不作次日确认判定（交人工结合均线系统与大盘判断）';
-  /* 口径外时逐条说明「差哪一项」——用户要求「核验有无漏洞」，把未满足项写出来比只报「口径外」有用得多 */
-  var missTxt = [];
-  if (kind === 'neutral') {
-    if (posHigh) missTxt.push('位置已高（长周期自低点涨幅 ' + (gain != null ? gain.toFixed(1) + '%' : '—') + '）→ 高位长上影按「避雷针 / 拉高出货」看待，不是低位试盘');
-    if (!closeUp) missTxt.push('收盘未高于前收（' + (prevC != null ? k.close.toFixed(2) + ' ≤ ' + prevC.toFixed(2) : '缺前收') + '）→ 收阴 / 下跌的长上影不构成仙人指路');
-    if (trendUp !== true) missTxt.push('非上升趋势（MA5 ' + (ma5s != null ? ma5s.toFixed(2) : '—') + ' / MA10 ' + (ma10s != null ? ma10s.toFixed(2) : '—') + ' / 收盘 ' + k.close.toFixed(2) + '）→ 下降通道中的长上影不属仙人指路');
-    if (!volMild && !volHuge) missTxt.push('量能不在两形态口径内（对前 5 日均量 ' + vdblX(r5) + '，仙人指路须 ' + WSCAN.SH_VOL_MILD + '~' + WSCAN.SH_VOL_MILD_HI + ' 倍、墓碑线须 ≥' + WSCAN.SH_VOL_HUGE + ' 倍）');
-    if (!shortLower) missTxt.push('下影不短（' + lower.toFixed(2) + ' &gt; 振幅 ×' + WSCAN.SH_LOWER + '）→ 上下影并存，属「长十字 / 高浪线」，不是单边试盘');
-    if (volHuge && posHigh && closeAt > WSCAN.SH_CLOSE_LOW) missTxt.push('高位巨量但收盘未收在最低（处全天 ' + (closeAt * 100).toFixed(0) + '% 位置）→ 尚未构成墓碑线的「收在最低」特征');
-  }
-  var detail = '<div style="margin-top:2px">上影 ' + upper.toFixed(2) + '（实体 ' + body.toFixed(2) + ' 的 ' + (body > 0 ? (upper / body).toFixed(1) : '∞') + ' 倍，占振幅 ' + (upper / rng * 100).toFixed(0) + '%）· 下影 ' + lower.toFixed(2) + ' · 收盘处全天 ' + (closeAt * 100).toFixed(0) + '% 位置</div>' +
-    '<div style="margin-top:2px">位置（主判据 = <b>长周期自低点涨幅</b>）：' + (gain != null ? gain.toFixed(1) + '%' : '—') + ' → <b>' + posKey + '</b>' +
-    '（低位阈值 ≤' + WSCAN.SH_GAIN_LOW + '% · 高位阈值 ≥' + WSCAN.SH_GAIN_HIGH + '%）· 20 日区间分位 ' + (pos != null ? (pos * 100).toFixed(0) + '%' : '—') + '（<b>不含当根</b>，仅作中位段细分兜底）</div>' +
-    '<div style="margin-top:2px">K 线前提：收盘 ' + k.close.toFixed(2) + (prevC != null ? ' 对前收 ' + prevC.toFixed(2) + ' → ' + (closeUp ? '<b>收涨</b>' : '<b>未收涨</b>') : '') +
-    ' · 趋势（MA5 ' + (ma5s != null ? ma5s.toFixed(2) : '—') + ' / MA10 ' + (ma10s != null ? ma10s.toFixed(2) : '—') + '）→ ' + (trendUp === true ? '<b>MA5 ≥ MA10 且收盘站稳 MA5（上升趋势前提成立）</b>' : (trendUp === false ? '<b>非上升趋势（下降通道不构成仙人指路）</b>' : '均线不足')) + '</div>' +
-    '<div style="margin-top:2px">量能：对前 5 日均量 <b>' + vdblX(r5) + '</b>' + (volHuge ? '（巨量 / 天量 · 须警惕高位派发）' : (volMild ? '（温和放量 · 符合试盘）' : '（不在两形态量能口径内）')) + '</div>' +
-    '<div style="margin-top:2px">' + confTxt + '</div>' +
-    (missTxt.length ? '<div style="margin-top:2px;color:var(--dim)">未满足项（故归「口径外」）：' + missTxt.join('；') + '</div>' : '') +
-    '<div style="margin-top:2px">止损参考（描述性，非交易指令）：<b>' + stopTxt + '</b> —— 跌破即形态失效</div>' +
-    '<div style="margin-top:2px">处置（描述性，非交易指令）：' + (kind === 'zhinan' ? '次日企稳 / 阳线反包上影线一半以上后分批介入，跌破 ' + stopTxt + ' 止损'
-      : (kind === 'grave' ? '当天减仓，次日低开低走（跌破本根最低价 ' + k.low.toFixed(2) + '）确认则清仓离场' : '位置 / 趋势 / 量能未同时满足 → 结合均线系统、大盘与板块人工判断，不按单一形态操作')) +
-    '</div><div style="margin-top:2px;color:var(--dim)">时点：日线<b>收盘后确认</b>，实际下单最早在次日开盘（A 股 T+1）。</div>';
-  return { ok: true, idx: i, date: k.date, kind: kind, kindName: kindName, shortName: shortName,
-    conf: conf, pos: pos, posKey: posKey, posHigh: posHigh, gain: gain, r5: r5, closeAt: closeAt,
-    upper: upper, body: body, lower: lower, rng: rng,
-    closeUp: closeUp, trendUp: trendUp, stopAt: stopAt, stopTxt: stopTxt, missTxt: missTxt,
-    brief: shortName + '（' + posKey + ' · 量 ' + vdblX(r5) + (conf === 'ok' ? ' · 已确认' : conf === 'no' ? ' · 未确认' : '') + '）',
-    detail: detail };
-}
+/* ==== 2B 买点（ws2bOf）/ 2B 卖点（ws2bTopOf）—— ★ 2026-10-12 已按用户要求整体删除
+   （「引发 123 趋势改变」硬门槛判定器、B2_* 常量、图上紫菱形 / 红叉标记、图例 chip、
+     wsScanRange 扫描路、wsScanHtml 判定行与清单 chip、wscan.b2 / b2t 挂载全链路移除）。 */
+/* ==== 长上影双形态 wsShadowOf —— ★ 2026-10-12 已按用户要求整体删除
+   （墓碑线 / 仙人指路 / 长上影判定：判定器、SH_* 常量、图上标记、图例 chip、
+     wsScanRange 第 5 路、wsScanHtml 判定行与清单 chip、wscan.sh 挂载全链路移除）。 */
 /* ==== 量价口诀 6 条 + 量价背离 4 信号 + 涨停前 4 信号 + 转强质量四维（★ 2026-10-04 用户提供 20 张图）====
    来源：①《量价口诀》—— 高位无量就要拿 / 高位放量就要跑 / 低位放量就要跟 / 低位无量就要等 /
         量增价升要介入 / 量增价平将转阴；②《主力异动前的 4 种量价背离信号》；
@@ -13753,8 +13238,8 @@ function wsShadowOf(kl, i) {
    ⚠️ 分层纪律：只描述、不计分 —— 不改 VPS / 四指标打分、不进钉钉推送、不发买卖指令。
    无未来函数：只用 kl[0..i]（含当日），不读 i 之后任何数据。 */
 var VP3 = {
-  POS_LB: 20,         /* 位置分位窗（与 wsPosIn / 2B 一致） */
-  TREND_LB: 60,       /* 长周期累计涨幅窗（与 wsShadowOf 一致） */
+  POS_LB: 20,         /* 位置分位窗（与 wsPosIn 一致） */
+  TREND_LB: 60,       /* 长周期累计涨幅窗 */
   GAIN_HIGH: 25,      /* 长周期自低点涨幅 ≥ 此（%）→ 高位（口诀口径） */
   GAIN_LOW: -15,      /* 长周期自低点涨幅 ≤ 此（%）→ 低位 */
   VOL_UP: 1.5,        /* 量增：当日量 ≥ 前 5 日均量 ×1.5（与九组合表同阈值） */
@@ -14205,19 +13690,25 @@ function wsChengjieOf(kl, i) {
   };
 }
 /* 扫描 [t0, t1] 全段，返回命中清单（全量下标） */
+/* ★ 2026-10-12 性能修复：扫描结果做「kl 数组引用级」缓存（WeakMap）——点击链路每次点击传的
+   (kl, t0, t1) 完全相同（扫描范围 = start..末根，与所点根无关），不该每点一次全区间逐日 × 6 策略重扫。
+   键含数据指纹（根数+末根日期/收/量）→ 盘中刷新末根变化即失效重扫，不拿旧清单冒充新数据。
+   返回对象为共享只读：调用方只读消费（wsScanHtml / 面板），不得改写数组。 */
+var __WSLR_MEMO = (typeof WeakMap === 'function') ? new WeakMap() : null;
 function wsScanRange(kl, t0, t1) {
-  var out = { spring: [], zt: [], b2: [], b2t: [], sh: [], vp: [], pzt: [], strong: [], mt: [] };
+  var out = { spring: [], zt: [], vp: [], pzt: [], strong: [], mt: [] };
   if (!kl || !kl.length) return out;
+  var __kEnd = kl[kl.length - 1] || {};
+  var __mk = (t0 | 0) + '|' + (t1 == null ? kl.length - 1 : t1) + '|' + kl.length + '|' + String(__kEnd.date || '') + '|' + __kEnd.close + '|' + __kEnd.volume;
+  var __hit = __WSLR_MEMO ? __WSLR_MEMO.get(kl) : null;
+  if (__hit && __hit.k === __mk) return __hit.v;
   var a = Math.max(WSCAN.MIN - 1, t0 | 0);
   var b = Math.min(t1 == null ? kl.length - 1 : t1, kl.length - 1);
   for (var t = a; t <= b; t++) {
-    var sp = null, zp = null, b2r = null, b2t = null, shr = null, vpr = null, pzr = null, strr = null, mtr = null;
+    var sp = null, zp = null, vpr = null, pzr = null, strr = null, mtr = null;
     try { sp = wsSpringOf(kl, t); } catch (e1) { sp = null; }
     try { zp = wsZtPullOf(kl, t); } catch (e2) { zp = null; }
-    try { b2r = ws2bOf(kl, t); } catch (e3) { b2r = null; }
-    /* ★ 2026-10-04：2B 卖点（顶部反转 · 突破失败）—— 用户图片里 2B 法则两侧都画，本轮补齐顶部方向 */
-    try { b2t = ws2bTopOf(kl, t); } catch (e3t) { b2t = null; }
-    try { shr = wsShadowOf(kl, t); } catch (e4) { shr = null; }
+    /* ★ 2026-10-12（用户要求删除 2B 买点 / 2B 卖点）：ws2bOf / ws2bTopOf 扫描路已移除 */
     try { vpr = wsVpOf(kl, t); } catch (e5) { vpr = null; }
     try { pzr = wsPreZtOf(kl, t); } catch (e6) { pzr = null; }
     try { strr = wsStrongOf(kl, t); } catch (e7) { strr = null; }
@@ -14225,11 +13716,6 @@ function wsScanRange(kl, t0, t1) {
     try { mtr = wsMa5TurnOf(kl, t); } catch (e8) { mtr = null; }
     if (sp && sp.ok) out.spring.push(sp);
     if (zp && zp.ok) out.zt.push(zp);
-    /* ★ 2026-10-04 用户口径：2B 清单只收**引发 123 趋势改变**的（与图上标记同一门槛 —— 图上标什么、清单就列什么）；
-       未引发趋势改变的 2B 仍会被判定器算出、点击该根时在面板完整显示，只是不进清单、不上图。 */
-    if (b2r && b2r.ok && b2r.mark) out.b2.push(b2r);
-    if (b2t && b2t.ok && b2t.mark) out.b2t.push(b2t);
-    if (shr && shr.ok) out.sh.push(shr);
     if (vpr && vpr.ok) out.vp.push(vpr);
     /* 涨停前兆只收「共振 ≥3 条」的根（2 条以下太常见，全标会把图铺满） */
     if (pzr && pzr.ok && pzr.n >= 3) out.pzt.push(pzr);
@@ -14238,6 +13724,7 @@ function wsScanRange(kl, t0, t1) {
     /* ★ 2026-10-04：MA5 斜率拐点全收（上拐 / 下拐都是「趋势方向发生改变」的那一根，各自都有信息量） */
     if (mtr && mtr.ok) out.mt.push(mtr);
   }
+  if (__WSLR_MEMO) __WSLR_MEMO.set(kl, { k: __mk, v: out });
   return out;
 }
 /* ==== 加仑·伍兹价格行为（Galen Woods Price Action）★ 2026-10-12 用户引入知识库 skill ====
@@ -14561,9 +14048,9 @@ function gwpaHtml(g) {
     '挂单价 / 失效价 / 止损位均为知识库原文规则的<b>参考位，不是交易指令</b>；高胜率三特征（关键位 + 多重确认 + 单独进场信号）须人工结合判断。</div>';
 }
 function wsScanHtml(s) {
-  var head = '📌 策略命中扫描（弹簧 / 涨停回调 / 2B 买点 / 2B 卖点 / 长上影 / 量价口诀 / 涨停前兆 / 转强质量 / MA5 斜率拐点 · 参考层 · 不计分）';
+  var head = '📌 策略命中扫描（弹簧 / 涨停回调 / 量价口诀 / 涨停前兆 / 转强质量 / MA5 斜率拐点 · 参考层 · 不计分）';
   if (!s) return '<div class="stage-desc" style="text-align:left;font-size:12.5px"><b>' + head + '</b>：—（数据不足）</div>';
-  var sp = s.spring, zp = s.zt, b2 = s.b2, b2t = s.b2t, sh = s.sh, vp = s.vp, pz = s.pzt, strn = s.strong, mt = s.mt, lines = [];
+  var sp = s.spring, zp = s.zt, vp = s.vp, pz = s.pzt, strn = s.strong, mt = s.mt, lines = [];
   /* ★ 2026-10-12（用户要求「GWPA 位置移动到承接力下方」）：GWPA 渲染行已迁出到 vpPanelHtml 的
      gwBlock（cjBlock 正下方，承接力条之后）；本函数不再渲染 GWPA —— 判定数据 wscan.gw 挂载
      （点击处理器）与 gwpaOf 引擎均不动，零签名演进契约不变。 */
@@ -14573,23 +14060,8 @@ function wsScanHtml(s) {
   lines.push(zp
     ? '<div class="' + (zp.isErBan ? 'up' : 'warn') + '" style="text-align:left">· ✅ 当根命中 <b>' + esc(zp.kindName) + '</b> —— ' + zp.detail + '</div>'
     : '<div style="text-align:left;color:var(--dim)">· 当根未命中涨停回调（' + esc(s.ztWhy || '—') + '）</div>');
-  /* ★ 2026-10-04：2B 买点 —— 直接给结论（真 / 待确认 / 伪）+ 四大失效原因逐条核查 + 量能验证 + 止损位 */
-  lines.push(b2
-    ? '<div class="' + (b2.verdict === 'valid' ? 'up' : (b2.verdict === 'invalid' ? 'down' : 'warn')) + '" style="text-align:left;margin-top:3px">' +
-      '· 🎯 2B 买点判定：<b>' + esc(b2.verdictName) + '</b>' +
-      (b2.mark ? '　<span style="color:#26c281">🏷 已上图标记</span>' : '　<span style="color:#ffb74d">🚫 不上图（未引发 123 趋势改变）</span>') + b2.detail + '</div>'
-    : '<div style="text-align:left;color:var(--dim);margin-top:2px">· 当根未构成 2B 买点（' + esc(s.b2Why || '—') + '）</div>');
-  /* ★ 2026-10-04：2B 卖点（顶部反转 · 突破失败）—— 与买点完全镜像（同样只标「引发 123 趋势改变」的）*/
-  lines.push(b2t
-    ? '<div class="' + (b2t.verdict === 'valid' ? 'down' : (b2t.verdict === 'invalid' ? 'up' : 'warn')) + '" style="text-align:left;margin-top:2px">' +
-      '· 🔻 2B 卖点判定：<b>' + esc(b2t.verdictName) + '</b>' +
-      (b2t.mark ? '　<span style="color:#ff8a80">🏷 已上图标记</span>' : '　<span style="color:#ffb74d">🚫 不上图（未引发 123 趋势改变）</span>') + b2t.detail + '</div>'
-    : '<div style="text-align:left;color:var(--dim)">· 当根未构成 2B 卖点（' + esc(s.b2tWhy || '—') + '）</div>');
-  /* ★ 2026-10-04：长上影双形态（仙人指路 / 墓碑线）*/
-  lines.push(sh
-    ? '<div class="' + (sh.kind === 'zhinan' ? 'up' : (sh.kind === 'grave' ? 'down' : 'warn')) + '" style="text-align:left;margin-top:2px">' +
-      '· 🕯️ 长上影判定：<b>' + esc(sh.kindName) + '</b>' + sh.detail + '</div>'
-    : '<div style="text-align:left;color:var(--dim)">· 当根非长上影（' + esc(s.shWhy || '—') + '）</div>');
+  /* ★ 2026-10-12（用户要求删除 K 线 2B 买点 / 2B 卖点「引发 123 趋势改变」判定）：「🎯 2B 买点判定」「🔻 2B 卖点判定」当根判定行已移除 */
+  /* ★ 2026-10-12（用户要求删除 K 线 墓碑线 / 仙人指路 / 长上影判定）：「🕯️ 长上影判定」当根判定行已移除 */
   /* ★ 2026-10-04 第二批（20 图策略）：⑤ 量价口诀 + 量价背离 */
   lines.push(vp
     ? '<div class="' + (vp.koujueTone === 'up' ? 'up' : (vp.koujueTone === 'down' ? 'down' : 'warn')) + '" style="text-align:left;margin-top:3px">' +
@@ -14610,7 +14082,7 @@ function wsScanHtml(s) {
     ? '<div class="' + (mt.isUp ? 'up' : 'down') + '" style="text-align:left;margin-top:2px">' +
       '· ' + (mt.isUp ? '📈' : '📉') + ' MA5 斜率拐点：<b>' + esc(mt.kindName) + '</b>' + mt.detail + '</div>'
     : '<div style="text-align:left;color:var(--dim)">· MA5 斜率拐点：当根不是拐点（' + esc(s.mtWhy || '—') + '）</div>');
-  var list = s.list || { spring: [], zt: [], b2: [], b2t: [], sh: [], vp: [], pzt: [], strong: [], mt: [] };
+  var list = s.list || { spring: [], zt: [], vp: [], pzt: [], strong: [], mt: [] };
   var start = s.start || 0;
   function chips(arr, col, label) {
     if (!arr || !arr.length) return '<div style="text-align:left;color:var(--dim);margin-top:2px">' + label + '：本段无命中</div>';
@@ -14627,15 +14099,12 @@ function wsScanHtml(s) {
   }
   lines.push(chips(list.spring, '#38bdf8', '🔄 威科夫弹簧'));
   lines.push(chips(list.zt, '#facc15', '🟨 涨停回调低吸'));
-  lines.push(chips(list.b2, '#a855f7', '🎯 2B 买点（只收「引发 123 趋势改变」的高质量根）'));
-  lines.push(chips(list.b2t, '#ef4444', '🔻 2B 卖点（顶部反转 · 只收「引发 123 趋势改变」的根）'));
-  lines.push(chips(list.sh, '#fbbf24', '🕯️ 长上影（仙人指路 / 墓碑线）'));
   lines.push(chips(list.vp, '#ec4899', '📖 量价口诀（六条）'));
   lines.push(chips(list.pzt, '#f97316', '🚀 涨停前兆（共振 ≥3/4）'));
   lines.push(chips(list.strong, '#06b6d4', '💪 转强质量（高质量 A）'));
   lines.push(chips(list.mt, '#ff5252', '📈 MA5 斜率拐点（上拐红↑ / 下拐绿↓）'));
   return '<div style="text-align:left;font-size:12.5px"><b>' + head + '</b>' +
-    '<div style="color:var(--dim);margin-top:1px">判定根 = 被点击的这一根（无未来函数）；「弹起确认 / 2B 事后回看 / 次日确认」需后续 K 线 → 只作事后回看标注，明示「已确认 / 未确认 / 待确认」。<b>图上每种标记都有专属形状</b>（2026-10-04 按用户要求把「清一色圆圈」拆成 11 种形状）：下方 <b>空心圆环</b> = 弹簧（实心 = 已确认，空心 = 待/未确认）、<b>紫菱形</b> = 2B 买点（<b>只画「引发 123 趋势改变」的根</b>：实心 = 真 2B，空心 = 待确认；未引发趋势改变的普通 2B / 伪 2B <b>一律不画</b>，点击该根仍在本面板完整显示）、<b>金方块</b> = 涨停回调低吸；上方 <b>红叉</b> = 2B 卖点（顶部反转，<b>同理只画引发 123 趋势改变的根</b>）、<b>黄▲ 上三角</b> = 仙人指路、<b>红▼ 下三角</b> = 墓碑线、<b>橙四角星</b> = 涨停前兆共振、<b>青六边形</b> = 高质量转强、<b>蓝高矮双柱</b> = 左倍量（前长后短）、<b>橙矮高双柱</b> = 右倍量（前短后长）、下方 <b>红↑ 向上箭头</b> = MA5 斜率上拐、上方 <b>绿↓ 向下箭头</b> = MA5 斜率下拐。图例 chip 的图标与上图形状一一对应。<b>量价口诀已取消图上标注</b>（每条 K 线都会命中 → 大量重复；判定仍在本块的「📖 量价口诀」中显示）。</div>' +
+    '<div style="color:var(--dim);margin-top:1px">判定根 = 被点击的这一根（无未来函数）；「弹起确认 / 次日确认」需后续 K 线 → 只作事后回看标注，明示「已确认 / 未确认 / 待确认」。<b>图上每种标记都有专属形状</b>（2026-10-04 按用户要求把「清一色圆圈」拆成 7 种形状；★ 2026-10-12 黄▲仙人指路 / 红▼墓碑线与 2B 买点紫菱形 / 2B 卖点红叉已按用户要求删除）：下方 <b>空心圆环</b> = 弹簧（实心 = 已确认，空心 = 待/未确认）、<b>金方块</b> = 涨停回调低吸；上方 <b>橙四角星</b> = 涨停前兆共振、<b>青六边形</b> = 高质量转强、<b>蓝高矮双柱</b> = 左倍量（前长后短）、<b>橙矮高双柱</b> = 右倍量（前短后长）、下方 <b>红↑ 向上箭头</b> = MA5 斜率上拐、上方 <b>绿↓ 向下箭头</b> = MA5 斜率下拐。图例 chip 的图标与上图形状一一对应。<b>量价口诀已取消图上标注</b>（每条 K 线都会命中 → 大量重复；判定仍在本块的「📖 量价口诀」中显示）。</div>' +
     lines.join('') +
     '<div style="color:var(--dim);margin-top:3px">口径（★ 2026-10-04 全网核验后修订，改动处已标注）：' +
     '弹簧 = 当根最低刺破前 ' + WSCAN.SUP_LB + ' 根最低价（支撑下沿）且收盘收回 + 长下影；<b>刺破深度须 ≤' + WSCAN.SP_MAX_PIERCE + '%</b>（超过 = 真破位 / 破位延续，不算弹簧）；' +
@@ -14644,19 +14113,7 @@ function wsScanHtml(s) {
     '<b>吸筹区间前提</b>：近 ' + WSCAN.SP_RANGE_LB + ' 根振幅 ≤' + WSCAN.SP_RANGE_MAX + '% 且支撑被触及 ≥' + WSCAN.SP_TOUCH_MIN + ' 次（Wyckoff：长期下跌后无区间时的破位更可能是破位延续 → 不满足则可靠性降级并显式提示）；止损 = 弹簧最低价下方。' +
     '涨停回调 = 近 ' + WSCAN.ZT_LB + ' 根内涨停启动后 ' + WSCAN.ZT_WIN + ' 个交易日内回踩 MA5 / 涨停价 / 前平台 + 缩量至锚量 ' + WSCAN.ZT_SHRINK + ' 倍以下 + 企稳信号（十字星 / 小阳线 / 长下影）；前一日亦涨停 = 二板回调。' +
     '<b>涨停口径（已修）</b>：封板 = 收红 + 收盘即当日最高（收盘 ≥ 最高 ×' + WSCAN.ZT_FENG + '）+ 涨幅落在板制档位（5% 板 [4.4,5.6] / 10% 板 [9.4,10.6] / 20% 板 [19.4,20.6]）—— 修掉了「ST 股 5% 涨停漏判」与「创业板 +10%~+19% 被误判为涨停」两个漏洞。' +
-    '2B 买点（底部反转 · 突破失败）= 近 ' + WSCAN.B2_FIND + ' 根内跌破前 ' + WSCAN.B2_LB + ' 根最低价（前低）后收回其上方；干脆（≤' + WSCAN.B2_QUICK + ' 日）+' +
-    '阴柱右倍量破位 + 低位倍量阳线收回（阳柱 + 倍量柱 且 20 日分位 ≤40% 或 收盘仍贴前低 ≤×1.05）+ 左倍量回踩缩量 + 大级别未逆势 → 真 2B；磨蹭 / 刺破 &lt;' + WSCAN.B2_SHALLOW + '% / 反复刺破（独立探底 &gt;' + WSCAN.B2_MULTI + ' 次）/ 连续放量阴柱 / 收回段无量 → 伪 2B；' +
-    '大级别以日线 ' + WSCAN.B2_TREND_LB + ' 根自高点回落 ≥' + WSCAN.B2_TREND_DROP + '% 近似「逆势小级别」（MA5 ≥ MA20 视为可能见底，降为风险提示）；基本面冲击无法由 K 线判定，须人工核查。' +
-    '<b>2B 卖点（顶部反转 · 突破失败，★ 本轮新增 · 与买点完全镜像）</b>：突破前 ' + WSCAN.B2_LB + ' 根最高价（前高）后跌回前高下方；止损 = 前高上方；再上破前高 = 失效。' +
-    '<b>二次突破</b>：用户图片口径的 2B = 「两次突破关键价位都未站稳」（首破 → 回调 / 反弹 → 再破后失败）；本台两说并存 —— 经典 Sperandeo 版单次假突破即成立，检出「二次突破」时额外加分并在面板写明。' +
-    '<b>123 法则联动（★ 2026-10-04 升级为「标记硬门槛」）</b>：用户口径「标记的 2B 是导致趋势改变的 K 线，没有导致 123 法则中趋势改变的 2B 都不是高质量 2B、不需要标记」—— 本台据此把 123 从「信息展示」升级为**上图门槛**：' +
-    '① 趋势线被突破（底部 = 收盘 &gt; MA10 <b>或</b> MA5 &gt; MA10；顶部 = 收盘 &lt; MA10 <b>或</b> MA5 &lt; MA10；本台不拟合趋势线，用均线近似并明示）' +
-    '② 不再创新低 / 新高（破位 / 突破根之后未再创出更极端的值，逐根真实计数）' +
-    '③ 穿越短期反弹高点 / 跌破前波回调低点（收盘收复破位整根失地 / 跌破突破整根失地）—— ' +
-    '<b>三条件当根全中（3/3）才 trendChange=true、才在图上画紫菱形 / 红叉</b>；只中 1~2 条 = 「普通 2B —— 未引发 123 趋势改变」，只在点击面板显示、<b>图上不画</b>（判定与四因核查一字未减）。' +
-    '三条件全部只用 kl[0..i]，无未来函数；另列「趋势改变完全确认位」（前波反弹高点 / 前波回调低点）作为后续观察位，不参与本根门控。' +
-    '长上影 = 上影 ≥ 实体 ×' + WSCAN.SH_UP + '；仙人指路 = 位置（<b>主判据 = 长周期自低点涨幅 ≤' + WSCAN.SH_GAIN_LOW + '%</b>，20 日分位不含当根、仅作中位细分）+ 实体小 + 温和放量 ' + WSCAN.SH_VOL_MILD + '~' + WSCAN.SH_VOL_MILD_HI + ' 倍 + <b>收盘高于前收</b> + <b>上升趋势前提（MA5 ≥ MA10 且收盘站稳 MA5；下降通道中的长上影不属仙人指路）</b>（次日收阳且破上影线一半以上为确认）；止损 = 本根最低价 / MA10。' +
-    '墓碑线 = 高位（长周期自低点涨幅 ≥' + WSCAN.SH_GAIN_HIGH + '%）+ 巨量 ≥' + WSCAN.SH_VOL_HUGE + ' 倍 + 收盘近全天最低 + 下影极短（次日跌破本根最低价为确认）。' +
+    '★ 2026-10-12（用户要求）：长上影双形态（仙人指路 / 墓碑线）与 2B 买点 / 2B 卖点（引发 123 趋势改变）已整体删除，判定口径不再维护。' +
     '量价口诀 = 位置（长周期自低点涨幅 ≥' + VP3.GAIN_HIGH + '% 或 20 日分位 ≥72% → 高位；≤' + VP3.GAIN_LOW + '% 或 ≤40% → 低位）× 量态（对前 5 日均量 ≥' + VP3.VOL_UP + ' 倍 = 增 / ≤' + VP3.VOL_DN + ' 倍 = 缩）× 价态（收盘对前收 > +' + VP3.PX_UP + '% = 涨 / < ' + VP3.PX_DN + '% = 跌），按优先级互斥映射六条口诀，另附四条量价背离。' +
     '涨停前兆 = ① 成交量微放（' + VP3.PZ_MILD_LO + '~' + VP3.PZ_MILD_HI + ' 倍，非突发巨量）② 阳线收小（收红且实体 ≤ 振幅 ' + (VP3.PZ_BODY * 100) + '%）③ 上影 ≥ 实体 ×2 且 ≥ 振幅 45%（缩量上影 = 洗盘 / 放量上影 = 出货）④ 回踩不破 MA5 且 MA5 向上；命中 ≥3 条 = 共振（图中只标共振根）。' +
     '转强质量 = 位置（低位 / 有效突破关键位 = 强，高位 = 警惕诱多）+ 量能（放量 ' + VP3.ST_VOL_LO + '~' + VP3.ST_VOL_HI + ' 倍 = 健康）+ 均线（MA5>MA10>MA20 且 MA5 向上）三维，≥3 维 = 高质量（支撑维 = 题材 / 基本面，日 K 不可判 → 留白；图中只标高质量根）；核心判据：低位放量突破 = 强信号、高位无量拉升 = 弱信号。' +
@@ -14742,22 +14199,16 @@ function vpsCardHtml(ind, pre, ctx) {
   /* ---- ④.7 威科夫弹簧 / 涨停回调低吸扫描（★ 2026-10-04 17 图策略学习 · 同层纪律：只描述、不计分、不进推送）
      清单项的 data-i = 图上窗口下标（窗口起点与 renderChart 同口径 = max(0, n − 70)），点击回跳由文档级委托处理。 */
   (function () {
-    var _kl = ind.klines || [], _wsp = null, _wzp = null, _w2b = null, _w2bt = null, _wsh = null, _wvp3 = null, _wpz3 = null, _wst3 = null, _st = Math.max(0, _kl.length - 70);
+    var _kl = ind.klines || [], _wsp = null, _wzp = null, _wvp3 = null, _wpz3 = null, _wst3 = null, _st = Math.max(0, _kl.length - 70);
     if (!_kl.length) { h += wsScanHtml(null); return; }
     try { _wsp = wsSpringOf(_kl, _kl.length - 1); } catch (eWs7a) { _wsp = null; }
     try { _wzp = wsZtPullOf(_kl, _kl.length - 1); } catch (eWs7b) { _wzp = null; }
-    try { _w2b = ws2bOf(_kl, _kl.length - 1); } catch (eWs7c) { _w2b = null; }
-    try { _w2bt = ws2bTopOf(_kl, _kl.length - 1); } catch (eWs7c2) { _w2bt = null; }
-    try { _wsh = wsShadowOf(_kl, _kl.length - 1); } catch (eWs7d) { _wsh = null; }
     try { _wvp3 = wsVpOf(_kl, _kl.length - 1); } catch (eWs7e) { _wvp3 = null; }
     try { _wpz3 = wsPreZtOf(_kl, _kl.length - 1); } catch (eWs7f) { _wpz3 = null; }
     try { _wst3 = wsStrongOf(_kl, _kl.length - 1); } catch (eWs7g) { _wst3 = null; }
     h += wsScanHtml({
       spring: (_wsp && _wsp.ok) ? _wsp : null, springWhy: (_wsp && !_wsp.ok) ? _wsp.why : '',
       zt: (_wzp && _wzp.ok) ? _wzp : null, ztWhy: (_wzp && !_wzp.ok) ? _wzp.why : '',
-      b2: (_w2b && _w2b.ok) ? _w2b : null, b2Why: (_w2b && !_w2b.ok) ? _w2b.why : '',
-      b2t: (_w2bt && _w2bt.ok) ? _w2bt : null, b2tWhy: (_w2bt && !_w2bt.ok) ? _w2bt.why : '',
-      sh: (_wsh && _wsh.ok) ? _wsh : null, shWhy: (_wsh && !_wsh.ok) ? _wsh.why : '',
       vp: (_wvp3 && _wvp3.ok) ? _wvp3 : null, vpWhy: (_wvp3 && !_wvp3.ok) ? _wvp3.why : '',
       pzt: (_wpz3 && _wpz3.ok) ? _wpz3 : null, pztWhy: (_wpz3 && !_wpz3.ok) ? _wpz3.why : '',
       strong: (_wst3 && _wst3.ok) ? _wst3 : null, strongWhy: (_wst3 && !_wst3.ok) ? _wst3.why : '',
@@ -27603,11 +27054,8 @@ function init() {
       if (ent && ent.kl && ent.kl.length) {
         var _wsp = wsSpringOf(ent.kl, ent.start + i);
         var _wzp = wsZtPullOf(ent.kl, ent.start + i);
-        /* ★ 2026-10-04：2B 买点（直接结论 + 四因核查）与长上影双形态（仙人指路 / 墓碑线）同根判定 */
-        var _w2b = ws2bOf(ent.kl, ent.start + i);
-        /* ★ 2026-10-04：2B 卖点（顶部反转）—— 用户图片里 2B 两侧都画，本轮补齐顶部方向 */
-        var _w2bt = ws2bTopOf(ent.kl, ent.start + i);
-        var _wsh = wsShadowOf(ent.kl, ent.start + i);
+        /* ★ 2026-10-12（用户要求删除 2B 买点 / 2B 卖点）：ws2bOf / ws2bTopOf 当根判定已移除 */
+        /* ★ 2026-10-12：_wsh（wsShadowOf 长上影双形态）已按用户要求删除 */
         /* ★ 2026-10-04 第二批（20 图策略）：量价口诀 + 涨停前兆 + 转强质量（当根完整判定，不限共振 / 等级） */
         var _wvp3 = wsVpOf(ent.kl, ent.start + i);
         var _wpz3 = wsPreZtOf(ent.kl, ent.start + i);
@@ -27615,10 +27063,7 @@ function init() {
         wscan = {
           spring: (_wsp && _wsp.ok) ? _wsp : null, springWhy: (_wsp && !_wsp.ok) ? _wsp.why : '',
           zt: (_wzp && _wzp.ok) ? _wzp : null, ztWhy: (_wzp && !_wzp.ok) ? _wzp.why : '',
-          b2: (_w2b && _w2b.ok) ? _w2b : null, b2Why: (_w2b && !_w2b.ok) ? _w2b.why : '',
-          b2t: (_w2bt && _w2bt.ok) ? _w2bt : null, b2tWhy: (_w2bt && !_w2bt.ok) ? _w2bt.why : '',
-          sh: (_wsh && _wsh.ok) ? _wsh : null, shWhy: (_wsh && !_wsh.ok) ? _wsh.why : '',
-          vp: (_wvp3 && _wvp3.ok) ? _wvp3 : null, vpWhy: (_wvp3 && !_wvp3.ok) ? _wvp3.why : '',
+              vp: (_wvp3 && _wvp3.ok) ? _wvp3 : null, vpWhy: (_wvp3 && !_wvp3.ok) ? _wvp3.why : '',
           pzt: (_wpz3 && _wpz3.ok) ? _wpz3 : null, pztWhy: (_wpz3 && !_wpz3.ok) ? _wpz3.why : '',
           strong: (_wst3 && _wst3.ok) ? _wst3 : null, strongWhy: (_wst3 && !_wst3.ok) ? _wst3.why : '',
           /* ★ 2026-10-12（§92）：加仑·伍兹价格行为九框架 —— 以所点根为"当前根"整段判定（gwpaOf 内部只用 kl[0..i]，无未来函数）。
@@ -27643,6 +27088,7 @@ function init() {
         · 只用 ent.ind + 全量下标 gidx —— renderChart 内部走 srZoneScan(kl.slice(0, gidx+1))，天然无未来函数；
         · 重绘失败（缓存被 LRU 淘汰 / DOM 结构变了）不拖累面板 —— 面板结论本来就按所点根算，仍然正确。 */
     var gidx = ent ? (ent.start + i) : null;
+    var __dsFresh = false;   /* ★ 2026-10-12 性能修复：重绘成功 → renderChart 已按基准根渲染徽标组，下方不必再算一遍 */
     try {
       var curFocus = wrap.getAttribute('data-focus');
       curFocus = (curFocus == null || curFocus === '') ? NaN : parseInt(curFocus, 10);
@@ -27657,6 +27103,7 @@ function init() {
           par.removeChild(wrapEl);
           var nw = par.querySelector('.chart-wrap');
           if (nw) { wrap = nw; cd = nw.querySelector('g.cd[data-i="' + i + '"]') || null; }
+          __dsFresh = true;
         }
       }
     } catch (eSrzR) { /* 关键位重绘失败不拖累面板 */ }
@@ -27670,10 +27117,12 @@ function init() {
       var s4col = s4ColHtml(s4ser ? s4ser[gidx] : null);
       if (vvEl && s4col) vvEl.insertAdjacentHTML('beforeend', s4col);
     } catch (eS4C) { /* 右列失败不拖累面板 */ }
-    /* 徽标条联动必须在重绘**之后**：.kl-dayset 就住在 .kl-head 里，重绘会把整段换掉 */
+    /* 徽标条联动必须在重绘**之后**：.kl-dayset 就住在 .kl-head 里，重绘会把整段换掉。
+       ★ 2026-10-12 性能修复：重绘成功（__dsFresh）时 renderChart 已按**基准根**渲染好徽标组
+       （同根同参，再算一遍纯属浪费）；只在未重绘（同根重复点击 / 重绘失败兜底）时才在这里补写。 */
     try {
       var ds = card.querySelector('.kl-dayset');
-      if (ds && ent) ds.innerHTML = klDaysetHtml(ent, ent.start + i, kj, raw, null);
+      if (ds && ent && !__dsFresh) ds.innerHTML = klDaysetHtml(ent, ent.start + i, kj, raw, null);
     } catch (eDsV) { /* 徽标条联动失败不拖累面板 */ }
     /* 选中标记同样在重绘之后：统一用当前 DOM 里的新节点（旧节点已脱离文档） */
     try {
