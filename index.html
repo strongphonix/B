@@ -1201,6 +1201,10 @@
     <div class="wl-toolbar" data-page-node-id="kHetxiwemVpfpld8vC6SS3">
       <span class="wl-count" id="wlCount" data-page-node-id="2VWBtBcugj8EsA7pyznP6x">自选 0 只</span>
       <button class="btn" id="wlQueryAll" data-page-node-id="9Nd3vd3cFUzVo29Esymq5q">刷新查询</button>
+      <!-- ★ 2026-10-30：自选 txt/csv 文件导入（用户要求）。隐藏 file input 由按钮触发；
+           解析口径见 wlParseTxt（6 位代码 + 可选名称，自动剥 sh/sz 前缀与 .SH 后缀）。 -->
+      <button class="btn ghost" id="wlTxtImport" title="从 txt/csv 文件批量导入自选：每行一条，支持「600519 贵州茅台」「sh600519」「600519.SH」「000001,平安银行」等写法；自动去重，已在自选里的跳过">📄 导入TXT</button>
+      <input type="file" id="wlTxtFile" accept=".txt,.csv,.lst,text/plain" style="display:none">
       <button class="btn ghost" id="wlClear" data-page-node-id="toSnFRwcO0TrAfV1ZmzBv7">清空自选</button>
       <!-- ★ 2026-10-01：本地存储占用披露 + 一键清理。
            背景：题材/成分股等可再生缓存会把浏览器 5MB 配额写满 → 批量加自选静默失败（能勾选、提示已加入、刷新后一只没有）。
@@ -1272,7 +1276,7 @@
         <div class="wl-status" id="dingPosStatus" data-page-node-id="Ovjy8OfYXurngXDmfUeNAk"></div>
         <div id="dingPosPreviewBox" style="display:none;margin-top:10px;" data-page-node-id="ftML34R8nCaqkOemgeHj3g"><pre class="ding-prev" id="dingPosPreviewPre" data-page-node-id="AmIvLDLPE4mbekc8uAL1yu"></pre></div>
         <div class="ding-warn" data-page-node-id="3DsbDdWaP3j8PyE4rxEHAu">
-          <b data-page-node-id="umVfFESO5rHStqeUvP7z7r">这栏干什么：</b>把你要盯的持仓（含成本）一次填进来 → 点「推送持仓日报」，自动抓每只的现价 / MA5 / 偏离 / 量比 / 破线连板 / MA5斜率，算出<b data-page-node-id="iVNiWYCgbzpULs5PLBjIM5">浮盈参考</b>，按你群里现有的日报格式推到钉钉：<br data-page-node-id="SOlBOLEd5g6sXXKnz2QUpd">
+          <b data-page-node-id="umVfFESO5rHStqeUvP7z7r">这栏干什么：</b>把你要盯的持仓（含成本）一次填进来 → 点「推送持仓日报」，自动抓每只的现价 / MA5 / 偏离 / 量比 / 破线连板 / MA5斜率（含<b>斜率往上天数</b>），算出<b data-page-node-id="iVNiWYCgbzpULs5PLBjIM5">浮盈参考</b>，按你群里现有的日报格式推到钉钉：<br data-page-node-id="SOlBOLEd5g6sXXKnz2QUpd">
           <code data-page-node-id="ecRvGfAp5VOE43B7KnkhuQ">### 600795 国电电力（成本 3.358）</code>　→　<code data-page-node-id="bvQrTr3uBquEdNsXcNRpN9">- 现价 …｜MA5 …｜dev …（档位）｜量比 …｜破线连板 0｜MA5斜率 up</code>　→　<code data-page-node-id="YB2nrOx7FgzCFHEXThwpXr">- 结论：【继续持有】</code>　→　<code data-page-node-id="WZ2rSTtfJBfNu5YHagKbgS">- 依据：…（浮盈参考 +56.0%）</code><br data-page-node-id="FaBryy2un9obyXE6Dqtnt6">
           <b data-page-node-id="H9CB5HY7cz4mm5wx9aCy7O">KDJ 金叉/死叉（经典算法，非自创）：</b>用 <code data-page-node-id="p0lDL9o3sDgYH2a2Fr6PpA">KDJ(9,3,3)</code> —— <code data-page-node-id="MamHHJH3AFnj2b47S0RRs0">RSV=(今收−9日最低)÷(9日最高−9日最低)×100</code>，<code data-page-node-id="Eh7mpRGqGDv4CUtuQOpMiL">K=(2×前K+RSV)÷3</code>、<code data-page-node-id="mCPooQnBJJLt4Fh2HKc4gX">D=(2×前D+K)÷3</code>。<b data-page-node-id="6vaU0hWGQzjxGvx1xGPdWK">金叉＝K 上穿 D（买入）· 死叉＝K 下穿 D（卖出）</b>；D&lt;20 为低位（金叉更可靠）、D&gt;80 为高位（死叉更危险），命中时文案会标明「低位金叉 / 高位死叉」。<b data-page-node-id="lbQm8eUeq34AEod8G0eKpD">只推「当日刚发生」的交叉</b>（隔日老交叉不重复推，否则每天都会把一堆早就是多头的票刷一遍）。⚠️ 末根含<b data-page-node-id="nHQL4bUKGnRf2xiWEtzqwr">当日实时价</b>，盘中的金叉/死叉可能随尾盘变化，收盘后建议复核。<br data-page-node-id="BCSAj6Xg5SKwcDFoL3FXEI">
           <b data-page-node-id="PiuAuwXGsT3mhmCEOGvt9Q">触发条件 + 间隔是干什么的：</b>间隔不填「0」时，工作台会在交易时段内<b data-page-node-id="nMSUqj878DYbtt48sj2XVg">每 N 分钟自动跑一遍持仓清单</b>，只对勾选条件命中的标的推提醒（同一只同一天同一个信号<b data-page-node-id="O3LBhN7bNq2kmD40EkSVOY">只推一次</b>，不刷屏）；填「0」= 关掉自动检测，只手动推。自动检测要求页面保持打开（页面切到后台会被浏览器降频，建议保持前台）。<br data-page-node-id="ARck2c5s4BYPgrgFvu4fup">
@@ -2012,6 +2016,38 @@ function wlSaveFailMsg(r, tryN) {
 function wlRemove(code) { var a = wlGet(), hit = false; a = a.filter(function (x) { if (x.code === code) { hit = true; return false; } return true; }); lsSet(WL_KEY, a); if (hit) { try { wlSyncNoteDel([code]); } catch (eRD) { } } return a; }
 function wlToggle(code, name) { return wlHas(code) ? wlRemove(code) : wlAdd(code, name); }
 
+/* ★ 2026-10-30：自选股 txt/csv 文件导入（用户要求）=========================
+   解析口径（宽容）：
+     · 每行一条，兼容「600519 贵州茅台」「sh600519」「600519.SH」「000001,平安银行」
+       「600519\t贵州茅台」等常见写法；# 开头当注释行跳过。
+     · 代码 = 行内第一个 6 位数字（自动剥 sh/sz/bj 前缀与 .SH/.SZ/.BJ 后缀）；
+       市场前缀白名单校验（沪 600-605/688/689、深 000-003/300/301、北交 430/83x/87x/920），
+       防止把文件里的「20261030」这类日期误当股票代码。
+     · 名称 = 单代码行时，去掉代码后剩余文字（纯数字 / 乱码 U+FFFD / 孤立 sh|sz|bj 不当名字）。
+     · 文件内自动去重；与已有自选的去重交给 wlAddMany（唯一写盘入口，纪律不变）。
+   返回 [{ code, name }]。 */
+function wlParseTxt(text) {
+  var seen = {}, out = [];
+  String(text || '').split(/\r\n|\r|\n/).forEach(function (line) {
+    var s = String(line || '').trim();
+    if (!s || /^#/.test(s)) return;
+    var re = /(sh|sz|bj)?(\d{6})(?:\.(?:sh|sz|bj))?/ig, m, hits = [];
+    while ((m = re.exec(s))) hits.push({ i: m.index, code: m[2], len: m[0].length });
+    if (!hits.length) return;
+    hits.forEach(function (h, k) {
+      if (!/^(60[0-5]|68[89]|00[0-3]|30[01]|430|8[37][0-9]|920)/.test(h.code)) return;  /* 市场前缀白名单：滤日期/单号等杂讯 */
+      if (seen[h.code]) return;
+      var name = '';
+      if (hits.length === 1) {                          /* 单代码行 → 剩余文字尝试当名字 */
+        var rest = (s.slice(0, h.i) + s.slice(h.i + h.len)).replace(/^[\s\-—_:：|,，、·]+|[\s\-—_:：|,，、·]+$/g, '');
+        if (rest && !/^\d+$/.test(rest) && rest.indexOf('\uFFFD') < 0 && !/^(sh|sz|bj)$/i.test(rest) && rest.length <= 12) name = rest;
+      }
+      seen[h.code] = true; out.push({ code: h.code, name: name });
+    });
+  });
+  return out;
+}
+
 /* ==== 涨停台自选池自动同步（2026-10-29 §232）=================================
    用户要求：「（涨停台）五池明细自选股中的股票，自动加入（本台）自选股」。
 
@@ -2160,37 +2196,43 @@ var __boardCache = {};
 async function getBoards(type) {
   var c = __boardCache[type];
   if (c && Date.now() - c.ts < 120000) return c.list;
+  // 本机 push2 家族被整体拦截时，单次要等所有主机 fetch+JSONP 各 9s 超时（约 1 分钟）才失败；
+  // 记下「东财不可用」窗口（5 分钟），期间刷新直接走新浪实时备用通道，不再空等，也不再用旧缓存冒充新数据。
+  var emDown = window.__BOARD_EM_DOWN && (Date.now() - window.__BOARD_EM_DOWN < 5 * 60 * 1000);
   var list = null;
+  if (!emDown) {
+    try {
+      var r = await emListAll(BOARD_FS[type], BOARD_FIELDS, { maxPages: 7 });
+      list = r.list.map(function (d) {
+        return {
+          code: d.f12, name: d.f14, index: d.f2, chg: num(d.f3),
+          flow: num(d.f62), upCount: d.f104, downCount: d.f105,
+          amount: num(d.f6),
+          leadName: d.f128 || '', leadCode: d.f140 || '', leadChg: num(d.f136),
+          leadDownName: d.f207 || '', leadDownCode: d.f208 || ''
+        };
+      });
+      lsSet('bwork_boards_' + type, { ts: Date.now(), list: list });
+      window.__BOARD_SRC = 'em';
+      __boardCache[type] = { ts: Date.now(), list: list };
+      return list;
+    } catch (e) {
+      window.__BOARD_EM_DOWN = Date.now();   // 东财 clist 本次失败 → 标记，后续刷新直接走新浪，避免每次空等 1 分钟
+    }
+  }
+  // 东财不可用：优先拉「新浪板块列表」实时备用通道（本机实测 ~0.3s 可达，含涨跌幅/成交额/领涨股），
+  // 仅当新浪也失败时，才退回到本地 stale 缓存（杜绝「刷新 = 原地重放旧缓存」的假响应）。
   try {
-    var r = await emListAll(BOARD_FS[type], BOARD_FIELDS, { maxPages: 7 });
-    list = r.list.map(function (d) {
-      return {
-        code: d.f12, name: d.f14, index: d.f2, chg: num(d.f3),
-        flow: num(d.f62), upCount: d.f104, downCount: d.f105,
-        amount: num(d.f6),
-        leadName: d.f128 || '', leadCode: d.f140 || '', leadChg: num(d.f136),
-        leadDownName: d.f207 || '', leadDownCode: d.f208 || ''
-      };
-    });
-    lsSet('bwork_boards_' + type, { ts: Date.now(), list: list });
-    window.__BOARD_SRC = 'em';
-  } catch (e) {
+    list = await boardsFromSina(type);
+    window.__BOARD_SRC = 'sina';
+  } catch (e2) {
     var cached = lsGet('bwork_boards_' + type);
     if (cached && cached.list && cached.list.length) {
       list = cached.list;
       window.__BOARD_STALE = cached.ts;
       window.__BOARD_SRC = (cached.list[0] && cached.list[0]._src === 'tx') ? 'tx' : 'cache';
     } else {
-      /* 2026-09-25 新增：push2 全家族被本机网络拦截且无任何缓存时，
-         改用「新浪板块列表」备用通道 —— newSinaHy / newFLJK 返回 var 全局变量，
-         用 loadScriptVar 脚本注入读取（与腾讯快照同一套绕 CORS 机制，本机网络实测可达）。
-         板块码为新浪 node 码，点开板块后由降级链按板块名解析 BK（见 dcResolveBK）。 */
-      try {
-        list = await boardsFromSina(type);
-        window.__BOARD_SRC = 'sina';
-      } catch (e2) {
-        throw new Error((e.message || e) + '；新浪备用通道也不可用：' + ((e2 && e2.message) || e2));
-      }
+      throw new Error('板块列表获取失败：东财与新浪通道均不可用' + ((e2 && e2.message) ? '（新浪：' + e2.message + '）' : ''));
     }
   }
   __boardCache[type] = { ts: Date.now(), list: list };
@@ -23301,7 +23343,7 @@ function renderWatch() {
   if (!list) return;
   if (!a.length) {
     if (st) st.textContent = '';
-    list.innerHTML = '<div class="empty-state"><div class="icon">⭐</div><p>还没有自选股票</p><p style="font-size:12px;color:#5d6788;margin-top:8px">在「个股诊断」里查询后，点报告里的「☆ 加自选」即可收藏到这里</p></div>';
+    list.innerHTML = '<div class="empty-state"><div class="icon">⭐</div><p>还没有自选股票</p><p style="font-size:12px;color:#5d6788;margin-top:8px">在「个股诊断」里查询后，点报告里的「☆ 加自选」即可收藏到这里；也可以点上方「📄 导入TXT」从 txt/csv 文件批量导入</p></div>';
     return;
   }
   if (WATCH.running) {
@@ -23420,6 +23462,18 @@ function dingSlopeTxt(ind) {
     var b = ma5SlopeBandOf(v), tag = (b && b.tag) ? b.tag : '';
     if (+v >= 0 && ma5SlopeDown3Of(ind)) tag += (tag ? '·衰竭预警' : '⚠️衰竭预警');
     return (+v > 0 ? '+' : '') + (+v).toFixed(2) + '%' + (tag ? '（' + tag + '）' : '');
+  } catch (e) { return ''; }
+}
+/* ★ 2026-10-30（用户要求）：所有推送统一带「MA5斜率往上天数」——
+   口径与页面「MA5斜率往上天数」列 / K 线 chip 完全同源（ma5UpDaysOf：MA5 斜率 ma5[t]−ma5[t−1]>0
+   连续为正的交易日数；1 = 翻上当天，0 = 今日仍未向上，null = 日K不足）。
+   返回 '往上N天'（调用方在「MA5斜率」token 后加 ｜ 拼接 → 「MA5斜率 +x.xx%（…）｜往上5天」）；
+   算不出 → ''（调用方整段省略，不留空尾巴）。 */
+function dingUpDaysTxt(ind) {
+  try {
+    var n = ma5UpDaysOf(ind);
+    if (n == null || isNaN(+n)) return '';
+    return '往上' + n + '天';
   } catch (e) { return ''; }
 }
 /* =========================================================================
@@ -24170,6 +24224,8 @@ async function dingPushDailyReport() {
         slopeUp: r.ind.ma5Slope > 0,
         /* ★ 2026-09-30（用户要求）：日报统一带 MA5 斜率**数值**（页面 MA5斜率 列同源 ma5SlopePct） */
         slopeTxt: dingSlopeTxt(r.ind),
+        /* ★ 2026-10-30（用户要求）：MA5斜率往上天数（ma5UpDaysOf 同源；算不出 → '' 渲染侧省略） */
+        upDaysTxt: dingUpDaysTxt(r.ind),
         stateKey: ms.state,
         stateFull: ms.meta.name,
         posText: pInfo.text,
@@ -24369,6 +24425,7 @@ async function dingPushDailyReport() {
       (s.ma2060 ? '｜' + s.ma2060 : '') +
       '｜' + (s.devPair || dingDevNote(s.dev) || 'dev —') +
       '｜量比 ' + volTxt(s) + '｜破线连板 ' + s.breakDays + '｜MA5斜率 ' + (s.slopeTxt || (s.slopeUp ? 'up' : 'down')) +
+      (s.upDaysTxt ? '｜' + s.upDaysTxt : '') +     /* ★ 2026-10-30：MA5斜率往上天数（缺 → 整段省略） */
       (s.atrPair ? '｜' + s.atrPair : '') + '\n';   /* ★ 2026-10-15 §126：ATR% 昨/今双值（s.atrPair，缺 → 整段省略） */
     /* ★ 2026-10-14 §124：KDJ 段昨/今双值（s.kdjPair 优先 → kdjDetailLine 单值兜底）
        ★ 2026-10-15 §133：同行追加周线 KDJ 昨/今双值（s.wkPair，缺 → 整段省略） */
@@ -24417,7 +24474,8 @@ async function dingPushDailyReport() {
       /* ★ 2026-10-13 §117：dev 段同 fullBlock（s.devPair 优先 → dingDevNote 单值 → 'dev —'） */
       '｜MA5 ' + posFmt2(s.ma5) + (s.ma2060 ? '｜' + s.ma2060 : '') + '｜' + (s.devPair || dingDevNote(s.dev) || 'dev —') + '｜量比 ' + volTxt(s) +
       /* ★ 2026-09-30（用户要求）：斜率段统一数值（slopeTxt，缺省回退 up/down） */
-      '｜破线 ' + s.breakDays + '｜' + (s.slopeTxt || (s.slopeUp ? 'up' : 'down')) + (s.atrPair ? '｜' + s.atrPair : '') + '｜KDJ ' + (s.kdjPair || kdjBrief(s.kdj)) +
+      '｜破线 ' + s.breakDays + '｜' + (s.slopeTxt || (s.slopeUp ? 'up' : 'down')) +
+      (s.upDaysTxt ? '｜' + s.upDaysTxt : '') + (s.atrPair ? '｜' + s.atrPair : '') + '｜KDJ ' + (s.kdjPair || kdjBrief(s.kdj)) +
       /* ★ 2026-10-15 §133：周线 KDJ 昨/今双值（s.wkPair，缺 → 整段省略） */
       (s.wkPair ? '｜周KDJ ' + s.wkPair : '');
     if (profit != null) line += '｜浮盈 ' + posFmtProfit(profit);
@@ -24491,7 +24549,8 @@ async function dingPushDailyReport() {
       var b = '### ' + lv + ' ' + s.code + ' ' + s.name + '\n';
       /* ★ 2026-10-13 §117：dev 段同 fullBlock（s.devPair 优先 → dingDevNote 单值 → 'dev —'） */
       b += '- 现价 ' + posFmt2(s.price) + '（' + chgTxt(s) + '）｜MA5 ' + posFmt2(s.ma5) + '｜' + (s.devPair || dingDevNote(s.dev) || 'dev —') +
-        '｜量比 ' + volTxt(s) + '｜MA5斜率 ' + (s.slopeTxt || (s.slopeUp ? 'up' : 'down')) + '\n';
+        '｜量比 ' + volTxt(s) + '｜MA5斜率 ' + (s.slopeTxt || (s.slopeUp ? 'up' : 'down')) +
+        (s.upDaysTxt ? '｜' + s.upDaysTxt : '') + '\n';   /* ★ 2026-10-30：MA5斜率往上天数（缺 → 整段省略） */
       b += '- 🎯 四指标 ' + (s.s4k ? ('**' + s.s4k.total + '分** → ' + s.s4k.action + '｜趋势：' + (trendTxt[s.s4k.trend] || s.s4k.trend)) : '无法打分（日K不足）') +
         (s.buyAge ? '｜📍 四指标' + s.buyAge : '') + '\n';
       b += '- 结论：【' + posStateLabel(s.stateKey) + '】\n';
@@ -24712,6 +24771,7 @@ function posStockBlock(x) {
     '｜量比 ' + posFmt2(x.volRatio) +
     '｜破线连板 ' + (x.breakDays == null ? '—' : x.breakDays) +
     '｜MA5斜率 ' + (x.slopeTxt || (x.slopeUp ? 'up' : 'down')) +   /* ★ 2026-09-30（用户要求）：统一数值 */
+    (x.upDaysTxt ? '｜' + x.upDaysTxt : '') +                      /* ★ 2026-10-30：MA5斜率往上天数（缺 → 整段省略） */
     (x.atrPair ? '｜' + x.atrPair : '') +                          /* ★ 2026-10-15 §126：ATR% 昨/今双值 */
     '｜KDJ ' + (x.kdjPair || (x.kdj ? kdjBrief(x.kdj) : '—')) +
     (x.wkPair ? '｜周KDJ ' + x.wkPair : '');                        /* ★ 2026-10-15 §133：周线 KDJ 昨/今双值（缺 → 整段省略） */
@@ -24771,6 +24831,8 @@ async function buildPosReport(rows, cfg, opt) {
       out.slopeUp = r.ind.ma5Slope > 0;
       /* ★ 2026-09-30（用户要求）：持仓日报统一带 MA5 斜率数值（与日报/盯盘行同源） */
       out.slopeTxt = dingSlopeTxt(r.ind);
+      /* ★ 2026-10-30（用户要求）：MA5斜率往上天数（ma5UpDaysOf 同源；算不出 → '' 由 posStockBlock 省略） */
+      out.upDaysTxt = dingUpDaysTxt(r.ind);
       out.state = ms.state;
       out.stateName = (ms.meta && ms.meta.name) || '';
       out.reasons = ms.reasons || [];
@@ -25261,6 +25323,8 @@ async function dingScanPositions(silent) {
         out.slopeUp = r.ind.ma5Slope > 0;
         /* ★ 2026-09-30（用户要求）：持仓盘中也统一带 MA5 斜率数值（与日报/盯盘行同源） */
         out.slopeTxt = dingSlopeTxt(r.ind);
+        /* ★ 2026-10-30（用户要求）：MA5斜率往上天数（ma5UpDaysOf 同源；算不出 → '' 由 posStockBlock 省略） */
+        out.upDaysTxt = dingUpDaysTxt(r.ind);
         out.state = ms.state;
         out.reasons = ms.reasons || [];
         out.kdj = kdjState(r.ind.klines);
@@ -25969,7 +26033,7 @@ function composeDingDigest(sec, hits, roster) {
            在册的自选股（已推过、本轮仍有触发）也用**完整字段行** —— roster 条目把同一份字段
            原样带过来，渲染统一走 dingBuyLineFmt（买点推送同一份行格式，禁止在此另写字段序列）。
            ★ 2026-10-13 §111：mompos（动量状态）同属这套字段，一并透传。 */
-        sr: r.sr, pow: r.pow, kdj: r.kdj, slope: r.slope, dev: r.dev, atr: r.atr, buyAge: r.buyAge, s4: r.s4,
+        sr: r.sr, pow: r.pow, kdj: r.kdj, slope: r.slope, upDays: r.upDays, dev: r.dev, atr: r.atr, buyAge: r.buyAge, s4: r.s4,
         mompos: r.mompos,
         /* ★ 2026-10-19 §173：MA20/MA60 段字段透传（在册行走 dingBuyLineFmt → 缺了则 ✅ 行丢该段） */
         ma2060: r.ma2060,
@@ -26087,6 +26151,8 @@ function composeDingDigest(sec, hits, roster) {
         + (h.pow ? ' · 今昨强弱：' + h.pow : '')
         + (h.kdj ? ' · KDJ：' + h.kdj : '')
         + (h.slope ? ' · MA5斜率 ' + h.slope : '')
+        /* ★ 2026-10-30（用户要求）：MA5斜率往上天数（与 dingBuyLineFmt 同一份表达式；缺 → 整段省略） */
+        + (h.upDays ? ' · ' + h.upDays : '')
         /* ★ 2026-10-19 §173：MA20 / MA60 数值 + 金死叉（与 dingBuyLineFmt **同一份表达式**，
            重复两处 + _check_static 锁 2 处；缺值 → 整段省略） */
         + (h.ma2060 ? ' · ' + h.ma2060 : '')
@@ -26499,6 +26565,7 @@ async function dingScan(silent) {
             /* ★ 2026-09-30（用户要求）：每条命中行统一带「MA5 斜率」数值（页面 MA5斜率 列同源）
                ★ 2026-10-12 §102：改昨/今双值（dingSlopePairTxt，纯数值不带档位标签） */
             slope: dingSlopePairTxt(r.ind),
+            upDays: dingUpDaysTxt(r.ind),   /* ★ 2026-10-30：MA5斜率往上天数（缺 → '' 整段省略） */
             dev: devTxt,   /* ★ 2026-10-12：统一 dev 备注（dev +x.xx%（档位）；缺 → '' 整段省略） */
             hot: hotTxt,   /* ★ 2026-09-30：追高标注（≥5% 且买入/预警类触发才有值，老 fixture 缺省 → 整段省略） */
             risk: rkF,   /* ★ 2026-09-26：风险旗标（买点钝化 / 冲高回落）→ 命中行带颜色标识 */
@@ -26547,6 +26614,9 @@ async function dingScan(silent) {
           } catch (eKw) { kdjW = ''; }
           var slopeW = '';
           try { slopeW = dingSlopePairTxt(r.ind); } catch (eSlW) { slopeW = ''; }
+          /* ★ 2026-10-30（用户要求）：MA5斜率往上天数（与命中行同源；算不出 → '' 整段省略） */
+          var upDaysW = '';
+          try { upDaysW = dingUpDaysTxt(r.ind); } catch (eUdW) { upDaysW = ''; }
           /* ★ 2026-10-13 §117：在册行 dev 备注同命中行口径（dingDevPairTxt 昨/今双值；算不出 → ''） */
           var devW = '';
           try { devW = dingDevPairTxt(r.ind); } catch (eDw) { devW = ''; }
@@ -26560,7 +26630,7 @@ async function dingScan(silent) {
           try { s4PrevW = dingS4PairTotal(r.ind.klines); } catch (eSpW) { s4PrevW = null; }
           var hRos = { code: r.code, name: (r.quote && r.quote.name) || x.name, board: bdW,
             sr: (r.sr && r.sr.stage) ? r.sr : null,
-            pow: powW, kdj: kdjW, slope: slopeW, dev: devW, atr: atrW, buyAge: buyAgeTxt,
+            pow: powW, kdj: kdjW, slope: slopeW, upDays: upDaysW, dev: devW, atr: atrW, buyAge: buyAgeTxt,
             s4: (s4k && s4k.ok) ? { total: s4k.total, prev: s4PrevW, action: s4k.action, veto: !!s4k.veto } : null,
             badge: badgeW, mompos: momposW, wkj: wkjW, sig: trig.length > 0 };
           /* ★ 2026-10-17 §144：在册行（✅）与命中行（▶）同带「开盘八法」信息段。 */
@@ -26589,7 +26659,7 @@ async function dingScan(silent) {
     var roster = (rosterAll || []).map(function (r) {
       /* ★ 2026-10-13 §107：把整套字段透传给 composeDingDigest（未命中行走完整模版行）。 */
       return { code: r.code, name: r.name, board: r.board, badge: r.badge,
-        sr: r.sr, pow: r.pow, kdj: r.kdj, slope: r.slope, dev: r.dev, atr: r.atr, buyAge: r.buyAge, s4: r.s4,
+        sr: r.sr, pow: r.pow, kdj: r.kdj, slope: r.slope, upDays: r.upDays, dev: r.dev, atr: r.atr, buyAge: r.buyAge, s4: r.s4,
         mompos: r.mompos,
         /* ★ 2026-10-19 §173：MA20/MA60 段字段透传（在册行走 dingBuyLineFmt → 缺了则 ✅ 行丢该段） */
         ma2060: r.ma2060,
@@ -27337,6 +27407,9 @@ function dingRowFields(r, x, meta, all) {
   try { s4Prev = dingS4PairTotal(r.ind.klines); } catch (eS4Q) { s4Prev = null; }
   var slopeTxt = '';
   try { slopeTxt = dingSlopePairTxt(r.ind); } catch (eSlP) { slopeTxt = ''; }
+  /* ★ 2026-10-30（用户要求）：MA5斜率往上天数（ma5UpDaysOf 同源；算不出 → '' 整段省略） */
+  var upDaysTxt = '';
+  try { upDaysTxt = dingUpDaysTxt(r.ind); } catch (eUd) { upDaysTxt = ''; }
   try { if (s4k && s4k.ok && s4kTierOf(s4k.total, s4k.veto) === 'buy') trig.push(s4kTierToken(s4k.total, s4k.veto)); } catch (eT) {}
   /* ★ §85 放行闸门口径：四指标买入档是唯一放行口径 —— 判定结果下沉到 meta（trig / tier），
      闸门本身由 dingBuyHitBuild 执行（保持命中函数自 §75 起的行为逐字不变）。 */
@@ -27390,7 +27463,7 @@ function dingRowFields(r, x, meta, all) {
     trig: trig, total: (s4k && s4k.ok) ? s4k.total : null,
     s4: (s4k && s4k.ok) ? { total: s4k.total, prev: s4Prev, action: s4k.action, veto: !!s4k.veto } : null,
     /* ★ 2026-10-12 §102：slope 改昨/今双值（dingSlopePairTxt，纯数值不带档位标签） */
-    pow: powTxt, kdj: kdjTxt, slope: slopeTxt, dev: devTxt, atr: atrTxt, buyAge: buyAgeTxt,
+    pow: powTxt, kdj: kdjTxt, slope: slopeTxt, upDays: upDaysTxt, dev: devTxt, atr: atrTxt, buyAge: buyAgeTxt,
     badge: badge, mompos: momposTxt, wkj: wkjTxt, ma2060: maTxt
   };
 }
@@ -27427,6 +27500,8 @@ function dingBuyLineFmt(h) {
     /* ★ 2026-10-15 §133：周线 KDJ 昨/今双值（dingKdjWeekTxt；用户定稿同 §124 模版；缺 → 整段省略） */
     + (h.wkj ? ' · 周KDJ：' + h.wkj : '')
     + (h.slope ? ' · MA5斜率 ' + h.slope : '')
+    /* ★ 2026-10-30（用户要求）：MA5斜率往上天数（紧贴斜率段；缺 → 整段省略）。与 composeDingDigest ▶ 行同一份表达式 */
+    + (h.upDays ? ' · ' + h.upDays : '')
     /* ★ 2026-10-19 §173（用户要求「股票信息中增加 MA20、MA60 数值 + 金死叉关系」）：
        紧贴 MA5斜率 —— 均线族聚在一起读，别插到 ATR%/dev 中间把尺子打散。
        本行与 composeDingDigest 的 ▶ 命中行**同一份表达式**（两种行格式无法共用函数，
@@ -33991,7 +34066,18 @@ function init() {
       scanBoardsForStages(isFinite(n) ? n : 8);
     }
   });
-  el('brefresh').addEventListener('click', function () { loadBoardList(true); });
+  /* ★ 2026-10-30：点「刷新实时」立刻给按钮级反馈（变「刷新中…」+ 禁用防连点），刷完恢复 ——
+     杜绝「点了没反应」的观感：即使数据链路慢（东财超时→新浪兜底），按钮本身也是即时响应的。 */
+  el('brefresh').addEventListener('click', function () {
+    var btn = this;
+    if (btn.dataset.busy) return;                       // 上一轮还没结束 → 忽略连点
+    btn.dataset.busy = '1';
+    var old = btn.textContent;
+    btn.textContent = '刷新中…'; btn.disabled = true;
+    var done = function () { btn.dataset.busy = ''; btn.textContent = old; btn.disabled = false; };
+    try { var pr = loadBoardList(true); if (pr && pr.then) pr.then(done, done); else done(); }
+    catch (e) { done(); }
+  });
   var ft = null;
   el('bfilter').addEventListener('input', function () {
     ST.bfilter = this.value;
@@ -34502,6 +34588,36 @@ function init() {
   var _wlZtCb = el('wlFromZt');
   if (_wlZtCb) _wlZtCb.addEventListener('change', function () { wlSyncSetOn(!!_wlZtCb.checked); });
   wlSyncBoot();
+
+  /* ★ 2026-10-30：自选 txt/csv 文件导入（用户要求）。
+     链路：按钮 → 隐藏 file input → FileReader(utf-8) → wlParseTxt → wlAddMany（唯一写盘入口）。
+     导入后：重置 WATCH 行情缓存（下次「刷新查询」全量重拉）+ renderWatch + 状态条如实汇报
+     （写盘失败走 wlSaveFailMsg 话术，绝不给「已加入」的错觉 —— §2026-10-01 纪律）。 */
+  var _wlTxtBtn = el('wlTxtImport'), _wlTxtFile = el('wlTxtFile');
+  if (_wlTxtBtn && _wlTxtFile) {
+    _wlTxtBtn.addEventListener('click', function () { _wlTxtFile.value = ''; _wlTxtFile.click(); });
+    _wlTxtFile.addEventListener('change', function () {
+      var f = _wlTxtFile.files && _wlTxtFile.files[0];
+      this.value = '';                                   /* 立即清空：同一文件再次选择也能触发 change（Chrome 对同文件二次选择不重触发的兜底） */
+      if (!f) return;
+      var st = el('wlStatus');
+      var rd = new FileReader();
+      rd.onload = function () {
+        var list = wlParseTxt(String(rd.result || ''));
+        if (!list.length) { if (st) st.innerHTML = '⚠️ 文件里没找到 6 位股票代码（' + escapeHtml(f.name) + '）'; return; }
+        var nameOf = {}; list.forEach(function (x) { if (x.name) nameOf[x.code] = x.name; });
+        var r = wlAddMany(list.map(function (x) { return x.code; }), function (c) { return nameOf[c] || c; }, false);
+        WATCH.loaded = false; WATCH.results = [];      /* 让「刷新查询」按新名单全量重拉 */
+        renderWatch();
+        if (st) {
+          if (!r.ok) st.innerHTML = wlSaveFailMsg(r, list.length);
+          else st.innerHTML = '📄 导入完成：新增 <b>' + r.added + '</b> 只' + (r.dup ? '（跳过已在自选 ' + r.dup + ' 只）' : '') + '，现自选 ' + r.total + ' 只 · 点「刷新查询」加载行情';
+        }
+      };
+      rd.onerror = function () { if (st) st.textContent = '⚠️ 文件读取失败，请重试'; };
+      rd.readAsText(f, 'utf-8');
+    });
+  }
   /* ★ 2026-10-01：清理可再生缓存（治「批量加自选静默失败」的根因：5MB 配额被题材/成分股缓存占满） */
   el('wlLsClean').addEventListener('click', function () { wlLsClean(); });
   wlLsPaint();                                  /* 进页面就把占用显示出来（>4MB 标红） */
