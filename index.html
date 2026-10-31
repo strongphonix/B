@@ -1639,6 +1639,17 @@
         <label style="font-size:12.5px;color:var(--muted)" title="勾选=启用 F27；取消=跳过。F27：「多头」= MA5 严格大于 MA10；「多头或即将金叉」= MA5>MA10，或 MA5 在 MA10 下方但差距 ≤0.5% 且 MA5 今日比昨日上行。⚠️「且上行」是关键 —— 贴在一起但双双下滑是死叉前兆，不是金叉前兆，不能算「即将金叉」。均线取 ind.ma5 / ind.ma10 数组（与 MA5斜率、F1 同一份数），不重算 SMA。参考层不计分。"><input type="checkbox" id="pickMa510On"> F27 5·10日均线 <select class="ctl" id="pickMa510Mode" style="width:132px"><option value="ready" selected>多头或即将金叉</option><option value="bull">严格多头(MA5&gt;MA10)</option></select></label>
         <label style="font-size:12.5px;color:var(--muted)" title="勾选=启用 F28；取消=跳过。F28 剔次新：日K根数 < N → 视为上市不满 N 个交易日（默认 250 ≈ 1 年），剔除。⚠️ 已知近似：长期停牌会减少根数，可能把老股误判成次新 —— 这里刻意选择保守方向（误判成次新只是漏选，误判成老股会把真次新放进结果）。ST / 退市在预筛阶段已按名称剔除，不在这里重复。参考层不计分。"><input type="checkbox" id="pickNewOn"> F28 剔次新 &lt; <input class="ctl" id="pickNewN" type="number" step="10" min="20" max="500" value="250" style="width:56px"> 交易日</label>
       </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;padding:7px 9px;background:rgba(120,200,255,.045);border:1px solid rgba(120,200,255,.16);border-radius:9px">
+        <span style="font-size:12px;color:#7fb8d1;font-weight:600">动量区间族 F29~F30</span>
+        <label style="font-size:12.5px;color:var(--muted)" title="勾选=启用 F29；取消=跳过。F29：近 5 日收盘涨幅 ∈ [min,max]%（含两端，默认 -10~15）。口径 pickChg5Of：最新收盘 ÷ 5 根前收盘 − 1，与 F30 近10日、F3 20日动量同族区间判定；日K&lt;6根 = 数据不足（诚实留白，绝不按 0 冒充）。刻意不读 computeIndicators 的 gain5 —— 同族两窗一个来源（日K直算），防日后窗口调整带偏口径。★ 参考/描述层：不计分、不进四指标打分、不进钉钉推送、不生成买卖信号。"><input type="checkbox" id="pickMom5On"> F29 5日动量 <input class="ctl" id="pickMom5Min" type="number" step="0.5" min="-100" max="100" value="-10" style="width:56px"> ~ <input class="ctl" id="pickMom5Max" type="number" step="0.5" min="-100" max="100" value="15" style="width:56px"> %</label>
+        <label style="font-size:12.5px;color:var(--muted)" title="勾选=启用 F30；取消=跳过。F30：近 10 日收盘涨幅 ∈ [min,max]%（含两端，默认 -20~30）。口径 pickChg10Of —— 与表格「10日涨幅」列、R10 涨幅排名同一份算法，不开第二套 10 日口径；日K&lt;11根 = 数据不足。⚠️ F30 是区间过滤、R10 是排名截断：两者可叠加，先区间后排名，互不干扰。★ 参考/描述层：不计分、不进四指标打分、不进钉钉推送、不生成买卖信号。"><input type="checkbox" id="pickMom10On"> F30 10日动量 <input class="ctl" id="pickMom10Min" type="number" step="0.5" min="-100" max="100" value="-20" style="width:56px"> ~ <input class="ctl" id="pickMom10Max" type="number" step="0.5" min="-100" max="100" value="30" style="width:56px"> %</label>
+        <span style="font-size:11.5px;color:var(--dim)">表列不新增：10日涨幅已有列可见，5日值见口径行与报告（§196 教训：加列引发 colspan 连锁）</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;padding:7px 9px;background:rgba(239,159,39,.05);border:1px solid rgba(239,159,39,.18);border-radius:9px">
+        <span style="font-size:12px;color:#EF9F27;font-weight:600">超跌反转族 F31</span>
+        <label style="font-size:12.5px;color:var(--muted)" title="勾选=启用 F31；取消=跳过。F31 地量枯竭：近 N 个交易日内出现过 量 ≤ 前一日 ×0.7 的缩量柱（缩至前日 0.7 倍以下 = 抛压枯竭，止跌末期的量价信号）。取窗口内最后一根地量作命中记录。日K不足 N+1 根 / 窗口内量值缺失 = 数据不足（诚实留白，不按「未出现」处理）。⚠️ 深超跌前提不在本条内判 —— 组合勾选 F3（20日动量区间设 −35~−20）即得「深超跌 + 已现地量」的超跌反转筛选；K线点击面板另有「超跌反转·量价四阶段」块（①阴跌→②恐慌宣泄→③缩量枯竭→④放量确认）给出阶段判定与策略。★ 参考/描述层：不计分、不进四指标打分、不进钉钉推送、不生成买卖信号。"><input type="checkbox" id="pickDlOn"> F31 地量枯竭（近 <input class="ctl" id="pickDlN" type="number" step="1" min="2" max="60" value="10" style="width:48px"> 日内出现）</label>
+        <span style="font-size:11.5px;color:var(--dim)">量 ≤ 前日 ×0.7 = 抛压枯竭；深超跌池复用 F3（20日动量上限设 −20），不另设因子</span>
+      </div>
       <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px" data-page-node-id="E9nSSSGTwkTd7bqD4gs4IZ">
         <button class="btn" id="pickRun" data-page-node-id="HQFncX5Gm9QMrNJ13f6gEN">🚀 开始选股</button>
         <button class="btn ghost" id="pickStop" style="display:none" data-page-node-id="DvXCGqsRgzRDnONMiIIrKn">■ 停止</button>
@@ -5778,6 +5789,178 @@ function vpMomHtml(mr) {
 }
 
 /* ============================================================================
+   ★★ 2026-10-31 §245（用户要求「请按照上面策略修改生命周期平台」）：超跌反转 · 量价四阶段
+   ----------------------------------------------------------------------------
+   口径来自本轮对话三轮交叉验证确立的「超跌反转体系」：
+     前提：20日动量 ≤ −20%（深度超跌带；−25~−30% 属极端区，同门槛不另设档）；
+     ① 阴跌中继 —— 尚无恐慌宣泄，不抄底；
+     ② 恐慌宣泄 —— 出现「放量大阴」：阴线实体 ≥5%（|收−开|÷昨收）且量 ≥ 前5日均量
+        （不含当日）1.5 倍，多为最后恐慌盘；宣泄之后仍创新低 = 宣泄不是终点；
+     ③ 缩量枯竭 —— 恐慌之后出现「地量」：量 ≤ 前一根 0.7 倍（抛压枯竭 = 止跌末期观察区）。
+        ⚠️ 纪律原文：缩量只说明卖方没了，不等于买方来了 —— 左侧只试仓 ≤5%；
+     ④ 放量确认 —— 末根放量阳线（量 ≥ 前5日均量 1.5 倍）=「缩量之后再放量」的真买点，
+        配合「低点不创新低」（恐慌低点此后未被跌破）。
+   阶段判定优先级 ④ > ③ > ② > ①；评价根 = 被点击的这一根（传入 kl 已截到该根，无未来函数）。
+   纪律：左试仓 / 右确认 / 反弹目标 20 日线分批兑现 / 止损破前低 · 时间止损 2~4 周。
+   ★ 参考/描述层：不计分、不进四指标打分、不进钉钉推送、不生成买卖信号、不进选股器。
+   ============================================================================ */
+var OSR = {
+  MOM20_MIN: -20,     /* 深超跌门槛：20日动量 ≤ −20% */
+  PANIC_VOLX: 1.5,    /* 恐慌宣泄：量 ≥ 前5日均量（不含当日）× 1.5 */
+  PANIC_BODY: 5,      /* 恐慌宣泄：阴线实体 ≥ 5%（|收−开| ÷ 昨收） */
+  DRY_RATIO: 0.7,     /* 地量：量 ≤ 前一根 × 0.7（抛压枯竭） */
+  CONF_VOLX: 1.5      /* 确认：末根阳线量 ≥ 前5日均量（不含当日）× 1.5 */
+};
+/* 末 n 根收盘简单均线（纯函数自算，仅供本块展示「站上/目标 20 日线」；平台 MA 数组按全量算、
+   与点击段切片不同窗，这里不读它 —— 读切片外的数据反而引入未来函数风险） */
+function osrSmaOf(kl, n) {
+  if (!Array.isArray(kl) || kl.length < n) return null;
+  var s = 0, i, c;
+  for (i = kl.length - n; i < kl.length; i++) {
+    c = kl[i] && kl[i].close;
+    if (typeof c !== 'number' || !isFinite(c) || c <= 0) return null;
+    s += c;
+  }
+  return s / n;
+}
+/* 以第 j 根为「当日」的前 5 根均量（j-5..j-1，不含当日）；不足 5 根 / 脏值 → null */
+function osrAvg5VolOf(kl, j) {
+  if (!Array.isArray(kl) || j < 5) return null;
+  var s = 0, k, v;
+  for (k = j - 5; k < j; k++) {
+    v = kl[k] && kl[k].volume;
+    if (typeof v !== 'number' || !isFinite(v) || v < 0) return null;
+    s += v;
+  }
+  return s / 5;
+}
+/* 超跌反转四阶段判定（纯函数）。kl = 已截到评价根的日K段。
+   返回 null = 非深超跌 / 数据不足（调用方不出块，不硬凑）。 */
+function osrJudgeOf(kl) {
+  if (!Array.isArray(kl) || kl.length < 21) return null;   /* 20日动量需 ≥21 根 */
+  var n = kl.length, i, b, p;
+  var c0 = kl[n - 1] && kl[n - 1].close, c20 = kl[n - 21] && kl[n - 21].close;
+  if (typeof c0 !== 'number' || !isFinite(c0) || c0 <= 0) return null;
+  if (typeof c20 !== 'number' || !isFinite(c20) || c20 <= 0) return null;
+  var mom20 = (c0 / c20 - 1) * 100;
+  if (!(mom20 <= OSR.MOM20_MIN)) return null;              /* 非深超跌 → 不出块（面板已有动量判读块兜底） */
+  var mom5 = null, mom10 = null;
+  if (n >= 6 && typeof kl[n - 6].close === 'number' && isFinite(kl[n - 6].close) && kl[n - 6].close > 0)
+    mom5 = (c0 / kl[n - 6].close - 1) * 100;
+  if (n >= 11 && typeof kl[n - 11].close === 'number' && isFinite(kl[n - 11].close) && kl[n - 11].close > 0)
+    mom10 = (c0 / kl[n - 11].close - 1) * 100;
+  /* ---- 扫描最后一根「恐慌宣泄」放量大阴 ---- */
+  var pIdx = -1, pVolX = null, pBody = null, pDrop = null;
+  for (i = 1; i < n; i++) {
+    b = kl[i]; p = kl[i - 1];
+    if (!b || !p) continue;
+    var v = b.volume, a5 = osrAvg5VolOf(kl, i);
+    if (typeof v !== 'number' || !isFinite(v) || a5 == null || a5 <= 0) continue;
+    if (!(b.close < b.open)) continue;                     /* 必须阴线 */
+    var body = (p.close > 0) ? Math.abs(b.close - b.open) / p.close * 100 : 0;
+    if (body < OSR.PANIC_BODY) continue;                   /* 实体 ≥5% */
+    if (v < a5 * OSR.PANIC_VOLX) continue;                 /* 量 ≥1.5×前5日均量 */
+    pIdx = i; pVolX = v / a5; pBody = body;
+    pDrop = (p.close > 0 && isFinite(p.close)) ? (b.close / p.close - 1) * 100 : null;
+  }
+  /* ---- 恐慌之后的地量（≤ 前一根 0.7 倍；取最后一根） ---- */
+  var dIdx = -1, dRatio = null;
+  if (pIdx >= 0) {
+    for (i = pIdx + 1; i < n; i++) {
+      b = kl[i]; p = kl[i - 1];
+      if (!b || !p) continue;
+      var v2 = b.volume, pv2 = p.volume;
+      if (typeof v2 !== 'number' || !isFinite(v2) || typeof pv2 !== 'number' || !isFinite(pv2) || pv2 <= 0) continue;
+      if (v2 > 0 && v2 <= pv2 * OSR.DRY_RATIO) { dIdx = i; dRatio = v2 / pv2; }
+    }
+  }
+  /* ---- 低点不创新低：恐慌低点此后是否被跌破（true=破 / false=守住 / null=脏值未知） ---- */
+  var brokeLow = null;
+  if (pIdx >= 0) {
+    var pLow = kl[pIdx].low;
+    if (typeof pLow !== 'number' || !isFinite(pLow)) brokeLow = null;
+    else {
+      brokeLow = false;
+      for (i = pIdx + 1; i < n; i++) {
+        var L = kl[i] && kl[i].low;
+        if (typeof L === 'number' && isFinite(L) && L < pLow) { brokeLow = true; break; }
+      }
+    }
+  }
+  /* ---- 末根是否放量阳线确认（④） ---- */
+  var conf = null;
+  var last = kl[n - 1], a5L = osrAvg5VolOf(kl, n - 1);
+  if (last && a5L != null && a5L > 0 && last.close > last.open &&
+      typeof last.volume === 'number' && isFinite(last.volume) && last.volume >= a5L * OSR.CONF_VOLX) {
+    conf = {
+      volX: last.volume / a5L,
+      chg: (n >= 2 && kl[n - 2] && typeof kl[n - 2].close === 'number' && kl[n - 2].close > 0)
+        ? (last.close / kl[n - 2].close - 1) * 100 : null
+    };
+  }
+  /* ---- 阶段判定（④ > ③ > ② > ①；③/④ 都要求「低点不创新低」严格成立） ---- */
+  var phase;
+  if (pIdx >= 0 && dIdx >= 0 && brokeLow === false) phase = conf ? 'P4' : 'P3';
+  else if (pIdx >= 0) phase = 'P2';
+  else phase = 'P1';
+  return {
+    ok: true, phase: phase, mom20: mom20, mom5: mom5, mom10: mom10,
+    panic: (pIdx >= 0) ? { date: kl[pIdx].date || '', volX: pVolX, body: pBody, drop: pDrop, low: kl[pIdx].low } : null,
+    dry: (dIdx >= 0) ? { date: kl[dIdx].date || '', ratio: dRatio } : null,
+    brokeLow: brokeLow, confirm: conf,
+    lastClose: c0, ma10: osrSmaOf(kl, 10), ma20: osrSmaOf(kl, 20)
+  };
+}
+/* 超跌反转块 HTML（失败 / 非深超跌 → 空串，不出块不硬凑）。样式沿用 vp-cj 四 tone。 */
+function osrHtml(res) {
+  if (!res || !res.ok) return '';
+  var tip = '超跌反转 · 量价四阶段（§245，本轮对话三轮交叉验证口径）\n' +
+    '前提：20日动量 ≤ −20%（深度超跌带）。\n' +
+    '① 阴跌中继：尚无恐慌宣泄，不抄底。\n' +
+    '② 恐慌宣泄：放量大阴（阴线实体 ≥5% 且量 ≥ 前5日均量 1.5 倍）多为最后恐慌盘；宣泄后仍创新低 = 宣泄不是终点。\n' +
+    '③ 缩量枯竭：地量（量 ≤ 前一根 0.7 倍）= 抛压枯竭、止跌末期观察区。⚠️ 缩量只说明卖方没了，不等于买方来了 —— 左侧只试仓 ≤5%，且须「低点不创新低」。\n' +
+    '④ 放量确认：缩量之后再放量（末根阳线量 ≥ 前5日均量 1.5 倍）= 右侧真买点，站上10日线 + 回踩不破前低再进。\n' +
+    '纪律：反弹目标 20 日线分批兑现；止损破前低 / 箱体下沿；时间止损 2~4 周不涨即走。\n' +
+    '评价根 = 被点击的这一根（只用它及之前的数据，无未来函数）。\n' +
+    '参考层：不计分、不进四指标打分、不进钉钉推送、不生成买卖信号。';
+  var PH = {
+    P1: { t: '① 阴跌中继', tone: 'con', c: '#ff9b9b', s: '尚无恐慌宣泄信号 —— 不抄底、不接飞刀，等待 ② 出现。' },
+    P2: { t: '② 恐慌宣泄', tone: 'warn', c: '#f0b429', s: '放量大阴多为最后恐慌盘；宣泄后未缩量或仍创新低 = 跌势未止，继续等 ③。' },
+    P3: { t: '③ 缩量枯竭', tone: 'warn', c: '#f0b429', s: '止跌末期观察区：缩量=卖方没了≠买方来了。左侧只试仓 ≤5%（衰竭信号齐才加）；等 ④ 再动手更稳。' },
+    P4: { t: '④ 放量确认', tone: 'pro', c: '#5fd8a4', s: '缩量之后再放量 + 低点不创新低 = 右侧确认。带量长红站上10日线 + 回踩不破前低再进；反弹目标 20 日线分批兑现。' }
+  };
+  var ph = PH[res.phase] || PH.P1;
+  function f1(v) { return (v == null || !isFinite(v)) ? '—' : ((v >= 0 ? '+' : '') + v.toFixed(1) + '%'); }
+  function fx(v) { return (v == null || !isFinite(v)) ? '—' : v.toFixed(1) + '×'; }
+  /* 证据行：恐慌宣泄 / 低点 / 地量 / 末根 —— 有什么写什么，缺的如实不写 */
+  var ev = [];
+  if (res.panic) ev.push('恐慌宣泄 <span style="color:#f0b429">' + escapeHtml(res.panic.date || '—') +
+    '</span>（量 ' + fx(res.panic.volX) + ' · 实体 ' + (res.panic.body != null ? res.panic.body.toFixed(1) + '%' : '—') +
+    (res.panic.drop != null ? ' · 收 ' + f1(res.panic.drop) : '') + '）');
+  ev.push('低点不创新低 ' + (res.brokeLow === true
+    ? '<b style="color:#ff9b9b">✗ 恐慌低点已被跌破</b>'
+    : (res.brokeLow === false ? '<b style="color:#5fd8a4">✓ 守住</b>' : '<span style="color:var(--dim)">未知（脏数据）</span>')));
+  if (res.dry) ev.push('地量 <span style="color:#EF9F27">' + escapeHtml(res.dry.date || '—') + '</span>（缩至前日 ' + fx(res.dry.ratio) + '）');
+  if (res.confirm) ev.push('<b style="color:#5fd8a4">末根放量阳线 ✓（量 ' + fx(res.confirm.volX) +
+    (res.confirm.chg != null ? ' · 涨 ' + f1(res.confirm.chg) : '') + '）</b>');
+  else ev.push('<span style="color:var(--dim)">末根未放量确认（④未到）</span>');
+  /* 位置参照：现价 vs 10/20 日线（切片自算 SMA，仅展示） */
+  var pos = '';
+  if (res.lastClose != null && res.ma10 != null) pos += '现价' + (res.lastClose >= res.ma10 ? '站上' : '仍在') + ' 10日线（' + res.ma10.toFixed(2) + '）';
+  if (res.lastClose != null && res.ma20 != null) pos += (pos ? ' · ' : '') + '20日线 ' + res.ma20.toFixed(2) + '（反弹目标位）';
+  return '<div class="vp-cj ' + ph.tone + '" title="' + escapeHtml(tip).replace(/\n/g, '&#10;') + '">' +
+    '<span class="kk">超跌反转</span>' +
+    '<span class="kn">20日动量 <b style="color:#5fd8a4">' + f1(res.mom20) + '</b>（≤−20% 深超跌）' +
+    (res.mom5 != null ? ' · 5日 ' + f1(res.mom5) : '') +
+    (res.mom10 != null ? ' · 10日 ' + f1(res.mom10) : '') + '</span>' +
+    '<div class="kd">▸ 阶段：<b style="color:' + ph.c + '">' + ph.t + '</b> — ' + ph.s + '</div>' +
+    '<div class="kd" style="color:var(--muted)">▸ 证据：' + ev.join(' ｜ ') + '</div>' +
+    (pos ? '<div class="kd" style="color:var(--dim)">▸ 位置：' + pos + '</div>' : '') +
+    '<div class="kd" style="color:var(--dim)">▸ 纪律：止损 = 破前低 / 箱体下沿；时间止损 2~4 周不涨即走；反弹目标 20 日线分批兑现。参考层：不计分、不发买卖信号。</div>' +
+    '</div>';
+}
+
+/* ============================================================================
    量价八法 · 实时策略（2026-10-25 §211 · 用户八图要求）
    ----------------------------------------------------------------------------
    用户原话：「增加实时点击k线下方量价分析的策略」，附八张图：
@@ -7141,6 +7324,58 @@ var KL_DL_R5_MAX = 0.5;
 var KL_DL_LOW_COLOR = '#ffd400';   /* 正黄 · 低位 / 中位地量（机会侧） */
 var KL_DL_HI_COLOR = '#ff8f00';    /* 橙黄 · 高位地量（陷阱侧） */
 
+/* ============================================================================
+   ★ 2026-10-31 §246（用户原话「符合 10 日动量 ≤ −10%（深超跌），20 日动量 ≤ −20%（深超跌），
+     地量（缩至前日 0.7 倍以下）量柱请用特殊颜色标注，不受其他条件限制」）
+   —— 量能副图「深超跌地量柱」的判据阈值与专属色，**单一真源**
+      （图上 <linearGradient> / kl-head 图例 / 图上角标 / kl-hint tooltip 四处共用同一份数与同一份色）。
+   ----------------------------------------------------------------------------
+   ① 判据 = 三条同时成立，**逐根判定、无未来函数**（只读该根与它之前 20 根，窗口右端就是这根自己）：
+        · 10 日动量 = close[i]÷close[i−10] − 1 ≤ KL_OSDL_M10_MAX(−10%)；
+        · 20 日动量 = close[i]÷close[i−20] − 1 ≤ KL_OSDL_M20_MAX(−20%)；
+        · 该根量 ≤ 前一日量 × KL_OSDL_RATIO(0.7)（**环比前日**口径，≤ 含边界恰好 0.7 也算）。
+      动量单位用**百分数**（−10 / −20），与 §245 OSR 常量表（MOM20_MIN: −20）同口径同单位，
+      不另造第二套深超跌尺。
+   ② 「不受其他条件限制」= **不要求**四阶段 / 恐慌量 / 低点守住 / 位置档 / 量比 r5 ——
+      与 §213 地量黄柱（r5 ≤ 0.5 的「前 5 均量」口径）、§245 OSR 面板（四阶段判定）是三把不同的尺：
+      这里是**环比前日 0.7 倍**口径。同一根柱可以同时满足多把尺，fill 优先级
+      深超跌地量(冰蓝) > 放量(紫) > 地量黄/橙黄 > 红涨绿跌，一根柱只出一个色（见扫描段）。
+      为什么冰蓝优先级压过紫/黄：恐慌大阴（放量）之后的次日缩到 0.7× 以下，恰恰是
+      「最后恐慌盘跑完 → 抛压枯竭」的核心形态 —— §245 三轮交叉验证确立的 ③ 地量枯竭阶段，
+      这一根必须一眼可见，不能被紫柱 / 黄柱盖掉。
+   ③ 颜色 #9fd8ff 冰蓝：量柱现有色板（紫 258° / 正黄 50° / 橙黄 38° / 红 0° / 绿 152°）全部避开，
+      与 5 日均量线 #ffcc66（金细线）、跌停蜡烛 #00c8ff（高饱和青）形态与饱和度双重分层；
+      语义「冰点」—— 深超跌 + 缩到前日七成 = 交易冰封，冷色而非琥珀（琥珀与橙黄 38° 撞车，弃）。
+      想换色只改下面这一行，图例 / 渐变 / 角标 / tooltip 全部跟随（别在 renderChart 里另写字面量）。
+   ④ 诚实留白：i < 20 根 / close·volume 脏（⚠️ isFinite(null)===true，必须显式判 == null，
+      §212/§213 同一个坑）/ 前一日量 ≤ 0 → 该根不判、不涂；整段 try/catch 兜住，图不能挂。
+   ⑤ 参考层：只上色，不计分、不进四指标、不进 VPS、不发买卖信号、不进钉钉；不分阴阳，
+      枯竭这件事把量能柱的涨跌配色让位给「双深超跌 + 缩量」，涨跌方向看正上方那根蜡烛。 */
+var KL_OSDL_M10_MAX = -10;         /* 10 日动量门槛（百分数）：≤ −10% 算深超跌 */
+var KL_OSDL_M20_MAX = -20;         /* 20 日动量门槛（百分数）：≤ −20% 算深超跌 */
+var KL_OSDL_RATIO = 0.7;           /* 环比地量门槛：该根量 ≤ 前一日量 × 0.7（≤ 含边界） */
+var KL_OSDL_MIN_BARS = 20;         /* 需要 i−20 的收盘价，凑不满 20 根不判 */
+var KL_OSDL_COLOR = '#9fd8ff';     /* 冰蓝 · 深超跌地量柱（抛压枯竭） */
+
+/* 深超跌地量判定纯函数（§246 单一判定器：renderChart 扫描与单测共用这一份，绝不各写一份）。
+   返回 true / false（false 含「数据不足 / 脏数据」—— 诚实留白，不冒充）。
+   kl 为全量日K数组（字段 open/high/low/close/volume/date），i 为该根在 kl 中的下标。 */
+function klOsDryOf(kl, i) {
+  if (!kl || !isFinite(i) || i < KL_OSDL_MIN_BARS) return false;
+  var _c0 = kl[i] && kl[i].close, _c10 = kl[i - 10] && kl[i - 10].close, _c20 = kl[i - 20] && kl[i - 20].close;
+  /* ⚠️ 显式判 null：isFinite(null) === true（§212/§213 同坑），脏值一律 false */
+  if (_c0 == null || !isFinite(_c0) || _c0 <= 0) return false;
+  if (_c10 == null || !isFinite(_c10) || _c10 <= 0) return false;
+  if (_c20 == null || !isFinite(_c20) || _c20 <= 0) return false;
+  var _v0 = kl[i] && kl[i].volume, _v1 = kl[i - 1] && kl[i - 1].volume;
+  if (_v0 == null || !isFinite(_v0) || _v0 < 0) return false;
+  if (_v1 == null || !isFinite(_v1) || !(_v1 > 0)) return false;   /* 前一日量 ≤ 0 → 环比无意义，不判 */
+  var _m10 = (_c0 / _c10 - 1) * 100, _m20 = (_c0 / _c20 - 1) * 100;
+  if (!(_m10 <= KL_OSDL_M10_MAX)) return false;   /* 10 日动量 ≤ −10% */
+  if (!(_m20 <= KL_OSDL_M20_MAX)) return false;   /* 20 日动量 ≤ −20% */
+  return _v0 <= _v1 * KL_OSDL_RATIO;              /* 环比地量 ≤ 0.7×（≤ 含边界） */
+}
+
 /* 窗口取数（**唯一真源**）：前 N 根的最低价 / 最低收盘，一次遍历同时给出两者。
    klNewLowOf（正向命中）与 klDipOf（反例诊断）都走这里，绝不各写一份。
    ⚠️ 与 klHiWinOf 刻意**分成两个函数**、不合并成「一次算完 hi 和 lo」：脏数据判断的语义不同 ——
@@ -8225,6 +8460,13 @@ function renderChart(ind, focus, opt) {
   var __dlHi = (typeof KL_DL_HI_COLOR === 'string' && KL_DL_HI_COLOR) ? KL_DL_HI_COLOR : '#ff8f00';
   var __dlR5 = (typeof KL_DL_R5_MAX === 'number' && isFinite(KL_DL_R5_MAX) && KL_DL_R5_MAX > 0) ? KL_DL_R5_MAX : 0.5;
 
+  /* ★ 2026-10-31 §246：深超跌地量柱色 / 阈值的本函数内别名（真源在 KL_OSDL_* 五个常量）。
+     同样 typeof 取（同 §212/§213 既有写法），缺失时退回同一字面量，图不能因此挂掉。 */
+  var __osCol = (typeof KL_OSDL_COLOR === 'string' && KL_OSDL_COLOR) ? KL_OSDL_COLOR : '#9fd8ff';
+  var __osR = (typeof KL_OSDL_RATIO === 'number' && isFinite(KL_OSDL_RATIO) && KL_OSDL_RATIO > 0) ? KL_OSDL_RATIO : 0.7;
+  var __osM10 = (typeof KL_OSDL_M10_MAX === 'number' && isFinite(KL_OSDL_M10_MAX)) ? KL_OSDL_M10_MAX : -10;
+  var __osM20 = (typeof KL_OSDL_M20_MAX === 'number' && isFinite(KL_OSDL_M20_MAX)) ? KL_OSDL_M20_MAX : -20;
+
   var M = 'ui-monospace,Consolas,monospace';
   var svg = '<svg class="chart" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '">';
   svg += '<defs>' +
@@ -8251,6 +8493,11 @@ function renderChart(ind, focus, opt) {
     '</linearGradient>' +
     '<linearGradient id="' + uid + 'vt" x1="0" y1="0" x2="0" y2="1">' +
       '<stop offset="0%" stop-color="' + __dlHi + '" stop-opacity="0.96"/><stop offset="100%" stop-color="' + __dlHi + '" stop-opacity="0.34"/>' +
+    '</linearGradient>' +
+    /* ★ 2026-10-31 §246：深超跌地量柱专属渐变 —— 与 vu / vd / vx / vl / vt 逐字同构
+       （同色两端只差透明度），id 定名 vo（os = oversold，o 避免与 vu/vd/vx/vl/vt 任何一个混）。 */
+    '<linearGradient id="' + uid + 'vo" x1="0" y1="0" x2="0" y2="1">' +
+      '<stop offset="0%" stop-color="' + __osCol + '" stop-opacity="0.96"/><stop offset="100%" stop-color="' + __osCol + '" stop-opacity="0.34"/>' +
     '</linearGradient>' +
     /* ★ KDJ 副图的裁剪窗：J = 3K − 2D 会越出 0~100，越界段裁掉（不 clamp 成贴边直线） */
     '<clipPath id="' + uid + 'kjclip"><rect x="' + plotL + '" y="' + (kdjT - 1) + '" width="' + (plotR - plotL) + '" height="' + (kdjB - kdjT + 2) + '"/></clipPath>' +
@@ -8410,6 +8657,32 @@ function renderChart(ind, focus, opt) {
   svg += '<text x="' + (plotR + 6) + '" y="' + (volT + 11) + '" fill="#5d6788" font-size="10" ' +
     'font-family="' + M + '">' + escapeHtml(fmtWan(vmax)) + '</text>';
 
+  /* ===== ★ 2026-10-31 §246（用户要求「双深超跌 + 缩至前日 0.7 倍以下」的量柱特殊标注）=====
+     逐根判「深超跌地量」并记进 __osdlMap。判据与判定器见常量块（klOsDryOf 单一真源）：
+       10 日动量 ≤ −10% 且 20 日动量 ≤ −20% 且 该根量 ≤ 前一日量 × 0.7（环比口径，≤ 含边界）。
+     ⚠️ 本段必须排在 §212 放量 / §213 地量两段扫描**之前**：那两段都要引用 __osdlMap 做互斥短路
+     （深超跌根不再计入紫柱 / 黄柱的角标根数 —— 一根柱只有一个可见色，每个角标根数 = 图上可见柱数）。
+     纪律（与 §212 / §213 / §166 / §208 同一套）：
+       · 无未来函数 —— 只读该根与它之前 20 根，窗口右端就是这根自己（klOsDryOf 内保证）；
+       · 参考层 —— 只上色，不计分、不进四指标、不进 VPS、不发买卖信号、不进钉钉；
+       · 优先级最高 —— 一根柱可以同时命中 §212 放量 / §213 地量 / 本档（恐慌大阴次日缩量正是
+         核心形态），fill 时冰蓝 > 紫 > 黄/橙黄一决胜负（见量柱 fill 段）；
+       · 不分阴阳 —— 枯竭柱只回答「深跌之后没人卖了」，涨跌方向看正上方那根蜡烛；
+       · 诚实留白 —— i < 20 根 / close·volume 脏（isFinite(null)===true 坑，klOsDryOf 内已显式判）
+         → 该根不判、不涂；判定器缺失（单测沙箱只切本段）→ 整组跳过、图不挂；
+       · 整段 try/catch 兜住 —— 数据脏了，图也不能挂。 */
+  var __osdlMap = {}, __osdlN = 0;
+  try {
+    var _osDryFn = (typeof klOsDryOf === 'function') ? klOsDryOf : null;
+    if (_osDryFn) {
+      for (var _oi = 0; _oi < ks.length; _oi++) {
+        var _og = start + _oi;
+        if (_og < (typeof KL_OSDL_MIN_BARS === 'number' && isFinite(KL_OSDL_MIN_BARS) ? KL_OSDL_MIN_BARS : 20)) continue;
+        if (_osDryFn(kl, _og)) { __osdlMap[_oi] = true; __osdlN++; }
+      }
+    }
+  } catch (eOsDL) { __osdlMap = {}; __osdlN = 0; }
+
   /* ===== ★ 2026-10-26 §212（用户要求「量比大于 1.5 的 k 线量柱用特殊颜色显示」）=====
      逐根算 r5 = 该根量 ÷ 该根之前 5 根均量（**不含当根**），把 > __vrTh 的下标记进 __vrHot。
      口径与点击面板「量比(近似)」chip **逐字同源**（都取自 vpRawOf 的 r5），不另写第二套：
@@ -8425,6 +8698,7 @@ function renderChart(ind, focus, opt) {
   try {
     for (var _vi2 = 0; _vi2 < ks.length; _vi2++) {
       var _gi2 = start + _vi2;
+      if (__osdlMap[_vi2]) continue;          /* §246 深超跌地量优先级最高，已命中不再计紫柱（角标根数 = 可见柱数） */
       if (_gi2 < 5) continue;
       var _s5 = 0, _ok5 = true, _a5;
       for (_a5 = _gi2 - 5; _a5 < _gi2; _a5++) {
@@ -8460,6 +8734,7 @@ function renderChart(ind, focus, opt) {
   try {
     for (var _di = 0; _di < ks.length; _di++) {
       if (__vrHotMap[_di]) continue;            /* 放量优先（见常量块 ③） */
+      if (__osdlMap[_di]) continue;             /* §246 深超跌地量优先级更高，已命中不再计黄柱 */
       var _dg = start + _di;
       if (_dg < 5) continue;                    /* 需要前 5 根，凑不满 5 根不判 */
       var _ds5 = 0, _dok = true, _da;
@@ -8508,18 +8783,36 @@ function renderChart(ind, focus, opt) {
       '</text>';
   }
 
+  /* ★ 2026-10-31 §246：深超跌地量角标（一行：灰标签「枯竭」+ 冰蓝根数，只列根数不列色相 —— 只有冰蓝一档）。
+     · 纵向位置跟着前两组浮动：放量有 → volT+58；放量无但有地量 → volT+36；两组都无 → volT+25。
+       量能面板高 68px（volT=326~volB=394），最深一行 58 仍在面板内；
+     · 「枯竭」两字 + 数字：58px 左留白放不下「深超跌地量」五六个汉字（§213 角标同样教训），
+       完整口径在 kl-hint tooltip 与图例 chip 里，颜色本身就是注解；
+     · 0 根不画（同 §212/§213：没数据别占版面）。 */
+  if (__osdlN > 0) {
+    var _osY = volT + (__vrHotN > 0 ? 58 : ((__dlLoN + __dlHiN) > 0 ? 36 : 25));
+    svg += '<text x="' + (padL - 8) + '" y="' + _osY + '" font-size="9" ' +
+      'font-family="' + M + '" text-anchor="end">' +
+      '<tspan fill="#5d6788">枯竭 </tspan>' +
+      '<tspan fill="' + __osCol + '" font-weight="600">' + __osdlN + '</tspan>' +
+      '</text>';
+  }
+
   /* 量能柱 + 5 日均量线 */
   ks.forEach(function (k, idx) {
     var up = k.close >= k.open;
     var vy = YV(k.volume || 0), vh = Math.max(1, volB - vy);
-    /* 量柱配色从「二选一」→「四选一」（优先级从上到下，互斥由扫描段保证）：
+    /* 量柱配色从「四选一」→「五选一」（§246 新增最高档；优先级从上到下，互斥由扫描段保证）：
+         ⓪ 深超跌地量（§246：双深超跌 + 量 ≤ 前日 0.7×）→ vo 冰蓝 —— 「恐慌跑完、抛压枯竭」
+            的核心形态，压过紫 / 黄（放量紫只说明昨天吓出了量，今天冰蓝说明量也没了）
          ① 放量柱（量比 > __vrTh）          → vx 紫
          ② 低位 / 中位地量（机会侧）        → vl 正黄
          ③ 高位地量（陷阱侧）               → vt 橙黄
          ④ 其余                             → vu 收阳红 / vd 收阴绿（A 股口径）
        柱宽 / 圆角 / 底边 / 高度与位置一律沿用，只换 fill —— 几何一个字符都没动。 */
     var vfill;
-    if (__vrHotMap[idx]) vfill = 'url(#' + uid + 'vx)';
+    if (__osdlMap[idx]) vfill = 'url(#' + uid + 'vo)';
+    else if (__vrHotMap[idx]) vfill = 'url(#' + uid + 'vx)';
     else if (__dlMap[idx] === 1) vfill = 'url(#' + uid + 'vl)';
     else if (__dlMap[idx] === 2) vfill = 'url(#' + uid + 'vt)';
     else vfill = 'url(#' + uid + (up ? 'vu' : 'vd') + ')';
@@ -9477,7 +9770,11 @@ function renderChart(ind, focus, opt) {
       '⚠️ 口径差异：面板 ④「地量地价」用的是另一套尺（量 ≤ 前 60 日均量 × 0.5 且近 5 日 ≥3 日低量，持续性口径），所以「图上涂了黄柱、面板 ④ 却说未进入地量持续区」是正常的 —— 图上以量比为准。&#10;' +
       '· 与放量柱互斥：量比不可能既 ≤ ' + __dlR5 + ' 又 &gt; ' + __vrTh + '，两档天然不重叠，一根柱只会有一个颜色。&#10;' +
       '⚠️ 你提到的另两条「怎么看地量」，本图算不了就不算、不冒充：换手率（小票 &lt;1% / 权重 &lt;0.3%）—— 本台日 K 没有逐日换手率字段（只有当日 quote 带一个），不伪造；两市成交额创新低 —— 那是全市场的地量，属大盘卡口径，单只个股的 K 线图不承载。&#10;' +
-      '诚实留白：前 60 根凑不满 / 量取不到 / 均量 ≤ 0 → 不涂色，也不拿现有根数凑一个假地量。">红涨绿跌（A 股口径） · ' +
+      '诚实留白：前 60 根凑不满 / 量取不到 / 均量 ≤ 0 → 不涂色，也不拿现有根数凑一个假地量。&#10;' +
+      '—— 深超跌地量柱（2026-10-31 §246，冰蓝）：判据按你给的口径 —— 10 日动量 ≤ ' + __osM10 + '% 且 20 日动量 ≤ ' + __osM20 + '%（双深超跌），且该根量 ≤ 前一日量 × ' + __osR + '（**环比前日**口径，≤ 含边界恰好 0.7 也算）—— 与地量黄柱的「前 5 均量 r5 ≤ ' + __dlR5 + '」是两把不同的尺，不冒充同源。&#10;' +
+      '· 「不受其他条件限制」= 不要求四阶段 / 恐慌量 / 低点守住 / 位置档 / 量比 r5，逐根判定、无未来函数（只读该根与它之前 20 根）；&#10;' +
+      '· 优先级最高：同一根同时命中放量紫 / 地量黄时只涂冰蓝 —— 恐慌大阴次日缩到 0.7× 以下，正是「最后恐慌盘跑完、抛压枯竭」的核心形态；&#10;' +
+      '· 诚实留白：不足 20 根 / close·volume 脏 / 前一日量 ≤ 0 → 不判、不涂；参考层，不计分、不发买卖信号。">红涨绿跌（A 股口径） · ' +
       '<b style="color:' + __vrCol + '">量比&gt;' + __vrTh + ' 放量柱 · ' + __vrHotN + ' 根</b></span>' +
     /* ★ 2026-10-26 §213：地量柱图例（两枚 chip，图标沿用 sh-cnd 竖长实体 —— 与图上的柱子是同一个形状）。
        · **只在真有地量柱时出现**：地量是稀有事件（60 日均量的 50% 且近 5 日 3 天），常显「0 根」会让
@@ -9485,6 +9782,9 @@ function renderChart(ind, focus, opt) {
        · 颜色与图上渐变、左侧角标三者取同一份真源（__dlLo / __dlHi），不可能分叉。 */
     (__dlLoN > 0 ? '<span class="kl-chip"><i class="sh sh-cnd" style="color:' + __dlLo + '"></i><b>低位/中位地量 ' + __dlLoN + ' 根</b></span>' : '') +
     (__dlHiN > 0 ? '<span class="kl-chip"><i class="sh sh-cnd" style="color:' + __dlHi + '"></i><b>高位地量 ' + __dlHiN + ' 根</b></span>' : '') +
+    /* ★ 2026-10-31 §246：深超跌地量 chip —— 同地量两枚的规矩：只在真有冰蓝柱时出现（0 根不占版面），
+       判据写在上面 .kl-hint 的 title 里随时可查；色与图上渐变、左侧角标同一份真源（__osCol）。 */
+    (__osdlN > 0 ? '<span class="kl-chip"><i class="sh sh-cnd" style="color:' + __osCol + '"></i><b>深超跌地量 ' + __osdlN + ' 根</b></span>' : '') +
     /* ★ 2026-10-04（用户要求「涨停或跌停 k 线请用特殊的颜色」）：蜡烛专属色图例 —— 金 = 涨停 · 青 = 跌停。
        判定见 klLimitTickOf（收盘 = 该股当日涨 / 跌停价 + 封板 / 封底）；只在蜡烛上换色，量能柱仍按红涨绿跌。
        ★ 2026-10-26 §212 起量能柱多出**一档**配色：量比 > KL_VR15_HOT 的「放量柱」走专属渐变（vx），
@@ -33532,6 +33832,19 @@ function pickReadCfg() {
     })(),
     f28On: cb('pickNewOn'),
     newN: iv('pickNewN', PICK_LS.N_NEW, 20, 500),
+    /* ★ 2026-10-31 F29/F30（用户要求「智能选股增加 5日动量区间，10日动量区间」）：
+       近 5 / 10 日收盘涨幅 ∈ [min,max]%（区间型，同 F1/F19 模式）。10 日直接复用 f.chg10
+       （pickChg10Of —— 与「10日涨幅」列、R10 排名同一口径）；默认值只是输入框种子（两开关默认不勾）。 */
+    mom5On: cb('pickMom5On'),
+    mom5Min: fv('pickMom5Min', -10, -1000, 10000),
+    mom5Max: fv('pickMom5Max', 15, -1000, 10000),
+    mom10On: cb('pickMom10On'),
+    mom10Min: fv('pickMom10Min', -20, -1000, 10000),
+    mom10Max: fv('pickMom10Max', 30, -1000, 10000),
+    /* ★ 2026-10-31 §245 F31（用户策略「超跌反转」）：地量枯竭 —— 近 n 日内出现 量≤前日0.7倍
+       的缩量柱（抛压枯竭）。布尔开关 + 窗口 N；深超跌前提复用 F3（20日动量上限 −20），不另设因子。 */
+    dlOn: cb('pickDlOn'),
+    dlN: iv('pickDlN', 10, 2, 60),
     strategy: String(PICK.strategy || ''),
     rps20On: cb('pickRps20On'), rps60On: cb('pickRps60On'),
     stages: stages
@@ -33558,7 +33871,9 @@ function pickStratApply(key) {
     'pickF9On', 'pickVrOn', 'pickVolOn', 'pickDevOn', 'pickFixZoneOn', 'pickMa2060On', 'pickMaLocOn',
     'pickM5sOn', 'pickRps20On', 'pickRps60On', 'pickR10On',
     'pickNoLimitOn', 'pickChgOn', 'pickToOn', 'pickPxOn', 'pickSpdOn', 'pickPlatOn', 'pick60On',
-    'pickPosOn', 'pickMa510On', 'pickNewOn'].forEach(function (id) { ck(id, false); });
+    'pickPosOn', 'pickMa510On', 'pickNewOn', 'pickMom5On', 'pickMom10On', 'pickDlOn'].forEach(function (id) { ck(id, false); });
+    /* ↑ ★ 2026-10-31：F29/F30（pickMom5On/pickMom10On）与 F31（pickDlOn）随新增一并进「全关」名单 ——
+       预设没写进清单的开关一律不参与，否则上一轮随手勾的动量区间/地量枯竭会悄悄混进策略。 */
 
   /* ② 写入本策略的 12 项阈值并勾选（顺序与上方「展开口径」表 1~13 条一一对应） */
   ck('pickNoLimitOn', true);                                                   /* 1 未涨停 · 13 触板/一字板 */
@@ -33692,6 +34007,37 @@ function pickChg10Of(ind) {
   var a = kl[kl.length - 11].close, b = kl[kl.length - 1].close;
   if (!(a > 0) || !(isFinite(b))) return null;
   return (b / a - 1) * 100;
+}
+/* ★ 2026-10-31 F29（用户要求「智能选股增加 5日动量区间」）：近 5 日涨幅（%）
+   = 最新收盘 ÷ 5 根前收盘 − 1。需 ≥6 根日K。刻意与 pickChg10Of 同法**自算**而不读
+   ind.gain5：computeIndicators 的 gain5 窗口日后若被调整，不至于把智能选股口径悄悄带偏
+   —— 同族两窗（5日/10日）一个来源（日K 直算），分叉风险归零；日K不足 → null（诚实留白）。 */
+function pickChg5Of(ind) {
+  var kl = ind && ind.klines;
+  if (!kl || kl.length < 6) return null;
+  var a = kl[kl.length - 6].close, b = kl[kl.length - 1].close;
+  if (!(a > 0) || !(isFinite(b))) return null;
+  return (b / a - 1) * 100;
+}
+/* ★ 2026-10-31 §245 F31（用户策略「超跌反转 · 地量枯竭」）：近 n 日内是否出现「地量」——
+   量 ≤ 前一根 × 0.7（缩至前日 0.7 倍以下 = 抛压枯竭、止跌末期的量价信号）。
+   返回：{ hit:true, date, ratio }（命中，取窗口内最后一根地量）/ { hit:false, n }（窗口内未出现）；
+   日K不足 n+1 根（每根地量候选都要有自己的「前一日」）/ 窗口内量值脏 → null（数据不足，诚实留白）。
+   ⚠️ 深超跌前提不在本因子内判 —— 复用既有 F3（20日动量区间上限设 −20）即可，不开第二套动量口径。 */
+function pickDlOf(kl, n) {
+  if (!Array.isArray(kl) || !kl.length) return null;
+  n = (n != null && isFinite(n) && n >= 2) ? Math.floor(n) : 10;
+  if (kl.length < n + 1) return null;
+  var hit = null;
+  for (var i = kl.length - n; i < kl.length; i++) {
+    var b = kl[i], p = kl[i - 1];
+    if (!b || !p) return null;
+    var v = b.volume, pv = p.volume;
+    if (typeof v !== 'number' || !isFinite(v) || typeof pv !== 'number' || !isFinite(pv)) return null;
+    if (pv > 0 && v > 0 && v <= pv * 0.7) hit = { date: b.date || '', ratio: v / pv };
+  }
+  if (hit) { hit.hit = true; return hit; }
+  return { hit: false, n: n };
 }
 
 /* ============================================================================
@@ -34001,7 +34347,8 @@ function pickFactors(code) {
      2.5~5 明显放量（突破有效率高）· >8 过热；主升浪启动共识区 ≈ 2~5（2~3 启动信号、3~5 蓄势起爆）。 */
   f.volR = (_bs && _bs.volRatio != null && isFinite(_bs.volRatio)) ? _bs.volRatio
     : ((r.ind.volRatio != null && isFinite(r.ind.volRatio)) ? r.ind.volRatio : null);
-  f.chg10 = pickChg10Of(r.ind);           /* R10：近 10 日涨幅 % */
+  f.chg10 = pickChg10Of(r.ind);           /* R10：近 10 日涨幅 %（★ 2026-10-31 F30 复用同一口径，不开第二套 10 日算法） */
+  f.mom5 = pickChg5Of(r.ind);             /* ★ 2026-10-31 F29：近 5 日涨幅 %（与 chg10 同法自算，不读 ind.gain5 —— 见 pickChg5Of 注释） */
   /* F11 波动率：近 20 日日收益率标准差（%）。快照无历史价 → 仅日K 单路；取不到 = null（诚实留白）。
      核验来源与口径见 pickVolOf 注释；⚠️ 与 F4 ATR 同为波动率口径（振幅 vs 收盘），建议二选一启用。 */
   f.vol = pickVolOf(r.ind);
@@ -34076,6 +34423,10 @@ function pickFactors(code) {
   f.ma510 = pickMa510Of(r.ind, PICK_LS.MA_GAP);
   /* F28 次新：日K根数 < n → 次新（近似口径与已知误伤见 pickNewStockOf 注释） */
   f.newstk = pickNewStockOf(r.ind.klines, _lsC.nNew);
+  /* ★ 2026-10-31 §245 F31 地量枯竭：近 dlN 日内是否出现 量≤前日0.7倍 的缩量柱。
+     窗口走 cfg.dlN（用户可改，2~60，默认 10）；_pickF 已由 pickRun 开头统一清缓存，
+     改窗口重跑即生效（与 m5sBase 同一套失效机制，不另设版本号）。 */
+  f.dl = pickDlOf(r.ind.klines, _lsC.dlN);
   r._pickF = f;
   return f;
 }
@@ -34179,6 +34530,9 @@ function pickJudge(code, cfg) {
   if (cfg.f9On && f.amt == null) return { ok: false, why: 'data' };
   if (cfg.f10On && f.volR == null) return { ok: false, why: 'data' };
   if (cfg.f11On && f.vol == null) return { ok: false, why: 'data' };
+  if (cfg.mom5On && f.mom5 == null) return { ok: false, why: 'data' };     /* ★ 2026-10-31 F29：日K<6根 → 近5日涨幅取不到，诚实留白 */
+  if (cfg.mom10On && f.chg10 == null) return { ok: false, why: 'data' };   /* ★ 2026-10-31 F30：日K<11根 → 近10日涨幅取不到（chg10 本来就算，零新增成本） */
+  if (cfg.dlOn && f.dl == null) return { ok: false, why: 'data' };         /* ★ 2026-10-31 §245 F31：日K<dlN+1根 / 窗口量值脏 → 数据不足，诚实留白 */
   if (cfg.rps20On && f.rps20 == null) return { ok: false, why: 'data' };   /* ★ 2026-10-07 F12：板块RPS数据缺失（未入板块/未拉取）→ 诚实留白 */
   if (cfg.rps60On && f.rps60 == null) return { ok: false, why: 'data' };   /* ★ 2026-10-07 F13 同上 */
   if (cfg.f14On && f.dev == null) return { ok: false, why: 'data' };       /* ★ 2026-10-08 F14：dev 偏离度缺数据 → 诚实留白 */
@@ -34210,6 +34564,9 @@ function pickJudge(code, cfg) {
   if (cfg.rps20On && (f.rps20 < cfg.rps20Min || f.rps20 > cfg.rps20Max)) return { ok: false, why: 'F12' };   /* ★ 2026-10-07（用户策略）：F12 板块RPS20 ∈ [min,max]（>85 短期强势；不追 >90 鱼尾；<50 回避） */
   if (cfg.rps60On && (f.rps60 < cfg.rps60Min || f.rps60 > cfg.rps60Max)) return { ok: false, why: 'F13' };   /* ★ 2026-10-07（用户策略）：F13 板块RPS60 ∈ [min,max]（>80 中期趋势稳固、回调即低吸；与 F12 双高优先） */
   if (cfg.f14On && (f.dev < cfg.devMin || f.dev > cfg.devMax)) return { ok: false, why: 'F14' };   /* ★ 2026-10-08（用户要求）：F14 dev 偏离度 ∈ [min,max]%（(现价−MA5)÷MA5；默认 0~6 = 平台 MA5 策略不追高区；>8 超涨 / 负值破线） */
+  if (cfg.mom5On && (f.mom5 < cfg.mom5Min || f.mom5 > cfg.mom5Max)) return { ok: false, why: 'F29' };     /* ★ 2026-10-31 F29：近5日动量 ∈ [min,max]%（与 F3 20日动量同族区间判定；比较含两端） */
+  if (cfg.mom10On && (f.chg10 < cfg.mom10Min || f.chg10 > cfg.mom10Max)) return { ok: false, why: 'F30' }; /* ★ 2026-10-31 F30：近10日动量 ∈ [min,max]%（f.chg10 与「10日涨幅」列同源；R10 是排名截断、F30 是区间过滤，两者可叠加，口径互不干扰） */
+  if (cfg.dlOn && !(f.dl && f.dl.hit)) return { ok: false, why: 'F31' };   /* ★ 2026-10-31 §245 F31：近 dlN 日内须出现过「量≤前日0.7倍」的地量（抛压枯竭）；深超跌前提用 F3 组合，不在本条内重复判 */
   if (cfg.fixZoneOn && f.fixZone !== true) return { ok: false, why: 'F15' };   /* ★ 2026-10-17（用户要求）：F15 只留「此刻正处在修正区」的票 —— MA20>MA60 ∧ MA60<收盘<MA20 */
   /* ★ 2026-10-19 §182（用户要求「MA20大于MA60，股价小于MA20 或大于MA20」）：
      F16 = 20 线在 60 线上方（严格不等：恰好相等不算多头排列）。
@@ -34491,6 +34848,8 @@ async function pickRun() {
   if (cfg.rps20Min > cfg.rps20Max) { pickStatus('F12：板块RPS20区间下限不能大于上限', true); return; }
   if (cfg.rps60Min > cfg.rps60Max) { pickStatus('F13：板块RPS60区间下限不能大于上限', true); return; }
   if (cfg.devMin > cfg.devMax) { pickStatus('F14：dev 偏离度区间下限不能大于上限', true); return; }
+  if (cfg.mom5Min > cfg.mom5Max) { pickStatus('F29：5日动量区间下限不能大于上限', true); return; }     /* ★ 2026-10-31 F29 */
+  if (cfg.mom10Min > cfg.mom10Max) { pickStatus('F30：10日动量区间下限不能大于上限', true); return; }   /* ★ 2026-10-31 F30 */
   PICK.cfg = cfg;
   PICK.started = true;
   var run = ++PICK.runId;
@@ -34707,10 +35066,12 @@ function pickDropTxt() {
   var map = { data: '数据不足', F1: '斜率越界', F2: '往上天数越界', F3: '动量越界', F4: 'ATR越界', F5: '阶段不符', F6: '四指标越界/否决', F7: '涨停过频', F8: '市值越界', F9: '成交额越界', F10: '量比越界', F11: '波动率越界', F12: '板块RPS20越界', F13: '板块RPS60越界', F14: 'dev偏离越界', F15: '不在修正区', F16: 'MA20未在MA60上方', F17: '股价不在MA20指定侧', F18: '5分钟无异动', F20: '🩸风险行业黑名单', F21: '攻防非进攻日', R10: '涨幅排名外',
     /* ★ 2026-10-25 §209 策略「未涨停 · 低位 · 已启动」*/
     F19: '涨幅越界', F20: '今日涨停/触板', F21: '换手越界', F22: '股价过低', F23: '5分钟涨速<门槛',
-    F24: '平台整理不足', F25: '近3月涨幅过大', F26: '位置不够低', F27: '5·10均线不符', F28: '次新剔除' };
+    F24: '平台整理不足', F25: '近3月涨幅过大', F26: '位置不够低', F27: '5·10均线不符', F28: '次新剔除',
+    /* ★ 2026-10-31 F29/F30 动量区间族 + §245 F31 地量枯竭 */
+    F29: '5日动量越界', F30: '10日动量越界', F31: '未见地量枯竭' };
   var parts = [];
   ['data', 'F1', 'F2', 'F3', 'F4', 'F5', 'F6', 'F7', 'F8', 'F9', 'F10', 'F11', 'F12', 'F13', 'F14', 'F15', 'F16', 'F17', 'F18',
-    'F19', 'F20', 'F21', 'F22', 'F23', 'F24', 'F25', 'F26', 'F27', 'F28', 'R10'].forEach(function (k) {
+    'F19', 'F20', 'F21', 'F22', 'F23', 'F24', 'F25', 'F26', 'F27', 'F28', 'F29', 'F30', 'F31', 'R10'].forEach(function (k) {
     if (PICK.drop[k]) parts.push((map[k] || k) + ' ' + PICK.drop[k]);
   });
   return parts.length ? parts.join(' · ') : '无';
@@ -34841,10 +35202,12 @@ function pickRender() {
     if (!_cfg.ma2060On) _off.push('F16');
     if (!_cfg.maLocOn) _off.push('F17');
     if (!_cfg.m5sOn) _off.push('F18');   /* ★ 2026-10-21 §196：新增因子必须同步「本轮已停用」名单，否则用户看不出它没参与 */
+    if (!_cfg.mom5On) _off.push('F29'); if (!_cfg.mom10On) _off.push('F30');   /* ★ 2026-10-31 F29/F30：动量区间族同步停用名单 */
+    if (!_cfg.dlOn) _off.push('F31');   /* ★ 2026-10-31 §245：F31 地量枯竭同步停用名单（§196 老问题预防） */
     /* ★ 2026-10-25 §209：F19~F28 走条件表遍历 —— 以后再加条件只改 PICK_LS_COND 一处，
        这里自动跟上（写死数组就会重演「新增了因子但停用名单没同步」的老问题）。 */
     PICK_LS_COND.forEach(function (c) { if (!_cfg[c.on]) _off.push(c.f); });
-    h += '<div style="color:var(--dim);font-size:11.5px;margin-top:6px">口径：F1=MA5斜率 ' + _cfg.slopeMin + '~' + _cfg.slopeMax + '%（ma5SlopePct，区间）· F2=斜率往上天数 ' + _cfg.upDaysMin + '~' + _cfg.upDaysMax + ' 天（ma5UpDaysOf）· F3=20日动量 ' + _cfg.momMin + '~' + _cfg.momMax + '%（mom20Of）· F4=ATR% ' + _cfg.atrMin + '~' + _cfg.atrMax + '（atr14Of）· F5=阶段∈{' + _cfg.stages.map(pickStageTag).join('/') + '}（描述性筛选，不发信号）· F6=四指标 ' + _cfg.s4kMin + '~' + _cfg.s4kMax + ' 分' + (_cfg.noVeto ? ' 且无一票否决' : '') + '（s4kTotal，区间；0~100=分数不限）· F7=20日涨停 ' + _cfg.ztCntMin + '~' + _cfg.ztCntMax + ' 次（近20根收盘涨停，板制档位按 boardOf）' + (_cfg.f8On ? '· F8=流通市值 ' + _cfg.capMin + '~' + _cfg.capMax + ' 亿' : '') + (_cfg.f9On ? '· F9=成交额 ' + _cfg.amtMin + '~' + _cfg.amtMax + ' 亿（榜单快照：东财 f6 / 新浪 amount）' : '') + (_cfg.f10On ? '· F10=量比 ' + _cfg.vrMin + '~' + _cfg.vrMax + ' 倍（当日量÷前5日均量·不含当日）' : '') + (_cfg.f11On ? '· F11=波动率 ' + _cfg.volMin + '~' + _cfg.volMax + '%（20日日收益率标准差，年化≈×√250；与 F4 ATR 同为波动率口径建议二选一）' : '') + (_cfg.f14On ? '· F14=dev偏离度 ' + _cfg.devMin + '~' + _cfg.devMax + '%（(现价−MA5)÷MA5；默认 0~6=平台 MA5 策略不追高区）' : '') + (_cfg.rps20On ? '· F12=板块RPS20 ' + _cfg.rps20Min + '~' + _cfg.rps20Max + '（新浪一级行业·成员流通市值加权20日涨幅→排名，RPS=(1−排名÷总数)×100；>85 短期强势，<50 回避，不追>90 鱼尾）' : '') + (_cfg.rps60On ? '· F13=板块RPS60 ' + _cfg.rps60Min + '~' + _cfg.rps60Max + '（同口径60日涨幅排名；>80 中期趋势稳固、回调即低吸；与 F12 双高优先）' : '') + (_cfg.fixZoneOn ? '· F15=铲斗修正区（勾选=只要 MA20>MA60 ∧ MA60<收盘<MA20 的票，与 C 区徽标「实色档」同一判定 inFixZone；徽标灰蓝档=形态在 C 区但不属修正区，不入选；参考层，不计分、不发买卖信号）' : '') + (_cfg.ma2060On ? '· F16=MA20>MA60（20 线在 60 线上方·多头排列；均线取 digPhaseOf，与 F15/C 区徽标同一份数；严格不等；参考层不计分）' : '') + (_cfg.maLocOn ? '· F17=股价' + (_cfg.maLocDir === 'gt' ? '高于' : '低于') + 'MA20（收盘与 MA20 取自 digPhaseOf，严格不等比较；' + (_cfg.maLocDir === 'gt' ? '站在 20 线上方的强势侧' : '回落至 20 线下方') + '；参考层不计分）' : '') + (_cfg.m5sOn ? '· F18=5分钟强势异动（当日 9:30 起，5 分钟K「至少一根」单根涨幅 ≥ 门槛：10cm 主板 ' + _cfg.m5sMain + '% · 20cm 双创 ' + _cfg.m5sStar + '%；口径=' + (_cfg.m5sBase === 'self' ? '收÷开（不含跳空：全部按本根收÷本根开，跳空高开型会漏）' : (_cfg.m5sBase === 'prev' ? '收÷前收（全含跳空·首根比昨收，高开抢筹会入选、一字涨停也会命中）' : '首根取较大值（默认：当日首根 09:35 取 max(收÷昨收, 收÷开) —— 高开时把集合竞价缺口加上去、低开时用收÷开不被压低；其余根 收÷开，既不漏竞价抢筹、也不把跳空重复计入每一根）')) + '；数据复用 analyzeStock 已抓的 r.m5，零新增请求；参考层不计分）' : '') + (_cfg.r10On ? '· 10日涨幅排名前 ' + _cfg.r10N + ' 只（分析后按近10日涨幅降序）' : '') + pickLsFootTxt(_cfg) + (_off.length ? '。本轮已停用：' + _off.join('/') + '（取消勾选）' : '') + '。20日动量/流通市值/成交额/10日涨幅值见展开详情与报告。' + (PICK.rps ? escapeHtml(PICK.rps.info) + '。' : '') + '本页只做选股与描述，买卖决策仍以四指标打分为唯一依据。</div>';
+    h += '<div style="color:var(--dim);font-size:11.5px;margin-top:6px">口径：F1=MA5斜率 ' + _cfg.slopeMin + '~' + _cfg.slopeMax + '%（ma5SlopePct，区间）· F2=斜率往上天数 ' + _cfg.upDaysMin + '~' + _cfg.upDaysMax + ' 天（ma5UpDaysOf）· F3=20日动量 ' + _cfg.momMin + '~' + _cfg.momMax + '%（mom20Of）· F4=ATR% ' + _cfg.atrMin + '~' + _cfg.atrMax + '（atr14Of）· F5=阶段∈{' + _cfg.stages.map(pickStageTag).join('/') + '}（描述性筛选，不发信号）· F6=四指标 ' + _cfg.s4kMin + '~' + _cfg.s4kMax + ' 分' + (_cfg.noVeto ? ' 且无一票否决' : '') + '（s4kTotal，区间；0~100=分数不限）· F7=20日涨停 ' + _cfg.ztCntMin + '~' + _cfg.ztCntMax + ' 次（近20根收盘涨停，板制档位按 boardOf）' + (_cfg.f8On ? '· F8=流通市值 ' + _cfg.capMin + '~' + _cfg.capMax + ' 亿' : '') + (_cfg.f9On ? '· F9=成交额 ' + _cfg.amtMin + '~' + _cfg.amtMax + ' 亿（榜单快照：东财 f6 / 新浪 amount）' : '') + (_cfg.f10On ? '· F10=量比 ' + _cfg.vrMin + '~' + _cfg.vrMax + ' 倍（当日量÷前5日均量·不含当日）' : '') + (_cfg.f11On ? '· F11=波动率 ' + _cfg.volMin + '~' + _cfg.volMax + '%（20日日收益率标准差，年化≈×√250；与 F4 ATR 同为波动率口径建议二选一）' : '') + (_cfg.f14On ? '· F14=dev偏离度 ' + _cfg.devMin + '~' + _cfg.devMax + '%（(现价−MA5)÷MA5；默认 0~6=平台 MA5 策略不追高区）' : '') + (_cfg.rps20On ? '· F12=板块RPS20 ' + _cfg.rps20Min + '~' + _cfg.rps20Max + '（新浪一级行业·成员流通市值加权20日涨幅→排名，RPS=(1−排名÷总数)×100；>85 短期强势，<50 回避，不追>90 鱼尾）' : '') + (_cfg.rps60On ? '· F13=板块RPS60 ' + _cfg.rps60Min + '~' + _cfg.rps60Max + '（同口径60日涨幅排名；>80 中期趋势稳固、回调即低吸；与 F12 双高优先）' : '') + (_cfg.fixZoneOn ? '· F15=铲斗修正区（勾选=只要 MA20>MA60 ∧ MA60<收盘<MA20 的票，与 C 区徽标「实色档」同一判定 inFixZone；徽标灰蓝档=形态在 C 区但不属修正区，不入选；参考层，不计分、不发买卖信号）' : '') + (_cfg.ma2060On ? '· F16=MA20>MA60（20 线在 60 线上方·多头排列；均线取 digPhaseOf，与 F15/C 区徽标同一份数；严格不等；参考层不计分）' : '') + (_cfg.maLocOn ? '· F17=股价' + (_cfg.maLocDir === 'gt' ? '高于' : '低于') + 'MA20（收盘与 MA20 取自 digPhaseOf，严格不等比较；' + (_cfg.maLocDir === 'gt' ? '站在 20 线上方的强势侧' : '回落至 20 线下方') + '；参考层不计分）' : '') + (_cfg.m5sOn ? '· F18=5分钟强势异动（当日 9:30 起，5 分钟K「至少一根」单根涨幅 ≥ 门槛：10cm 主板 ' + _cfg.m5sMain + '% · 20cm 双创 ' + _cfg.m5sStar + '%；口径=' + (_cfg.m5sBase === 'self' ? '收÷开（不含跳空：全部按本根收÷本根开，跳空高开型会漏）' : (_cfg.m5sBase === 'prev' ? '收÷前收（全含跳空·首根比昨收，高开抢筹会入选、一字涨停也会命中）' : '首根取较大值（默认：当日首根 09:35 取 max(收÷昨收, 收÷开) —— 高开时把集合竞价缺口加上去、低开时用收÷开不被压低；其余根 收÷开，既不漏竞价抢筹、也不把跳空重复计入每一根）')) + '；数据复用 analyzeStock 已抓的 r.m5，零新增请求；参考层不计分）' : '') + (_cfg.mom5On ? '· F29=5日动量 ' + _cfg.mom5Min + '~' + _cfg.mom5Max + '%（近5日收盘涨幅 pickChg5Of，日K<6根=数据不足）' : '') + (_cfg.mom10On ? '· F30=10日动量 ' + _cfg.mom10Min + '~' + _cfg.mom10Max + '%（近10日收盘涨幅 pickChg10Of，与「10日涨幅」列/R10 同源）' : '') + (_cfg.dlOn ? '· F31=地量枯竭（近 ' + _cfg.dlN + ' 日内出现 量≤前日0.7倍 的缩量柱 = 抛压枯竭信号；深超跌前提勾 F3 20日动量上限 −20 组合使用）' : '') + (_cfg.r10On ? '· 10日涨幅排名前 ' + _cfg.r10N + ' 只（分析后按近10日涨幅降序）' : '') + pickLsFootTxt(_cfg) + (_off.length ? '。本轮已停用：' + _off.join('/') + '（取消勾选）' : '') + '。20日动量/流通市值/成交额/10日涨幅值见展开详情与报告。' + (PICK.rps ? escapeHtml(PICK.rps.info) + '。' : '') + '本页只做选股与描述，买卖决策仍以四指标打分为唯一依据。</div>';
   } else if (done && !sel.length && n) {
     h += '<div class="card" style="margin-top:12px"><div class="stage-empty">③ 入选股票：<b>0 只</b> —— 预筛 ' + n + ' 只中无「勾选条件全部满足」的股票（淘汰分布：' + pickDropTxt() + '）。可放宽阈值后重跑（分析缓存复用，秒级）。</div></div>';
   }
@@ -34872,6 +35235,9 @@ function pickReportMd() {
   if (cfg.f1On) _rp.push('F1 MA5斜率 ' + cfg.slopeMin + '~' + cfg.slopeMax + '%（ma5SlopePct；★ 2026-10-08 由「≥ min」改区间）');
   if (cfg.f2On) _rp.push('F2 斜率往上天数 ' + cfg.upDaysMin + '~' + cfg.upDaysMax + ' 天（ma5UpDaysOf；1=翻上当天）');
   if (cfg.f3On) _rp.push('F3 20日动量 ' + cfg.momMin + '~' + cfg.momMax + '%（mom20Of）');
+  if (cfg.mom5On) _rp.push('F29 5日动量 ' + cfg.mom5Min + '~' + cfg.mom5Max + '%（近5日收盘涨幅 pickChg5Of，日K<6根=数据不足；与 F3 20日动量同族区间判定）');   /* ★ 2026-10-31 */
+  if (cfg.mom10On) _rp.push('F30 10日动量 ' + cfg.mom10Min + '~' + cfg.mom10Max + '%（近10日收盘涨幅 pickChg10Of，与「10日涨幅」列 / R10 排名同一口径；F30 是区间过滤、R10 是排名截断，可叠加）');   /* ★ 2026-10-31 */
+  if (cfg.dlOn) _rp.push('F31 地量枯竭（近 ' + cfg.dlN + ' 个交易日内出现过 量≤前日0.7倍 的缩量柱 = 抛压枯竭、止跌末期量价信号；日K不足 N+1 根 / 窗口量值脏 = 数据不足；深超跌前提请组合 F3（20日动量上限 −20）；★ 参考/描述层：不计分、不进四指标打分、不进钉钉推送、不生成买卖信号）');   /* ★ 2026-10-31 §245 */
   if (cfg.f4On) _rp.push('F4 ATR% ' + cfg.atrMin + '~' + cfg.atrMax + '（atr14Of）');
   if (cfg.f5On) _rp.push('F5 阶段∈{' + cfg.stages.map(pickStageTag).join('/') + '}');
   if (cfg.f6On) _rp.push('F6 四指标 ' + cfg.s4kMin + '~' + cfg.s4kMax + ' 分' + (cfg.noVeto ? ' 且无一票否决' : '') + '（s4kTotal，区间；0~100=分数不限）');
@@ -35505,6 +35871,16 @@ function init() {
         momBlock = vpMomHtml(dingMomNumsOf(ent.kl.slice(0, ent.start + i + 1)));
       }
     } catch (eMomV) { momBlock = ''; }
+    /* ★ 2026-10-31 §245（用户要求「按照上面策略修改生命周期平台」）：超跌反转 · 量价四阶段块。
+       仅深超跌（20日动量 ≤ −20%）出块（osrJudgeOf 返回 null = 不出块，不硬凑）；
+       评价根 = 被点击的这一根（slice 截到全量下标，无未来函数）；仅日线面板（分钟/周线套日线
+       阈值属假读数，§175/§176 先例）。先算后插（§150 DOM 时序纪律）。 */
+    var osrBlock = '';
+    try {
+      if (ent && ent.kl && ent.kl.length && (!ent.per || ent.per === 'day')) {
+        osrBlock = osrHtml(osrJudgeOf(ent.kl.slice(0, ent.start + i + 1)));
+      }
+    } catch (eOsrV) { osrBlock = ''; }
     /* ★ 2026-10-13（用户要求删除「K 线图上的支撑/压力关键位」）：原先在此处的「以所点 K 线为基准根
        整图重绘关键位」（data-focus 比对 → renderChart(ent.ind, gidx) → 替换 .kl-head/.chart-wrap）已随之移除。
        理由：关键位（图上横线 + 区间带 + 图例 chip + 基准根口径）已整体下线，图上内容不再随所点根变化，
@@ -35525,6 +35901,17 @@ function init() {
         else panel.insertAdjacentHTML('afterbegin', momBlock);
       }
     } catch (eMomIns) { /* 插入失败不拖累面板 */ }
+    /* ★ 2026-10-31 §245：超跌反转块插入 —— 与动量判读同锚（.vp-verdict beforebegin），
+       晚于动量判读执行 → 落位「动量判读 / 超跌反转 / 小师妹量价 / 结论条」：
+       三窗动量先给趋势位置，深超跌时紧接四阶段判定与策略，再进单根口诀与结论。
+       （仅深超跌出块；osrBlock 为空 = 本段直接跳过。） */
+    try {
+      if (osrBlock) {
+        var vdOsr = panel.querySelector('.vp-verdict');
+        if (vdOsr) vdOsr.insertAdjacentHTML('beforebegin', osrBlock);
+        else panel.insertAdjacentHTML('afterbegin', osrBlock);
+      }
+    } catch (eOsrIns) { /* 插入失败不拖累面板 */ }
     /* ★ 2026-10-17 §150：小师妹量价口诀块 —— **必须在 innerHTML 赋值之后插入**（原因见上，先插会被整段覆盖）。
        锚点 = 结论条 .vp-verdict 的 beforebegin → 落位「动量判读（§240）之后 / 结论条之前」；
        兜底（vpVerdictHtml 返回空串等异常形态）→ 挂面板最前面，宁可见不隐藏。
