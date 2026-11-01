@@ -1125,6 +1125,57 @@
   .d12-gate.bad  { background:#f0453a22; color:#f0453a; border:1px solid #f0453a55; }
   .d12-gate.dim  { background:#8892b01a; color:#8892b0; border:1px solid #8892b040; }
   /* ==== D12-CSS-END ==== */
+  /* ==== §258 涨停催化（cat 模块）专用样式，cat 前缀避免与主站冲突 ==== */
+  .catpipe{display:flex;align-items:stretch;margin:2px 0 12px;flex-wrap:wrap}
+  .catpipe .pstep{flex:1;min-width:130px;background:#111a2e;border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+  .catpipe .pstep .no{font-size:10px;color:var(--dim);letter-spacing:1px}
+  .catpipe .pstep .t{font-weight:700;font-size:13px;margin:2px 0}
+  .catpipe .pstep .d{font-size:10.5px;color:var(--muted);line-height:1.5}
+  .catpipe .parrow{display:flex;align-items:center;padding:0 6px;color:var(--dim);font-size:15px}
+  .catkpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:12px}
+  .catkpi{background:#111a2e;border:1px solid var(--line);border-radius:10px;padding:10px 13px}
+  .catkpi .v{font-size:22px;font-weight:800;line-height:1.2}
+  .catkpi .k{font-size:11px;color:var(--muted);margin-top:2px;line-height:1.5}
+  .catkpi.hot .v{color:var(--up)} .catkpi.gold .v{color:var(--gold)} .catkpi.blue .v{color:var(--accent)} .catkpi.dim .v{color:var(--dim)}
+  .catsec{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:14px;background:#0e1626}
+  .catsec h3{font-size:14.5px;margin:0 0 4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .catsec h3 .tag{font-size:10px;font-weight:400;color:#0b1020;background:var(--accent);border-radius:4px;padding:1px 7px}
+  .catsec .desc{color:var(--muted);font-size:11.5px;margin-bottom:10px;line-height:1.7}
+  .catpill{display:inline-block;font-size:10.5px;padding:1px 8px;border-radius:9px;white-space:nowrap;border:1px solid transparent}
+  .catpill.ok{background:#ff525222;color:#ff9e9e;border-color:#ff525255}
+  .catpill.mid{background:#ff9f4322;color:#ff9f43;border-color:#ff9f4355}
+  .catpill.bad{background:#26c28118;color:var(--down);border-color:#26c28155}
+  .catpill.a{background:#ff2d7822;color:#ff7ba6;border-color:#ff2d7866}
+  .catpill.b{background:#ffcc6618;color:var(--gold);border-color:#ffcc6655}
+  .catpill.c{background:#8892b015;color:var(--muted);border-color:#8892b044}
+  .catstars{letter-spacing:2px;color:var(--gold);font-size:10.5px}
+  .catfbtn{font-size:11.5px;padding:3px 12px;border-radius:14px;border:1px solid var(--line);background:#0a0f1e;color:var(--muted);cursor:pointer;user-select:none}
+  .catfbtn.on{border-color:var(--accent);color:#bcd0ff;background:#5b8cff18}
+  .cattl{position:relative;height:14px;background:#0a0f1e;border:1px solid var(--line);border-radius:4px;overflow:hidden;min-width:150px}
+  .cattl i{position:absolute;top:0;bottom:0}
+  .cattl .msg{background:#00c8ff} .cattl .zt{background:var(--up)}
+  .cattlleg{display:flex;gap:14px;font-size:10.5px;color:var(--muted);margin-top:8px}
+  .cattlleg i{display:inline-block;width:10px;height:8px;border-radius:2px;margin-right:4px;vertical-align:middle}
+  .cattiers{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+  .cattier{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#0a0f1e}
+  .cattier.lead{border-color:#ff2d7866}
+  .cattier h4{font-size:12.5px;margin:0 0 6px;color:var(--gold)}
+  .catlb{font-size:10px;padding:1px 7px;border-radius:4px;margin-right:6px;vertical-align:1px}
+  .catlb.l1{background:#ff2d7822;color:#ff7ba6} .catlb.l2{background:#ff9f4322;color:#ff9f43} .catlb.l3{background:#5b8cff22;color:#9db8ff} .catlb.l0{background:#8892b015;color:var(--muted)}
+  .catdead{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+  .catdcard{border:1px solid #ff525244;border-radius:10px;padding:10px 13px;background:#ff525208}
+  .catdcard.ok{border-color:#26c28144;background:#26c28108}
+  .catdcard h4{font-size:12.5px;color:#ff9e9e;margin:0 0 4px}
+  .catdcard.ok h4{color:#7de8b8}
+  .catdcard p{font-size:11.5px;color:var(--muted);margin:0;line-height:1.7}
+  .catdcard p b{color:var(--text)}
+  .catnote{font-size:11.5px;color:var(--dim);margin-top:10px;line-height:1.8}
+  .catnote b{color:var(--muted)}
+  .catmono{font-family:Consolas,monospace}
+  #view-cat table{border-collapse:collapse;width:100%;font-size:12px}
+  #view-cat th{background:#0a0f1e;color:var(--muted);font-weight:600;text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);white-space:nowrap}
+  #view-cat td{padding:6px 9px;border-bottom:1px solid #1a2440;vertical-align:middle}
+  #view-cat tr:hover td{background:#ffffff05}
 </style>
 </head>
 <body data-page-node-id="UGXFNq22Fto2n4pmhAbjQL">
@@ -1144,6 +1195,7 @@
     <button class="tab" data-view="bt">🕘 买点回溯</button>
 <button class="tab" data-view="pick" data-page-node-id="ec5mxWvGSED0PTAanIATHX">🎯 智能选股</button>
     <button class="tab" data-view="pool8" title="涨幅≥8% 入池 → 剔杂毛 → 三天观察 → 等再次上攻">🪣 8点池</button>
+    <button class="tab" data-view="cat" title="涨停催化溯源：消息时间戳三分类 → 五维打分 → 题材梯队 → 跟风作战（不打板，只做跟风）">🔗 涨停催化</button>
   </div>
 
   <!-- ======================= 视图一：板块全景 ======================= -->
@@ -1694,6 +1746,37 @@
       <div id="p8Summary" style="font-size:12.5px;margin-bottom:8px"></div>
       <div id="p8Sectors"></div>
       <div id="p8Body"><div class="loading">切到本页不自动跑。点「📥 收盘入池 / 刷新」拉当日全市场快照（1~3 个请求），筛出涨幅 ≥ 阈值的票；再点「🔍 分析池内」补日K，就能看到中枢、MA20 与三天状态。</div></div>
+    </div>
+  </div>
+
+  <div class="view" id="view-cat">
+    <div class="card">
+      <div class="card-title">🔗 涨停催化溯源 · 跟风作战 —— 消息时间戳 → 三分类 → 五维打分 → 题材梯队 → 跟风作战
+        <span style="font-size:11.5px;font-weight:400;color:var(--dim)">口径：① 消息时间早于首次封板 30 分钟以上 = <b style="color:var(--up)">真催化</b>；±30 分钟内 = <b style="color:var(--gold)">共振</b>；涨停之后才出消息 = <b style="color:var(--dim)">蹭车</b>（剔除）② 五维打分（可计量性/兑现时点/业绩弹性/稀缺性/可持续跟踪，各 0~2 分）：≥7=A 级、4~6=B 级、≤3=C 级；备注命中「澄清/减持/立案/问询/质押」→ 一票否决强制 C ③ 梯队按连板高度→首封时间→成交额排序 ④ <b>只做跟风不打板</b>：竞价低吸或分时回踩，试错仓 ≤7% ⑤ 三条死线：龙头断板 / 板块涨停家数衰减 / 澄清减持一票否决。<b>本页为参考层：不计分、不进四指标打分、不进钉钉推送、不发买卖信号</b>。消息时间戳与评分为手工录入，存本机 localStorage 按日期累积。</span></div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+        <button class="btn" id="catLoad" title="拉最近交易日涨停池（当日+上一交易日，用于死线对比），push2ex 直连">📥 拉涨停池</button>
+        <button class="btn ghost" id="catFetch" title="四渠道聚合抓取：①新浪7x24（深度翻页覆盖池日）②东财快讯（cursor 翻页）③东财公告（代码批量查）④金十，票名/代码匹配自动预填；手工录入不会被覆盖">📰 自动抓取催化</button>
+        <button class="btn ghost" id="catGrade" title="对「有消息但未评/缺分」的票按关键词规则补 🤖 建议分：只填空维度、已评分不动、人工改分即撤销 🤖 标记；一票否决词照常兜底">🎯 自动评分</button>
+        <button class="btn ghost" id="catClear" title="只清当日(池日期对应)的手工录入，不动其它日期">🗑 清空当日录入</button>
+        <span id="catStatus" style="font-size:12px;color:var(--dim)"></span>
+      </div>
+      <div class="catpipe">
+        <div class="pstep"><div class="no">STEP 1</div><div class="t">📥 涨停池</div><div class="d">东财 push2ex<br>首封时间·开板·连板</div></div>
+        <div class="parrow">→</div>
+        <div class="pstep"><div class="no">STEP 2</div><div class="t">🔎 时间戳溯源</div><div class="d">消息时间 vs 首封<br>真催化 / 共振 / 蹭车</div></div>
+        <div class="parrow">→</div>
+        <div class="pstep"><div class="no">STEP 3</div><div class="t">⚖️ 五维打分</div><div class="d">计量·兑现·弹性·稀缺·跟踪<br>A / B / C 三级</div></div>
+        <div class="parrow">→</div>
+        <div class="pstep"><div class="no">STEP 4</div><div class="t">🏛️ 题材梯队</div><div class="d">龙头 / 龙二 / 龙三<br>跟风先看容量</div></div>
+        <div class="parrow">→</div>
+        <div class="pstep"><div class="no">STEP 5</div><div class="t">🎯 跟风作战</div><div class="d">竞价低吸 / 分时回踩<br>+ 三条死线风控</div></div>
+      </div>
+      <div id="catSummary"></div>
+      <div id="catSrcBody"><div class="loading">切到本页不自动跑。点「📥 拉涨停池」取当日与上一交易日的涨停池（东财 push2ex），然后在表内逐票录入消息时间与五维评分；溯源三分类与等级由录入即时重算。</div></div>
+      <div id="catScoreBody"></div>
+      <div id="catTierBody"></div>
+      <div id="catPlanBody"></div>
+      <div id="catLineBody"></div>
     </div>
   </div>
 
@@ -24235,7 +24318,7 @@ function switchView(v) {
   document.querySelectorAll('.tabs .tab').forEach(function (x) {
     x.classList.toggle('on', x.getAttribute('data-view') === v);
   });
-  ['view-board', 'view-single', 'view-watch', 'view-ding', 'view-ztpool', 'view-bt', 'view-sectest', 'view-pick', 'view-pool8'].forEach(function (id) {
+  ['view-board', 'view-single', 'view-watch', 'view-ding', 'view-ztpool', 'view-bt', 'view-sectest', 'view-pick', 'view-pool8', 'view-cat'].forEach(function (id) {
     var e = el(id);
     if (e) e.classList.toggle('on', id === 'view-' + v);
   });
@@ -24246,6 +24329,7 @@ function switchView(v) {
   if (v === 'bt') { if (BT.done || BT.rows.length) btRender(); }
   if (v === 'pick') pickOnEnter();
   if (v === 'pool8' && typeof p8OnEnter === 'function') p8OnEnter();
+  if (v === 'cat' && typeof catOnEnter === 'function') catOnEnter();
 }
 
 /* ★ 2026-10-23（用户指定）：智能选股 / 8点池 两个工作区里的股票「点击后」自动跳本页「个股诊断」。
@@ -38316,9 +38400,708 @@ function p8Bind() {
   if (hn) hn.value = (POOL8.holdN || 30);
 }
 
+/* ===== §258 涨停催化溯源 · 跟风作战（参考层，2026-11-01） =====
+   方法论（用户指定）：
+     ① 时间戳溯源：消息时间 vs 首次封板时间 → 真催化(早≥30min) / 共振(±30min内) / 蹭车(涨停后才出，剔除)
+     ② 五维打分：可计量性/兑现时点/业绩弹性/稀缺性/可持续跟踪，各 0~2 分 → A(≥7)/B(4~6)/C(≤3)
+     ③ 题材梯队：组内 连板高度↓ → 首封时间↑ → 成交额↓ → 龙头/龙二/龙三/补涨
+     ④ 跟风作战：只跟风不打板，竞价低吸/分时回踩，试错仓 ≤7%
+     ⑤ 三条死线：龙头断板 / 板块涨停家数衰减 / 澄清减持一票否决
+   纪律（参考层）：不计分、不进四指标打分、不进钉钉推送、不发买卖信号。
+   数据链：fetchPool('getTopicZTPool')（push2ex 本机可达，复用全站 jsonp）；消息时间戳/五维评分
+   = 手工录入，localStorage 'bwork_cat_msgs_v1' 按池日期分键累积。
+   设计：catSource/catScore/catTierOf/catPlanOf/catDeadlinesOf/catMinOf/catFbtMin/catVetoHit
+   均为纯函数（vm 桩单测覆盖）。 */
+var CAT_LS = 'bwork_cat_msgs_v1';
+var CAT = { loaded: false, running: false, fetching: false, day: null, dayY: null, pool: [], poolY: [], data: null };
+var CAT_POS_CAP = 7; /* 试错仓上限 %（不打板只跟风） */
+
+/* ---- 纯函数：时间 ---- */
+function catMinOf(hhmm) { /* 'HH:MM' → 分钟数；非法 → null */
+  var m = /^(\d{1,2}):(\d{2})$/.exec(String(hhmm == null ? '' : hhmm).trim());
+  if (!m) return null;
+  var h = +m[1], mi = +m[2];
+  return (h > 23 || mi > 59) ? null : h * 60 + mi;
+}
+function catFbtMin(fbt) { /* 东财 fbt 数字 HHmmss → 分钟数；非法 → null */
+  var n = +fbt;
+  if (!isFinite(n) || n <= 0) return null;
+  return Math.floor(n / 10000) * 60 + Math.floor(n % 10000 / 100);
+}
+function catDayDiff(fromYmd, toYmd) { /* 两个 'YYYY-MM-DD' 相差天数（to − from） */
+  var a = String(fromYmd || '').split('-'), b = String(toYmd || '').split('-');
+  if (a.length !== 3 || b.length !== 3) return 0;
+  return Math.round((Date.UTC(+b[0], +b[1] - 1, +b[2]) - Date.UTC(+a[0], +a[1] - 1, +a[2])) / 86400000);
+}
+function catDayShift(ymd, n) { /* 'YYYY-MM-DD' 平移 n 天 → 'YYYY-MM-DD' */
+  var p = String(ymd || '').split('-');
+  if (p.length !== 3) return ymd;
+  var d = new Date(+p[0], +p[1] - 1, +p[2]);
+  d.setDate(d.getDate() + n);
+  return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+}
+/* 录入消息的「绝对分钟」：池日内 = 当日分钟；早于池日（m.mday）→ 减去天数×1440
+   —— 跨日消息天然「更早」，落进真催化方向，与当日消息同一 diff 轴比较 */
+function catMsgAbsMin(m, dayYmd) {
+  if (!m || !m.mt) return null;
+  var base = catMinOf(m.mt);
+  if (base == null) return null;
+  if (m.mday && m.mday !== dayYmd) {
+    var dd = catDayDiff(m.mday, dayYmd);
+    if (dd > 0) base -= dd * 1440;
+  }
+  return base;
+}
+/* 抓取命中择优：先选「首封前」的消息（其中离首封最近者最可能驱动涨停）；
+   全部都在首封后才选最早一条（蹭车口径=涨停后最先被援引的消息）。fbt 缺失一律取最早。 */
+function catMsgBetter(a, b, fbtMin) {
+  if (fbtMin == null) return a.min < b.min;
+  var aPre = a.min <= fbtMin, bPre = b.min <= fbtMin;
+  if (aPre !== bPre) return aPre;
+  return aPre ? a.min > b.min : a.min < b.min;
+}
+function catMinStr(min) { /* 分钟数 → 'HH:MM'（池行展示用；非法给 —） */
+  if (min == null || !isFinite(+min)) return '—';
+  var m = Math.max(0, Math.round(+min));
+  return ('0' + Math.floor(m / 60)).slice(-2) + ':' + ('0' + (m % 60)).slice(-2);
+}
+
+/* ---- 纯函数：时间戳溯源三分类 ----
+   diff = 消息 − 首封（分钟，>0 = 消息更晚）。消息早 ≥30 分 = 真催化(diff≤−30)；
+   ±30 分钟内 = 共振；消息晚 ≥30 分 = 蹭车(diff≥30，涨停后才出消息)。 */
+function catSource(msgMin, fbtMin) {
+  var a = (msgMin == null || !isFinite(+msgMin)) ? null : +msgMin;
+  var b = (fbtMin == null || !isFinite(+fbtMin)) ? null : +fbtMin;
+  if (a == null || b == null) return { cls: null, text: '未录入', diff: null };
+  var d = Math.round(a - b);
+  if (d <= -30) return { cls: 'real', text: '真催化', diff: d };
+  if (d < 30) return { cls: 'sync', text: '共振', diff: d };
+  return { cls: 'ride', text: '蹭车', diff: d };
+}
+
+/* ---- 纯函数：五维打分 ----
+   sc = [s1..s5] 各 0~2（null = 未评，任一未评 → 评分不全）；vetoHit = 否决词命中 → 强制 C。 */
+function catVetoHit(note) { return /澄清|减持|立案|问询|质押|处罚/.test(String(note || '')); }
+function catScore(sc, vetoHit) {
+  if (vetoHit) return { total: null, grade: 'C', veto: true, text: '一票否决' };
+  var t = 0;
+  for (var i = 0; i < 5; i++) {
+    var v = (sc && sc[i] != null) ? +sc[i] : NaN;
+    if (!isFinite(v) || v < 0 || v > 2) return { total: null, grade: null, veto: false, text: '评分不全' };
+    t += v;
+  }
+  return { total: t, grade: (t >= 7 ? 'A' : (t >= 4 ? 'B' : 'C')), veto: false, text: '' };
+}
+
+/* ---- 纯函数：五维自动建议分（关键词规则文本分析；🤖 起点分，人工改任一分即撤销）----
+   note = 溯源表备注原文（含【渠道】前缀与消息文本）。五维：可计量/兑现/弹性/稀缺/跟踪，各 0~2。
+   口径偏保守：无关键词的中性维度给 1，宁低勿高；一票否决词由 catVetoHit 单独兜底。 */
+function catAutoScore(note) {
+  var t = String(note || '');
+  if (!t.trim()) return null;
+  var num = /\d/.test(t) && /(亿|万|％|%|元|吨|GW|GWh|MW|倍|股|亩|辆|架|KW|kw)/.test(t);
+  var strong = /(收购|并购|中标|重大合同|涨价|提价|扩产|新增产能|回购|增持|销售订单|大额合同|涨价函)/.test(t);
+  var weak = /(理财|更名|摘帽|互动|回复|接待|调研|股东会|监事会|董事会|例行|常规|澄清|更正)/.test(t);
+  var vague = /(框架|意向|筹划|探讨|拟设立|拟推进|沟通|传闻|媒体报道)/.test(t);
+  var done = /(已完成|正式落地|获批|即日|已于|签订|签署|达产|投产|开工|交付|实施|颁发|获得)/.test(t);
+  var scarce2 = /(首个|首家|第一|唯一|打破|垄断|国产替代|空白|卡脖子|独家|自主可控|进口替代)/.test(t);
+  var scarce1 = /(领先|先进|核心|重点|龙头|主要供应商|知名)/.test(t);
+  var track2 = /(量产|达产|一期|二期|三期|分期|时间表|月度|订单陆续|持续供货|扩产计划)/.test(t);
+  var track1 = /(项目|推进|建设|后续|进展|规划|合作)/.test(t);
+  return [
+    num && strong ? 2 : (num ? 1 : 0),      /* ① 可计量性：数字+强业务动词=2，仅数字=1，无数字=0 */
+    done ? 2 : (vague ? 0 : 1),             /* ② 兑现时点：已落地=2，纯意向/框架=0，其余中性=1 */
+    weak ? 0 : (strong && num ? 2 : 1),     /* ③ 业绩弹性：弱相关=0，强业务+量化=2，其余中性=1 */
+    scarce2 ? 2 : (scarce1 ? 1 : 0),        /* ④ 稀缺性：唯一/替代类=2，领先类=1 */
+    track2 ? 2 : (track1 ? 1 : 0)           /* ⑤ 可持续跟踪：量产/分期=2，有项目推进=1，一次性=0 */
+  ];
+}
+
+/* ---- 纯函数：题材梯队（组内排序 + 命名；口径与主站 27809 一致）---- */
+function catTierOf(rows) {
+  var arr = (rows || []).slice().sort(function (a, b) {
+    return (b.lbc || 1) - (a.lbc || 1) || (a.fbt || 999999) - (b.fbt || 999999) || (b.amount || 0) - (a.amount || 0);
+  });
+  var names = ['龙头', '龙二', '龙三'];
+  arr.forEach(function (x, i) { x.tier = i < 3 ? names[i] : '补涨'; });
+  return arr;
+}
+
+/* ---- 纯函数：跟风入场方式（不打板）---- */
+function catPlanOf(grade, cls) {
+  if (grade === 'A' && cls === 'real') return { way: '竞价低吸 或 早盘分时回踩', note: '真催化+高分，最优跟风形态' };
+  if (grade === 'A') return { way: '分时回踩低吸', note: '共振但评分高，等回踩不追价' };
+  if (grade === 'B' && cls === 'real') return { way: '分时回踩轻仓试错', note: '真催化但评分一般' };
+  if (grade === 'B') return { way: '观察为主，回踩企稳再试', note: '共振+中评分，小仓' };
+  return { way: '只观察', note: 'C 级 / 蹭车 / 未录入，不参与' };
+}
+
+/* ---- 纯函数：死线①②动态检查（单题材，今日 vs 上一交易日）---- */
+function catDeadlinesOf(todayRows, yRows) {
+  var t = todayRows || [], y = yRows || [];
+  var tMax = t.reduce(function (m, x) { return Math.max(m, x.lbc || 1); }, 0);
+  var yMax = y.reduce(function (m, x) { return Math.max(m, x.lbc || 1); }, 0);
+  return { tN: t.length, yN: y.length, tMax: tMax, yMax: yMax,
+    leadBreak: y.length > 0 && tMax < yMax,   /* 死线① 龙头断板：最高板高度回落 */
+    fade: y.length > 0 && t.length < y.length /* 死线② 家数衰减 */
+  };
+}
+
+/* ---- 状态 / 存取 ---- */
+function catStatus(s) { var e = el('catStatus'); if (e) e.textContent = s || ''; }
+function catData() { if (!CAT.data) CAT.data = lsGet(CAT_LS, {}) || {}; return CAT.data; }
+function catMsgsOf(day) { var d = catData(); return d[day] || (d[day] = {}); }
+function catMsgOf(code) { return CAT.day ? (catMsgsOf(CAT.day)[code] || null) : null; }
+function catSave() { if (!lsSet(CAT_LS, catData())) catStatus('⚠️ localStorage 写入失败（可能配额已满），本次录入未保存'); }
+function catNormRow(x) {
+  return { c: String(x.c || ''), n: x.n || '', hybk: String(x.hybk || '').trim() || '未分类',
+    lbc: Math.max(1, +x.lbc || 1), fbt: (x.fbt == null ? null : +x.fbt),
+    zbc: Math.max(0, +x.zbc || 0), amount: +x.amount || 0 };
+}
+
+/* ---- 拉池：最近候选日（跳周末）里找首个非空 = 当日，其后首个非空 = 对比日 ---- */
+function catLoad() {
+  if (CAT.running) return;
+  CAT.running = true;
+  catStatus('⏳ 拉取涨停池中（push2ex，最多 6 个候选日）…');
+  var dates = midTradingDates(6), got = [], i = 0;
+  function step() {
+    if (got.length >= 2 || i >= dates.length) {
+      CAT.running = false;
+      if (!got.length) { catStatus('⚠️ 最近候选日均未取到涨停池（非交易日 / 接口异常，可稍后重试）'); return; }
+      CAT.day = got[0].day; CAT.pool = got[0].rows;
+      CAT.dayY = got.length > 1 ? got[1].day : null;
+      CAT.poolY = got.length > 1 ? got[1].rows : [];
+      catData(); CAT.loaded = true;
+      catStatus('✅ 池日期 ' + CAT.day + '：' + CAT.pool.length + ' 只涨停'
+        + (CAT.dayY ? ('；对比日 ' + CAT.dayY + '：' + CAT.poolY.length + ' 只') : '（对比日未取到，死线①②只显示当日口径）'));
+      catRenderAll();
+      return;
+    }
+    var d = dates[i++];
+    fetchPool('getTopicZTPool', d, 'fbt:asc').then(function (p) {
+      p = cleanPool(p || []);
+      if (p.length) got.push({ day: d, rows: p.map(catNormRow) });
+      step();
+    }).catch(function () { step(); });
+  }
+  step();
+}
+
+/* ---- 自动抓取催化消息（多渠道聚合，逐渠道独立成败）----
+   渠道① 新浪财经 7x24 快讯  zhibo.sina.com.cn（JSONP·callback，深度自适应翻页：翻过池日早停，封顶 45 页）
+   渠道② 东方财富快讯       np-weblist.eastmoney.com（JSONP·callback，sortEnd cursor 翻页，stockList 带票号直配）
+   渠道③ 东方财富公告       np-anotice-stock.eastmoney.com（JSONP·cb，池内代码分批批量查，每批最多 3 页）
+   渠道④ 金十数据快讯       jin10.com/flash_newest.js（全局变量 newest 注入，最新 50 条）
+   归一化后合并去重，同票命中取时间最早；自动预填 auto:true（🤖 标记），手工录入绝不覆盖。 */
+var CAT_SINA_URL = 'https://zhibo.sina.com.cn/api/zhibo/feed?page_size=100&zhibo_id=152&tag_id=0&page=';
+var CAT_EM_URL = 'https://np-anotice-stock.eastmoney.com/api/security/ann?page_size=100&ann_type=A&client_source=web&stock_list=';
+var CAT_EMFAST_URL = 'https://np-weblist.eastmoney.com/comm/web/getFastNewsList?client=web&biz=web_724&fastColumn=102&pageSize=100&sortEnd=';
+var CAT_JIN10_URL = 'https://www.jin10.com/flash_newest.js';
+
+/* 归一化公共口径：消息时间落在 [dayFrom, dayYmd] 窗口（抓取池日前 5 日内相关消息）；
+   min = 当日分钟 − 消息日距池日天数×1440 → 跨日消息在 diff 轴上天然更早（真催化方向）；
+   mday 记录消息自身日期（'YYYY-MM-DD'），随预填记录持久化，供显示与 catMsgAbsMin 折算。 */
+function catFeedNorm(raw, dayFrom, dayYmd) {
+  var t = String((raw && raw.rich_text) || '').replace(/\s+/g, ' ').trim();
+  var ct = String((raw && raw.create_time) || '');
+  if (!t || !ct) return null;
+  var d8 = ct.slice(0, 10);
+  if (d8 < dayFrom || d8 > dayYmd) return null; /* 只留窗口内 */
+  var base = catMinOf(ct.slice(11, 16));
+  if (base == null) return null;
+  return { id: raw.id || 0, txt: '【新浪7x24】' + t, mt: ct.slice(11, 16), min: base - catDayDiff(d8, dayYmd) * 1440, mday: d8, src: '新浪7x24' };
+}
+/* 渠道③ 归一化：东财公告 → 标题即文本；display_time 带毫秒（如 2026-11-01 19:03:32:264）取 HH:MM；
+   codes 数组自带票号——公告标题可能不含完整票名（短名<3字），代码直配最稳 */
+function catNoteEm(raw, dayFrom, dayYmd) {
+  var t = String((raw && raw.title) || '').replace(/\s+/g, ' ').trim();
+  var dt = String((raw && raw.display_time) || '');
+  if (!t || !dt) return null;
+  var d8 = dt.slice(0, 10);
+  if (d8 < dayFrom || d8 > dayYmd) return null;
+  var base = catMinOf(dt.slice(11, 16));
+  if (base == null) return null;
+  var codes = [];
+  ((raw && raw.codes) || []).forEach(function (c) { var s = String((c && c.stock_code) || ''); if (/^\d{6}$/.test(s)) codes.push(s); });
+  return { id: (raw && raw.art_code) || 0, txt: '【东财公告】' + t, mt: dt.slice(11, 16), min: base - catDayDiff(d8, dayYmd) * 1440, mday: d8, codes: codes, src: '东财公告' };
+}
+/* 渠道④ 归一化：金十快讯（data.title 优先于 content；time 形如 2026-11-01 19:26:44） */
+function catNoteJin10(raw, dayFrom, dayYmd) {
+  var d = (raw && raw.data) || {};
+  var t = String(d.title || d.content || '').replace(/\s+/g, ' ').trim();
+  var ct = String((raw && raw.time) || '');
+  if (!t || !ct) return null;
+  var d8 = ct.slice(0, 10);
+  if (d8 < dayFrom || d8 > dayYmd) return null;
+  var base = catMinOf(ct.slice(11, 16));
+  if (base == null) return null;
+  return { id: (raw && raw.id) || 0, txt: '【金十】' + t, mt: ct.slice(11, 16), min: base - catDayDiff(d8, dayYmd) * 1440, mday: d8, src: '金十' };
+}
+/* 渠道④ 归一化：东财快讯（np-weblist getFastNewsList：summary 优先 title；showTime 形如 2026-11-01 19:44:13；
+   stockList 为「市场.代码」格式如 "0.002082"/"90.BK0800"/"116.03750"——正则只取 6 位数字票号，板块/港股自动过滤） */
+function catNoteEmFast(raw, dayFrom, dayYmd) {
+  var t = String((raw && raw.summary) || (raw && raw.title) || '').replace(/\s+/g, ' ').trim();
+  var ct = String((raw && raw.showTime) || '');
+  if (!t || !ct) return null;
+  var d8 = ct.slice(0, 10);
+  if (d8 < dayFrom || d8 > dayYmd) return null;
+  var base = catMinOf(ct.slice(11, 16));
+  if (base == null) return null;
+  var codes = [];
+  ((raw && raw.stockList) || []).forEach(function (s) {
+    var m = /\.(\d{6})$/.exec(String(s || ''));
+    if (m) codes.push(m[1]);
+  });
+  return { id: (raw && raw.code) || 0, txt: '【东财快讯】' + t, mt: ct.slice(11, 16), min: base - catDayDiff(d8, dayYmd) * 1440, mday: d8, codes: codes, src: '东财快讯' };
+}
+/* 纯函数：票名(≥3 字防误匹配)/6 位代码/快讯自带 codes 命中 → 择优（catMsgBetter：首封前取离首封最近、否则取最早）；mday 透传 */
+function catMatchNews(pool, feed) {
+  var out = {};
+  (pool || []).forEach(function (x) {
+    var fMin = catFbtMin(x.fbt), best = null;
+    (feed || []).forEach(function (f) {
+      if (!f) return;
+      var hit = (x.n && x.n.length >= 3 && f.txt.indexOf(x.n) >= 0) || (x.c && String(x.c).length === 6 && f.txt.indexOf(String(x.c)) >= 0)
+        || (f.codes && f.codes.indexOf(String(x.c)) >= 0);
+      if (hit && (best == null || catMsgBetter(f, best, fMin))) best = f;
+    });
+    if (best) out[x.c] = { mt: best.mt, note: best.txt.length > 90 ? best.txt.slice(0, 90) + '…' : best.txt, src: best.src || '新浪7x24', mday: best.mday || null };
+  });
+  return out;
+}
+function catFetchNews() {
+  if (!CAT.loaded) { catStatus('⚠️ 先「📥 拉涨停池」再抓催化'); return; }
+  if (CAT.fetching) return;
+  CAT.fetching = true;
+  var dayYmd = CAT.day.slice(0, 4) + '-' + CAT.day.slice(4, 6) + '-' + CAT.day.slice(6, 8);
+  var dayFrom = catDayShift(dayYmd, -4); /* 5 日窗口：池日 −4 天起 */
+  var t0 = Date.now(), FETCH_DEADLINE = 290000; /* 墙钟截止：翻页循环内自检，不依赖 setTimeout 看门狗 */
+  var feed = [], stat = {};
+  catStatus('⏳ 多渠道抓取中：① 新浪7x24 → ② 东财快讯 → ③ 东财公告 → ④ 金十（深度翻页覆盖 ' + dayFrom + ' ~ ' + dayYmd + ' 池日前 5 日窗口）…');
+  function chTxt() {
+    return '新浪 ' + (stat.sina == null ? '—' : stat.sina + ' 条') + ' · 东财快讯 ' + (stat.emFast == null ? '—' : stat.emFast + ' 条')
+      + ' · 东财公告 ' + (stat.em == null ? '—' : stat.em + ' 条') + ' · 金十 ' + (stat.jin10 == null ? '—' : stat.jin10 + ' 条');
+  }
+  /* 渠道①：深度自适应翻页——翻到「最旧一条早于池日」即早停；封顶 45 页（4500 条，实测可覆盖 2~3 个交易日前），页间隔 0.7s */
+  function chSina(cb) {
+    var i = 1, n = 0, covered = false;
+    function step() {
+      if (i > 90 || covered || Date.now() - t0 > FETCH_DEADLINE) { stat.sina = n + (covered ? '' : (Date.now() - t0 > FETCH_DEADLINE ? '（截止截断）' : (i <= 1 ? '' : '（未覆盖窗口起点）'))); cb(); return; }
+      jsonp(CAT_SINA_URL + i, 'callback').then(function (r) {
+        var list = (r && r.result && r.result.data && r.result.data.feed && r.result.data.feed.list) || [];
+        list.forEach(function (raw) { var f = catFeedNorm(raw, dayFrom, dayYmd); if (f) { feed.push(f); n++; } });
+        var oldest = list.length ? String(list[list.length - 1].create_time || '') : '';
+        covered = !!oldest && oldest.slice(0, 10) < dayFrom; /* 最旧一条已早于窗口起点 → 无需再翻 */
+        if (!finished) catStatus('⏳ ① 新浪7x24 第 ' + i + ' 页，已取窗口内快讯 ' + n + ' 条…'); /* 看门狗截断后不再覆盖终态 */
+        if (!list.length) { stat.sina = n; cb(); return; } /* 空页 = 已翻到底 */
+        i++; setTimeout(step, 400);
+      }).catch(function () { stat.sina = n + '（中断）'; cb(); });
+    }
+    step();
+  }
+  /* 渠道②：东财快讯 cursor 翻页（sortEnd 必填、可传空取最新；同样翻过池日早停，封顶 30 页），页间隔 0.7s */
+  function chEmFast(cb) {
+    var se = '', i = 0, n = 0, covered = false;
+    function step() {
+      if (i >= 80 || covered || Date.now() - t0 > FETCH_DEADLINE) { stat.emFast = n + (covered ? '' : (Date.now() - t0 > FETCH_DEADLINE ? '（截止截断）' : (i < 1 ? '' : '（未覆盖窗口起点）'))); cb(); return; }
+      jsonp(CAT_EMFAST_URL + se + '&req_trace=' + Date.now(), 'callback').then(function (r) {
+        var list = (r && r.data && r.data.fastNewsList) || [];
+        list.forEach(function (raw) { var f = catNoteEmFast(raw, dayFrom, dayYmd); if (f) { feed.push(f); n++; } });
+        var oldest = list.length ? String(list[list.length - 1].showTime || '') : '';
+        covered = !!oldest && oldest.slice(0, 10) < dayFrom;
+        se = (r && r.data && r.data.sortEnd) || '';
+        if (!finished) catStatus('⏳ ② 东财快讯 第 ' + (i + 1) + ' 页，已取窗口内快讯 ' + n + ' 条…');
+        i++;
+        if (!list.length || !se) { stat.emFast = n; cb(); return; } /* 空页/无游标 = 已翻到底 */
+        setTimeout(step, 400);
+      }).catch(function () { stat.emFast = n + '（中断）'; cb(); });
+    }
+    step();
+  }
+  /* 渠道③：池内代码分批（≤30 只/批防 URL 过长）批量查公告；每批最多翻 3 页（列表满页才续翻），批间隔 0.7s */
+  function chEm(cb) {
+    var codes = CAT.pool.map(function (x) { return String(x.c); }).filter(function (c) { return /^\d{6}$/.test(c); });
+    if (!codes.length) { stat.em = 0; cb(); return; }
+    var batches = [], bi = 0, n = 0;
+    for (var i = 0; i < codes.length; i += 30) batches.push(codes.slice(i, i + 30).join(','));
+    function step() {
+      if (bi >= batches.length) { stat.em = n; cb(); return; }
+      var batch = batches[bi]; /* 捕获当前批：page 循环回调里 bi 可能已被推进 */
+      (function loop(pi) {
+        jsonp(CAT_EM_URL + batch + '&page_index=' + pi, 'cb').then(function (r) {
+          var list = (r && r.data && r.data.list) || [];
+          list.forEach(function (raw) { var f = catNoteEm(raw, dayFrom, dayYmd); if (f) { feed.push(f); n++; } });
+          if (list.length >= 100 && pi < 3) { setTimeout(function () { loop(pi + 1); }, 500); return; } /* 满页才续翻（封顶 3 页） */
+          bi++; setTimeout(step, 500);
+        }).catch(function () { bi++; setTimeout(step, 500); });
+      })(1);
+    }
+    step();
+  }
+  /* 渠道④：script 注入 flash_newest.js → window.newest（最新 50 条，12s 兜底超时） */
+  function chJin10(cb) {
+    var s = document.createElement('script');
+    s.src = CAT_JIN10_URL + '?t=' + Date.now();
+    var fin = false, n = 0;
+    function finOnce() { if (fin) return; fin = true; if (s.parentNode) s.parentNode.removeChild(s); stat.jin10 = n; cb(); }
+    s.onload = function () {
+      var arr = window.newest || [];
+      try { delete window.newest; } catch (eQ) { window.newest = undefined; } /* 清掉全局，避免污染主站 */
+      arr.forEach(function (raw) { var f = catNoteJin10(raw, dayFrom, dayYmd); if (f) { feed.push(f); n++; } });
+      finOnce();
+    };
+    s.onerror = function () { finOnce(); };
+    setTimeout(finOnce, 12000);
+    document.head.appendChild(s);
+  }
+  /* 四渠道并行拉取（互不依赖，共享 feed 数组；全部结束后统一匹配预填），240s 总看门狗防挂死 */
+  var doneN = 0, finished = false;
+  function chDone() { if (!finished && ++doneN >= 4) { finished = true; catFetchDone(feed, chTxt()); } }
+  setTimeout(function () { if (!finished) { finished = true; catFetchDone(feed, chTxt() + '（看门狗截断，结果为部分数据）'); } }, 300000);
+  chSina(chDone); chEmFast(chDone); chEm(chDone); chJin10(chDone);
+}
+function catFetchDone(feed, chTxt) {
+  CAT.fetching = false;
+  if (!feed.length) { catStatus('⚠️ 四渠道均未取到池日 ' + CAT.day + ' 的消息（' + chTxt + '）——跨日复盘快讯流可能覆盖不到该日，请手工录入，当日盘后使用命中最佳'); return; }
+  var hit = catMatchNews(CAT.pool, feed), n = 0;
+  Object.keys(hit).forEach(function (c) {
+    var m = catMsgOf(c);
+    if (m && m.mt && !m.auto) return; /* 手工录入不覆盖 */
+    catMsgsOf(CAT.day)[c] = { mt: hit[c].mt, note: hit[c].note, sc: (m && m.sc) || [null, null, null, null, null], auto: true, src: hit[c].src, mday: hit[c].mday || null, ts: Date.now() };
+    n++;
+  });
+  catSave(); catRenderAll();
+  catStatus('📰 ' + chTxt + '（池日 ' + CAT.day + '），票名/代码匹配命中 ' + Object.keys(hit).length + ' 票，预填 ' + n + ' 条（🤖 标记，手工录入不覆盖）。评分五维仍需人工判断。');
+}
+
+/* ---- 徽章（段①②已统一用 catpill，此函数族仅 catTierCol 仍被段④引用）---- */
+function catTierCol(t) { return t === '龙头' ? 'var(--up)' : (t === '龙二' || t === '龙三' ? 'var(--gold)' : 'var(--dim)'); }
+
+/* ---- 辅助：溯源可视化条（预览版同款：消息早 → 青条在左占大头；消息晚 → 红条在左）---- */
+function catTlBar(msgMin, fbtMin) {
+  if (msgMin == null || !isFinite(+msgMin) || fbtMin == null || !isFinite(+fbtMin))
+    return '<div class="cattl"><i style="left:0;width:100%;background:#222c4a"></i></div>';
+  var d = Math.max(-40, Math.min(40, Math.round(+msgMin - +fbtMin))); /* diff=消息−首封，>0=消息晚 */
+  var split = 50 - d / 2; /* 消息早(d<0) → split>50 → 青条占大头 */
+  var s1 = split.toFixed(1);
+  if (d <= 0) return '<div class="cattl"><i class="msg" style="left:0;width:' + s1 + '%"></i><i class="zt" style="left:' + s1 + '%;width:' + (100 - split).toFixed(1) + '%"></i></div>';
+  return '<div class="cattl"><i class="zt" style="left:0;width:' + s1 + '%"></i><i class="msg" style="left:' + s1 + '%;width:' + (100 - split).toFixed(1) + '%"></i></div>';
+}
+function catStars(total) { /* 五星制：总分 10 → 5 星，半分四舍五入 */
+  if (total == null) return '';
+  var n = Math.round(Math.max(0, Math.min(10, total)) / 2);
+  return '<div class="catstars">' + '★'.repeat(n) + '☆'.repeat(5 - n) + '</div>';
+}
+
+/* ---- 段 KPI 摘要（预览版大卡）---- */
+function catRenderSummary() {
+  var e = el('catSummary'); if (!e || !CAT.loaded) return;
+  var cnt = { real: 0, sync: 0, ride: 0, none: 0 }, gr = { A: 0, B: 0, C: 0 }, cand = 0;
+  CAT.pool.forEach(function (x) {
+    var m = catMsgOf(x.c) || {};
+    var s = catSource(catMsgAbsMin(m, CAT.day), catFbtMin(x.fbt));
+    cnt[s.cls || 'none']++;
+    if (s.cls === 'real' || s.cls === 'sync') {
+      var r = catScore(m.sc, catVetoHit(m.note));
+      if (r.grade) gr[r.grade]++;
+      if (r.grade === 'A' || r.grade === 'B') cand++;
+    }
+  });
+  var kpi = function (cls, v, k) { return '<div class="catkpi ' + cls + '"><div class="v">' + v + '</div><div class="k">' + k + '</div></div>'; };
+  setHtml(e, '<div class="catkpis">'
+    + kpi('', CAT.pool.length, '当日涨停（池 ' + CAT.day + '，剔 ST）')
+    + kpi('blue', cnt.real + cnt.sync, '时间戳已溯源（真催化 ' + cnt.real + ' · 共振 ' + cnt.sync + '）')
+    + kpi('gold', gr.A, 'A 类催化（真驱动）')
+    + kpi('dim', cnt.ride, '蹭车剔除（涨停后才出消息）')
+    + kpi('hot', cand, '跟风候选（A/B 级 · 明日作战）')
+    + '</div>');
+}
+
+/* ---- 段① 时间戳溯源表（全池 + 行内录入 + 过滤器 + 可视化条）---- */
+function catRenderSrc() {
+  var e = el('catSrcBody'); if (!e || !CAT.loaded) return;
+  var h = '<div class="catsec"><h3>① 时间戳溯源 —— 先分清「催化→资金」还是「资金→找催化」<span class="tag">STEP 2</span></h3>'
+    + '<div class="desc">在表内录入每票催化消息的<b style="color:var(--gold)">发布时间</b>与来源；消息早于首封 30 分钟以上 = 真催化驱动（青条在左），涨停后才出消息 = 资金蹭车（直接剔除）。<b style="color:var(--gold)">自动抓取覆盖池日前 5 日窗口</b>：跨日消息按「更早」折算进 diff 轴（早 X.X 天），消息单元格旁标注来源日期。备注命中「澄清/减持/立案/问询/质押/处罚」即一票否决。</div>'
+    + '<div class="catfbtns" style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">'
+    + '<span class="catfbtn on" data-cf="all">全部 ' + CAT.pool.length + '</span>'
+    + '<span class="catfbtn" data-cf="real">真催化 <span class="cfN" data-n="real">0</span></span>'
+    + '<span class="catfbtn" data-cf="sync">共振 <span class="cfN" data-n="sync">0</span></span>'
+    + '<span class="catfbtn" data-cf="ride">蹭车 <span class="cfN" data-n="ride">0</span></span>'
+    + '<span class="catfbtn" data-cf="none">未录入 <span class="cfN" data-n="none">0</span></span>'
+    + '</div><div style="overflow-x:auto"><table><thead><tr>'
+    + '<th>股票</th><th>题材</th><th>首封</th><th>板/炸</th><th>消息时间</th><th>溯源可视化</th><th>判定</th><th>催化消息（来源，手工录入）</th></tr></thead><tbody>';
+  var fc = { real: 0, sync: 0, ride: 0, none: 0 };
+  CAT.pool.forEach(function (x) {
+    var m = catMsgOf(x.c) || {};
+    var s = catSource(catMsgAbsMin(m, CAT.day), catFbtMin(x.fbt));
+    fc[s.cls || 'none']++;
+    var diffTxt = s.diff == null ? '' : (s.diff <= -1440 ? '早 ' + (-s.diff / 1440).toFixed(1) + ' 天' : s.diff >= 1440 ? '晚 ' + (s.diff / 1440).toFixed(1) + ' 天' : s.diff <= 0 ? '早 ' + (-s.diff) + ' 分' : '晚 ' + s.diff + ' 分');
+    h += '<tr data-code="' + esc(x.c) + '" data-c="' + s.cls + '">'
+      + '<td class="catmono">' + esc(x.c) + '<br><span style="font-family:inherit">' + esc(x.n) + '</span></td>'
+      + '<td style="color:var(--gold)">' + esc(x.hybk) + '</td>'
+      + '<td class="catmono">' + catMinStr(catFbtMin(x.fbt)) + '</td>'
+      + '<td class="catmono"><span style="color:var(--up)">' + x.lbc + '</span>板 / ' + x.zbc + '</td>'
+      + '<td><input type="time" data-f="mt" value="' + esc(m.mt || '') + '"' + (m.mday && m.mday !== CAT.day ? ' title="消息日期 ' + esc(m.mday) + '（早于池日，diff 按天数折算）"' : '') + ' style="width:92px;background:transparent;color:var(--text);border:1px solid var(--line);border-radius:4px;padding:1px 3px">'
+      + (m.mday && m.mday !== CAT.day ? '<div style="font-size:10px;color:var(--gold);margin-top:1px">' + esc(m.mday.slice(5)) + '</div>' : '') + '</td>'
+      + '<td data-cell="tl">' + catTlBar(catMsgAbsMin(m, CAT.day), catFbtMin(x.fbt)) + '</td>'
+      + '<td data-cell="cls"><span class="catpill ' + (s.cls === 'real' ? 'ok' : (s.cls === 'sync' ? 'mid' : (s.cls === 'ride' ? 'bad' : 'c'))) + '">' + esc(s.text) + '</span>'
+      + (m.auto ? '<span title="消息由新浪 7x24 自动匹配预填，可手工修正" style="font-size:10.5px"> 🤖</span>' : '')
+      + (diffTxt ? '<div style="font-size:10.5px;color:var(--dim)">' + diffTxt + '</div>' : '') + '</td>'
+      + '<td><input type="text" data-f="note" value="' + esc(m.note || '') + '" placeholder="如：磷酸涨价8% · 财联社（填否决词=一票否决）" style="width:230px;background:transparent;color:var(--text);border:1px solid var(--line);border-radius:4px;padding:1px 5px"></td></tr>';
+  });
+  h += '</tbody></table></div>'
+    + '<div class="cattlleg"><span><i style="background:#00c8ff"></i>催化消息时间轴</span><span><i style="background:var(--up)"></i>涨停封板（首封）</span>'
+    + '<span style="margin-left:auto">青条在左 = 消息先于涨停 = 真催化；反之 = 蹭车</span></div></div>';
+  setHtml(e, h);
+  /* 回填过滤器计数 */
+  e.querySelectorAll('.cfN').forEach(function (sp) { sp.textContent = fc[sp.getAttribute('data-n')] || 0; });
+}
+
+/* ---- 段② 五维打分表（真催化/共振且未蹭车的票）---- */
+function catRenderScore() {
+  var e = el('catScoreBody'); if (!e || !CAT.loaded) return;
+  var rows = CAT.pool.filter(function (x) {
+    var m = catMsgOf(x.c) || {};
+    var s = catSource(catMsgAbsMin(m, CAT.day), catFbtMin(x.fbt));
+    return s.cls === 'real' || s.cls === 'sync';
+  });
+  if (!rows.length) {
+    setHtml(e, '<div class="catsec"><h3>② 催化质量五维打分 —— 把「感觉利好」变成数字<span class="tag">STEP 3</span></h3>'
+      + '<div class="desc">先在表①录入消息时间，真催化/共振的票才会进这里。</div></div>');
+    return;
+  }
+  var h = '<div class="catsec"><h3>② 催化质量五维打分 —— 把「感觉利好」变成数字<span class="tag">STEP 3</span></h3>'
+    + '<div class="desc">每维 0~2 分（下拉选择），总分 ≥7 = A 类 / 4~6 = B 类 / ≤3 = C 类（C 类不参与跟风）。核心分水岭在<b style="color:var(--gold)">「可持续跟踪」</b>：涨价型催化每天都有新数据接力（弹药天天续），中标型是静态的一次性利好。</div>'
+    + '<div style="overflow-x:auto"><table><thead><tr><th>股票</th>';
+  ['可计量性', '兑现时点', '业绩弹性', '稀缺性', '可持续跟踪'].forEach(function (t) { h += '<th>' + t + '</th>'; });
+  h += '<th>总分</th><th>分级</th></tr></thead><tbody>';
+  var scoreCol = function (v) { return v === 2 ? 'var(--up)' : (v === 1 ? 'var(--gold)' : 'var(--muted)'); };
+  rows.forEach(function (x) {
+    var m = catMsgOf(x.c) || {}; m.sc = m.sc || [null, null, null, null, null];
+    var s = catSource(catMsgAbsMin(m, CAT.day), catFbtMin(x.fbt));
+    var r = catScore(m.sc, catVetoHit(m.note));
+    var gcls = r.grade === 'A' ? 'a' : (r.grade === 'B' ? 'b' : 'c');
+    h += '<tr data-code="' + esc(x.c) + '"><td class="catmono">' + esc(x.c) + ' ' + esc(x.n) + '</td>';
+    for (var i = 0; i < 5; i++) {
+      var v = m.sc[i];
+      h += '<td><select data-f="sc" data-i="' + i + '" style="background:#0a0f1e;color:' + (v == null ? 'var(--dim)' : scoreCol(v)) + ';border:1px solid var(--line);border-radius:4px;padding:1px 3px">'
+        + '<option value=""' + (v == null ? ' selected' : '') + '>— 未评</option>';
+      for (var k = 0; k <= 2; k++) h += '<option value="' + k + '"' + (v === k ? ' selected' : '') + '>' + k + '</option>';
+      h += '</select></td>';
+    }
+    h += '<td data-cell="total"><b style="color:' + (r.total == null ? 'var(--dim)' : (r.total >= 7 ? 'var(--up)' : (r.total >= 4 ? 'var(--gold)' : 'var(--muted)'))) + '">'
+      + (r.total == null ? (r.veto ? '⛔' : '—') : r.total + '/10') + '</b></td>'
+      + '<td data-cell="grade"><span class="catpill ' + gcls + '">' + (r.veto ? 'C 类 · 一票否决' : (r.grade ? r.grade + ' 类' : '评分不全')) + '</span>' + catStars(r.total) + (m.scAuto ? '<div style="font-size:10px;color:var(--dim)">🤖 建议分</div>' : '') + '</td></tr>';
+  });
+  setHtml(e, h + '</tbody></table></div></div>');
+}
+
+/* ---- 段③ 题材梯队（预览版组卡：题材一卡，成员带 lb 徽章）---- */
+function catRenderTier() {
+  var e = el('catTierBody'); if (!e || !CAT.loaded) return;
+  var by = {};
+  CAT.pool.forEach(function (x) { (by[x.hybk] = by[x.hybk] || []).push(x); });
+  var names = Object.keys(by);
+  names.forEach(function (k) { by[k] = catTierOf(by[k]); });
+  names.sort(function (a, b) { return maxLbcOf(by[b]) - maxLbcOf(by[a]) || by[b].length - by[a].length; });
+  var main = names.filter(function (k) { return by[k].length >= 2; }), lone = names.filter(function (k) { return by[k].length < 2; });
+  var lbCls = function (t) { return t === '龙头' ? 'l1' : (t === '龙二' ? 'l2' : (t === '龙三' ? 'l3' : 'l0')); };
+  var h = '<div class="catsec"><h3>③ 题材梯队 —— 跟龙二龙三，不碰杂毛<span class="tag">STEP 4</span></h3>'
+    + '<div class="desc">催化质量定「题材能不能碰」，梯队定「什么时候碰、碰谁」。组内按<b style="color:#ff9e9e">连板高度 → 首封时间 → 成交额</b>排；涨停时间远远落后的「补涨」次日溢价历史最差。只做跟风时优先盯着有梯队容量的题材。</div><div class="cattiers">';
+  main.forEach(function (k) {
+    var rows = by[k];
+    h += '<div class="cattier' + (rows[0].lbc >= 3 ? ' lead' : '') + '"><h4>' + esc(k) + ' <span style="color:var(--dim);font-weight:400">· ' + rows.length + ' 只 · 最高 ' + maxLbcOf(rows) + ' 板</span></h4>';
+    rows.forEach(function (x) {
+      var m = catMsgOf(x.c) || {};
+      var s = catSource(catMsgAbsMin(m, CAT.day), catFbtMin(x.fbt));
+      var r = (s.cls === 'real' || s.cls === 'sync') ? catScore(m.sc, catVetoHit(m.note)) : null;
+      h += '<div style="margin:6px 0;font-size:12px"><span class="catlb ' + lbCls(x.tier) + '">' + x.tier + ' · ' + x.lbc + '板</span>'
+        + '<b>' + esc(x.n) + '</b> <span class="catmono" style="color:var(--dim)">' + esc(x.c) + '</span>'
+        + '<div style="color:var(--muted);line-height:1.8;margin-top:1px">首封 <b style="color:var(--text)">' + catMinStr(catFbtMin(x.fbt)) + '</b> · 开板 <b style="color:var(--text)">' + x.zbc + '</b> 次'
+        + (r && r.grade ? ' · 催化 <span class="catpill ' + (r.grade === 'A' ? 'a' : (r.grade === 'B' ? 'b' : 'c')) + '" style="font-size:10px">' + r.grade + '</span>' : '')
+        + (s.cls === 'ride' ? ' · <span style="color:var(--down)">蹭车剔除</span>' : '')
+        + (x.tier === '龙头' ? '<br><span style="color:#ff9e9e">龙头状态 = 跟风票的总阀门</span>' : (x.tier === '补涨' ? '<br><span style="color:var(--down)">时间落后 · 次日溢价历史最差 → 不碰</span>' : ''))
+        + '</div></div>';
+    });
+    h += '</div>';
+  });
+  if (lone.length) h += '</div><div class="catnote"><b>独苗题材（1 只）</b>：' + lone.map(function (k) { return esc(k) + '(' + esc(by[k][0].n) + ')'; }).join('、') + ' —— 没有梯队容量的题材跟风性价比低，只看。</div></div>';
+  else h += '</div></div>';
+  setHtml(e, h);
+}
+
+/* ---- 段④ 跟风作战表（预览版：优先级 + 入场方式 + 死线绑定）---- */
+function catRenderPlan() {
+  var e = el('catPlanBody'); if (!e || !CAT.loaded) return;
+  var tierMap = {}, by = {};
+  CAT.pool.forEach(function (x) { (by[x.hybk] = by[x.hybk] || []).push(x); });
+  Object.keys(by).forEach(function (k) { catTierOf(by[k]).forEach(function (x) { tierMap[x.c] = x.tier; }); });
+  var dline = {};
+  Object.keys(by).forEach(function (k) { dline[k] = catDeadlinesOf(by[k], CAT.poolY.filter(function (y) { return y.hybk === k; })); });
+  var rows = [];
+  CAT.pool.forEach(function (x) {
+    var m = catMsgOf(x.c) || {};
+    var s = catSource(catMsgAbsMin(m, CAT.day), catFbtMin(x.fbt));
+    if (s.cls !== 'real' && s.cls !== 'sync') return;
+    var r = catScore(m.sc, catVetoHit(m.note));
+    if (r.grade !== 'A' && r.grade !== 'B') return;
+    rows.push({ x: x, s: s, r: r });
+  });
+  rows.sort(function (a, b) { return (a.r.grade === 'A' ? 0 : 1) - (b.r.grade === 'A' ? 0 : 1) || b.r.total - a.r.total; });
+  var h = '<div class="catsec"><h3>④ 跟风作战表 —— 明日的执行清单<span class="tag">STEP 5</span></h3>'
+    + '<div class="desc">不打板的两条入场路：<b style="color:#bcd0ff">竞价低吸</b>（平开/低开接，弱转强才看）与<b style="color:#bcd0ff">分时回踩</b>（回踩分时均线不破 + 首次放量拉起跟）。每票绑定死线，触发即无条件走。</div>';
+  if (!rows.length) { setHtml(e, h + '<div style="font-size:12px;color:var(--dim)">暂无 A/B 级跟风候选（未录入或评分不足）。</div></div>'); return; }
+  h += '<div style="overflow-x:auto"><table><thead><tr><th>优先</th><th>标的</th><th>题材</th><th>梯队</th><th>三分类</th><th>入场方式</th><th>参考仓位</th><th>死线（触发即走）</th></tr></thead><tbody>';
+  rows.forEach(function (o, idx) {
+    var x = o.x, p = catPlanOf(o.r.grade, o.s.cls);
+    var dl = dline[x.hybk] || {};
+    var gcls = o.r.grade === 'A' ? 'a' : 'b';
+    var dead = '龙头(' + esc((by[x.hybk] || [])[0] ? by[x.hybk][0].n : '—') + ')断板/封单大幅萎缩 · 板块涨停家数衰减' + (dl.fade ? ' <b style="color:var(--gold)">（今日已衰减 ' + dl.tN + '<' + dl.yN + '）</b>' : '') + ' · 澄清/减持公告';
+    var leadBreak = dl.leadBreak;
+    h += '<tr' + (leadBreak ? ' style="opacity:.6"' : '') + '><td><b class="catmono" style="color:' + (idx === 0 ? 'var(--up)' : 'var(--muted)') + '">' + (leadBreak ? '—' : '①②③④⑤'.charAt(idx) || (idx + 1)) + '</b></td>'
+      + '<td class="catmono">' + esc(x.n) + '<br>(' + esc(x.c) + ')</td>'
+      + '<td style="color:var(--gold)">' + esc(x.hybk) + ' <span class="catpill ' + gcls + '" style="font-size:10px">' + o.r.grade + '</span></td>'
+      + '<td><b style="color:' + catTierCol(tierMap[x.c]) + '">' + esc(tierMap[x.c] || '—') + '</b> ' + x.lbc + '板</td>'
+      + '<td><span class="catpill ' + (o.s.cls === 'real' ? 'ok' : 'mid') + '">' + esc(o.s.text) + '</span></td>'
+      + '<td>' + esc(p.way) + (leadBreak ? '<br><b style="color:var(--up)">⚠️ 龙头已断板：只看勿追</b>' : '') + '</td>'
+      + '<td><b style="color:' + (leadBreak ? 'var(--dim)' : 'var(--up)') + '">' + (leadBreak ? '0（停手）' : '轻仓 ≤' + CAT_POS_CAP + '%') + '</b><br><span style="color:var(--dim);font-size:10.5px">试错仓 · 时间止损</span></td>'
+      + '<td style="font-size:11px;color:var(--muted)">' + dead + '</td></tr>';
+  });
+  setHtml(e, h + '</tbody></table></div>'
+    + '<div class="catnote"><b>仓位纪律</b>：跟风票全部按「试错仓」管理，时间止损 = 机会成本而非证伪 —— 题材热度消退即走，不给基本面耐心。催化缺失 ≠ 证伪（形态✓+催化✗ = 只配试错仓）；形态✗+催化✓ = 最危险（追高），永远不做。</div></div>');
+}
+
+/* ---- 段⑤ 三条死线（预览版红边卡 + 动态检查状态）---- */
+function catRenderLines() {
+  var e = el('catLineBody'); if (!e || !CAT.loaded) return;
+  var by = {}, byY = {};
+  CAT.pool.forEach(function (x) { (by[x.hybk] = by[x.hybk] || []).push(x); });
+  CAT.poolY.forEach(function (x) { (byY[x.hybk] = byY[x.hybk] || []).push(x); });
+  var warn1 = [], warn2 = [];
+  Object.keys(by).forEach(function (k) {
+    var d = catDeadlinesOf(by[k], byY[k] || []);
+    if (d.leadBreak) warn1.push(esc(k) + '（' + d.tMax + '板 < ' + d.yMax + '板）');
+    if (d.fade) warn2.push(esc(k) + '（' + d.tN + ' < ' + d.yN + '）');
+  });
+  var vetos = CAT.pool.filter(function (x) { var m = catMsgOf(x.c); return m && catVetoHit(m.note); });
+  var card = function (title, body, ok, dynamic) {
+    return '<div class="catdcard' + (ok ? ' ok' : '') + '"><h4>' + title + (dynamic ? ' · <span style="color:' + (ok ? '#7de8b8' : '#ff9e9e') + '">' + (ok ? '未触发' : '⚠️ 已触发') + '</span>' : '') + '</h4><p>' + body + '</p></div>';
+  };
+  var cmpNote = CAT.dayY ? ('对比日 ' + CAT.dayY) : '无对比日数据（仅当日口径）';
+  var h = '<div class="catsec"><h3>⑤ 三条死线 —— 跟风票的风控总闸</h3>'
+    + '<div class="desc">任何一条触发，当日跟风单全部只看不动。</div><div class="catdead">'
+    + card('① 龙头断板 = 全队撤退',
+      warn1.length ? ('已触发题材：<b>' + warn1.join('、') + '</b> —— 跟风溢价 100% 依附龙头高度，无条件走人。') : ('次日早盘盯龙头封单：<b>封单持续萎缩 / 炸板</b> → 跟风票无条件走人。' + (warn1.length ? '' : cmpNote + '，暂无题材触发。')), !warn1.length, true)
+    + card('② 板块涨停家数衰减',
+      warn2.length ? ('已衰减题材：<b>' + warn2.join('、') + '</b> —— 题材退潮，手中跟风票冲高即清，不留恋。') : ('题材今日涨停家数少于上一交易日 = 退潮信号。<b>手中跟风票冲高即清</b>。' + cmpNote + '，暂无题材触发。'), !warn2.length, true)
+    + card('③ 澄清 / 减持 一票否决',
+      vetos.length ? ('命中（强制 C 级、剔除作战表）：<b>' + vetos.map(function (x) { return esc(x.n) + '(' + esc(x.c) + ')'; }).join('、') + '</b> —— 且永久拉黑该催化源。') : ('备注/消息命中「澄清、减持、立案、问询、质押、处罚」→ <b>不管图形多好看直接除名</b>。当前未命中。'), !vetos.length, true)
+    + '</div></div>';
+  setHtml(e, h);
+}
+
+function catRenderAll() {
+  if (!CAT.loaded) return;
+  catRenderSummary(); catRenderSrc(); catRenderScore(); catRenderTier(); catRenderPlan(); catRenderLines();
+}
+function catOnEnter() { if (CAT.loaded) catRenderAll(); /* 不自动拉池：与 ztpool/p8「切到本页不自动跑」纪律一致 */ }
+
+/* ---- 事件绑定（委托：表内 input/select change → 存 LS → 局部刷新；过滤器 click；抓取按钮）---- */
+/* ---- 五维自动评分（🤖 建议分）：只补「有消息但缺分」的空维度，人工已评分不动 ---- */
+function catAutoGrade() {
+  if (!CAT.loaded) { catStatus('⚠️ 先「📥 拉涨停池」再评分'); return; }
+  var msgs = catMsgsOf(CAT.day), n = 0;
+  CAT.pool.forEach(function (x) {
+    var m = msgs[x.c];
+    if (!m || !m.mt) return; /* 无消息时间 = 无从评起 */
+    if (!m.sc) m.sc = [null, null, null, null, null];
+    var sug = catAutoScore(m.note);
+    if (!sug) return;
+    var touched = false;
+    for (var i = 0; i < 5; i++) if (m.sc[i] == null) { m.sc[i] = sug[i]; touched = true; }
+    if (touched) { m.scAuto = true; n++; }
+  });
+  catSave(); catRenderAll();
+  catStatus(n ? '🎯 已为 ' + n + ' 票补齐未评维度（🤖 规则建议分：关键词文本分析仅供起点，请人工复核；改任一分即撤销 🤖）' : '无需补评（没有「有消息但缺分」的票）');
+}
+
+function catBind() {
+  var lb = el('catLoad'); if (lb) lb.addEventListener('click', catLoad);
+  var gb = el('catGrade'); if (gb) gb.addEventListener('click', catAutoGrade);
+  var fb = el('catFetch'); if (fb) fb.addEventListener('click', catFetchNews);
+  var cb = el('catClear'); if (cb) cb.addEventListener('click', function () {
+    if (!CAT.day) { catStatus('⚠️ 先「📥 拉涨停池」再清'); return; }
+    var n = Object.keys(catMsgsOf(CAT.day)).length;
+    delete catData()[CAT.day];
+    catSave(); catRenderAll();
+    catStatus('🗑 已清空 ' + CAT.day + ' 的 ' + n + ' 条录入（其它日期不受影响）');
+  });
+  /* 段① 过滤器：胶囊点击筛选行 */
+  var src = el('catSrcBody');
+  if (src) src.addEventListener('click', function (ev) {
+    var b = ev.target && ev.target.closest ? ev.target.closest('.catfbtn') : null;
+    if (!b) return;
+    src.querySelectorAll('.catfbtn').forEach(function (x) { x.classList.toggle('on', x === b); });
+    var f = b.getAttribute('data-cf');
+    src.querySelectorAll('tbody tr').forEach(function (r) {
+      r.style.display = (f === 'all' || r.getAttribute('data-c') === f) ? '' : 'none';
+    });
+  });
+  /* 段①：消息时间 / 备注 change —— 只局部更新该行 可视化条+判定+行分类，防整表重渲染丢输入焦点 */
+  if (src) src.addEventListener('change', function (ev) {
+    var inp = ev.target, f = inp.getAttribute ? inp.getAttribute('data-f') : null;
+    if (!f) return;
+    var tr = inp.closest ? inp.closest('tr') : null, code = tr ? tr.getAttribute('data-code') : null;
+    if (!code) return;
+    var m = catMsgsOf(CAT.day)[code] || (catMsgsOf(CAT.day)[code] = { mt: '', note: '', sc: [null, null, null, null, null] });
+    if (f === 'mt') { m.mt = inp.value || ''; m.auto = false; } /* 手工改动 = 不再是自动预填 */
+    if (f === 'note') { m.note = inp.value || ''; m.auto = false; }
+    catSave();
+    var row = CAT.pool.filter(function (x) { return x.c === code; })[0];
+    if (row && tr) {
+      var s = catSource(catMsgAbsMin(m, CAT.day), catFbtMin(row.fbt));
+      var ct = tr.querySelector('[data-cell="tl"]'); if (ct) ct.innerHTML = catTlBar(catMsgAbsMin(m, CAT.day), catFbtMin(row.fbt));
+      var cc = tr.querySelector('[data-cell="cls"]');
+      if (cc) {
+        var diffTxt = s.diff == null ? '' : (s.diff <= -1440 ? '早 ' + (-s.diff / 1440).toFixed(1) + ' 天' : s.diff >= 1440 ? '晚 ' + (s.diff / 1440).toFixed(1) + ' 天' : s.diff <= 0 ? '早 ' + (-s.diff) + ' 分' : '晚 ' + s.diff + ' 分');
+        cc.innerHTML = '<span class="catpill ' + (s.cls === 'real' ? 'ok' : (s.cls === 'sync' ? 'mid' : (s.cls === 'ride' ? 'bad' : 'c'))) + '">' + esc(s.text) + '</span>'
+          + (diffTxt ? '<div style="font-size:10.5px;color:var(--dim)">' + diffTxt + '</div>' : '');
+        tr.setAttribute('data-c', s.cls);
+      }
+      /* 过滤器计数同步 */
+      var fc = { real: 0, sync: 0, ride: 0, none: 0 };
+      CAT.pool.forEach(function (x2) { var m2 = catMsgOf(x2.c) || {}; var s2 = catSource(catMsgAbsMin(m2, CAT.day), catFbtMin(x2.fbt)); fc[s2.cls || 'none']++; });
+      src.querySelectorAll('.cfN').forEach(function (sp) { sp.textContent = fc[sp.getAttribute('data-n')] || 0; });
+    }
+    catRenderSummary(); catRenderScore(); catRenderTier(); catRenderPlan(); catRenderLines();
+  });
+  /* 段②：五维评分 change —— 只局部更新该行 总分+分级 */
+  var scb = el('catScoreBody');
+  if (scb) scb.addEventListener('change', function (ev) {
+    var sel = ev.target, f = sel.getAttribute ? sel.getAttribute('data-f') : null;
+    if (f !== 'sc') return;
+    var tr = sel.closest ? sel.closest('tr') : null, code = tr ? tr.getAttribute('data-code') : null;
+    if (!code) return;
+    var m = catMsgOf(code) || (catMsgsOf(CAT.day)[code] = { mt: '', note: '', sc: [null, null, null, null, null] });
+    m.sc[+sel.getAttribute('data-i')] = (sel.value === '' ? null : +sel.value);
+    m.scAuto = false; /* 人工改分 → 撤销 🤖 建议分标记 */
+    catSave();
+    var r = catScore(m.sc, catVetoHit(m.note));
+    var ct = tr.querySelector('[data-cell="total"]');
+    if (ct) ct.innerHTML = '<b style="color:' + (r.total == null ? 'var(--dim)' : (r.total >= 7 ? 'var(--up)' : (r.total >= 4 ? 'var(--gold)' : 'var(--muted)'))) + '">'
+      + (r.total == null ? (r.veto ? '⛔' : '—') : r.total + '/10') + '</b>';
+    var cg = tr.querySelector('[data-cell="grade"]');
+    if (cg) cg.innerHTML = '<span class="catpill ' + (r.grade === 'A' ? 'a' : (r.grade === 'B' ? 'b' : 'c')) + '">'
+      + (r.veto ? 'C 类 · 一票否决' : (r.grade ? r.grade + ' 类' : '评分不全')) + '</span>' + catStars(r.total) + (m.scAuto ? '<div style="font-size:10px;color:var(--dim)">🤖 建议分</div>' : '');
+    catRenderSummary(); catRenderTier(); catRenderPlan(); catRenderLines();
+  });
+}
+
 init();
 try{ wbbHostInit(); }catch(eWHI){ }
 try{ p8Bind(); }catch(eP8){ }
+try{ catBind(); }catch(eCAT){ }
 
 
 
