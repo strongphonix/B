@@ -38440,14 +38440,21 @@ function catDayShift(ymd, n) { /* 'YYYY-MM-DD' 平移 n 天 → 'YYYY-MM-DD' */
   d.setDate(d.getDate() + n);
   return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
 }
+function catDayIso(d) { /* 日期归一化：'YYYYMMDD'（CAT.day/pool 口径）→ 'YYYY-MM-DD'（ISO）；已是 ISO 原样返回。
+   §258g 修复：CAT.day 是 8 位而抓取消息 mday 是 ISO，catDayDiff(ISO, 8位) split('-') 失败恒返 0，
+   导致跨日消息折算失效（跨日 14:29 被当池日 14:29 → 消息早于涨停却判蹭车）。 */
+  var m = /^(\d{4})(\d{2})(\d{2})$/.exec(String(d == null ? '' : d).trim());
+  return m ? m[1] + '-' + m[2] + '-' + m[3] : String(d == null ? '' : d);
+}
 /* 录入消息的「绝对分钟」：池日内 = 当日分钟；早于池日（m.mday）→ 减去天数×1440
-   —— 跨日消息天然「更早」，落进真催化方向，与当日消息同一 diff 轴比较 */
+   —— 跨日消息天然「更早」，落进真催化方向，与当日消息同一 diff 轴比较。
+   §258g：dayYmd 入参兼容 8 位与 ISO（经 catDayIso 归一后再算天数差）。 */
 function catMsgAbsMin(m, dayYmd) {
   if (!m || !m.mt) return null;
   var base = catMinOf(m.mt);
   if (base == null) return null;
-  if (m.mday && m.mday !== dayYmd) {
-    var dd = catDayDiff(m.mday, dayYmd);
+  if (m.mday) {
+    var dd = catDayDiff(m.mday, catDayIso(dayYmd));
     if (dd > 0) base -= dd * 1440;
   }
   return base;
@@ -38853,8 +38860,8 @@ function catRenderSrc() {
       + '<td style="color:var(--gold)">' + esc(x.hybk) + '</td>'
       + '<td class="catmono">' + catMinStr(catFbtMin(x.fbt)) + '</td>'
       + '<td class="catmono"><span style="color:var(--up)">' + x.lbc + '</span>板 / ' + x.zbc + '</td>'
-      + '<td><input type="time" data-f="mt" value="' + esc(m.mt || '') + '"' + (m.mday && m.mday !== CAT.day ? ' title="消息日期 ' + esc(m.mday) + '（早于池日，diff 按天数折算）"' : '') + ' style="width:92px;background:transparent;color:var(--text);border:1px solid var(--line);border-radius:4px;padding:1px 3px">'
-      + (m.mday && m.mday !== CAT.day ? '<div style="font-size:10px;color:var(--gold);margin-top:1px">' + esc(m.mday.slice(5)) + '</div>' : '') + '</td>'
+      + '<td><input type="time" data-f="mt" value="' + esc(m.mt || '') + '"' + (m.mday && m.mday !== catDayIso(CAT.day) ? ' title="消息日期 ' + esc(m.mday) + '（早于池日，diff 按天数折算）"' : '') + ' style="width:92px;background:transparent;color:var(--text);border:1px solid var(--line);border-radius:4px;padding:1px 3px">'
+      + (m.mday && m.mday !== catDayIso(CAT.day) ? '<div style="font-size:10px;color:var(--gold);margin-top:1px">' + esc(m.mday.slice(5)) + '</div>' : '') + '</td>'
       + '<td data-cell="tl">' + catTlBar(catMsgAbsMin(m, CAT.day), catFbtMin(x.fbt)) + '</td>'
       + '<td data-cell="cls"><span class="catpill ' + (s.cls === 'real' ? 'ok' : (s.cls === 'sync' ? 'mid' : (s.cls === 'ride' ? 'bad' : 'c'))) + '">' + esc(s.text) + '</span>'
       + (m.auto ? '<span title="消息由新浪 7x24 自动匹配预填，可手工修正" style="font-size:10.5px"> 🤖</span>' : '')
