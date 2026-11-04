@@ -36795,29 +36795,42 @@ function init() {
              ★ §263d：占位与回填渲染改为 open8StratPanelHtml（四维确认块替代全天预判块）。 */
           var o8pid = 'o8ph_' + Date.now() + '_' + Math.floor(Math.random() * 1e6);
           o8Block = '<div id="' + o8pid + '">' + open8StratPanelHtml({ ok: false, reason: '5分钟K未缓存，正在补拉…' }, null) + '</div>';
-          (function o8Lazy(o8c2, o8pid2, o8date2, o8pc2) {
+          /* ★ 2026-11-04 §263e（用户报障「补拉失败…无数据，请修复」）：根因 = sym 形态错配。
+             ST.results 的键是 6 位无前缀码（ST.results[s.code]），ent.code / ind.code 也是 6 位码；
+             而 fetchM5Parse 是薄包装（3097 行），内部**不做任何归一**，分析时各调用点传的都是
+             带前缀 sym（stock.sym = 'sz000001' 形态）。懒加载把 6 位码直接传进去 → URL 拼成
+             param=000001,m5，腾讯 mkline 不认 → 三源 fetch+JSONP 全挂；且每点一次 src.fail++，
+             3 次后源进入 M5_COOL 冷却 → 后续点击永远看到「接口限流或数据源冷却中」。
+             修复：传参前用 minSymOf() 归一（§175 现成函数，幂等：6位码→补前缀，带前缀 sym→原样
+             等价重建，hk 5位→hk 前缀）；inflight 键与写回 ST.results 仍用原 code（缓存键形态不变，
+             回归面为零）；失败原因透出到文案（window.__o8m5LastErr），不再一律甩锅「限流/冷却」。 */
+          (function o8Lazy(o8c2, o8sym2, o8pid2, o8date2, o8pc2) {
             try {
               var infl = (window.__o8m5Inflight = window.__o8m5Inflight || {});
-              var p = infl[o8c2];
+              var p = infl[o8sym2];
               if (!p) {
-                p = infl[o8c2] = fetchM5Parse(o8c2)
+                p = infl[o8sym2] = fetchM5Parse(o8sym2)
                   .then(function (bars) {
-                    delete infl[o8c2];
+                    delete infl[o8sym2];
                     try { var rc = ST.results[o8c2]; if (rc && bars && bars.length) rc.m5 = bars; } catch (eW8) {}
                     return (bars && bars.length) ? bars : null;
                   })
-                  .catch(function () { delete infl[o8c2]; return null; });
+                  .catch(function (eF8) {
+                    delete infl[o8sym2];
+                    try { window.__o8m5LastErr = (eF8 && (eF8.message || String(eF8))) || '未知错误'; } catch (eW9) {}
+                    return null;
+                  });
               }
               p.then(function (bars) {
                 var ph = document.getElementById(o8pid2);
                 if (!ph || !ph.isConnected) return;   /* 面板已重建/关闭 → 丢弃，不回填 */
                 var html2 = bars
                   ? (function () { var d8 = open8DayOf(bars, o8date2, o8pc2, o8c2); return open8StratPanelHtml(d8, open8Strategy(d8)); })()
-                  : open8StratPanelHtml({ ok: false, reason: '补拉失败（接口限流或数据源冷却中），稍后再点一次本根K线即可重试' }, null);
+                  : open8StratPanelHtml({ ok: false, reason: '补拉失败（' + ((window.__o8m5LastErr && String(window.__o8m5LastErr).slice(0, 60)) || '接口限流或数据源冷却中') + '），稍后再点一次本根K线即可重试' }, null);
                 ph.outerHTML = html2;
               });
             } catch (eLz8) { /* 懒加载失败不拖累面板 */ }
-          })(o8code, o8pid, o8kDate, o8pc);
+          })(o8code, (typeof minSymOf === 'function' ? (minSymOf(o8code) || o8code) : o8code), o8pid, o8kDate, o8pc);
         } else {
           /* ★ §263d：渲染改为四维确认块（open8Strategy 纯函数打分，与卡片/钉钉同一份口径） */
           o8Block = open8StratPanelHtml(o8res, open8Strategy(o8res));
