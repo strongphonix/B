@@ -7205,7 +7205,7 @@ function vpPanelHtml(x, sigs, adv, kf, kj, dbl, vpat, wscan, cj, rr) {
      本轮迁至面板最顶部·结论条上方，见 return 处）。三态同纪律：wscan 未传 / gw 未挂 → 不出现（老调用点兼容）；
      gw = null → gwpaHtml 渲染「数据不足」条（诚实留白）；gw = 判定对象 → 正常九框架块。
      ★ 2026-10-13：第 8 参 wscan 现在**只承载 gw 一个键**（策略命中扫描整块已删；GWPA 是独立功能，保留）。 */
-  var gwBlock = (wscan === undefined || wscan.gw === undefined) ? '' : '<div style="margin-top:6px">' + gwpaHtml(wscan.gw) + '</div>';
+  var gwBlock = (wscan === undefined || wscan.gw === undefined) ? '' : '<div class="vp-gw-wrap" style="margin-top:6px">' + gwpaHtml(wscan.gw) + '</div>';
   /* ★ 2026-10-06（用户要求）：理论盈亏比条（第 10 参 rr）—— 与 KDJ / 承接力同纪律的三态：
      未传（undefined）→ 区块不出现（向后兼容旧调用点 / 老测试）；null 或 na → 诚实「数据不足」条；对象 → 正常读数条。
      放在风险/利多清单正下方（见下方 return 的拼装顺序）：盈亏比是「看完多空证据之后紧接着要问的那个数」。 */
@@ -9238,6 +9238,26 @@ function renderChart(ind, focus, opt) {
     }
   } catch (eWsScan) { __wsMarks = {}; }
 
+  /* ===== 超跌反弹图上标记（★ 2026-11-04 §262：用户要求「把超跌反弹的思路增加到生命周期平台k线提示」）=====
+     逐根跑 cbReboundOf（与点击面板**同一份**判定，不另写第二套口径），fired（四条件齐备）的那根
+     在 K 线下方画翠绿「超反」文字标签（与「多反」标签同款描边手法，颜色 CBR_COLOR 单一真源）。
+     纪律：分层参考层 —— 不计分、不进四指标、不进钉钉、不发买卖信号；
+       无未来函数 —— cbReboundOf(kl, t, code) 只读 kl[0..t]；
+       仅日线面板 —— 24 根窗口是「日」口径（分钟线 24 根只覆盖半天、周线是 24 周，套用属假读数，§175/§176 先例）；
+       判定失败 / 数据不足 / 港股一律静默跳过（图不能挂）。 */
+  var __cbMarks = {};
+  if (!__per || __per === 'day') {
+    try {
+      var _cbCode = (ind && ind.code) ? ind.code : '';
+      for (var _cbi = 0; _cbi < ks.length; _cbi++) {
+        var _cbt = start + _cbi, _cbr = null;
+        try { _cbr = cbReboundOf(kl, _cbt, _cbCode); } catch (eCbOf) { _cbr = null; }
+        if (_cbr && _cbr.ok && _cbr.fired) __cbMarks[_cbi] = _cbr;
+      }
+    } catch (eCbScan) { __cbMarks = {}; }
+  }
+  var __cbN = Object.keys(__cbMarks).length;
+
   /* ===== ★ 2026-10-18 §166（用户要求「突破震荡结构的那根 k 线请用特殊颜色标记」）=====
      逐根跑 gwRangeState（与点击面板**同一份**判定，不另写第二套口径），st==='break' 的那根 = 突破蜡烛。
      纪律：
@@ -9698,6 +9718,29 @@ function renderChart(ind, focus, opt) {
             '<rect x="' + (cx + 0.8).toFixed(1) + '" y="' + (dBot - dH2).toFixed(1) + '" width="2.2" height="' + dH2.toFixed(1) + '" rx="0.7" fill="' + dCol + '" stroke="#0b1020" stroke-width="0.5"/></g>';
         }
         return s2;
+      })() +
+      /* ★ 2026-11-04 §262：超跌反弹「超反」标签 —— 落位与倍量双柱同一纵向堆叠链：
+         该根同时有倍量双柱 → 让位一档（+7.2px）画在其下方，互不遮挡；
+         贴到量能面板顶（volT−2）→ 翻到最高价上方（同「多反」标签的翻转手法）。
+         <title> 悬停给四条件完整明细（与点击面板同一份字段，逐条 ✓/✗ + 数值）。 */
+      (function () {
+        var cb = __cbMarks[idx];
+        if (!cb) return '';
+        var cbN0 = (__wsMarks[idx] && __wsMarks[idx].dbl) ? 1 : 0;
+        var cty = Y(k.low) + 7.5 + cbN0 * 7.2;
+        if (cty + 8 > volT - 2) cty = Y(k.high) - 4.6;
+        var cbTip = klDateTxt(k.tt || k.date) + '　超跌反弹信号（' + cb.bkLabel + ' 阈值 −' + cb.thr + '%）&#10;' +
+          '① 超跌：加权乖离 XJ=' + cb.xj.toFixed(2) + '% ≤ −' + cb.thr + '%' + (cb.cOv ? ' ✓' : ' ✗') +
+          '（BIAS6 ' + cb.b6.toFixed(1) + ' / BIAS12 ' + cb.b12.toFixed(1) + ' / BIAS24 ' + cb.b24.toFixed(1) + '）&#10;' +
+          '② 修复：' + (cb.crossJ ? 'J(13) 上穿 0（' + cb.j1.toFixed(1) + '→' + cb.j.toFixed(1) + '）' :
+            'WR10=' + (cb.wr10 == null ? '—' : cb.wr10.toFixed(1)) + ' 且当日收红') + (cb.cRep ? ' ✓' : ' ✗') + '&#10;' +
+          '③ 站线：收盘 ' + (cb.cost != null ? cb.cost1 != null ? '上穿 3日加权成本线 ' + cb.cost.toFixed(2) : '' : '—') + (cb.cStd ? ' ✓' : ' ✗') + '&#10;' +
+          '④ 量态：' + (cb.maV != null ? (cb.vol > cb.maV ? '放量 ' + Math.round(cb.vol) + ' &gt; 5日均量 ' + Math.round(cb.maV) : '缩量止跌（今昨两根均低于 5日均量 ' + Math.round(cb.maV) + '）') : '—') + (cb.cVol ? ' ✓' : ' ✗') + '&#10;' +
+          '参考层：不计分、不进四指标、不进钉钉、不发买卖信号。';
+        return '<text class="cb-reb-tag" data-fired="1" x="' + cx.toFixed(1) + '" y="' + cty.toFixed(1) +
+          '" fill="' + CBR_COLOR + '" font-size="6.2" font-weight="700" text-anchor="middle"' +
+          ' stroke="#0b1020" stroke-width="2.2" stroke-opacity="0.85" paint-order="stroke"' +
+          ' style="pointer-events:none"><title>' + cbTip + '</title>超反</text>';
       })() +
       '</g>';
   });
@@ -10251,6 +10294,16 @@ function renderChart(ind, focus, opt) {
     /* ★ 2026-10-31 §246：深超跌地量 chip —— 同地量两枚的规矩：只在真有冰蓝柱时出现（0 根不占版面），
        判据写在上面 .kl-hint 的 title 里随时可查；色与图上渐变、左侧角标同一份真源（__osCol）。 */
     (__osdlN > 0 ? '<span class="kl-chip"><i class="sh sh-cnd" style="color:' + __osCol + '"></i><b>深超跌地量 ' + __osdlN + ' 根</b></span>' : '') +
+    /* ★ 2026-11-04 §262：超跌反弹 chip —— 同地量三枚的规矩：只在真有「超反」标记时出现（0 根不占版面）；
+       判据（四条件全文）写在本 chip 的 title 里随时可查；色与图上标记同一份真源（CBR_COLOR）。 */
+    (__cbN > 0 ? '<span class="kl-chip" title="超跌反弹标记（§262）—— 判定 = 通达信【超跌反弹·精简版】四条件 AND，全滞后无未来函数（只用该日及之前数据）：&#10;' +
+      '① 超跌：加权乖离 XJ = BIAS6/6 + BIAS12/3 + BIAS24/2 ≤ −板阈值（主板 −5% / 双创·北交 −9%，boardOf 判板）；&#10;' +
+      '② 修复：J(13) 上穿 0（RSV 13 日、SMA(3,1) 平滑、J=3K−2D）或（WR10 &gt; 85 且当日收红 C&gt;昨收）；&#10;' +
+      '③ 站线：收盘 CROSS 上穿 3 日加权成本线 MA((H+L+2C)/4, 3)——标准 /4，不用原公式 4.15 魔法数；&#10;' +
+      '④ 量态：放量（V &gt; 5日均量）或缩量止跌（今昨两根量均低于 5日均量）。&#10;' +
+      '⚠️ 与原【超跌反弹·优化版】的差异：砍掉 RSI/ADX/WR 三重共线的 GG、去 JTB&lt;55 冗余、除数还原 /4、阈值分板——四条件彼此正交，信号频率恢复到可用水平。&#10;' +
+      '仅日线面板出现（24 根窗口是「日」口径，分钟/周线套用属假读数）；历史不足 24 根 / 港股 / HHV=LLV 除零 → 不判不标（诚实留白）。&#10;' +
+      '参考层：只标记，不计分、不进四指标、不进钉钉、不发买卖信号。"><i class="sh sh-cnd" style="color:' + CBR_COLOR + '"></i><b>超跌反弹 ' + __cbN + ' 根</b></span>' : '') +
     /* ★ 2026-10-04（用户要求「涨停或跌停 k 线请用特殊的颜色」）：蜡烛专属色图例 —— 金 = 涨停 · 青 = 跌停。
        判定见 klLimitTickOf（收盘 = 该股当日涨 / 跌停价 + 封板 / 封底）；只在蜡烛上换色，量能柱仍按红涨绿跌。
        ★ 2026-10-26 §212 起量能柱多出**一档**配色：量比 > KL_VR15_HOT 的「放量柱」走专属渐变（vx），
@@ -17561,6 +17614,108 @@ function wsDblFormOf(kl, i) {
     colA: d.colA, colB: d.color, ratio: d.ratio, pos: d.pos, band: d.band, posName: d.posName,
     formTxt: d.formTxt, comboTxt: d.comboTxt, t: d.t };
 }
+/* ==== 超跌反弹判定（★ 2026-11-04 §262：用户要求「把超跌反弹的思路增加到生命周期平台k线提示」）====
+   口径 = 本会话给用户的通达信【超跌反弹·精简版】逐字同源（四条件 AND，全滞后、只用 kl[0..i]）：
+     ① 超跌  XJ := BIAS6/6 + BIAS12/3 + BIAS24/2 ≤ −板阈值（boardOf 判板：主板 5 / 双创·北交 9；港股无此口径不判）
+     ② 修复  CROSS(J13, 0) 或（WR10 > 85 且 C > 昨收）—— J13 = RSV(13) 的 KDJ J 值（SMA(3,1) 平滑，J=3K−2D）
+     ③ 站线  CROSS(C, MA((H+L+2C)/4, 3)) —— 3 日加权成本线，标准 /4（不用原公式 4.15 魔法数）
+     ④ 量态  V > MA(V,5)（放量确认）或（V < MA(V,5) 且 昨量 < MA(V,5)）（缩量止跌后启动）
+   与原【超跌反弹·优化版】的差异（本会话分析结论）：砍掉 RSI/ADX/WR 三重共线的 GG、去 JTB<55 冗余、
+   除数还原 /4、阈值分板 —— 四条彼此正交，信号频率恢复到可用水平。
+   分层纪律：参考层 —— 只做图上标记 + 图例 + 点击面板明细，不计分、不进四指标、不进钉钉、不发买卖信号。
+   诚实留白：历史不足 24 根 / 港股 / 高低价全同（HHV=LLV 除零）→ 不判、不标，不硬凑。 */
+var CBR_RULE = {
+  thrMain: 5, thrGrowth: 9,      /* 加权乖离超跌阈值：主板 −5 / 双创·北交 −9 */
+  wrTh: 85,                      /* 威廉 WR10 深度超卖线 */
+  costN: 3, volN: 5, jN: 13,     /* 成本线 3 日 / 量均线 5 日 / J 值 RSV 13 日 */
+  minBars: 24                    /* 至少 24 根（BIAS24 窗口；J(13) 的 SMA 平滑在此长度内已基本收敛） */
+};
+var CBR_COLOR = '#34d399';       /* 标记色单一真源：翠绿（本文件唯一使用处，与既有 9 色不撞） */
+/* 通达信 SMA(X,N,M)：Y = (X*M + 昨Y*(N−M)) / N，首根 Y = X */
+function _cbrSma(arr, n, m) {
+  var out = [], y = null, t;
+  for (t = 0; t < arr.length; t++) {
+    y = (y == null) ? arr[t] : (arr[t] * m + y * (n - m)) / n;
+    out.push(y);
+  }
+  return out;
+}
+function cbReboundOf(kl, i, code) {
+  if (!kl || !kl.length || i == null || i < 0 || i > kl.length - 1) return { ok: false, why: '下标越界' };
+  if (i < CBR_RULE.minBars - 1) return { ok: false, why: '历史不足 ' + CBR_RULE.minBars + ' 根（需 24 日乖离窗口 + J(13) 平滑起步）' };
+  var bk = boardOf(code);
+  if (bk.key === 'hk') return { ok: false, why: '港股无涨跌幅限制，超跌阈值口径不适用' };
+  var thr = (bk.key === 'main') ? CBR_RULE.thrMain : CBR_RULE.thrGrowth;
+  var s = kl.slice(0, i + 1), n = s.length, t;
+  var C = s[n - 1].close, H = s[n - 1].high, L = s[n - 1].low, V = s[n - 1].volume, C1 = s[n - 2].close;
+  /* —— 均线族（窗口内末值；逐窗累加，缺数 → null 诚实留白）—— */
+  function _ma(f, N, end) {
+    var sum = 0, cnt = 0, k;
+    for (k = end - N + 1; k <= end; k++) { var v = f(s[k]); if (isFinite(v)) { sum += v; cnt++; } }
+    return cnt === N ? sum / N : null;
+  }
+  var ma6 = _ma(function (b) { return b.close; }, 6, n - 1);
+  var ma12 = _ma(function (b) { return b.close; }, 12, n - 1);
+  var ma24 = _ma(function (b) { return b.close; }, 24, n - 1);
+  if (ma6 == null || ma12 == null || ma24 == null || !(ma6 > 0) || !(ma12 > 0) || !(ma24 > 0))
+    return { ok: false, why: '均线数据不足（6/12/24 日收盘均价取不到）' };
+  var B6 = (C - ma6) / ma6 * 100, B12 = (C - ma12) / ma12 * 100, B24 = (C - ma24) / ma24 * 100;
+  var xj = B6 / 6 + B12 / 3 + B24 / 2;               /* 加权乖离：长周期权重更高（原公式 XJ1~XJ5 口径） */
+  /* —— J(13) 序列：RSV13 → SMA(3,1) → K → D → J = 3K−2D —— */
+  var rsv = [];
+  for (t = 0; t < n; t++) {
+    var hh = -Infinity, ll = Infinity, k2, need = Math.min(CBR_RULE.jN, t + 1), from = t - need + 1;
+    for (k2 = from; k2 <= t; k2++) { if (s[k2].high > hh) hh = s[k2].high; if (s[k2].low < ll) ll = s[k2].low; }
+    rsv.push((hh - ll) <= 0 ? 0 : (s[t].close - ll) / (hh - ll) * 100);  /* HHV=LLV（极端一字）→ 按 0 处理，不除零 */
+  }
+  var K = _cbrSma(rsv, 3, 1), D = _cbrSma(K, 3, 1);
+  var j = 3 * K[n - 1] - 2 * D[n - 1], j1 = 3 * K[n - 2] - 2 * D[n - 2];
+  /* —— WR10（10 日威廉：收盘在 10 日区间的位置，100 = 贴着最低）—— */
+  var hh10 = -Infinity, ll10 = Infinity, k3;
+  for (k3 = n - 10; k3 < n; k3++) { if (s[k3].high > hh10) hh10 = s[k3].high; if (s[k3].low < ll10) ll10 = s[k3].low; }
+  var wr10 = (hh10 - ll10) <= 0 ? null : (hh10 - C) / (hh10 - ll10) * 100;  /* 全同价 → 不判（诚实留白） */
+  /* —— 三日加权成本线（标准 /4，含当根）+ CROSS 语义 —— */
+  function _w(b) { return (b.high + b.low + 2 * b.close) / 4; }
+  var cost = _ma(_w, CBR_RULE.costN, n - 1), cost1 = _ma(_w, CBR_RULE.costN, n - 2);
+  var maV = _ma(function (b) { return b.volume; }, CBR_RULE.volN, n - 1);
+  /* —— 四条件逐项判定 —— */
+  var cOv = xj <= -thr;                                             /* ① 超跌 */
+  var crossJ = (j1 <= 0 && j > 0);                                  /* ② 修复 a：J 上穿 0（CROSS 语义） */
+  var redC = C > C1;                                                /* ② 修复 b 前提：当日收红（C > 昨收，原公式 C>REF(C,1)） */
+  var cRep = crossJ || (wr10 != null && wr10 > CBR_RULE.wrTh && redC);
+  var cStd = (cost != null && cost1 != null && C1 <= cost1 && C > cost);  /* ③ 站线：CROSS(C, 成本线) */
+  var cVol = (maV != null && maV > 0) && (V > maV || (V < maV && s[n - 2].volume < maV));  /* ④ 量态 */
+  var fired = cOv && cRep && cStd && cVol;
+  return { ok: true, fired: fired, bkKey: bk.key, bkLabel: bk.label, thr: thr,
+    xj: xj, b6: B6, b12: B12, b24: B24, j: j, j1: j1, crossJ: crossJ,
+    wr10: wr10, redC: redC, cost: cost, cost1: cost1, maV: maV, vol: V, vol1: s[n - 2].volume,
+    cOv: cOv, cRep: cRep, cStd: cStd, cVol: cVol, idx: i, date: s[n - 1].date };
+}
+/* 点击面板「超跌反弹判定」块 —— 仅超跌成立（cOv）时出块（与 §245 超跌反转「仅深超跌出块」同纪律）；
+   fired = 四条件全过（信号日）高亮；未触发 → 逐条列出差哪条（诚实展示，不冒充信号）。 */
+function cbReboundHtml(r) {
+  var head = '🎯 超跌反弹判定（参考层 · 不计分）';
+  if (!r || !r.ok) return '';                                   /* 数据不足 / 港股 → 不出块（不硬凑） */
+  if (!r.cOv) return '';                                        /* 未超跌 → 本块不出现（其余条件无从谈起） */
+  var tick = function (b) { return b ? '<span style="color:#2ee6a8;font-weight:700">✓</span>' : '<span style="color:#ff6b81;font-weight:700">✗</span>'; };
+  var repTxt = r.crossJ
+    ? 'J(13) 上穿 0（' + r.j1.toFixed(1) + '→' + r.j.toFixed(1) + '）'
+    : 'WR10=' + (r.wr10 == null ? '—' : r.wr10.toFixed(1)) + (r.wr10 != null && r.wr10 > CBR_RULE.wrTh ? '' : '（≤' + CBR_RULE.wrTh + '）') + ' 且当日收红';
+  var volTxt = (r.maV == null) ? '—' : (r.vol > r.maV
+    ? '放量（' + Math.round(r.vol) + ' &gt; 5日均量 ' + Math.round(r.maV) + '）'
+    : '缩量止跌（' + Math.round(r.vol) + ' 与昨量 ' + Math.round(r.vol1) + ' 均低于 5日均量 ' + Math.round(r.maV) + '）');
+  var verdict = r.fired
+    ? '<span style="color:' + CBR_COLOR + ';font-weight:800">⚡ 四条件齐备 = 超跌反弹信号日（图上已标翠绿「超反」）</span>'
+    : '<span style="color:var(--dim)">未触发 —— ' + (!r.cRep ? '缺「修复」' : '') + (!r.cStd ? (r.cRep ? '缺' : '、缺') + '「站线」' : '') + (!r.cVol ? ((!r.cRep && !r.cStd) ? '、缺' : '缺') + '「量态」' : '') + '，等条件补齐再看</span>';
+  return '<div class="stage-desc" style="text-align:left;font-size:12.5px"><b>' + head + '</b>（' + esc(r.bkLabel) + '阈值 −' + r.thr + '%）：' +
+    '① 超跌 ' + tick(r.cOv) + ' 加权乖离 XJ=<b class="mono">' + r.xj.toFixed(2) + '%</b>' +
+    '（BIAS6 ' + r.b6.toFixed(1) + ' / BIAS12 ' + r.b12.toFixed(1) + ' / BIAS24 ' + r.b24.toFixed(1) + '，长周期权重 1/6·1/3·1/2）　' +
+    '② 修复 ' + tick(r.cRep) + ' ' + repTxt + '　' +
+    '③ 站线 ' + tick(r.cStd) + ' 收盘 ' + (r.cost != null ? 'vs 3日加权成本线 ' + r.cost.toFixed(2) : '—') + '（CROSS：昨收在线下、今收站上线）　' +
+    '④ 量态 ' + tick(r.cVol) + ' ' + volTxt +
+    '　→ ' + verdict +
+    '　<span style="color:var(--dim)">（口径 = 通达信【超跌反弹·精简版】逐字同源；全滞后无未来函数，只用该日及之前数据；参考层：不计分、不进四指标、不进钉钉、不发买卖信号）</span></div>';
+}
 function dblVolHtml(d) {
   var head = '🔍 倍量形态 × 倍量位置（参考层 · 不计分）';
   /* ★ 2026-10-04 术语统一注：位置档（低位/高位倍量）与形态档（左/右倍量）是两个维度、可叠加，
@@ -18846,6 +19001,185 @@ function gwpaHtml(g) {
     return '<div class="' + cls + '" style="text-align:left;margin-top:2px">· ' + icon + ' <b>' + esc(x.name) + '</b> —— ' + x.txt + '</div>';
   }).join('');
   return head + lines;
+}
+/* ★ 2026-11-04 §263b（用户要求升级「每一根K线对应的开盘八法全天预判、9:35 量比量」）：
+   逐日回算器 —— 从已缓存的 m5（ST.results[code].m5，约 11 个交易日 × 48 根）对**任意历史交易日**
+   重放开盘八法判型 + 量比量，口径与 computeOpen8 逐字同源（零新增请求）：
+   · 形态 = open8Classify(该日昨收, 该日 0935/0940/0945 三根, 板涨停幅) → OPEN8_SPECIAL / OPEN8_FORMS
+     （昨收 = 调用方传入「所点根的上一根日K收盘」；首根无昨收 → cls.why 诚实留白，不硬算）；
+   · 全天预判 = form.side 映射（与 computeOpen8 同一逻辑：bull 偏强 / bear 偏弱 / 其他 震荡）；
+   · 量比量 = 本日 0935 根 ÷ 上一交易日 0935 根（跨日同刻，±8% 三档；分母冷量失真防护同 §261：
+     < 此前各日 0935 均量 ×0.3 → distorted，不打分不硬算）。
+   m5 未覆盖该日 / m5 缺失 → { ok:false, reason } 诚实留白。 */
+function open8DayOf(m5, targetDate, prevClose, code) {
+  /* noM5: m5 缓存整体缺失（区别于「覆盖外日期」）→ 点击面板据此触发懒加载补拉（§263c） */
+  if (!m5 || !m5.length) return { ok: false, noM5: true, reason: '5分钟K未缓存（分析时抓取失败），点击面板会自动补拉' };
+  if (!targetDate) return { ok: false, reason: '该根日K无日期，无法定位交易日' };
+  var day = m5.filter(function (b) { return b.date === targetDate; })
+    .sort(function (a, b) { return a.time < b.time ? -1 : (a.time > b.time ? 1 : 0); });
+  if (!day.length) return { ok: false, reason: '该日不在5分钟K覆盖范围（数据仅回溯约11个交易日）' };
+  var first3 = day.slice(0, 3);
+  var ups = first3.map(function (b) { return b.close >= b.open; });
+  var pat = ups.map(function (u) { return u ? '涨' : '跌'; }).join('');
+  var ztPct = 0;
+  try { ztPct = (typeof boardOf === 'function') ? (boardOf(code || '').zt || 0) : 0; } catch (eZ8d) { ztPct = 0; }
+  var cls = (first3.length >= 3)
+    ? open8Classify(prevClose, first3[0].open, first3[0].close, first3[1].close, first3[2].close, ztPct)
+    : { key: null, why: '该日早盘不足3根（数据边缘日）' };
+  var form = cls.special ? (OPEN8_SPECIAL[cls.special] || null) : (cls.key ? (OPEN8_FORMS[cls.key] || null) : null);
+  var forecast = form ? (form.side === 'bull' ? '偏强' : form.side === 'bear' ? '偏弱' : '震荡') : '—';
+  /* 量比量：上一交易日 = 日期小于本日的最大交易日（与 computeOpen8 prevDate 同口径） */
+  var prevDate = null;
+  m5.forEach(function (b) { if (b.date < targetDate && (!prevDate || b.date > prevDate)) prevDate = b.date; });
+  var rrBasis = null;
+  if (prevDate) {
+    var yBar = null, tBar = null;
+    for (var i1 = 0; i1 < m5.length; i1++) {
+      if (m5[i1].date === prevDate && String(m5[i1].time).slice(8, 12) === '0935') { yBar = m5[i1]; break; }
+    }
+    for (var i2 = 0; i2 < day.length; i2++) {
+      if (String(day[i2].time).slice(8, 12) === '0935') { tBar = day[i2]; break; }
+    }
+    if (yBar && tBar && yBar.vol > 0) {
+      /* 分母失真参照：比昨日更早各日 0935 根均量（按日去重、不含昨日自身——§261 同款） */
+      var rrAvgSum = 0, rrAvgN = 0, seenD = {};
+      m5.forEach(function (b3) {
+        if (b3.date >= prevDate || String(b3.time).slice(8, 12) !== '0935' || seenD[b3.date]) return;
+        seenD[b3.date] = 1; rrAvgSum += b3.vol; rrAvgN++;
+      });
+      var rrAvg = rrAvgN ? rrAvgSum / rrAvgN : null;
+      rrBasis = { yDate: prevDate, yVol: yBar.vol, tVol: tBar.vol,
+        rr: tBar.vol / yBar.vol,
+        distorted: (rrAvg != null && rrAvg > 0 && yBar.vol < rrAvg * 0.3) };
+    }
+  }
+  return { ok: true, date: targetDate, pat: pat, form: form,
+    subtype: cls.subtype || null, forecast: forecast,
+    prevClose: (prevClose != null && isFinite(prevClose)) ? prevClose : null,
+    gapPct: (cls.gapPct != null) ? cls.gapPct : null,
+    clsWhy: cls.why || null, incomplete: (first3.length < 3),
+    /* ★ §263d（2026-11-04）：喂 open8Strategy 逐日回算四维确认的原料 ——
+       specialKey（一字板等乖离形态 → 打分层 §5.2 跳过）/ first3（10 点法则的开盘价取自首根 open）/
+       today（当日全部分钟根升序 → 打分层定位 10:00 锚点根 + 累计均价线）。 */
+    specialKey: cls.special || null,
+    first3: first3, today: day,
+    rrBasis: rrBasis };
+}
+/* ★ 2026-11-04 §263（用户要求「加仑·伍兹价格行为上方增加开盘八法全天预判、9:35 量比量」）：
+   开盘八法面板块。数据 = ST.results[code].open8（与顶部摘要 / 早盘5分钟K线诊断卡**同一份**，
+   零重复计算、零新增请求）；rrBasis 为 §261 量比量（跨日同刻口径）。
+   三态纪律：o8 = null/undefined → 「数据未取到」条（与 renderOpen8Top 同款：不静默消失，写明原因）；
+   !ok → 原因条；ok → 形态 + 全天预判 + 量比量五态（量增/量缩/相当/失真/缺失）。
+   ★ open8 是「当日盘中」产物 → 调用方必须只在「日线面板 + 末根」调用（点历史根无当日八法可言）。 */
+function open8PanelHtml(o8) {
+  function volWan(v) { return (v >= 10000) ? (v / 10000).toFixed(2) + '万手' : (v != null ? v + '手' : '—'); }
+  var head = '<div style="text-align:left;margin-top:6px"><b>🕐 开盘八法 · 全天预判 + 9:35 量比量</b>　' +
+    '<span style="color:var(--dim)">逐日回算自已缓存的5分钟K（覆盖约11个交易日）· 参考层不计分（买卖决策仍以四指标打分为唯一依据）</span></div>';
+  if (!o8 || !o8.ok) {
+    var why = (o8 && o8.reason) ? o8.reason : '未取到5分钟K线（休市 / 接口限流，重新分析即可）';
+    return head + '<div style="text-align:left;color:var(--dim);margin-top:2px">· ' + esc(why) + '</div>';
+  }
+  var c = null;
+  var formSeg;
+  if (o8.form) {
+    c = o8SideColor(o8);
+    formSeg = '<span style="color:' + c + ';font-weight:700">' + esc(o8.form.name) +
+      (o8.subtype ? '（' + esc(o8.subtype) + '）' : '') + '</span>' +
+      '<span style="color:var(--dim)">　' + esc(o8.pat || '') + '</span>';
+  } else {
+    formSeg = '<span style="color:var(--dim)">形态待定（早盘不足 3 根 / 缺昨收基准），09:45 后自动判出</span>';
+  }
+  var line1 = '<div style="text-align:left;margin-top:2px">· <b>形态</b> ' + formSeg +
+    '　<b>全天预判</b> <span style="color:' + (c || 'var(--dim)') + ';font-weight:700">' + esc(o8.forecast || '—') + '</span></div>';
+  /* 量比量五态（§261 口径：今日 0935 根 ÷ 上一交易日 0935 根，≥1.08 量增 +0.5 / ≤0.92 量缩 −0.5 / 之间相当 0；
+     distorted = 昨日 0935 根为异常冷量（< 此前各日 0935 均量 ×0.3）→ 比值无意义，不打分不硬算（诚实留白）） */
+  var rb = o8.rrBasis, rrSeg;
+  if (!rb) {
+    rrSeg = '<span style="color:var(--dim)">缺失（昨日停牌或无 09:35 分时根 → 不打分不硬算）</span>';
+  } else if (rb.distorted) {
+    rrSeg = '<span style="color:#e2b93b">失真</span><span style="color:var(--dim)">（昨日 09:35 根 ' +
+      volWan(rb.yVol) + ' 为异常冷量（&lt; 均量×0.3），比值无意义 → 不打分）</span>';
+  } else {
+    var st3 = rb.rr >= 1.08 ? ['量增', '+0.5', '#ff5252']
+            : (rb.rr <= 0.92 ? ['量缩', '−0.5', '#26c281'] : ['相当', '0', 'var(--dim)']);
+    rrSeg = '<span style="color:' + st3[2] + ';font-weight:700">RR ' + rb.rr.toFixed(2) + ' → ' + st3[0] + '（' + st3[1] + '）</span>' +
+      '<span style="color:var(--dim)">　今 ' + volWan(rb.tVol) + ' ÷ 昨 ' + volWan(rb.yVol) +
+      (rb.yDate ? '（' + esc(rb.yDate) + '）' : '') + '</span>';
+  }
+  var line2 = '<div style="text-align:left;margin-top:2px">· <b>9:35 量比量</b> ' + rrSeg + '</div>';
+  return head + line1 + line2;
+}
+/* ★ 2026-11-04 §263d（用户要求「四维确认块替代 GW 上方的全天预判块」）：
+   四维确认面板块 —— 与卡片详情「四维确认」块（O8StratCard0AaBb01）**同一份打分口径**
+   （open8Strategy 纯函数，渲染与钉钉触发共用结论、禁止两处各写一套判据）；
+   数据 = open8DayOf 逐日回算（§263b 口径）→ open8Strategy 打分，点任意历史 K 线都算**那一天**的
+   10:00 四维（m5 覆盖约 11 个交易日）。头部保留形态 + 全天预判行（§263b 成果不丢失）。
+   三态纪律：o8day 缺/!ok → 原因条（含 noM5 补拉场景）；st 未成（未到 10:00 / 乖离形态）→ why 条；
+   st.ok → 评分合账 + 价/势/量/比/量比量五行 + 未入选原因。参考层不计分声明保留。 */
+function open8StratPanelHtml(o8day, st) {
+  function volWan2(v) { return (v == null || !isFinite(v)) ? '—' : (v >= 10000 ? (v / 10000).toFixed(2) + '万手' : v + '手'); }
+  function row2(k, vHtml) { return '<div style="text-align:left;margin-top:2px;font-size:12px">· <b>' + k + '</b> ' + vHtml + '</div>'; }
+  var head = '<div style="text-align:left;margin-top:6px"><b>🎯 四维确认 · 开盘八法AI实时选股策略 v1.0（锚点 10:00）</b>　' +
+    '<span style="color:var(--dim)">逐日回算自已缓存的5分钟K（覆盖约11个交易日）· 参考层不计分（买卖决策仍以四指标打分为唯一依据）</span></div>';
+  if (!o8day || !o8day.ok) {
+    var why0 = (o8day && o8day.reason) ? o8day.reason : '未取到5分钟K线（休市 / 接口限流）';
+    return head + '<div style="text-align:left;color:var(--dim);margin-top:2px">· ' + esc(why0) + '</div>';
+  }
+  /* 形态 + 全天预判行（§263b 成果保留） */
+  var c = null, formSeg;
+  if (o8day.form) {
+    c = o8SideColor(o8day);
+    formSeg = '<span style="color:' + c + ';font-weight:700">' + esc(o8day.form.name) +
+      (o8day.subtype ? '（' + esc(o8day.subtype) + '）' : '') + '</span>';
+  } else {
+    formSeg = '<span style="color:var(--dim)">形态待定（早盘不足 3 根 / 缺昨收基准）</span>';
+  }
+  var line1 = row2('形态', formSeg +
+    '<span style="color:var(--dim)">　' + esc(o8day.pat || '') + '</span>' +
+    '　<b>全天预判</b> <span style="color:' + (c || 'var(--dim)') + ';font-weight:700">' + esc(o8day.forecast || '—') + '</span>');
+  if (!st || !st.ok) {
+    return head + line1 +
+      '<div style="text-align:left;color:#ffb74d;margin-top:2px;font-size:12px">· <b>四维未成</b> ' + esc((st && st.why) || (o8day.clsWhy || '未计算')) + '（本项不参与触发）</div>';
+  }
+  var stPass = st.pass, stCol = stPass ? '#ff5b5b' : '#8892b0';
+  var mult2 = (st.atk && st.atk.mult != null) ? st.atk.mult.toFixed(2) + '×' : '—';
+  var scoreLine = row2('评分', '判型 ' + st.w + '（' + esc(o8day.form ? o8day.form.name : '—') + '） ＋ 价 ' + st.pricePt +
+    ' ＋ 势 ' + st.vwapPt + ' ＋ 量 ' + st.atkPt + ' ＋ 比 ' + (st.chgPt > 0 ? '+' : '') + st.chgPt +
+    ' ＋ 量比量 ' + (st.rrPt > 0 ? '+' : '') + st.rrPt +
+    ' ＝ <b style="color:' + stCol + ';font-size:14px">' + st.score + '</b> / 入选线 ' + OPEN8_STRAT.pass +
+    '　<b style="color:' + stCol + '">' + (stPass ? '✓ 命中 → 钉钉推送' : '✗ 未命中 → 不推送') + '</b>');
+  var px10Txt = (st.px10 != null) ? st.px10.toFixed(2) : '—';
+  var openPTxt = (st.openP != null) ? st.openP.toFixed(2) : '—';
+  var lPrice = row2('价', '10 点法则（10:00 现价 &gt; 开盘价）：' + px10Txt + ' vs ' + openPTxt + ' → ' +
+    (st.pricePt ? '✓ +' + st.pricePt : '✗ 0（判弱）'));
+  var lVwap = row2('势', '均价线（10:00 现价 &gt; 当日均价）：' +
+    (st.vwap10 != null ? '均价 ' + st.vwap10.toFixed(2) : '均价 —') + ' → ' +
+    (st.vwapPt ? '✓ +' + st.vwapPt : '✗ 0'));
+  var lAtk = row2('量', '攻击量（10:00 当根 ≥ 前 3 根均量 × ' + OPEN8_STRAT.atkMult + '）：' +
+    volWan2(st.atk ? st.atk.vol : null) + ' vs 前3根均量 ' + volWan2(st.atk ? st.atk.avg3 : null) +
+    ' ＝ ' + mult2 + ' → ' + (st.atkPt ? '✓ +' + st.atkPt : '✗ 0') + (st.degrade ? '【' + esc(st.degrade) + '】' : ''));
+  var lChg = row2('比', '涨幅（10:00 现价 vs 昨收' + (o8day.prevClose > 0 ? ' ' + o8day.prevClose.toFixed(2) : '') + '）：' +
+    (st.chg10 == null ? '—' : (st.chg10 > 0 ? '+' : '') + st.chg10.toFixed(2) + '%') + ' → ' +
+    (st.chgPt ? (st.chgPt > 0 ? '✓ +' + st.chgPt + '（3%~7% 适中）' : '✗ ' + st.chgPt + '（近涨停，追高风险）') : '0'));
+  /* 量比量明细行（§261 口径，与卡片版同款文案） */
+  var rb = st.rrBasis, rrRow;
+  if (!rb) {
+    rrRow = row2('量比量', '<span style="color:var(--dim)">昨日 9:35 根缺失 → 0（不加减，绝不冒充）</span>');
+  } else if (!isFinite(rb.rr)) {
+    rrRow = row2('量比量', '<span style="color:var(--dim)">数据不完整 → 0（不加减）</span>');
+  } else {
+    rrRow = row2('量比量', '跨日同刻（今日 9:35 根 ÷ 昨日 9:35 根，±8% 三档）：' +
+      volWan2(rb.tVol) + ' ÷ ' + volWan2(rb.yVol) + '（' + esc(rb.yDate) + '）＝ ' + rb.rr.toFixed(2) + ' → ' +
+      (rb.distorted ? '<span style="color:#e2b93b">0（昨日 9:35 根冷量失真，不加减）</span>'
+        : st.rrPt > 0 ? '<span style="color:#ff5252;font-weight:700">✓ 量增 +' + st.rrPt + '</span>'
+        : st.rrPt < 0 ? '<span style="color:#26c281;font-weight:700">✗ 量缩 ' + st.rrPt + '</span>'
+        : '<span style="color:var(--dim)">量能相当 0</span>'));
+  }
+  var failRow = (!stPass)
+    ? row2('未入选', '<span style="color:#ffb74d">' + esc((st.fail || []).join('；') || '—') + '</span>')
+    : '';
+  var anchorNote = '<div style="text-align:left;color:#5d6788;font-size:11px;margin-top:3px">为什么锚在 10:00：策略 §2 把 10:00 定为「出票时点」——四维里的现价 / 均价线 / 攻击量全部取 10:00 那一根；同一交易日多次点击结论恒定。</div>';
+  return head + line1 + scoreLine + lPrice + lVwap + lAtk + lChg + rrRow + failRow + anchorNote;
 }
 function vpsCardHtml(ind, pre, ctx) {
   var r = pre;
@@ -36409,6 +36743,16 @@ function init() {
         osrBlock = osrHtml(osrJudgeOf(ent.kl.slice(0, ent.start + i + 1)));
       }
     } catch (eOsrV) { osrBlock = ''; }
+    /* ★ 2026-11-04 §262（用户要求「把超跌反弹的思路增加到生命周期平台k线提示」）：超跌反弹判定块。
+       仅超跌成立（加权乖离 ≤ −板阈值）出块 —— 未超跌时其余条件无从谈起，出块等于废话（与 §245
+       超跌反转「仅深超跌出块」同纪律）；评价根 = 被点击的这一根（slice 截到全量下标，无未来函数）；
+       仅日线面板（24 根窗口是「日」口径，分钟/周线不出块，§175/§176 先例）；先算后插（§150 DOM 时序纪律）。 */
+    var cbBlock = '';
+    try {
+      if (ent && ent.kl && ent.kl.length && (!ent.per || ent.per === 'day')) {
+        cbBlock = cbReboundHtml(cbReboundOf(ent.kl, ent.start + i, ent.code || ''));
+      }
+    } catch (eCbV) { cbBlock = ''; }
     /* ★ 2026-11-01 §247（用户指令「落地」）：主力状态块 —— 三类资金（红=机构 / 黄=控盘 / 紫=短线）
        当日状态 + 紫柱首日/离场事件 + 散户套牢系数；评价根 = 被点击的这一根（序列逐日时点对齐，
        无未来函数）。仅日线面板出块（周/分钟无日线筹码口径，§247 纪律）；先算后插（§150 DOM 时序纪律）。 */
@@ -36425,6 +36769,72 @@ function init() {
        面板结论仍按所点根算（只用该日及之前数据，无未来函数）；下方徽标条联动照旧在「未重绘」分支统一补写。 */
     var gidx = ent ? (ent.start + i) : null;
     panel.innerHTML = vpPanelHtml(x, sigs, adv, kf, kj, dbl, vpat, wscan, cj, srpSeg);
+    /* ★ 2026-11-04 §263 → §263b → §263d（用户三轮迭代：①GW上方加全天预判+量比量 ②每一根K线逐日回算
+       ③「四维确认」块**替代**全天预判块）：开盘八法四维确认面板块。
+       数据 = ST.results[code].m5（已缓存）→ open8DayOf 逐日回算（判型/量比量与 computeOpen8 逐字同源）
+       → open8Strategy 纯函数打分（与卡片「四维确认」块 / 钉钉触发**同一份口径**，禁止两处各写一套判据）；
+       昨收 = 所点根的上一根日K收盘（首根无昨收 → 诚实留白）；日期归一（kl 的 '2026-11-04' → m5 的 '20261104'）；
+       仅日线面板出块（§175 先例）；先算后插（§150 DOM 时序纪律），锚 = .vp-gw-wrap beforebegin（GW 块正上方），
+       缺失兜底 .vp-verdict beforebegin 且先于动量块执行（落位仍最高）。
+       m5 缺失 → noM5 → 懒加载补拉兜底（§263c）。 */
+    var o8Block = '';
+    try {
+      if (ent && ent.kl && ent.kl.length && (!ent.per || ent.per === 'day')) {
+        var o8code = ent.code || (ent.ind && ent.ind.code) || (card ? card.getAttribute('data-klsym') : '') || '';
+        var o8rec = (typeof ST !== 'undefined' && ST && ST.results && o8code) ? ST.results[o8code] : null;
+        var o8kDate = String((ent.kl[gidx] && ent.kl[gidx].date) || '').replace(/-/g, '');
+        var o8pc = (gidx > 0 && ent.kl[gidx - 1] && isFinite(ent.kl[gidx - 1].close)) ? ent.kl[gidx - 1].close : null;
+        var o8res = open8DayOf(o8rec ? o8rec.m5 : null, o8kDate, o8pc, o8code);
+        if (o8res && !o8res.ok && o8res.noM5 && o8code) {
+          /* ★ 2026-11-04 §263c（用户报障「未取到5分钟K线，请修复」）：懒加载兜底。
+             根因：m5 是 analyzeStock 时一次性抓取（13189/13215），那次失败（接口限流/数据源
+             冷却）→ ST.results[].m5 永久 null → 点面板永远「未取到」。此处点击时现场补拉一次
+             （fetchMinParse 自带 JSONP 兜底 + 失败源冷却 + 源轮换），成功回写 ST.results[].m5
+             并原地替换占位块；inflight 去重防狂点请求风暴；回填前 isConnected 校验
+             （§150 异步回填纪律：面板已重建/关闭 → 丢弃）。
+             ★ §263d：占位与回填渲染改为 open8StratPanelHtml（四维确认块替代全天预判块）。 */
+          var o8pid = 'o8ph_' + Date.now() + '_' + Math.floor(Math.random() * 1e6);
+          o8Block = '<div id="' + o8pid + '">' + open8StratPanelHtml({ ok: false, reason: '5分钟K未缓存，正在补拉…' }, null) + '</div>';
+          (function o8Lazy(o8c2, o8pid2, o8date2, o8pc2) {
+            try {
+              var infl = (window.__o8m5Inflight = window.__o8m5Inflight || {});
+              var p = infl[o8c2];
+              if (!p) {
+                p = infl[o8c2] = fetchM5Parse(o8c2)
+                  .then(function (bars) {
+                    delete infl[o8c2];
+                    try { var rc = ST.results[o8c2]; if (rc && bars && bars.length) rc.m5 = bars; } catch (eW8) {}
+                    return (bars && bars.length) ? bars : null;
+                  })
+                  .catch(function () { delete infl[o8c2]; return null; });
+              }
+              p.then(function (bars) {
+                var ph = document.getElementById(o8pid2);
+                if (!ph || !ph.isConnected) return;   /* 面板已重建/关闭 → 丢弃，不回填 */
+                var html2 = bars
+                  ? (function () { var d8 = open8DayOf(bars, o8date2, o8pc2, o8c2); return open8StratPanelHtml(d8, open8Strategy(d8)); })()
+                  : open8StratPanelHtml({ ok: false, reason: '补拉失败（接口限流或数据源冷却中），稍后再点一次本根K线即可重试' }, null);
+                ph.outerHTML = html2;
+              });
+            } catch (eLz8) { /* 懒加载失败不拖累面板 */ }
+          })(o8code, o8pid, o8kDate, o8pc);
+        } else {
+          /* ★ §263d：渲染改为四维确认块（open8Strategy 纯函数打分，与卡片/钉钉同一份口径） */
+          o8Block = open8StratPanelHtml(o8res, open8Strategy(o8res));
+        }
+      }
+    } catch (eO8pV) { o8Block = ''; }
+    try {
+      if (o8Block) {
+        var gwElO8 = panel.querySelector('.vp-gw-wrap');
+        if (gwElO8) gwElO8.insertAdjacentHTML('beforebegin', o8Block);
+        else {
+          var vdO8 = panel.querySelector('.vp-verdict');
+          if (vdO8) vdO8.insertAdjacentHTML('beforebegin', o8Block);
+          else panel.insertAdjacentHTML('afterbegin', o8Block);
+        }
+      }
+    } catch (eO8pIns) { /* 插入失败不拖累面板 */ }
     /* ★ 2026-10-31 §237：动量判读块插入 —— 同样必须在 innerHTML 赋值之后（§150 DOM 时序坑）。
        ★ 2026-10-31 §240（用户要求动量判读「放在小师妹量价前面」）：锚点 = 结论条 .vp-verdict 的
        **beforebegin**、且**先于**小师妹块执行插入（同锚 beforebegin 先插者在上一）→
@@ -36449,6 +36859,17 @@ function init() {
         else panel.insertAdjacentHTML('afterbegin', osrBlock);
       }
     } catch (eOsrIns) { /* 插入失败不拖累面板 */ }
+    /* ★ 2026-11-04 §262：超跌反弹块插入 —— 同锚（.vp-verdict beforebegin）、时序在超跌反转之后、
+       主力状态之前 → 落位「动量判读 / 超跌反转 / 超跌反弹 / 主力状态 / 小师妹量价 / 结论条」：
+       深超跌语境下先看四阶段位置（超跌反转），再看四条件判定进度（本块），再进主力状态。
+       （仅超跌出块；cbBlock 为空 = 本段直接跳过；插入失败不拖累面板。） */
+    try {
+      if (cbBlock) {
+        var vdCb = panel.querySelector('.vp-verdict');
+        if (vdCb) vdCb.insertAdjacentHTML('beforebegin', cbBlock);
+        else panel.insertAdjacentHTML('afterbegin', cbBlock);
+      }
+    } catch (eCbIns) { /* 插入失败不拖累面板 */ }
     /* ★ 2026-11-01 §247：主力状态块插入 —— 同锚（.vp-verdict beforebegin）、时序在超跌反转之后、
        小师妹之前 → 落位「动量判读 / 超跌反转 / 主力状态 / 小师妹量价 / 结论条」。
        （zlztBlock 为空 = 本段直接跳过；插入失败不拖累面板。） */
