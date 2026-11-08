@@ -346,6 +346,48 @@
   .stock-head .ba-src { font-size:11.5px; font-weight:700; color:#9fb4ff; }
   .stock-head .ba-hint { font-size:11.5px; color:var(--muted); }
   .stock-head .ba-na { font-size:12px; font-weight:700; color:#7a8aa8; }
+  /* ★ 2026-11-07 §277（用户要求「在这个区域给出基本面信息」）：结论条第 8 行「基本面风控门禁」。
+     与 .s4k-top / .s4k-buyage 同构（width:100% 的竖排卡），不改动前 7 行任何一行。
+     ⚠️ 配色是「风控状态语义」（绿=未检出否决 / 橙=需确认 / 红=否决 / 灰=未录入），
+        不是涨跌色；本页 --up 红 / --down 绿，绝不可复用 .up/.down 表达好坏（见 309-310 行注释）。
+     ⚠️ 本卡只做 0-1 型硬约束提示：不参与四指标打分、不产生买卖信号、不进钉钉推送、不进选股排序。 */
+  .stock-head .fa-top { display:flex; align-items:center; gap:8px; flex-wrap:wrap;
+    margin-left:0; width:100%; font-size:12px; padding:4px 10px; margin-top:6px;
+    border:1px solid #2b3a55; border-radius:8px; background:rgba(43,58,85,.28); max-width:100%; }
+  .stock-head .fa-top .k { font-size:11px; color:var(--muted); border:1px solid var(--line); border-radius:5px; padding:1px 6px; }
+  .stock-head .fa-state { font-size:12.5px; font-weight:800; }
+  .stock-head .fa-state.pass { color:#26c281; }
+  .stock-head .fa-state.watch, .stock-head .fa-state.future { color:#f59e0b; }
+  .stock-head .fa-state.veto { color:#f0453a; }
+  .stock-head .fa-state.na { color:#7a8aa8; }
+  .stock-head .fa-brief { font-size:11.5px; color:#cdd6f4; }
+  .stock-head .fa-pit { font-size:11px; color:var(--muted); border-left:1px solid var(--line); padding-left:8px; }
+  .stock-head .fa-snap { font-size:11px; color:#8d99b8; }
+  .stock-head .fa-edit { font-size:11px; font-weight:700; color:#9fb4ff; border:1px solid #3b4d70;
+    border-radius:5px; padding:1px 7px; cursor:pointer; margin-left:auto; white-space:nowrap; }
+  .stock-head .fa-edit:hover { background:rgba(159,180,255,.12); }
+  /* 详情面板：仅点「ⓘ 详情」时插入为 .fa-top 的兄弟节点，只读展示全部自动字段，
+     不常驻、不整页重渲染（不丢滚动位置）；全部自动取数，无任何输入框。 */
+  .fa-panel { width:100%; margin-top:6px; padding:10px 12px; border:1px solid #3b4d70;
+    border-radius:8px; background:rgba(20,28,44,.92); font-size:12px; box-sizing:border-box; }
+  .fa-panel .fa-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(175px,1fr)); gap:8px 12px; }
+  .fa-panel .fa-note { margin-top:9px; font-size:11px; line-height:1.65; color:#8d99b8; }
+  .fa-panel .fa-btns { margin-top:10px; display:flex; gap:8px; flex-wrap:wrap; }
+  .fa-panel .fa-btn { cursor:pointer; border:1px solid #3b4d70; border-radius:6px; padding:4px 12px;
+    font-size:12px; font-weight:700; background:#1a2540; color:#cdd6f4; }
+  .fa-panel .fa-btn.pri { background:#2b4a8a; border-color:#4a6db5; color:#fff; }
+  .fa-panel .fa-btn.danger { color:#f0453a; border-color:#f0453a66; }
+  .fa-panel .fa-msg { margin-top:6px; font-size:11.5px; font-weight:700; }
+  .stock-head .fa-core { font-size:11.5px; color:#cdd6f4; white-space:nowrap; }
+  .stock-head .fa-core i { font-style:normal; font-weight:800; }
+  .stock-head .fa-core .fa-sep { font-style:normal; color:#4a5a78; margin:0 5px; font-weight:400; }
+  .stock-head .fa-missing { font-size:11px; color:#f59e0b; border-left:1px solid var(--line); padding-left:8px; }
+  .fa-panel .fa-sec { font-size:11.5px; font-weight:800; color:#9fb4ff; margin:11px 0 5px; }
+  .fa-panel .fa-sec i { font-style:normal; }
+  .fa-panel .fa-dr { display:flex; justify-content:space-between; gap:8px; padding:3px 7px;
+    border:1px solid #2b3a55; border-radius:5px; background:rgba(43,58,85,.22); font-size:11px; }
+  .fa-panel .fa-dr span { color:var(--muted); }
+  .fa-panel .fa-dr b { color:#cdd6f4; font-weight:800; white-space:nowrap; }
   /* ★ 2026-09-27（用户要求）：ATR 通道卡内的「距买点 / 距卖点」行 —— 与上方四指标徽标**同构**
      （标签 + 天数 + 日期来源 + 分级提示，flex-wrap 自然折行），但作用域不限 stock-head（卡内也要用）。
      配色沿用全站语义：up 绿 / warn 橙 / down 红 / na 灰。 */
@@ -1044,6 +1086,8 @@
     background:linear-gradient(135deg,#1b2740,#121a29); border-color:#3b5a8c; padding:8px 13px; }
   .open8-item.o8-fc-hi .k { font-size:14px; font-weight:800; color:#9fc4ff; letter-spacing:.4px; }
   .open8-item.o8-fc-hi .v { font-size:19px; font-weight:800; letter-spacing:.6px; text-shadow:0 0 12px currentColor; }
+  /* ★ §239：全天预判的条件化依据（第二行小字，不抢结论，颜色固定为中性灰以免与结论色混淆） */
+  .open8-item.o8-fc-hi .o8-fc-why { display:block; margin-top:3px; font-size:11px; font-weight:500; letter-spacing:0; line-height:1.45; color:#8892b0; text-shadow:none; }
   .open8-advice { margin-top:12px; border-top:1px solid #20283b; padding-top:10px; }
   .oa-title { font-size:13px; color:#9fb4ff; margin-bottom:6px; }
   .oa-row { display:flex; gap:12px; font-size:12.5px; padding:3px 0; }
@@ -1430,7 +1474,7 @@
   <div class="view" id="view-ztpool" data-page-node-id="taYRC3H5FuQ4w8l8jMJ7xQ">
     <div class="card" data-page-node-id="UJBYTiuB5xEgbhsCe4RuHY">
       <div class="card-title" data-page-node-id="aPcHkh4UwsCJ61GapluFjQ">📈 涨停池 · 近 10 个交易日涨停并集（ST / 退市不加入）
-        <span style="font-size:11.5px;font-weight:400;color:var(--dim)" data-page-node-id="JpaD8RAHjek0XHtiQe1gTm">—— 已融合「成分股分类」那套列：现价 / 涨跌幅 / 阶段 / KDJ / dev / 四指标 / ATR% / MA5斜率 / <b data-page-node-id="M5UpDaysCol">MA5斜率往上天数</b> / 20日动量 / 今昨强弱 / 破线 / 换手 / 开盘强弱 / 主力参与 / 主力净流入 / 60日涨幅</span></div>
+        <span style="font-size:11.5px;font-weight:400;color:var(--dim)" data-page-node-id="JpaD8RAHjek0XHtiQe1gTm">—— 已融合「成分股分类」那套列：现价 / 涨跌幅 / 阶段 / KDJ / dev / 四指标 / ATR% / MA5斜率 / <b data-page-node-id="M5UpDaysCol">MA5斜率往上天数</b> / 20日动量 / 今昨强弱 / 破线 / 换手 / 开盘强弱 / 主力参与 / 主力净流入 / <b>RPS60</b>（★ 2026-11-06 由 60日涨幅占位列升级：全市场百分位 + 五档分级，涨停台 tdPanel 同口径）</span></div>
       <div class="ztp-toolbar" data-page-node-id="rhr6KDGSbBaBdO9BLC3fYo">
         <button class="btn" id="ztpScan" data-page-node-id="U1Pxf1SXn9ZlT3joxesffV">⟳ 重新拉取</button>
         <button class="btn" id="ztpAna" title="对本页全部涨停股逐只抓 260 根日K，用与「成分股生命周期分类」完全相同的引擎算出 阶段 / KDJ / ATR% / 辨识度 / 股性激活 / dev / MA5斜率 / 破线 / 开盘强弱 等列（并发 4，可随时停止）" data-page-node-id="UkyGEyFvkrVP3F0hbDY3TX">▶ 分析全部</button>
@@ -3259,6 +3303,11 @@ function computeIndicators(rawKlines, quote, code) {
      ma60 除原有的「辨识度 / 年线」用途外，**另挂到 ind.ma60 数组上供 K 线图叠加线使用**。
      ma10 保留全部既有用途（maRepair 金叉判定 / 个股诊断卡 / 筛选器 aboveMA10·bullMA），只是不再画在 K 线图上。 */
   var ma60 = calcMA(closes, 60), ma250 = calcMA(closes, 250);   // 辨识度用：季线 / 年线
+  /* ★ 2026-11-07 §263：3 日加权成本全量数组（klWc3Of 逐根调用，函数声明提升保证此处可用），
+     挂 ind.wc3 —— 同 ma5/ma20/ma60 的「图上叠加线 + 日徽标 chip 同源取值」模式；
+     renderChart 只做 slice(start) 对齐可见窗，不在图里另写第二套算法。 */
+  var wc3 = [];
+  for (var tW3 = 0; tW3 < n; tW3++) wc3.push(klWc3Of(klines, tW3));
   var i = n - 1;
   var price = closes[i];
   var cMA5 = ma5[i], cMA10 = ma10[i], cMA20 = ma20[i];
@@ -3607,7 +3656,7 @@ function computeIndicators(rawKlines, quote, code) {
     w60h: isFinite(w60.h) ? w60.h : null, w60l: isFinite(w60.l) ? w60.l : null,
     /* ★ 2026-10-16：ma60 **数组**上挂（同 ma5/ma10/ma20），供 K 线图叠加线 + 日徽标组 MA60 chip 取该根值。
        ma60v（标量，末根值）原本就在下方一行 —— 两者一全量序列、一末根快照，不要合并。 */
-    klines: klines, closes: closes, ma5: ma5, ma10: ma10, ma20: ma20, ma60: ma60, i: i,
+    klines: klines, closes: closes, ma5: ma5, ma10: ma10, ma20: ma20, ma60: ma60, wc3: wc3, i: i,
     price: price, ma5v: cMA5, ma10v: cMA10, ma20v: cMA20,
     dev: dev, ma5Slope: ma5Slope, ma5SlopePct: ma5SlopePct, breakDays: breakDays,
     volRatio: volRatio, shrinkRatio: shrinkRatio, turnover: turnover,
@@ -7812,6 +7861,54 @@ function klPressOf(kl, i, n) {
   };
 }
 
+/* ===== ★ 2026-11-07 §263（用户要求「在股票k线图中绘制3日加权成本曲线」）：
+   3 日加权成本线 WC3 —— 近 3 根（**含当根**）的「成交量加权平均成本」：
+     WC3(i) = Σ( close[j] × volume[j] ), j = i-2..i ÷ Σ( volume[j] ), j = i-2..i
+   即**滚动 3 日 VWAP**（分时 VWAP 是「当日累计」口径，本线是「近 3 根滚动」口径 —— 同一思想、不同窗口）。
+   ----------------------------------------------------------------------------
+   ① 为什么含当根：与 MA3 / MA5 的窗口约定一致（当根参与均值）。「成本」问的是「到现在为止，
+      最近 3 根成交的持仓成本摊在多少」—— 不含当根就答错了日期。
+   ② 无未来函数：只用 kl[0..i]，与全台口径一致；换周期（周 / 分钟）按「根」重算，口径不变。
+   ③ null 语义（诚实留白三档）：
+      · i < 2（窗口不满）→ null，曲线起点如实断开；
+      · 窗口内任一根 close 无效（null / 非数值）→ null（脏数据不凑数，同 klHiWinOf ③）；
+      · Σvolume ≤ 0（连续零量，极端罕见）→ null（没有成交就没有成本，不硬算）。
+   ④ volume 缺失（null / 非数值）**单独**按权重 0 处理、不作废整窗：
+      量缺失 ≠ 有量，按 0 权重 = 「该根成本不可知、不参与摊薄」，数学上与「当日无量」同解，
+      比凭空造一个权重诚实；而 close 无效连「这一天价格是多少」都不知道 → 只能整窗作废。
+      （日 K 的 volume 实际几乎恒有值，此档是防御性设计：避免一根脏量把整条线打成碎段。）
+   ⑤ 用途定位：**参考层** —— 只画线 + 右侧轴签 + 日徽标 chip + 图例 chip，不计分、不进四指标 / VPS、
+      不进钉钉推送、不发买卖指令（同 §205/§206/§208 的纪律）。
+   ⑥ 与 MA5 的读法差异（本线存在的意义）：MA5 是等权收盘均价，无量暴涨日会把它拉高；
+      WC3 按成交量摊 —— 缩量冲高日 WC3 明显低于 MA5 = 「涨得高、参与的人少」，成本并未跟上。 */
+var KL_WC3_N = 3;
+/* 白色 #ffffff（★ 2026-11-07 用户明确指定「颜色改为白色」，原拟长春花蓝 #8a7dff 作废）。
+   已知共存关系（如实记录，不隐瞒）：
+   · m5 周期的 VWAP 线是近白 #dfe6f3（同为虚线）——两者同图时靠**窗口窗口错开**不了，只能靠读数区
+     （VWAP=当日累计、WC3=近3根滚动），m5 上并看时以右侧轴签「WC3 / VWAP」文字为准；
+   · 买点轨 ATR 方块 SIG_COL.atr = #ffffff（6px 小方块）与本条 1.3px 虚线形状差一个量级，可辨。
+   白色在主价格面板（日线 / 周线）此前未被任何线占用（K线红绿 / MA 黄紫蓝 / 收盘虚线红绿），一眼可辨。 */
+var KL_WC3_COLOR = '#ffffff';
+
+/* 单根取值（**唯一真源**）：renderChart 叠加线、ind.wc3 全量数组（→ 右侧轴签 / 日徽标 chip）都走这里，
+   绝不各写一份 —— 否则「图上画的」与「chip 报的」会各说各话。 */
+function klWc3Of(kl, i) {
+  if (!kl || !(i >= KL_WC3_N - 1) || !kl[i]) return null;
+  var cv = 0, vv = 0, j, p, c, v;
+  for (j = i - KL_WC3_N + 1; j <= i; j++) {
+    p = kl[j];
+    if (!p) return null;
+    c = p.close;
+    /* ⚠️ `c == null` 必须单独判：`isFinite(null) === true`（null 被 Number() 转成 0），
+       只写 !isFinite 会让缺收盘的根以 0 元参与加权 → 成本被砸成假低位。 */
+    if (c == null || !isFinite(c)) return null;      /* 窗口内价格脏 → 整窗不作答（宁可断线，不凑数） */
+    v = p.volume;
+    if (v == null || !isFinite(v) || v < 0) v = 0;   /* 量缺失 / 非法 → 权重 0（见 ④），不作废整窗 */
+    cv += c * v; vv += v;
+  }
+  return (vv > 0) ? (cv / vv) : null;                /* 全窗零量 → null（没有成交就没有成本） */
+}
+
 /* ==========================================================================
    ★ 2026-10-06（用户要求）：「K 线图自动标注支撑 / 压力关键位」—— 少而精，不密集划线
    --------------------------------------------------------------------------
@@ -9836,6 +9933,24 @@ function renderChart(ind, focus, opt) {
     svg += '<path d="' + d + '" fill="none" stroke="' + L.c + '" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>';
   });
 
+  /* ★ 2026-11-07 §263（用户要求「K线图中绘制3日加权成本曲线」）：
+     3 日加权成本线 WC3 —— 虚线贴价，画在均线之后（压在 MA 之上，同为贯穿全图的基础设施层）。
+     · 数据源 = ind.wc3（klWc3Of 全量数组，§263 ①），此处只 slice(start) 对齐可见窗 ——
+       与 m5/m20/m60 完全同一套取数方式，不在图里另写第二套算法；
+     · null 如实断线（path() 既有行为：缺口不连跨直线）；Σ量=0 / 窗口脏数据 → 整段留白；
+     · 周期无差别（按「根」算）：日 / 周 / 分钟线同画；与 m5 VWAP 分属「3根滚动 / 当日累计」两层口径；
+     · 参考层：不计分、不进四指标、不进钉钉推送、不发买卖指令。 */
+  var __wc3Col = (typeof KL_WC3_COLOR === 'string') ? KL_WC3_COLOR : '#ffffff';
+  var __wc3Arr = (ind.wc3 || []).slice(start);
+  var __wc3Has = false, __wi;
+  for (__wi = 0; __wi < __wc3Arr.length; __wi++) {
+    if (__wc3Arr[__wi] != null && isFinite(__wc3Arr[__wi])) { __wc3Has = true; break; }
+  }
+  var __dW3 = __wc3Has ? path(__wc3Arr) : '';
+  if (__dW3) {
+    svg += '<path d="' + __dW3 + '" fill="none" stroke="' + __wc3Col + '" stroke-width="1.3" stroke-dasharray="5 3" stroke-opacity="0.95" stroke-linejoin="round" stroke-linecap="round"/>';
+  }
+
   /* ★ 2026-10-31 §IT（用户要求「分时诱多/诱空整合到个股分析 · 图表 VWAP 叠加」）：
      仅 5 分钟周期（__per==='m5'）叠加**当日均价线 VWAP** —— 与分时图黄线同一概念、
      与「当日分时体检」卡同一近似口径（典型价(H+L+C)/3×量累计）：
@@ -9929,7 +10044,8 @@ function renderChart(ind, focus, opt) {
       { nm: 'MA5', v: m5[m5.length - 1], c: '#ffd54f' },
       { nm: 'MA20', v: m20[m20.length - 1], c: '#ce93d8' },
       { nm: 'MA60', v: m60[m60.length - 1], c: '#5b8cff' }
-    ].concat((__per === 'm5' && __vwapLast != null && isFinite(__vwapLast)) ? [{ nm: 'VWAP', v: __vwapLast, c: '#dfe6f3' }] : []).filter(function (it) { return it.v != null && isFinite(it.v); })
+    ].concat(__wc3Has ? [{ nm: 'WC3', v: __wc3Arr[__wc3Arr.length - 1], c: __wc3Col }] : [])
+     .concat((__per === 'm5' && __vwapLast != null && isFinite(__vwapLast)) ? [{ nm: 'VWAP', v: __vwapLast, c: '#dfe6f3' }] : []).filter(function (it) { return it.v != null && isFinite(it.v); })
       .map(function (it) { return { nm: it.nm, v: it.v, c: it.c, y: Y(it.v) }; });
     if (!items.length) return;
     var GAP = 10.5, top = priceT + 8, bot = priceB - 4, i;
@@ -10232,6 +10348,7 @@ function renderChart(ind, focus, opt) {
     per: __per,
     /* ★ 2026-10-16：缓存数组与图上叠加线**同口径** —— 改为 ma5/ma20/ma60（MA10 已不上图，不再缓存）。 */
     ma5: ind.ma5 || null, ma20: ind.ma20 || null, ma60: ind.ma60 || null,
+    wc3: ind.wc3 || null,   /* ★ 2026-11-07 §263：3日加权成本全量数组 → 日徽标 WC3 chip 同源取值 */
     ind: ind || null,
     vr: (ind.volRatio != null && isFinite(ind.volRatio)) ? ind.volRatio : null };
 
@@ -10333,6 +10450,9 @@ function renderChart(ind, focus, opt) {
       '周线 / 5·30 分钟线按「根」重算（' + __prN + ' 根 = ' + __prN + ' 周 / ' + __prN + ' 个 5 分钟）。' +
       '参考层：只标注，不计分、不进四指标 / VPS、不进钉钉、不发买卖信号。"><i class="sh sh-pline" style="color:' + __prCol + '"></i><b>' +
       __prN + ' 根高 ' + __press.hi.toFixed(2) + (__press.broke ? ' · 已突破' : ' · 压力位') + '</b></span>' : '') +
+    /* ★ 2026-11-07 §263：3日加权成本 WC3 图例 —— 虚线横线图标（sh-pline，与图上 stroke-dasharray="5 3" 同形）。
+       与图一致原则（§176 那条）：可见窗内一条 WC3 都算不出来（全 null）→ 图上没有这条线 → chip 不出现。 */
+    (__wc3Has ? '<span class="kl-chip" title="3日加权成本（WC3）= 近 3 根（含当根）Σ(收盘×成交量) ÷ Σ(成交量)，即滚动 3 日 VWAP（klWc3Of 单一真源，与右侧轴签 / 日徽标 chip 同源）。&#10;为什么有用：MA5 是等权收盘均值，无量暴涨 / 缩量拉升日会被拉高；WC3 按成交量摊 —— WC3 明显低于 MA5 = 涨得高、参与的人少（无量虚涨）；WC3 上穿价格 = 短线套牢盘解套区下移。&#10;口径：含当根、无未来函数、换周期（周/分钟）按根重算；量缺失按权重 0、Σ量=0 / 收盘脏数据 → 如实断线留白。&#10;参考层：只画线，不计分、不进四指标 / VPS、不进钉钉推送、不发买卖信号。"><i class="sh sh-pline" style="color:' + __wc3Col + '"></i><b>WC3 加权成本</b></span>' : '') +
     /* ★ 2026-10-18 §166（用户要求「突破震荡结构的那根 k 线请用特殊颜色标记」）：
        洋红框 = 加仑·伍兹「区间突破」根（gwRangeState st='break'）。方向看三角：▲ 向上 / ▼ 向下。
        口径与点击面板同一份判定；参考层，不计分、不发信号。 */
@@ -10507,6 +10627,38 @@ function klDaysetHtml(ent, gidx, kj, raw, kjChipHtml, per) {
         （raw.r5，与 F10 缺快照时的兜底同口径），标签标「(近似)」；最新一根仍优先东财 f10 实时快照。 */
   var mom20v = null, momBase = (gidx >= 20 && kl[gidx - 20]) ? kl[gidx - 20].close : null;
   if (momBase > 0 && isFinite(kD.close) && isFinite(momBase)) mom20v = (kD.close - momBase) / momBase * 100;
+  /* ★ 2026-11-07 §240（用户要求「MA5斜率(至该日) 前增加显示 5日动量(至该日)」）：
+     5 日动量 = 该日收盘 ÷ 5 个交易日前收盘 − 1，与紧邻的 20 日动量 chip **同构**（20→5，同一个 kl[gidx−N] 定基），
+     也与 computeIndicators.gain5 / dingMomNumsOf.g5 / s4kCalc.chg5 逐值同式（同源纪律：不另写判据）。
+     · 只读该日及之前数据，无未来函数；窗口不足 / 基期脏数据 → 该枚 chip 消失（诚实留白不硬算，
+       绝不拿 gain5 历史兜底的 0 冒充真动量 —— 与 mom20Of 的「歧义零值留白」同一纪律）；
+     · 历史日标签加「(至该日)」；红涨绿跌。位置在 MA5斜率 之前（见 return 拼接段）。 */
+  var mom5v = null, mom5Base = (gidx >= 5 && kl[gidx - 5]) ? kl[gidx - 5].close : null;
+  if (mom5Base > 0 && isFinite(kD.close) && isFinite(mom5Base)) mom5v = (kD.close - mom5Base) / mom5Base * 100;
+  /* ★ 2026-11-07 §240（用户要求「20日动量(至该日) 后增加 ma20斜率」）：
+     MA20 斜率 = 该日 MA20 较 5 个周期前 MA20 的百分比变化（n=5 归一化口径），
+     与 computeIndicators 的 ma20Slope5 同一把尺子：(MA20[i] − MA20[i−5]) ÷ MA20[i−5] × 100。
+     · 口径依据（全网三轮交叉验证 2026-11-07）：MA20 斜率无统一标准定义，并存「绝对差分 / 日均变化 /
+       百分比 / 角度(ATAN×100)」四类量纲；只有百分比口径可跨股、跨周期比较，n=3~5 比 n=1 更抗单根跳动
+       —— 平台既有 ma20Slope5 恰好就是这一口径，故直接复用，不新造第五种定义。
+     · 注意口径差异：同组「MA5斜率」chip 是 n=1（相邻两根），本枚是 n=5 —— 两者数值不可直接比大小；
+       角度制的「15度/45度」是 ATAN 放大 100 倍后的另一套量纲（1%/日 ≈ 45度），不可与本枚混读。
+     · 注意共线性：MA20_t − MA20_{t−1} = (C_t − C_{t−20})/20，与 20 日动量分子同源；平台自身
+       800 笔买点实测 mom20 ~ ma20Slope 相关 0.909（MOM20_RULE 注释 / _analyze_mom20.js），
+       外部研报亦指单窗口均线斜率与传统动量 ρ 常 >0.7。本枚只作趋势倾角「参考层」描述，
+       不进四指标打分、不进排序权重、不发推送、不构成买卖依据（与生命周期阶段同一分层）。
+     · 只用该日及之前数据（ent.ma20[gidx] 对 ent.ma20[gidx−5]），无未来函数；
+       gidx<5 / 两值 null、0、非有限 → chip 消失（诚实留白）；着色 >0 红 = 向上，否则绿 = 向下。 */
+  var ma20slChip = '';
+  if (ent.ma20 && gidx >= 5 && ent.ma20[gidx] != null && ent.ma20[gidx - 5] != null &&
+      isFinite(ent.ma20[gidx]) && isFinite(ent.ma20[gidx - 5]) && ent.ma20[gidx - 5] !== 0) {
+    var ma20slV = (ent.ma20[gidx] - ent.ma20[gidx - 5]) / ent.ma20[gidx - 5] * 100;
+    ma20slChip = '<span class="kl-chip ' + (ma20slV > 0 ? 'up' : 'down') + '" title="MA20 斜率 = 该' + __u + ' MA20 较 5 个' + __dn + '前 MA20 的百分比变化（n=5 归一化口径：(MA20[i] − MA20[i−5]) ÷ MA20[i−5] × 100；与页面 computeIndicators 的 ma20Slope5 同源；只用该' + __u + '及之前数据，无未来函数）。&#10;' +
+      '注意口径差异：同组「MA5斜率」是 n=1（相邻两根），本枚是 n=5 —— 数值不可直接比大小；角度制(ATAN×100 度)是另一套量纲，不可混读。&#10;' +
+      '注意共线性：与「20日动量」分子同源（MA20 相邻两根之差 = (C[i] − C[i−20])/20），平台 800 笔买点实测相关 0.909；斜率只是动量的时间平滑版，不是独立信息源。&#10;' +
+      'MA20 滞后约 10 根、斜率是二阶滞后量，只描述趋势倾角、不具备独立预测能力。参考层：不计分、不进四指标、不进排序权重、不构成买卖依据。">' +
+      (isLast ? 'MA20斜率' : 'MA20斜率(至该' + __u + ')') + ' <b>' + (ma20slV >= 0 ? '+' : '') + ma20slV.toFixed(2) + '%</b></span>';
+  }
   var vrChip = '';
   if (isLast && ent.vr != null) {
     /* ⚠️ 量比是**实时快照口径**（东财 f10：当日量 ÷ 前 5 日均量），与所选 K 线周期无关，
@@ -10612,7 +10764,7 @@ function klDaysetHtml(ent, gidx, kj, raw, kjChipHtml, per) {
      · 数据不足（不足 11 根算不出 g10 / 20 日窗口无有效高低）→ 该枚 chip 消失（诚实留白不硬算）。 */
   var mp = null;
   try { mp = dingMomPosOf(kl.slice(0, gidx + 1)); } catch (eMp) { mp = null; }
-  var posChip = '', mom10Chip = '';
+  var posChip = '', mom10Chip = '', mom5Chip = '';
   if (mp && mp.pos20 != null) {
     var posCol = (mp.posKey === 'p5') ? '#ffb74d' : (mp.posKey === 'p1') ? '#64b5f6' : '';
     posChip = '<span class="kl-chip"' + (posCol ? ' style="color:' + posCol + '"' : '') +
@@ -10627,6 +10779,17 @@ function klDaysetHtml(ent, gidx, kj, raw, kjChipHtml, per) {
       '" title="10日动量 = 该日收盘 ÷ 10 个交易日前收盘 − 1（与钉钉推送「10日动量」「20日动量」同源口径；只用该日及之前数据，无未来函数）。&#10;' +
       '与「分位」必须合读：同样的 10 日动量，落高位是风险、落低位是机会（30 格组合矩阵）；仅描述，不构成买卖依据。">' +
       (isLast ? '10' + __u + '动量' : '10' + __u + '动量(至该' + __u + ')') + ' <b>' + (mp.g10 >= 0 ? '+' : '') + mp.g10.toFixed(2) + '%</b></span>';
+  }
+  /* ★ 2026-11-07 §240：5日动量 chip —— mom5v 在上方与 mom20v 同构现算（见该段注释），此处只负责渲染。
+     · 周期单位随 __u 动态（日 / 周 / 根），不把「5 根」硬标成「5 日」；历史根加「(至该日)」；
+     · 与 10日动量 / 20日动量 / 分位 合读：5 日窗在 A 股属反转域、零轴附近 whipsaw 最烈
+       （§243 σ 标定插入 ±2.5 中性带不判方向），中间段无方向预测力，只有极端值有情绪意义；
+     · 数据不足 → chip 整枚消失（诚实留白，不显示 0.00%）。仅描述，不构成买卖依据。 */
+  if (mom5v != null) {
+    mom5Chip = '<span class="kl-chip ' + (mom5v >= 0 ? 'up' : 'down') +
+      '" title="5' + __u + '动量 = 该' + __u + '收盘 ÷ 5 个' + __dn + '前收盘 − 1（与同组 20' + __u + '动量 chip 同构、与页面 gain5 / 钉钉动量数值段 dingMomNumsOf.g5 逐值同式；只用该' + __u + '及之前数据，无未来函数）。&#10;' +
+      '与「10日动量 / 20日动量 / 分位」必须合读：5 日窗在 A 股属反转域、零轴附近 whipsaw 最烈（§243 σ 标定插入 ±2.5 中性带不判方向），须看分位高低与量能确认；仅描述，不构成买卖依据。">' +
+      (isLast ? '5' + __u + '动量' : '5' + __u + '动量(至该' + __u + ')') + ' <b>' + (mom5v >= 0 ? '+' : '') + mom5v.toFixed(2) + '%</b></span>';
   }
   /* ★ 2026-10-17 §152（用户改口径：「不需要在每一根 k 显示对应的挖土机位置了，改为类似生命周期，
      在顶部用不同颜色显示区域即可」）—— 原先在此处的**逐根 chip**（§151 digSetChip）已整体移除：
@@ -10664,23 +10827,31 @@ function klDaysetHtml(ent, gidx, kj, raw, kjChipHtml, per) {
     mChip('MA5', ent.ma5 ? ent.ma5[gidx] : null, '#ffd54f') +
     mChip('MA20', ent.ma20 ? ent.ma20[gidx] : null, '#ce93d8') +
     mChip('MA60', ent.ma60 ? ent.ma60[gidx] : null, '#5b8cff') +
+    /* ★ 2026-11-07 §263：3日加权成本 chip —— 与图上 WC3 虚线同色同源（ind.wc3 全量数组、klWc3Of 逐根值）。
+       口径写进 title 随时可查（含与 MA5 的读法差异）；数据不足 / 全零量 → 「—」诚实缺省。参考层。 */
+    '<span class="kl-chip" title="3日加权成本（WC3）= 近 3 根（含当根）Σ(收盘×成交量) ÷ Σ(成交量) ≈ 滚动 3 日 VWAP（klWc3Of 单一真源；只用该根及之前数据，无未来函数；换周期按根重算）。&#10;与 MA5 的读法差异：MA5 是等权收盘均值，无量暴涨日会被拉高；WC3 按成交量摊 —— 缩量冲高日 WC3 明显低于 MA5 = 涨得高、参与的人少，成本并未跟上。&#10;量缺失按权重 0 不作废整窗；Σ量=0 / 收盘脏数据 → 如实留白。参考层：不计分、不进四指标、不构成买卖依据。"><i class="dot" style="background:' + ((typeof KL_WC3_COLOR === 'string') ? KL_WC3_COLOR : '#ffffff') + '"></i>WC3 <b>' +
+    (ent.wc3 && ent.wc3[gidx] != null && isFinite(ent.wc3[gidx]) ? (+ent.wc3[gidx]).toFixed(2) : '—') + '</b></span>' +
     '<span class="kl-chip ' + (rngD >= 0 ? 'up' : 'down') + '">' + (isLast ? '区间' : '区间(至该' + __u + ')') +
     ' <b>' + (rngD >= 0 ? '+' : '') + rngD.toFixed(2) + '%</b></span>' +
     '<span class="kl-chip">' + (isLast ? '区间高/低' : '区间高/低(至该' + __u + ')') + ' <b>' +
     (isFinite(hiD) ? hiD.toFixed(2) : '—') + ' / ' + (isFinite(loD) ? loD.toFixed(2) : '—') + '</b></span>' +
     '<span class="kl-chip">量能 <b>' + (vol != null ? fmtWan(vol) + '手' : '—') + '</b>' +
     (r5v != null ? ' <em style="font-style:normal;color:#9fb4ff">· 前5' + __u + '均量×' + (+r5v).toFixed(2) + '</em>' : '') + '</span>' +
-    /* ★ 2026-10-05（用户指定位置）：量能之后 → 20日动量 → 量比 → ATR% → KDJ；★ 2026-10-07：KDJ 之后 → MA5 斜率 */
+    /* ★ 2026-10-05（用户指定位置）：量能之后 → 20日动量 → 量比 → ATR% → KDJ；★ 2026-10-07：KDJ 之后 → MA5 斜率
+       ★ 2026-11-07 §240（用户指定位置）：20日动量之后 → MA20斜率；MA5斜率之前 → 5日动量 */
     (mom20v != null ? '<span class="kl-chip ' + (mom20v >= 0 ? 'up' : 'down') + '" title="20' + __u + '动量 = 该' + __u + '收盘 ÷ 20个' + __dn + '前收盘 − 1（与「20日动量」列 mom20Of 同口径，此处按所选 K 线周期取 20 根；只用该' + __u + '及之前数据，无未来函数）">' +
       (isLast ? '20' + __u + '动量' : '20' + __u + '动量(至该' + __u + ')') + ' <b>' + (mom20v >= 0 ? '+' : '') + mom20v.toFixed(2) + '%</b></span>' : '') +
+    ma20slChip +
     vrChip +
     atrChip +
     kjChip +
+    mom5Chip +
     slopeChip +
     /* ★ 2026-10-10（用户指定位置）：MA5 斜率之后 → 四指标打分（逐根，s4kBuyDay 同口径）→ dev → 斜率往上天数 → 换手率
        ★ 2026-10-13 §112（用户指定位置）：换手率之后 → 分位 → 10日动量（§111 同源口径）
        ★ 2026-10-17 §152：§151 的「挖土机位置」chip 已移除（改为图顶部区域带，见 renderChart __digBands）
-       ★ 2026-11-01 §247：10日动量之后 → 主力状态（红/黄/紫/套牢 + 事件，仅日线） */
+       ★ 2026-11-01 §247：10日动量之后 → 主力状态（红/黄/紫/套牢 + 事件，仅日线）
+       ★ 2026-11-07 §240：5日动量 紧贴 MA5斜率 之前（用户口令「MA5斜率(至该日) 前增加显示 5日动量(至该日)」） */
     s4chip + devChip + upChip + torChip + posChip + mom10Chip + zlztChip;
 }
 
@@ -11400,7 +11571,7 @@ var OPEN8_FORMS = {
   'pyUp':    { key: 'pyUp', name: '平移上盘', side: 'bull', strength: '中', full: '整理盘/补价盘：低开收回平盘上，弱转强（关键在比，须与前日形态比）', op: '突破前3根高点且量增=走强；低档量窒后出现有确底攻击机会' },
   'sandi':   { key: 'sandi', name: '三低盘', side: 'bear', strength: '强', full: '空方最强气势盘（追杀盘·攻击盘）：先价后量；低档量窒息=赶底背离', op: '不抄底，反弹减仓；低档量窒息后出现增量攻击线才谈确底' },
   'erdi':    { key: 'erdi', name: '二低盘', side: 'bear', strength: '中', full: '空方整理盘：开盘量宜缩；低档双收带价涨=确底架构，高档量退防挫头', op: '低档喜背离、高档怕量退；跌破第1根低点继续看空' },
-  'yidi':    { key: 'yidi', name: '一低盘', side: 'bear', strength: '弱', full: '承接盘：低开拉回，低档有承接（关键在量）；高档增量防杀低出货', op: '突破第1根高点=转强信号；低档增量一低为背离承接' },
+  'yidi':    { key: 'yidi', name: '一低盘', side: 'bear', strength: '弱', full: '承接盘／破支撑盘二象性（§265：一点低盘无限暖）：低开拉回，低档有承接（关键在量）；高档增量防杀低出货。全天预判按三档：反复低盘（9:45 回落）= 弱式整理偏弱 / 9:45 站上平盘 = 承接成立偏强 / 其余 = 震荡承接待确认', op: '突破第1根高点=转强信号；低档增量一低为背离承接' },
   'pyDown':  { key: 'pyDown', name: '平移下盘', side: 'bear', strength: '中', full: '整理盘/随从盘：高开收破平盘下；「下杀取量」常以此形态展开', op: '高开增量下杀取量后再攻击=强势洗盘；跌破前3根低点成空方' }
 };
 /* 特殊盘局（文档 §11.4）：一字板/跌停开盘属「跳」的乖离形态，不在八法常规判型内 */
@@ -11408,6 +11579,136 @@ var OPEN8_SPECIAL = {
   oneword:   { name: '一字板开盘', side: 'bull', strength: '—', full: '「跳」的乖离形态（开盘即封板）：大封单为强、漏单为弱，不按八法判型', op: '按涨停板战法（跳连插并落飘脱止离）观察封单质量；打不开不追排队' },
   limitdown: { name: '跌停开盘', side: 'bear', strength: '—', full: '乖离性开盘：按「止黑」逻辑观察低开高走能否收满线，决定是否由空转多', op: '不抄底；低开高走收满线=止黑成立才谈转强' }
 };
+
+/* ★ §265（2026-11-07 · 用户报「不是所有的一低盘都偏弱」）→ ★ §239（同日 · 用户报「其他开盘类型一刀切的问题也请修复」）：
+   全天预判**不能只按 form.side 一刀切** —— 八法里每一盘都是「本体 + 条件修正」的两层结构，
+   且本台原有 side 映射与自家形态表文案多处自相矛盾（最严重：一高盘 full 写「压力盘、看空」，却恒显「偏强」）。
+   ---------------------------------------------------------------------------
+   全网核对（domain_search 多源交叉：股澐《开盘八法》第1/4章、看盤八大法則、百度百科、
+     凤凰网/今日头条《开盘八法图解》、新浪博客《简单谈谈开盘八法》《开盘八法说明及操作释疑》、
+     雪球《开盘八法》与《三高富贵帝王盘》、东财财富号、通达信八法表、东吴/大富完整版、微博胡任标）：
+     · 一高盘 = **压力盘**（「一高压力买盘在尾盘」，原典看空）；跌破平盘→收黑；
+       带量过第一盘高点→「一高破高高仍高」转破高盘；量缩回调不破平盘→「涨多少收多少」收在开盘附近。
+     · 二高盘 = 中红盘但**「二高重比量」**：缩量只是整理；9:45 跌破第一盘收盘价＝「骗线二高」，降按一高。
+     · 三高盘 = 帝王盘/长红盘，但「三高节节高，**增量**中长红」；量缩为虚势三高（雪球：若量缩仍是整理走势）；
+       高档暴量/空方势是「孤王盘」派发 → 位置层未入判时只在 why 里如实提示，不硬算。
+     · 平移上/平移下/二高/二低 = **整理盘**：新浪原文「下有支撑、上有压力，整理盘分出胜负最终要由趋势盘决定」
+       → 默认不判偏强/偏弱。平移上须「量增 + 续走高」才确认弱转强；平移下「重回平盘上」才确认转强。
+     · 三低盘 = 长黑兼反弹盘；「三低带开窗，**无量**中长黑」，但「大量恐慌下杀则为背离」（新浪），
+       波段低档三日内多头可能反扑 → 放量不判续跌，给震荡。
+     · 二低盘 = 中黑「无为盘」，**量缩→差价当冲盘（盘中多波反弹、次日易红）/ 量增→收盘重挫**；
+       「低档双收带价涨＝确底架构」→ 9:45 站回昨收给偏强。
+     · 一低盘 = 承接盘／破支撑盘二象性（§265 三档，用户已确认，本轮保留不改判词）：
+       反复低盘→偏弱 / 9:45 站上昨收→偏强 / 其余→震荡。
+     · 反复高盘（一高的 §138 细分）= 换手整理盘，「当日跌幅小于瞬间高盘、涨幅低于瞬间低盘」→ 方向不明。
+   本台**可数据化**的五个维度（两处调用方 computeOpen8 / open8DayOf 完全同构可得，零新增请求、无未来函数）：
+     ① posPrev：9:45 收盘 vs 昨收（above / below / flat；cls.abovePrev 只覆盖 4 型，故由 ctx 原始数值自算）
+     ② volTone：今日 09:35 根量 ÷ 上一交易日 09:35 根量（§261 rrBasis，原典跨日同刻 ±8%：
+        ≥1.08 量增 / ≤0.92 量缩 / 之间相当；分母冷量失真或缺失 → null → 不猜，按形态本体）
+     ③ c3 vs c1：9:45 跌破第一盘收盘价 = 骗线二高
+     ④ brokeFirstHigh：第 4 根起、10:00 前是否带量站上第一盘收盘 = 一高破高（原典「10:00 前突破 9:35
+        高点则一高转折成二高」）—— **不能只用前 3 根判**：一高盘 c2<c1，前三根里 c3>c1 恒不成立，
+        若只写 c3>c1 会让「一高转强」成为永不触发的死分支（本轮实测排除）
+     ⑤ subtype：反复高盘 / 反复低盘（§138 已有细分）
+   ★ **位置层（高档/低档）与多空势（13/30 日均线）不入判**：原文强调同一盘型在多方势/空方势下结论可完全相反，
+     但逐日回放 open8DayOf 拿不到日K序列，若只在实时路径判会造成「网页与回放两套口径」——
+     故统一不判，把该局限写进 why，不编造阈值、不硬算（同 §265 的诚实留白纪律）。
+   ★ side 保持不动：口径 B 多方盘集合（四维确认候选资格）来自用户策略文档 v1.0，
+     预判措辞与触发资格是两层 —— 本修复只改**展示层预判 + 预判文字配色**，不动打分资格与权重。
+   ★ 单一真源：computeOpen8 与 open8DayOf 两处都走 open8ForecastDetailOf（一次取 text + why），
+     open8ForecastOf 保留为薄包装（旧测试 / 无 ctx 的兜底调用），禁止各写一份。 */
+function open8ForecastCtxOf(first3, prevClose, cls, rrBasis, today) {
+  function n(v) { return (v == null || !isFinite(v)) ? null : v; }
+  var b1 = first3 && first3[0], b2 = first3 && first3[1], b3 = first3 && first3[2];
+  var c1 = b1 ? n(b1.close) : null;
+  var rr = (rrBasis && !rrBasis.distorted && n(rrBasis.rr) != null && n(rrBasis.yVol) > 0) ? rrBasis.rr : null;
+  /* ★ 原典「10:00 前突破 9:35 高点 → 一高盘转折成二点高盘」：破高确认发生在**第 4 根起**，
+     不在前 3 根内（一高盘 c2<c1，前 3 根里 c3>c1 恒不成立）—— 只看 10:00 前的后续根，
+     无后续根（早盘未走完）→ null 诚实留白，绝不拿未来数据补。 */
+  var brokeFirstHigh = null;
+  if (c1 != null && today && today.length > 3) {
+    brokeFirstHigh = false;
+    for (var bfi = 3; bfi < today.length; bfi++) {
+      var bt = String(today[bfi].time == null ? '' : today[bfi].time).slice(-4);
+      if (bt && bt > '1000') break;
+      if (n(today[bfi].close) != null && today[bfi].close > c1) { brokeFirstHigh = true; break; }
+    }
+  }
+  return {
+    c1: c1, c2: b2 ? n(b2.close) : null, c3: b3 ? n(b3.close) : null,
+    prevClose: n(prevClose), gapPct: cls ? n(cls.gapPct) : null, rr: rr,
+    volTone: rr == null ? null : (rr >= 1.08 ? 'up' : (rr <= 0.92 ? 'down' : 'flat')),
+    brokeFirstHigh: brokeFirstHigh
+  };
+}
+function open8ForecastDetailOf(form, subtype, abovePrev, ctx) {
+  if (!form) return { text: '—', why: '形态未判出（早盘不足 3 根 5 分钟 K 线，或缺昨收平盘基准）' };
+  var sideDef = form.side === 'bull' ? '偏强' : (form.side === 'bear' ? '偏弱' : '震荡');
+  var k = form.key;
+  if (!k) return { text: sideDef, why: '乖离形态（一字板 / 跌停开盘）不按八法判型；强弱取决于封单质量 / 止黑是否成立，见形态说明' };
+  /* 兼容兜底：ctx 缺失（旧调用或早盘明细不可用）→ §265 三档 + side 映射，绝不假装条件已确认 */
+  if (!ctx) {
+    if (k === 'yidi') {
+      if (subtype === '反复低盘') return { text: '偏弱', why: '§265 反复低盘（9:45 回落）＝一低一高弱式整理' };
+      if (abovePrev === true) return { text: '偏强', why: '§265 9:45 站上昨收＝承接成立' };
+      return { text: '震荡', why: '§265 反弹延续但未收复平盘＝承接待确认' };
+    }
+    return { text: sideDef, why: '早盘明细缺失，按形态多空归属兜底（§239 兼容路径，非条件化结论）' };
+  }
+  function R(text, why) { return { text: text, why: why }; }
+  var c1 = ctx.c1, c2 = ctx.c2, c3 = ctx.c3, pv = ctx.prevClose, vt = ctx.volTone;
+  var pos = (c3 != null && pv != null && pv > 0) ? (c3 > pv ? 'above' : (c3 < pv ? 'below' : 'flat'))
+    : (abovePrev === true ? 'above' : (abovePrev === false ? 'below' : null));
+  var up = vt === 'up', shrink = vt === 'down';
+  var c3GtC1 = (c3 != null && c1 != null) ? c3 > c1 : null;
+  var c3LtC1 = (c3 != null && c1 != null) ? c3 < c1 : null;
+  var c3GeC2 = (c3 != null && c2 != null) ? c3 >= c2 : null;
+  var c3LtC2 = (c3 != null && c2 != null) ? c3 < c2 : null;
+  var volTxt = vt == null ? '（量比量缺失/失真，此维不参与）'
+    : (up ? '（首盘量增）' : (shrink ? '（首盘量缩）' : '（首盘量平）'));
+  switch (k) {
+    case 'yidi':   /* §265 用户已确认，本轮只补依据文案，判词不动 */
+      if (subtype === '反复低盘') return R('偏弱', '一低一高（9:45 回落）＝弱式整理，「一低承接」不成立');
+      if (pos === 'above') return R('偏强', '9:45 站上昨收＝承接成立（原典「9:50 前拉回平盘甚至突破可视为买点，收盘易中小红盘」）' + volTxt);
+      return R('震荡', '反弹延续但未收复平盘＝承接待确认' + volTxt + '；放量低开真出逃 / 缩量低开真洗盘，需结合位置层');
+    case 'yigao':
+      /* 破高确认是原典**凌驾于形态**的转折（10:00 前突破 9:35 高点 → 改按二高盘研判），故排最前 */
+      if (ctx.brokeFirstHigh === true && up) return R('偏强', '10:00 前带量突破第一盘高点＝「一高破高高仍高」，原典「一点高盘转折成二点高盘」');
+      if (pos === 'below') return R('偏弱', '压力盘 9:45 跌破平盘＝原典「直接跳水破平盘则收黑」；口诀「一高压力买盘在尾盘」');
+      if (subtype === '反复高盘') return R('震荡', '反复高盘＝换手整理盘，原典「当日跌幅小于瞬间高盘、涨幅低于瞬间低盘」，方向不明');
+      if (pos === 'above' && shrink) return R('震荡', '量缩回调不破平盘＝原典「开盘涨几点收盘就涨几点」，收在开盘附近，非趋势盘');
+      return R('震荡', '一高盘本体＝压力盘（原典看空 / 买盘在尾盘），高开回落概率大；未出现带量破高确认前不判偏强' + volTxt);
+    case 'ergao':
+      /* 跌破平盘比「骗线二高」更明确，须优先（否则 c3<昨收 隐含 c3<c1，骗线分支会吃掉它） */
+      if (pos === 'below') return R('偏弱', '二高盘 9:45 跌破平盘＝原典「跌破平盘 / 第一盘低点则杀尾盘」');
+      if (c3LtC1 === true) return R('震荡', '9:45 跌破第一盘收盘价＝「骗线二高盘」，原典降按一高盘研判');
+      if (shrink) return R('震荡', '「二高重比量」：昨日长红今日缩量只是整理，不是续攻；增量才是续攻');
+      return R('偏强', '二高盘本体＝中红盘（收次高、带上影），多方整理偏强' + volTxt);
+    case 'sangao':
+      if (shrink || vt === 'flat') return R('震荡', '「三高节节高，增量中长红」；量缩 / 量平为虚势三高，原典「若量缩仍然是整理走势」');
+      return R('偏强', '三高盘＝帝王盘 / 长红盘，多方最强气势盘' + volTxt + '；高档暴量或空方势为「孤王盘」派发（位置层未入判，需结合日K）');
+    case 'pyUp':
+      if (c3LtC2 === true) return R('震荡', '拉回平盘上后 9:45 回落＝承接未确认，整理盘');
+      if (c3GtC1 === true && up) return R('偏强', '低开 5 分钟内收回平盘上 + 首盘量增 + 9:45 续走高＝弱转强确认');
+      return R('震荡', '平移上＝整理盘 / 补价盘，原典「整理盘下有支撑上有压力，分出胜负最终要由趋势盘决定」' + volTxt);
+    case 'sandi':
+      if (up) return R('震荡', '三低盘放量＝「大量恐慌下杀则为背离」，波段低档三日内多头可能反扑，不猜续跌');
+      return R('偏弱', '三低盘＝长黑兼反弹盘，空方最强气势盘' + (shrink ? '（「三低带开窗，无量中长黑」）' : volTxt) + '；低档止跌带量拉升才有否极泰来转机（位置层未入判）');
+    case 'erdi':
+      if (pos === 'above') return R('偏强', '9:45 站回昨收＝「低档双收带价涨＝确底架构」');
+      if (shrink) return R('震荡', '二低量缩＝「差价当冲盘」：盘中 3–5 波反弹、尾盘买点、次日易中长红，当日方向不猜');
+      if (up) return R('偏弱', '二低量增＝原典「量增收盘易重挫」，中黑盘成立');
+      return R('偏弱', '二低盘＝中黑「无为盘」，口诀「二低中黑盘中拉抬皆假象」' + volTxt);
+    case 'pyDown':
+      if (pos === 'above') return R('偏强', '高开破平盘后又站回昨收＝原典「重回平盘上」确认转强（增量下杀取量后再攻击＝强势洗盘）');
+      if (shrink && c3GeC2 === true) return R('震荡', '缩量下杀取量 + 9:45 止跌走稳＝洗盘待确认，方向未定');
+      return R('偏弱', '平移下＝压力盘 / 随从盘（一高退档版），原典「跌破前 3 根低点成空方」' + volTxt);
+  }
+  return { text: sideDef, why: '未覆盖的形态键，按多空归属兜底（§239 诚实留白）' };
+}
+function open8ForecastOf(form, subtype, abovePrev, ctx) {
+  return open8ForecastDetailOf(form, subtype, abovePrev, ctx).text;
+}
 
 /* 开盘八法判型（纯函数，2026-09-29 按综述文档重写 · A 股口径）
    ❌ 旧版按「三根 5 分钟 K 线自身阴阳」查表 —— 轴错了：八法定义里没有 K 线阴阳，
@@ -11707,7 +12008,10 @@ function computeOpen8(ind, quote, m5) {
     else if (ind.price < y.low) vs = '跌破昨日低点';
     else vs = '在昨日高低间震荡';
   }
-  var forecast = form ? (form.side === 'bull' ? '偏强' : form.side === 'bear' ? '偏弱' : '震荡') : '—';
+  /* ★ §239：八形态条件化预判（原 §265 一低盘三档并入单一真源）；ctx 与 open8DayOf 同构构造 */
+  var fcD = open8ForecastDetailOf(form, cls.subtype || null, cls.abovePrev,
+    open8ForecastCtxOf(first3, prevClose, cls, rrBasis, today));
+  var forecast = fcD.text, forecastWhy = fcD.why;
   var aboveVwap = (vwapNow != null && isFinite(ind.price)) ? ind.price > vwapNow : null;
   var keyLow = Math.min(keyBar.open, keyBar.close), keyHigh = Math.max(keyBar.open, keyBar.close);
   var aboveKey = isFinite(ind.price) ? ind.price >= keyHigh : null;
@@ -11733,7 +12037,7 @@ function computeOpen8(ind, quote, m5) {
        并累计出「截至 10:00 的均价线」。只暴露引用，不复制数组。 */
     today: today,
     pressure: hi3, support: lo3, vwap3: vwap3, vwapNow: vwapNow, keyBar: keyBar,
-    vp: vp, vr: vr, vrLevel: vrLevel, vs: vs, y: y, forecast: forecast,
+    vp: vp, vr: vr, vrLevel: vrLevel, vs: vs, y: y, forecast: forecast, forecastWhy: forecastWhy,
     /* ★ §145：早盘前 3 根换手率昨今对比的原始量（渲染/推送共用；只有 open8TurnPair 消费） */
     turn3: turn3,
     /* ★ §261：量比量原料（渲染与打分共用；null = 昨日根缺失/冷量失真 → 打分层按 0 分） */
@@ -11752,6 +12056,12 @@ function o8SideColor(o8) {
   var s = (o8 && o8.form) ? o8.form.side : null;
   return s === 'bull' ? '#ff5b5b' : (s === 'bear' ? '#26c281' : '#ffb74d');
 }
+/* ★ §239：全天预判文字按**预判结论**着色，不按 form.side ——
+   一高盘 side='bull' 但 §239 预判可能是「偏弱 / 震荡」，若沿用 o8SideColor 会出现「红色偏弱」的语义反色。
+   形态徽章仍归 o8SideColor（形态的多空归属），两者分工：形态=归属色、预判=结论色。 */
+function o8ForecastColor(fc) {
+  return fc === '偏强' ? '#ff5b5b' : (fc === '偏弱' ? '#26c281' : (fc === '震荡' ? '#ffb74d' : '#8892b0'));
+}
 /* 顶部（个股名旁边，板块名之后）的「开盘八法」摘要：形态徽章 + 全天预判
    —— 与下方「早盘5分钟K线诊断」卡片共用同一份 open8 数据，只是把结论前置到最显眼处 */
 function renderOpen8Top(o8) {
@@ -11769,10 +12079,11 @@ function renderOpen8Top(o8) {
       '<span class="k">开盘八法</span>形态待定 · 全天预判 ' + escapeHtml(o8.forecast || '—') + '</span>';
   }
   var c = o8SideColor(o8);
+  var fcCol = o8ForecastColor(o8.forecast);   /* ★ §239：预判按结论着色，不沿用形态归属色 */
   return '<span class="o8-top" title="开盘八法：' + escapeHtml(o8.form.name) + (o8.subtype ? '（' + escapeHtml(o8.subtype) + '）' : '') + ' · ' + escapeHtml(o8.pat || '') +
-    ' · 全天预判 ' + escapeHtml(o8.forecast || '') + '（下方「早盘5分钟K线诊断」有完整依据）">' +
+    ' · 全天预判 ' + escapeHtml(o8.forecast || '') + '（依据：' + escapeHtml(o8.forecastWhy || '—') + '；下方「早盘5分钟K线诊断」有完整依据）">' +
     '<span class="o8-top-form" style="border-color:' + c + ';color:' + c + '">' + escapeHtml(o8.form.name) + '</span>' +
-    '<span class="o8-top-fc" style="color:' + c + '"><span class="k">全天预判</span>' + escapeHtml(o8.forecast || '—') + '</span>' +
+    '<span class="o8-top-fc" style="color:' + fcCol + '"><span class="k">全天预判</span>' + escapeHtml(o8.forecast || '—') + '</span>' +
     '</span>';
 }
 
@@ -12238,6 +12549,7 @@ function renderOpen8Card(o8) {
   }
   var form = o8.form;
   var sideColor = form ? o8SideColor(o8) : '#8892b0';
+  var fcColor = o8ForecastColor(o8.forecast);   /* ★ §239：一高盘可能「震荡/偏弱」，不能沿用红色 */
   var sideName = form ? (form.side === 'bull' ? '多方盘' : form.side === 'bear' ? '空方盘' : '震荡盘') : '—';
   var p2 = o8.pressure.toFixed(2), p3 = o8.support.toFixed(2);
   var vwn = o8.vwapNow != null ? o8.vwapNow.toFixed(2) : '—';
@@ -12264,7 +12576,7 @@ function renderOpen8Card(o8) {
   html += '<div class="card"><div class="card-title">早盘5分钟K线诊断（开盘八法）· ' + o8.date + (o8.incomplete ? ' · 早盘未走完(' + o8.first3.length + '根)' : '') + '</div>';
   html += '<div class="open8-head"><div class="open8-form" style="border-color:' + sideColor + ';color:' + sideColor + '">' + (form ? form.name : '形态不足') + '</div>' +
     '<div class="open8-pat">' + (o8.pat || '—') + (o8.subtype ? ' · ' + escapeHtml(o8.subtype) : '') + ' · ' + sideName + ' · 力道' + (form ? form.strength : '—') + '</div>' +
-    '<div class="open8-forecast" style="color:' + sideColor + '"><span class="k">全天预判</span>' + escapeHtml(o8.forecast) + '</div></div>';
+    '<div class="open8-forecast" style="color:' + fcColor + '"><span class="k">全天预判</span>' + escapeHtml(o8.forecast) + '</div></div>';
   html += bars;
   var gapTxt = (o8.gapPct != null) ? ((o8.gapPct > 0 ? '+' : '') + o8.gapPct.toFixed(2) + '%' + (o8.prevClose > 0 ? '（平盘 ' + o8.prevClose.toFixed(2) + '）' : '')) : (o8.clsWhy || '—');
   html += '<div class="open8-grid">' +
@@ -12277,9 +12589,10 @@ function renderOpen8Card(o8) {
     okv('前3根压力位', p2) +
     okv('前3根支撑位', p3) +
     okv('关键K线', keyState) +
-    /* 全天预判：单独高亮项（跨 2 列 + 加大加色，颜色随多方/空方/震荡） */
+    /* 全天预判：单独高亮项（跨 2 列 + 加大加色）。★ §239：颜色按预判结论 + 第二行展示条件化依据 */
     '<div class="open8-item o8-fc-hi"><div class="k">全天预判</div>' +
-    '<div class="v" style="color:' + sideColor + '">' + escapeHtml(o8.forecast) + '</div></div>' +
+    '<div class="v" style="color:' + fcColor + '">' + escapeHtml(o8.forecast) +
+    (o8.forecastWhy ? '<span class="o8-fc-why">' + escapeHtml(o8.forecastWhy) + '</span>' : '') + '</div></div>' +
     '</div>';
   html += '<div class="open8-advice"><div class="oa-title">操作建议</div>' +
     '<div class="oa-row"><span class="oa-k">买点</span><span>' + escapeHtml(o8.buy) + '</span></div>' +
@@ -12340,10 +12653,10 @@ function open8Cell(r) {
   var o = r && r.open8;
   if (!o || !o.ok || !o.form) return '<td class="open8-cell">—</td>';
   var form = o.form;
-  var c = o8SideColor(o);   /* ★ 2026-09-29：统一走配色单一来源（原内联三目与 o8SideColor 同色值，但绕开了口径） */
+  var c = o8ForecastColor(o.forecast);   /* ★ §239：此格只显示预判 → 按结论着色（原按 side） */
   var fc = o.forecast || '—';
   return '<td class="open8-cell">' +
-    '<div style="font-size:13px;color:' + c + ';font-weight:700">' + fc + '</div>' +
+    '<div style="font-size:13px;color:' + c + ';font-weight:700" title="' + escapeHtml(o.forecastWhy || '—') + '">' + fc + '</div>' +
     '<div style="font-size:10px;color:#5d6788;margin-top:2px">' + o.vp + '</div></td>';
 }
 
@@ -12835,6 +13148,432 @@ function d12Html(r){
 }
 /* ==== D12-END ==== */
 
+/* ==================== §277 基本面风控门禁（2026-11-07 · 全自动取数版） ====================
+   用户要求演进：① 基本面信息放进个股诊断页头部结论条；② 交易员基本面分析框架融入；
+                ③「自动取数」；④「全部自动取数」——取消人工录入主路径。
+   四路全网检索 + 交易员框架专项检索结论：
+     ① 盈利下修 / 成本抬升显著削弱「技术超跌买入信号」的可靠性；
+     ② 基本面因子适合做 0-1 型硬约束（风控门禁 / 准入剔除），不适合未经 IC/IR/分层回测
+        就直接进入连续型选股打分；两者不可互换；
+     ③ 财报必须按「披露日 / 可知日」PIT 处理，不能按报告期回填，否则产生前视偏差；
+     ④ 交易员流水线：赛道定位 → 财报质量验证 → 护城河与管理层 → 估值定价与情景
+        → 预期差与催化剂 → 仓位 / 纪律 / 跟踪闭环。
+   ⚠️ 平台纪律（不可越界）：四指标打分是唯一买卖信号源；本模块只做风险提示，
+      不计分、不改分、不发买卖信号、不进钉钉推送、不进选股排序。
+   ⚠️ 前视偏差防线：财报披露日 ≠ 报告期 → 以 NOTICE_DATE 作为「可知日」，
+      按「个股当前诊断的最新已知信息」展示，不绑逐根 K 线、不随回放变化。
+   ⚠️ 口径防线（实测赤峰黄金 600988 / 2026 三季报）：
+      累计口径 PARENTNETPROFITTZ = +11.05%，单季口径 DJD_DPNP_YOY = −41.84%，
+      两者都对；卡片并列高亮「累计 / 单季」，绝不混用、不互相覆盖。
+   ⚠️ 数据纪律：全部自动取数；无结构化数据源的字段自动留白（不是 0、不下结论）；
+      第三方聚合源标注「需核实公告原文」；取数失败如实「未取到」，不编造。
+   数据源（本机实测全部可达，均走平台既有 dcFetchJson 的 fetch + JSONP 双通道）：
+      · RPT_F10_FINANCE_MAINFINADATA  主要财务指标（含单季同比 / ROE / 现金流 / 负债率）
+      · RPT_LICO_FN_CPD               业绩报表（累计金额差分 → 单季净利金额）
+      · RPT_VALUEANALYSIS_DET         估值历史（PE_TTM / PB_MRQ / PS_TTM + 近 3 年分位）
+      · RPT_PUBLIC_OP_NEWPREDICT      业绩预告（预增 / 预减方向）
+      · 行情快照 PE / PB / 市值 / 换手  —— 复用 quote，零额外请求
+   ========================================================================== */
+var FA_DC_URL = 'https://datacenter-web.eastmoney.com/api/data/v1/get';
+var FA_AUTO_LS = 'bwork_fa_auto_';
+var FA_AUTO_MEM = {};       /* 内存缓存：本次会话内不再重复请求 */
+var FA_AUTO_PEND = {};      /* 取数去重：同一 code 同时只跑一次 */
+var FA_SNAP = {};           /* 行情快照上下文：局部重绘复用，不持久化 */
+/* 无结构化数据源清单：自动留白，不是 0、不下结论、不弹人工录入 */
+var FA_NO_SOURCE = [
+  '自产金产量 / 全年产量目标',
+  '全维持成本 AISC',
+  '机构评级 / 目标价调整',
+  '外部变量（金价目标、加息概率）',
+  '管理层与护城河定性'
+];
+/* 口径高亮色：累计蓝 / 单季紫 / 估值橙 / PIT 灰（数值本身不染色，避免与风控状态色打架） */
+var FA_TONE = { cum: '#9fb4ff', qtr: '#c9a7ff', val: '#f0b45a', pit: '#8d99b8' };
+
+/* ---------- 纯函数区（vm 沙箱切片单测直接注入，零 DOM / 零网络） ---------- */
+function faNum(v) {
+  if (v == null || v === '') return null;
+  var n = +v; return isFinite(n) ? n : null;
+}
+function faDate(v) {
+  var s = String(v == null ? '' : v).slice(0, 10);
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null;
+}
+function faPct(v, d) {
+  var n = faNum(v);
+  return n == null ? '—' : (n >= 0 ? '+' : '') + n.toFixed(d == null ? 2 : d) + '%';
+}
+function faNumTxt(v, d) {
+  var n = faNum(v);
+  return n == null ? '—' : n.toFixed(d == null ? 2 : d);
+}
+function faDayKey(ts) {
+  var d = (ts == null) ? new Date() : new Date(ts);
+  return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+}
+function faAt(p, path) {
+  var a = String(path).split('.'), v = p, i;
+  for (i = 0; i < a.length; i++) { if (v == null) return null; v = v[a[i]]; }
+  return v == null ? null : v;
+}
+/* 近 3 年 PS_TTM 分位：样本 <60 条诚实留白；返回 { pct, n, from, to } 或 null */
+function faPsPctOf(rows, cur, nowTs) {
+  if (!rows || !rows.length || cur == null || !isFinite(cur)) return null;
+  var cut = faDayKey((nowTs == null ? Date.now() : nowTs) - 3 * 365 * 86400000);
+  var arr = [], i;
+  for (i = 0; i < rows.length; i++) {
+    var dt = faDate(rows[i] && rows[i].TRADE_DATE);
+    var v = faNum(rows[i] && rows[i].PS_TTM);
+    if (dt && v != null && v > 0 && dt >= cut) arr.push(v);
+  }
+  if (arr.length < 60) return null;
+  var sorted = arr.slice().sort(function (a, b) { return a - b; });
+  var below = 0;
+  for (i = 0; i < sorted.length; i++) if (sorted[i] <= cur) below++;
+  return { pct: below / sorted.length * 100, n: sorted.length, from: cut,
+    to: faDate(rows[0] && rows[0].TRADE_DATE) };
+}
+/* 行情快照：只取平台已有的腾讯/东财快照字段，零额外网络请求；缺失如实留白，不冒充财报数据 */
+function faSnapText(q) {
+  if (!q) return '行情快照 —';
+  var p = [];
+  if (q.pe != null && isFinite(q.pe) && q.pe !== 0) p.push('PE ' + fmtN(q.pe));
+  if (q.pb != null && isFinite(q.pb) && q.pb !== 0) p.push('PB ' + fmtN(q.pb));
+  if (q.totalMarket != null && isFinite(q.totalMarket) && q.totalMarket > 0) p.push('总市值 ' + fmtN(q.totalMarket) + '亿');
+  if (q.floatMarket != null && isFinite(q.floatMarket) && q.floatMarket > 0) p.push('流通 ' + fmtN(q.floatMarket) + '亿');
+  return p.length ? '行情快照：' + p.join(' / ') : '行情快照 —';
+}
+/* 解析：把 4 张报表的原始行 + quote 压成统一 pack（判定与展示的唯一事实源） */
+function faParsePack(code, mainRows, cpdRows, valRows, predRows, quote) {
+  var m = (mainRows && mainRows[0]) || null;
+  if (!m) return null;
+  var cpd = cpdRows || [], v0 = (valRows && valRows[0]) || null, p0 = (predRows && predRows[0]) || null;
+  /* 单季归母净利金额（亿）= 本期累计 − 上期累计，仅同年相邻两期才差分（跨年无意义） */
+  var npAmt = null;
+  if (cpd.length >= 2) {
+    var a0 = faNum(cpd[0].PARENT_NETPROFIT), a1 = faNum(cpd[1].PARENT_NETPROFIT);
+    var d0 = faDate(cpd[0].REPORTDATE), d1 = faDate(cpd[1].REPORTDATE);
+    if (a0 != null && a1 != null && d0 && d1 && d0.slice(0, 4) === d1.slice(0, 4)) npAmt = (a0 - a1) / 1e8;
+  }
+  return {
+    ok: true, code: String(code),
+    name: m.SECURITY_NAME_ABBR || (quote && quote.name) || '',
+    period: m.REPORT_DATE_NAME || '',
+    asOf: faDate(m.NOTICE_DATE) || faDate(m.UPDATE_DATE),
+    reportDate: faDate(m.REPORT_DATE),
+    src: '东财数据中心 · 业绩快报/主要财务指标/估值分析',
+    primary: 'no',
+    industry: m.PUBLISHNAME || (v0 && v0.BOARD_NAME) || '',
+    cum: {
+      npYoy: faNum(m.PARENTNETPROFITTZ), revYoy: faNum(m.TOTALOPERATEREVETZ),
+      roe: faNum(m.ROEJQ), roeYoy: faNum(m.ROEJQTZ), eps: faNum(m.EPSJB),
+      ocfps: faNum(m.MGJYXJJE), ocfpsYoy: faNum(m.MGJYXJJETZ),
+      gpm: faNum(m.XSMLL), debt: faNum(m.ZCFZL), ocfToNp: faNum(m.NCO_NETPROFIT)
+    },
+    qtr: {
+      npYoy: faNum(m.DJD_DPNP_YOY), revYoy: faNum(m.DJD_TOI_YOY),
+      npQoq: faNum(m.DJD_DPNP_QOQ), npAmt: npAmt
+    },
+    val: {
+      pe: faNum(v0 && v0.PE_TTM), pb: faNum(v0 && v0.PB_MRQ), ps: faNum(v0 && v0.PS_TTM),
+      psPct: v0 ? faPsPctOf(valRows, faNum(v0.PS_TTM)) : null,
+      tradeDate: faDate(v0 && v0.TRADE_DATE)
+    },
+    forecast: p0 ? {
+      type: p0.PREDICT_TYPE || '', state: p0.FORECAST_STATE || '',
+      lower: faNum(p0.ADD_AMP_LOWER), upper: faNum(p0.ADD_AMP_UPPER),
+      noticeDate: faDate(p0.NOTICE_DATE)
+    } : null,
+    missing: FA_NO_SOURCE.slice(),
+    snap: faSnapText(quote),
+    ts: Date.now()
+  };
+}
+/* 0-1 型硬约束规则表：只数「方向性下修」项数，不做连续型打分、不设伪权威阈值。
+   warnOnly 项只提示不计入否决计数；80 分位是常识参照，不是平台阈值。 */
+var FA_ASSESS = [
+  { path: 'qtr.npYoy',      label: '单季盈利下修',   bad: function (v) { return v < 0; } },
+  { path: 'cum.npYoy',      label: '累计盈利下修',   bad: function (v) { return v < 0; } },
+  { path: 'qtr.revYoy',     label: '单季营收下修',   bad: function (v) { return v < 0; } },
+  { path: 'cum.revYoy',     label: '累计营收下修',   bad: function (v) { return v < 0; } },
+  { path: 'cum.roeYoy',     label: 'ROE 同比回落',   bad: function (v) { return v < 0; } },
+  { path: 'cum.ocfpsYoy',   label: '经营现金流转弱', bad: function (v) { return v < 0; } },
+  { path: 'qtr.npQoq',      label: '单季净利环比回落', bad: function (v) { return v < 0; } },
+  { path: 'val.psPct.pct',  label: '估值高分位',     bad: function (v) { return v >= 80; }, warnOnly: true },
+  { path: 'forecast.state', label: '业绩预告下修',   bad: function (v) { return v === 'decrease' || v === 'loss' || v === 'decline'; } }
+];
+/* 纯函数：只输出风控状态词，绝不产出买卖动作；「通过」也只说未检出否决项 */
+function faJudge(pack, baseDate) {
+  var j = { state: 'na', label: '自动取数中…', brief: '', down: [], warn: [], unknown: FA_ASSESS.length,
+    pit: '', snap: (pack && pack.snap) || '行情快照 —', tip: '' };
+  if (!pack || !pack.ok) {
+    j.label = '未取到 · 自动留白';
+    j.brief = '东财数据中心不可达或该股无财报记录；不编造、不弹人工录入';
+    j.tip = '基本面风控门禁 §277\n结论：' + j.label + '\n' + j.brief +
+      '\n\n⚠ 本卡不参与四指标打分、不产生买卖信号、不进钉钉推送；仅供信息参考，不构成投资建议。';
+    return j;
+  }
+  j.snap = pack.snap || j.snap;
+  var pitOk = /^\d{4}-\d{2}-\d{2}$/.test(String(pack.asOf || ''));
+  var future = !!(pitOk && /^\d{4}-\d{2}-\d{2}$/.test(String(baseDate || '')) && String(pack.asOf) > String(baseDate));
+  var down = [], warn = [], unknown = 0, i;
+  for (i = 0; i < FA_ASSESS.length; i++) {
+    var a = FA_ASSESS[i], v = faAt(pack, a.path);
+    if (v == null || v === '') { unknown++; continue; }
+    if (a.bad(v)) (a.warnOnly ? warn : down).push(a.label);
+  }
+  j.down = down; j.warn = warn; j.unknown = unknown;
+  j.pit = (pitOk ? '可知日 ' + pack.asOf : '可知日缺失') + (future ? ' · 晚于诊断日' : '') +
+    (pack.primary === 'no' ? ' · 第三方聚合，需核实公告原文' : '');
+  if (!pitOk) {
+    j.state = 'na'; j.label = '缺可知日 · 不予放行';
+    j.brief = '按 PIT 纪律：无披露日/可知日的基本面信息不得用于历史回放';
+  } else if (future) {
+    j.state = 'future'; j.label = '⚠ 未来数据 · 不得回放';
+    j.brief = '可知日晚于当前诊断基准日 → 仅可用于当前诊断，不得回填历史根';
+  } else if (down.length >= 2) {
+    j.state = 'veto'; j.label = '⛔ 风控否决 · ' + down.length + ' 项下修';
+    j.brief = down.join(' / ') + ' · 技术信号可靠性打折';
+  } else if (down.length === 1) {
+    j.state = 'watch'; j.label = '⚠ 需确认 · 1 项下修';
+    j.brief = down.join(' / ') + ' · 技术信号可靠性打折';
+  } else if (unknown >= 5) {
+    j.state = 'na'; j.label = '信息不足 · 不予放行';
+    j.brief = '自动字段未覆盖 ' + unknown + ' 项 → 不默认放行';
+  } else {
+    j.state = 'pass'; j.label = '✓ 无否决项';
+    j.brief = '未检出自选口径下的盈利 / 营收 / 现金流下修';
+  }
+  if (warn.length) j.brief += (j.brief ? '　｜　' : '') + '关注：' + warn.join('、');
+  j.tip = '基本面风控门禁 §277（0-1 型硬约束 · 全部自动取数）\n' +
+    '结论：' + j.label + '\n依据：' + j.brief + '\n' + j.pit + '\n' + j.snap + '（行情快照口径，非财报）\n' +
+    '报告期：' + (pack.period || '—') + '　报告期末：' + (pack.reportDate || '—') +
+    '　估值交易日：' + (pack.val && pack.val.tradeDate || '—') + '\n' +
+    '下修项 ' + down.length + ' / 关注项 ' + warn.length + ' / 未覆盖 ' + unknown + ' 项' +
+    ' / 无结构化源自动留白 ' + (pack.missing || []).length + ' 项\n\n' +
+    '⚠️ 口径：累计同比与单季同比是两种口径，均真实、不可互相替代；本卡并列展示并高亮。\n' +
+    '检索结论：盈利下修与成本抬升削弱技术超跌买入信号可靠性；基本面适合做风控门禁，\n' +
+    '不适合未经 IC/IR/分层回测就进连续型打分；财报须按披露日/可知日 PIT 处理。\n' +
+    '交易员框架：财报质量 → 经营与指引 → 估值定价 → 预期差与催化 → PIT 与来源 → 风控结论。\n\n' +
+    '⚠ 本卡不参与四指标打分、不产生买卖信号、不进钉钉推送、不进选股排序；\n' +
+    '按「个股当前诊断的最新已知信息」展示，不绑逐根 K 线、不随 K 线逐日回放变化（避免前视偏差）。\n' +
+    '⚠ 全部自动取数；无结构化数据源自动留白（不是 0）；仅供信息参考，不构成投资建议。';
+  return j;
+}
+
+/* ---------- 取数与缓存 ---------- */
+function faDcUrl(report, columns, code, o) {
+  o = o || {};
+  var f = encodeURIComponent('(SECURITY_CODE="' + String(code) + '")');
+  return FA_DC_URL + '?reportName=' + report + '&columns=' + columns +
+    '&filter=' + f + '&pageNumber=' + (o.page || 1) + '&pageSize=' + (o.size || 8) +
+    '&sortColumns=' + (o.sort || 'REPORT_DATE') + '&sortTypes=-1&_=' + Date.now();
+}
+function faRows(j) { return (j && j.result && Array.isArray(j.result.data)) ? j.result.data : []; }
+async function faAutoFetch(code) {
+  var VC = 'TRADE_DATE,PS_TTM,PE_TTM,PB_MRQ,BOARD_NAME';
+  var q = [
+    dcFetchJson(faDcUrl('RPT_F10_FINANCE_MAINFINADATA', 'ALL', code, { size: 2, sort: 'REPORT_DATE' }), 9000),
+    dcFetchJson(faDcUrl('RPT_LICO_FN_CPD', 'ALL', code, { size: 6, sort: 'NOTICE_DATE' }), 9000),
+    dcFetchJson(faDcUrl('RPT_VALUEANALYSIS_DET', VC, code, { page: 1, size: 500, sort: 'TRADE_DATE' }), 9000),
+    dcFetchJson(faDcUrl('RPT_VALUEANALYSIS_DET', VC, code, { page: 2, size: 500, sort: 'TRADE_DATE' }), 9000),
+    dcFetchJson(faDcUrl('RPT_PUBLIC_OP_NEWPREDICT', 'ALL', code, { size: 2, sort: 'NOTICE_DATE' }), 9000)
+  ];
+  /* 单路失败不影响其余：任何一路返回 null，缺的字段自动留白 */
+  var rs = await Promise.all(q.map(function (p) { return p.catch(function () { return null; }); }));
+  var main = faRows(rs[0]);
+  if (!main.length) return null;
+  var val = faRows(rs[2]).concat(faRows(rs[3]));
+  var c = FA_SNAP[String(code)] || {};
+  return faParsePack(code, main, faRows(rs[1]), val, faRows(rs[4]), c.quote || null);
+}
+function faAutoCacheKey(code) { return FA_AUTO_LS + code + '_' + faDayKey(); }
+function faAutoCached(code) {
+  if (FA_AUTO_MEM[code]) return FA_AUTO_MEM[code];
+  var c = lsGet(faAutoCacheKey(code));
+  if (c && c.ok && c.asOf) { FA_AUTO_MEM[code] = c; return c; }
+  return null;
+}
+function faAutoStore(code, pack) {
+  FA_AUTO_MEM[code] = pack;
+  try { lsSet(faAutoCacheKey(code), pack); } catch (e) { /* 配额满不影响本轮展示 */ }
+}
+function faAutoKick(code, force) {
+  if (FA_AUTO_PEND[code]) return;
+  if (force) {
+    try { localStorage.removeItem(faAutoCacheKey(code)); } catch (e) {}
+    FA_AUTO_MEM[code] = null;
+  } else if (faAutoCached(code)) { faAutoPaint(code); return; }
+  FA_AUTO_PEND[code] = true;
+  faAutoFetch(code).then(function (pack) {
+    if (pack) faAutoStore(code, pack);
+    faAutoPaint(code, pack ? null : '未取到');
+  }).catch(function () {
+    faAutoPaint(code, '未取到');
+  }).then(function () { delete FA_AUTO_PEND[code]; });
+}
+
+/* ---------- 结论条第 8 行：与 12维 / 四指标 / … / RPS60 并列 ---------- */
+function faSnapCtxOf(code, quote, ind) {
+  var base = (ind && ind.klines && ind.klines.length) ? ind.klines[ind.klines.length - 1].date : null;
+  var c = { snap: faSnapText(quote), base: (/^\d{4}-\d{2}-\d{2}$/.test(String(base || '')) ? String(base) : null), quote: quote };
+  FA_SNAP[String(code)] = c;
+  return c;
+}
+function faTopRender(code, pack, snap, base) {
+  var j = faJudge(pack, base);
+  var cum = pack && pack.cum ? pack.cum : {}, qtr = pack && pack.qtr ? pack.qtr : {};
+  var missN = (pack && pack.missing) ? pack.missing.length : 0;
+  return '<span class="fa-top" data-fa-code="' + escapeHtml(code) + '" title="' + escapeHtml(j.tip) + '">' +
+    '<span class="k">基本面</span>' +
+    '<span class="fa-state ' + j.state + '">' + escapeHtml(j.label) + '</span>' +
+    (j.brief ? '<span class="fa-brief">' + escapeHtml(j.brief) + '</span>' : '') +
+    '<span class="fa-core">' +
+      '<i style="color:' + FA_TONE.cum + '">累计</i> ' + faPct(cum.npYoy) +
+      '<i class="fa-sep">｜</i><i style="color:' + FA_TONE.qtr + '">单季</i> ' + faPct(qtr.npYoy) +
+      '<i style="color:' + FA_TONE.pit + '"> · ' + escapeHtml((pack && pack.period) || '') + '</i>' +
+    '</span>' +
+    '<span class="fa-pit">' + escapeHtml(j.pit) + '</span>' +
+    '<span class="fa-snap">' + escapeHtml(snap || j.snap) + '</span>' +
+    (missN ? '<span class="fa-missing">' + missN + ' 项无结构化源 · 自动留白</span>' : '') +
+    '<span class="fa-edit" data-fa-detail="' + escapeHtml(code) + '" title="查看全部自动字段、来源与口径">ⓘ 详情</span>' +
+    '<span class="fa-edit" data-fa-refresh="' + escapeHtml(code) + '" title="清除当日缓存并重新自动取数">↻ 重取</span>' +
+    '</span>';
+}
+function faTopPlaceholder(code, snap, base, err) {
+  var tip = '基本面风控门禁 §277 · 全部自动取数\n' +
+    '数据源：东财数据中心 主要财务指标 / 业绩报表 / 估值历史 / 业绩预告 + 行情快照\n' +
+    '按披露日 NOTICE_DATE 作为可知日（PIT），不绑逐根 K 线\n' +
+    '⚠ 不参与四指标打分、不产生买卖信号、不进钉钉推送；仅供信息参考，不构成投资建议。';
+  return '<span class="fa-top" data-fa-code="' + escapeHtml(code) + '" data-fa-loading="1" title="' + escapeHtml(tip) + '">' +
+    '<span class="k">基本面</span>' +
+    '<span class="fa-state na">' + (err ? '未取到 · 自动留白' : '自动取数中…') + '</span>' +
+    '<span class="fa-brief">' + (err
+      ? '东财数据中心不可达或该股无财报记录；不编造、不弹人工录入'
+      : '正在读取业绩报表 / 主要财务指标 / 估值历史 / 业绩预告') + '</span>' +
+    '<span class="fa-snap">' + escapeHtml(snap || '行情快照 —') + '</span>' +
+    /* ★ 2026-11-07 §277-FIX：占位态（自动取数中 / 未取到）曾只放「↻ 重取」，没有「ⓘ 详情」，
+       用户在这两种状态下点「基本面」整片区域都毫无反应 → 报障「基本面详情点击没反应」。
+       详情面板 faPanelHtml 已有 !p 的「尚未取到数据」只读分支，占位态常驻详情按钮即可闭环。 */
+    '<span class="fa-edit" data-fa-detail="' + escapeHtml(code) + '" title="查看自动取数状态、来源与口径">ⓘ 详情</span>' +
+    '<span class="fa-edit" data-fa-refresh="' + escapeHtml(code) + '" title="重新自动取数">↻ 重取</span>' +
+    '</span>';
+}
+function faTopHtml(code, quote, ind) {
+  if (!/^\d{6}$/.test(String(code || ''))) return '';
+  var c = faSnapCtxOf(code, quote, ind);
+  var pack = faAutoCached(code);
+  if (pack) return faTopRender(code, pack, c.snap, c.base);
+  faAutoKick(code);
+  return faTopPlaceholder(code, c.snap, c.base, null);
+}
+function faAutoPaint(code, err) {
+  var nd = null;
+  try { nd = document.querySelector('.fa-top[data-fa-code="' + code + '"]'); } catch (eQ) { return; }
+  if (!nd || !nd.parentNode) return;
+  var c = FA_SNAP[String(code)] || { snap: '行情快照 —', base: null };
+  var pack = faAutoCached(code);
+  var html = pack ? faTopRender(code, pack, c.snap, c.base) : faTopPlaceholder(code, c.snap, c.base, err);
+  var tmp = document.createElement('div'); tmp.innerHTML = html;
+  var nw = tmp.firstChild;
+  if (nw) nd.parentNode.replaceChild(nw, nd);
+  /* ★ §277-FIX：占位态点开的详情面板显示「尚未取到数据」，取数完成后要原地补全为 23 行只读详情，
+     不重渲染整页、不改变面板展开状态（避免用户以为「点了没反应」）。 */
+  /* ★ §277-FIX2：与点击委托同口径 —— 只刷新「可见」的已展开面板，隐藏 / 孤儿残留一律清掉，
+     避免异步刷新后反而留下一个看不见的同 code 面板，把下一次点击吞掉。 */
+  var fps = [];
+  try { fps = [].slice.call(document.querySelectorAll('.fa-panel[data-fa-panel="' + code + '"]')); } catch (eFp) { return; }
+  var fpi, kept = false;
+  for (fpi = 0; fpi < fps.length; fpi++) {
+    var fp = fps[fpi], fpVis = false;
+    try { fpVis = !!(fp.getClientRects && fp.getClientRects().length); } catch (eV) {}
+    if (fp.parentNode && fpVis && !kept) {
+      var tp = document.createElement('div'); tp.innerHTML = faPanelHtml(code);
+      if (tp.firstChild) fp.parentNode.replaceChild(tp.firstChild, fp);
+      kept = true;
+    } else if (fp.parentNode) fp.parentNode.removeChild(fp);
+  }
+}
+/* 详情面板：只读展示全部自动字段 + 口径对照 + 来源 + 自动留白清单，无任何输入框 */
+function faDetailRow(n, v, tone) {
+  return '<div class="fa-dr"><span>' + escapeHtml(n) + '</span><b' +
+    (tone ? ' style="color:' + tone + '"' : '') + '>' + escapeHtml(v == null ? '—' : String(v)) + '</b></div>';
+}
+function faPanelHtml(code) {
+  var p = faAutoCached(code);
+  var h = '<div class="fa-panel" data-fa-panel="' + escapeHtml(code) + '">' +
+    '<div style="font-weight:800;color:#9fb4ff;margin-bottom:4px">基本面自动取数详情 · ' + escapeHtml(code) +
+    (p && p.name ? ' ' + escapeHtml(p.name) : '') +
+    '　<span style="font-weight:400;color:var(--muted);font-size:11px">全部字段自动读取，无人工录入</span></div>';
+  if (!p) {
+    h += '<div class="fa-note">尚未取到数据。可点「↻ 重取」重试；失败时如实留白，不编造。</div>' +
+      '<div class="fa-btns"><button type="button" class="fa-btn" data-fa-close="' + escapeHtml(code) + '">关闭</button></div></div>';
+    return h;
+  }
+  var c = p.cum || {}, q = p.qtr || {}, v = p.val || {}, f = p.forecast || {};
+  h += '<div class="fa-note" style="margin-top:2px">报告期 <b>' + escapeHtml(p.period || '—') + '</b>' +
+    '　报告期末 ' + escapeHtml(p.reportDate || '—') + '　<b style="color:' + FA_TONE.pit + '">可知日(公告) ' + escapeHtml(p.asOf || '—') + '</b>' +
+    '　估值交易日 ' + escapeHtml(v.tradeDate || '—') + '　行业 ' + escapeHtml(p.industry || '—') + '</div>';
+  /* ① 财报质量：累计 / 单季双口径并列高亮 */
+  h += '<div class="fa-sec">① 财报质量 · <i style="color:' + FA_TONE.cum + '">累计口径</i> ／ <i style="color:' + FA_TONE.qtr + '">单季口径</i></div><div class="fa-grid">';
+  h += faDetailRow('累计归母净利同比', faPct(c.npYoy), FA_TONE.cum);
+  h += faDetailRow('单季归母净利同比', faPct(q.npYoy), FA_TONE.qtr);
+  h += faDetailRow('累计营收同比', faPct(c.revYoy), FA_TONE.cum);
+  h += faDetailRow('单季营收同比', faPct(q.revYoy), FA_TONE.qtr);
+  h += faDetailRow('单季净利环比', faPct(q.npQoq));
+  h += faDetailRow('单季归母净利(亿，差分)', faNumTxt(q.npAmt, 4));
+  h += faDetailRow('加权 ROE %', faNumTxt(c.roe));
+  h += faDetailRow('ROE 同比变动 %', faPct(c.roeYoy));
+  h += faDetailRow('每股收益 EPS', faNumTxt(c.eps));
+  h += faDetailRow('每股经营现金流', faNumTxt(c.ocfps, 4));
+  h += faDetailRow('其同比 %', faPct(c.ocfpsYoy));
+  h += faDetailRow('销售毛利率 %', faNumTxt(c.gpm));
+  h += faDetailRow('经营现金流/净利', faNumTxt(c.ocfToNp, 3));
+  h += '</div>';
+  /* ② 经营与指引：业绩预告 */
+  h += '<div class="fa-sec">② 经营与指引（业绩预告，自动）</div><div class="fa-grid">';
+  h += faDetailRow('预告类型', f.type || '—');
+  h += faDetailRow('预告方向', f.state || '—');
+  h += faDetailRow('变动下限 %', f.lower == null ? '—' : faNumTxt(f.lower, 0));
+  h += faDetailRow('变动上限 %', f.upper == null ? '—' : faNumTxt(f.upper, 0));
+  h += faDetailRow('预告可知日', f.noticeDate || '—');
+  h += '</div>';
+  /* ③ 估值定价 */
+  h += '<div class="fa-sec">③ 估值定价（东财估值分析历史 + 行情快照）</div><div class="fa-grid">';
+  h += faDetailRow('PE(TTM)', faNumTxt(v.pe), FA_TONE.val);
+  h += faDetailRow('PB(MRQ)', faNumTxt(v.pb), FA_TONE.val);
+  h += faDetailRow('PS(TTM)', faNumTxt(v.ps), FA_TONE.val);
+  h += faDetailRow('PS 近3年分位 %', (v.psPct ? faNumTxt(v.psPct.pct, 1) + '（样本 ' + v.psPct.n + '）' : '—'), FA_TONE.val);
+  h += faDetailRow('资产负债率 %', faNumTxt(c.debt));
+  h += '</div>';
+  /* 行情快照是长串读数，放进 175px 网格会被挤成竖排 → 独立整行展示（§277 真机截图验收修正） */
+  h += '<div class="fa-note" style="margin-top:5px">' + escapeHtml(p.snap || '行情快照 —') + '</div>';
+  /* ④ 预期差与催化 ⑤ PIT 与来源 → 自动留白清单 */
+  h += '<div class="fa-sec">④ 预期差 / ⑤ PIT 与来源 · <b style="color:#f59e0b">无结构化数据源 → 自动留白</b></div>';
+  h += '<div class="fa-note" style="margin-top:2px">' +
+    (p.missing || []).map(function (x) { return '· ' + escapeHtml(x); }).join('<br>') +
+    '<br><span style="color:#7a8aa8">以上字段来自公司公告文本、卖方研报或宏观变量，无稳定结构化接口；' +
+    '本卡自动留白（不是 0、不下结论），不弹人工录入、不据此判定否决。</span></div>';
+  h += '<div class="fa-sec">⑥ 风控结论</div><div class="fa-note" style="margin-top:2px">' +
+    escapeHtml(faJudge(p, (FA_SNAP[String(code)] || {}).base).label) + ' —— ' +
+    escapeHtml(faJudge(p, (FA_SNAP[String(code)] || {}).base).brief) +
+    '<br><span style="color:#7a8aa8">来源：' + escapeHtml(p.src) + '（第三方聚合，需核实公告原文）' +
+    '；PIT 以公告披露日为准，不按报告期回填。</span></div>';
+  h += '<div class="fa-note">⚠️ <b>口径高亮</b>：累计同比与单季同比是两种口径、均真实，不可互相替代；' +
+    '本卡并列展示，避免把「累计 +11%」与「单季 −41%」误读为数据冲突。<br>' +
+    '⚠️ <b>纪律</b>：本卡是 0-1 型风控门禁，只提示「技术超跌 + 盈利下修」时技术信号可靠性打折，' +
+    '<b>不参与四指标打分、不产生买卖信号、不进钉钉推送、不进选股排序</b>；不随 K 线逐日回放变化。<br>' +
+    '⚠️ 交易员框架：财报质量 → 经营与指引 → 估值定价 → 预期差与催化 → PIT 与来源 → 风控结论。' +
+    '全部自动取数，空数据诚实留白；仅供信息参考，不构成投资建议。</div>' +
+    '<div class="fa-btns">' +
+    '<button type="button" class="fa-btn pri" data-fa-refresh="' + escapeHtml(code) + '">↻ 重新自动取数</button>' +
+    '<button type="button" class="fa-btn" data-fa-close="' + escapeHtml(code) + '">关闭</button>' +
+    '</div></div>';
+  return h;
+}
+/* ==== §277-END ==== */
+
+
 function buildResultHTML(quote, ind, sr, compact, source, actv, cap, rec, open8, m5) {
   var st = STAGES[sr.stage] || STAGES.p1;
   var chgCls = ind.chgToday >= 0 ? 'up' : 'down';
@@ -12891,6 +13630,13 @@ function buildResultHTML(quote, ind, sr, compact, source, actv, cap, rec, open8,
     renderSrpTop(srp) +
     /* 顶部同步显示「KDJ 金叉质量评价」（2026-09-30 用户要求：六维量化打分 + 硬性黑名单，顶部一眼可见） */
     renderKdjqTop(kdjq) +
+    /* ★ 2026-11-06（用户要求）：顶部同步显示「RPS60」（涨停台 tdPanel §266-268 同口径移植；
+       仅信息展示，不参与四指标打分；快照未就绪时占位异步补齐，代理未运行如实「未取到」） */
+    srRpsTopHtml(quote && quote.code) +
+    /* ★ 2026-11-07 §277（用户要求「在这个区域给出基本面信息」）：结论条第 8 行「基本面风控门禁」。
+       与上方 7 行并列同款；只做 0-1 型硬约束提示，不参与四指标打分 / 买卖信号 / 钉钉推送；
+       全部自动取数、按公告披露日 PIT 记录、不绑逐根 K 线；无结构化源自动留白。 */
+    faTopHtml(quote && quote.code, quote, ind) +
     '</div>' +
     (quote.code ? '<button type="button" class="wl-btn' + (wlHas(quote.code) ? ' on' : '') + '" data-code="' + escapeHtml(quote.code) + '" data-name="' + escapeHtml(name) + '" title="加入 / 移出自选列表">' + (wlHas(quote.code) ? '★ 已自选' : '☆ 加自选') + '</button>' : '') +
     '</div>' +
@@ -19027,7 +19773,7 @@ function open8DayOf(m5, targetDate, prevClose, code) {
     ? open8Classify(prevClose, first3[0].open, first3[0].close, first3[1].close, first3[2].close, ztPct)
     : { key: null, why: '该日早盘不足3根（数据边缘日）' };
   var form = cls.special ? (OPEN8_SPECIAL[cls.special] || null) : (cls.key ? (OPEN8_FORMS[cls.key] || null) : null);
-  var forecast = form ? (form.side === 'bull' ? '偏强' : form.side === 'bear' ? '偏弱' : '震荡') : '—';
+  /* ★ §239：forecast 必须在 rrBasis 之后算 —— 量比量（跨日同刻 ±8%）是条件化预判的维度之一 */
   /* 量比量：上一交易日 = 日期小于本日的最大交易日（与 computeOpen8 prevDate 同口径） */
   var prevDate = null;
   m5.forEach(function (b) { if (b.date < targetDate && (!prevDate || b.date > prevDate)) prevDate = b.date; });
@@ -19053,8 +19799,12 @@ function open8DayOf(m5, targetDate, prevClose, code) {
         distorted: (rrAvg != null && rrAvg > 0 && yBar.vol < rrAvg * 0.3) };
     }
   }
+  /* ★ §239：与 computeOpen8 同一真源 / 同构 ctx（逐日回放也在 rrBasis 算完后才判，避免两套口径） */
+  var fcD = open8ForecastDetailOf(form, cls.subtype || null, cls.abovePrev,
+    open8ForecastCtxOf(first3, prevClose, cls, rrBasis, day));
+  var forecast = fcD.text, forecastWhy = fcD.why;
   return { ok: true, date: targetDate, pat: pat, form: form,
-    subtype: cls.subtype || null, forecast: forecast,
+    subtype: cls.subtype || null, forecast: forecast, forecastWhy: forecastWhy,
     prevClose: (prevClose != null && isFinite(prevClose)) ? prevClose : null,
     gapPct: (cls.gapPct != null) ? cls.gapPct : null,
     clsWhy: cls.why || null, incomplete: (first3.length < 3),
@@ -19090,7 +19840,8 @@ function open8PanelHtml(o8) {
     formSeg = '<span style="color:var(--dim)">形态待定（早盘不足 3 根 / 缺昨收基准），09:45 后自动判出</span>';
   }
   var line1 = '<div style="text-align:left;margin-top:2px">· <b>形态</b> ' + formSeg +
-    '　<b>全天预判</b> <span style="color:' + (c || 'var(--dim)') + ';font-weight:700">' + esc(o8.forecast || '—') + '</span></div>';
+    '　<b>全天预判</b> <span style="color:' + o8ForecastColor(o8.forecast) + ';font-weight:700">' + esc(o8.forecast || '—') + '</span>' +
+    (o8.forecastWhy ? '<span style="color:var(--dim);font-size:11px">　' + esc(o8.forecastWhy) + '</span>' : '') + '</div>';
   /* 量比量五态（§261 口径：今日 0935 根 ÷ 上一交易日 0935 根，≥1.08 量增 +0.5 / ≤0.92 量缩 −0.5 / 之间相当 0；
      distorted = 昨日 0935 根为异常冷量（< 此前各日 0935 均量 ×0.3）→ 比值无意义，不打分不硬算（诚实留白）） */
   var rb = o8.rrBasis, rrSeg;
@@ -19136,7 +19887,8 @@ function open8StratPanelHtml(o8day, st) {
   }
   var line1 = row2('形态', formSeg +
     '<span style="color:var(--dim)">　' + esc(o8day.pat || '') + '</span>' +
-    '　<b>全天预判</b> <span style="color:' + (c || 'var(--dim)') + ';font-weight:700">' + esc(o8day.forecast || '—') + '</span>');
+    '　<b>全天预判</b> <span style="color:' + o8ForecastColor(o8day.forecast) + ';font-weight:700">' + esc(o8day.forecast || '—') + '</span>' +
+    (o8day.forecastWhy ? '<span style="color:var(--dim);font-size:11px">　' + esc(o8day.forecastWhy) + '</span>' : ''));
   if (!st || !st.ok) {
     return head + line1 +
       '<div style="text-align:left;color:#ffb74d;margin-top:2px;font-size:12px">· <b>四维未成</b> ' + esc((st && st.why) || (o8day.clsWhy || '未计算')) + '（本项不参与触发）</div>';
@@ -22711,6 +23463,7 @@ function rowCells(s, opt) {
   badge += wbbZtTagHtml((r && r.code) || s.code);   /* ★ 2026-10-07 WBB：涨停台联动「涨停/N板」徽标（仅今日涨停股渲染） */
   badge += actvChipHtml(r);   /* ★ 2026-11-01：股性激活徽标（换手四判据缺一不标，替换原涨停基因徽标；参考层） */
   badge += digChipHtml(r);      /* ★ 2026-10-16：挖土机均线体系 · 铲斗 C 区阶段徽标（参考层不计分、不进推送） */
+  badge += srRpsNameChipHtml((r && r.code) || s.code);   /* ★ 2026-11-06（用户要求）：股票名后 RPS 判断结论徽标（三表同口径同步） */
   cells += '<td><span class="caret">' + (openMap[s.code] ? '▼' : '▶') + '</span>' + escapeHtml(s.name) +
     ' <span style="color:var(--dim)">' + s.code + '</span>' + badge + '</td>';
   /* ★ 2026-09-29（用户要求）：行业列，紧跟股票名 */
@@ -24760,6 +25513,150 @@ function boardRankPctIn(list, bkCode, chg) {
   return found ? (better / list.length * 100) : null;
 }
 
+/* ★ 2026-11-06（用户要求）：个股诊断 RPS60 列 + 详情卡顶部徽标 —— 移植涨停台（D:\2026-09-13-17-22-44）
+   tdPanel §266-268 的 RPS 口径，两平台同源同义：
+   ── 口径：RPS60 = 60 日涨幅在全市场（全A ~4600 只）横截面中的百分位：按涨幅降序排 →
+      pct = Math.round((1 - rank/n) × 100)（rank=0 最强 ≈100）；涨幅非有限值（'-' 停牌/无数据）
+      剔除不当 0（涨停台 rpsBuild 同款公式）。
+   ── 数据源：复用 F12/F13 板块RPS 的腾讯全A快照 pickRpsFetchUniverse()（zdf_d60，当日
+      localStorage 缓存 pickRpsUni_今天；经本地代理 8899 /relay）→ 不新增请求通道。
+   ── 分级五档（涨停台 rpsGrade 同款判据，红强绿弱）：≥90 领头羊 / 85~90 强势 / 80~85 次强 /
+      65~80 观察 / <65 弱势；title 带完整判据与 60 日涨幅原值。
+   ── 纪律：本模块仅信息展示 —— 不参与四指标打分、不进钉钉推送、不参与生命周期阶段判定。
+   ── 诚实口径：代理未运行 → 列/徽标如实显「未取到」并给启动指引（沿用 pickRpsEnsure
+      「绝不静默」纪律，但**不中止**个股诊断主流程 —— 诊断主数据不走代理）；快照未覆盖
+      该股（次新/停牌）→ 显「—」不冒充分级；非 6 位代码（港股等）→ 显「—」。 */
+var SR_RPS = { map: null, day: '', kick: null };
+function srRpsTodayKey() {
+  var d = new Date();
+  return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+}
+/* 分级（涨停台 rpsGrade 同款判据与文案） */
+function srRpsGrade(r60) {
+  if (r60 == null || !isFinite(r60)) return null;
+  if (r60 >= 90) return { c: 'g3', k: '领头羊', t: 'RPS60=' + r60 + '（≥90）→ 领头羊：全市场前 10% 相对动量，主升浪核心多发于此——「买强势不买便宜」，跌破 85 即降级警惕。' };
+  if (r60 >= 85) return { c: 'g2', k: '强势', t: 'RPS60=' + r60 + '（85~90）→ 强势：欧奈尔经验筛选线 87 附近，趋势主升选股主滤网；须配合平台突破/缩量回踩/板块共振确认，单独不构成买点。' };
+  if (r60 >= 80) return { c: 'g1', k: '次强', t: 'RPS60=' + r60 + '（80~85）→ 次强：动量合格但未过强势线，观察放量突破/回踩企稳等二次确认信号再上主池。' };
+  if (r60 >= 65) return { c: 'g0', k: '观察', t: 'RPS60=' + r60 + '（65~80）→ 观察：相对动量中性，不入趋势主升池（欧奈尔口径 <80 只做观察仓）。' };
+  return { c: 'gn', k: '弱势', t: 'RPS60=' + r60 + '（<65）→ 弱势：跑输全市场 65% 的个股，动量负贡献——反弹减仓位，不新增。' };
+}
+/* 五档配色（涨停台同语义「红深→红→黄→灰→暗绿」，light theme 适配） */
+function srRpsChipStyle(c) {
+  if (c === 'g3') return 'background:rgba(240,69,58,.16);color:#c81e28;border-color:rgba(240,69,58,.5);';
+  if (c === 'g2') return 'background:rgba(240,69,58,.09);color:#d94530;border-color:rgba(240,69,58,.32);';
+  if (c === 'g1') return 'background:rgba(217,119,6,.1);color:#b45309;border-color:rgba(217,119,6,.38);';
+  if (c === 'g0') return 'background:rgba(100,116,139,.08);color:#64748b;border-color:rgba(100,116,139,.32);';
+  return 'background:rgba(16,158,92,.08);color:#15803d;border-color:rgba(16,158,92,.32);';
+}
+/* 全A快照 → { code: {rps, v} }（百分位公式与涨停台 rpsBuild 完全同款） */
+function srRpsBuildMap(list) {
+  var pairs = [];
+  (list || []).forEach(function (x) {
+    var v = parseFloat(x.p60);   /* ★ 与涨停台 rpsBuild 同款用 parseFloat：'-' / null → NaN → 剔除，不当 0（Number(null)=0 会把缺数股错排最弱，vm 单测抓到后修正） */
+    if (isFinite(v) && x.c) pairs.push([x.c, v]);
+  });
+  pairs.sort(function (a, b) { return b[1] - a[1]; });
+  var m = {}, n = pairs.length;
+  pairs.forEach(function (p, i) { m[p[0]] = { rps: Math.round((1 - i / n) * 100), v: p[1] }; });
+  return m;
+}
+/* 确保全市场 map 就绪（当日 localStorage 缓存优先；无缓存才走代理拉取，拉取并发去重） */
+function srRpsEnsure() {
+  var day = srRpsTodayKey();
+  if (SR_RPS.map && SR_RPS.day === day) return Promise.resolve(SR_RPS.map);
+  try {
+    var c = JSON.parse(localStorage.getItem('pickRpsUni_' + day) || 'null');
+    if (c && c.list && c.list.length > 1000) { SR_RPS.map = srRpsBuildMap(c.list); SR_RPS.day = day; return Promise.resolve(SR_RPS.map); }
+  } catch (eC) { }
+  if (SR_RPS.kick) return SR_RPS.kick;
+  SR_RPS.kick = pickRpsFetchUniverse().then(function (uni) {
+    SR_RPS.map = srRpsBuildMap(uni.list); SR_RPS.day = day; SR_RPS.kick = null;
+    return SR_RPS.map;
+  }).catch(function (e) { SR_RPS.kick = null; throw e; });
+  return SR_RPS.kick;
+}
+function srRpsTitleOf(e) {
+  var base = '　口径：RPS60 = 60日涨幅全市场（全A ~4600 只）百分位，降序排 pct=(1−rank/n)×100；腾讯快照当日缓存，经本地代理 8899。仅信息展示，不参与四指标打分。';
+  if (!e) return base;
+  return 'RPS60=' + e.rps + '（60日涨幅 ' + (e.v > 0 ? '+' : '') + e.v.toFixed(1) + '%）。' + srRpsGrade(e.rps).t + base;
+}
+function srRpsTdFinal(code, e) {
+  if (!e) return '<td style="color:var(--dim);cursor:help" title="' + escapeHtml(srRpsTitleOf(null) + '全市场快照未覆盖该股（次新/停牌等），不冒充分级。') + '">—</td>';
+  var g = srRpsGrade(e.rps);
+  return '<td title="' + escapeHtml(srRpsTitleOf(e)) + '"><span style="display:inline-block;padding:0 7px;border-radius:4px;font-size:11px;font-weight:700;border:1px solid;line-height:1.8;cursor:help;white-space:nowrap;' + srRpsChipStyle(g.c) + '">' + e.rps + ' ' + g.k + '</span></td>';
+}
+/* 单元格（renderSingle 表格末列，替换原 60日涨幅 占位 '—'）：map 就绪直接出终值；
+   未就绪出占位并异步 kick，完成后只刷占位节点（不整表重绘、不折叠已展开详情）。 */
+function srRpsCellHtml(code) {
+  if (!/^\d{6}$/.test(String(code || ''))) return '<td style="color:var(--dim)" title="非A股代码，无全市场RPS截面">—</td>';
+  if (SR_RPS.map && SR_RPS.day === srRpsTodayKey()) return srRpsTdFinal(code, SR_RPS.map[code]);
+  srRpsKick();
+  return '<td data-srrps="' + escapeHtml(code) + '" style="color:var(--dim);cursor:help" title="RPS60 全市场快照获取中…（首跑约 20~40 秒，当日缓存后秒回）">…</td>';
+}
+/* 详情卡顶部徽标（buildResultHTML stock-head 内，与其他 renderXxxTop 并列） */
+function srRpsTopFinal(code) {
+  var e = SR_RPS.map ? SR_RPS.map[code] : null;
+  if (!e) return '<span style="font-size:11.5px;color:var(--dim);cursor:help" title="' + escapeHtml(srRpsTitleOf(null) + '全市场快照未覆盖该股（次新/停牌等），不冒充分级。') + '">RPS60 —</span>';
+  var g = srRpsGrade(e.rps);
+  return '<span style="font-size:11px;font-weight:700;border:1px solid;border-radius:4px;padding:0 6px;cursor:help;' + srRpsChipStyle(g.c) + '" title="' + escapeHtml(srRpsTitleOf(e)) + '">RPS60 ' + e.rps + ' ' + g.k + '</span>';
+}
+/* ★ 2026-11-06（用户要求）：股票名后 RPS 判断结论徽标（股票列 chip 区，紧跟题材情绪/涨停/股性激活等徽标后）
+   —— 三张批量表股票列共用：个股诊断 renderSingle / 自选 watchBatchBody / 板块成分股 rowCells。 */
+function srRpsNameChipFinal(code) {
+  var e = SR_RPS.map ? SR_RPS.map[code] : null;
+  if (!e) return '<span style="font-size:10.5px;color:var(--dim);cursor:help" title="' + escapeHtml(srRpsTitleOf(null) + '全市场快照未覆盖该股（次新/停牌等），不冒充分级。') + '">RPS—</span>';
+  var g = srRpsGrade(e.rps);
+  return '<span style="font-size:10.5px;font-weight:700;border:1px solid;border-radius:4px;padding:0 5px;cursor:help;white-space:nowrap;' + srRpsChipStyle(g.c) + '" title="' + escapeHtml(srRpsTitleOf(e)) + '">RPS' + e.rps + '·' + g.k + '</span>';
+}
+function srRpsNameChipHtml(code) {
+  if (!/^\d{6}$/.test(String(code || ''))) return '';
+  if (SR_RPS.map && SR_RPS.day === srRpsTodayKey()) return srRpsNameChipFinal(code);
+  srRpsKick();
+  return '<span data-srrps="' + escapeHtml(code) + '" data-srrps-mode="name" style="font-size:10.5px;color:var(--dim);cursor:help" title="RPS60 全市场快照获取中…">RPS…</span>';
+}
+function srRpsTopHtml(code) {
+  if (!/^\d{6}$/.test(String(code || ''))) return '';
+  if (SR_RPS.map && SR_RPS.day === srRpsTodayKey()) return srRpsTopFinal(code);
+  srRpsKick();
+  return '<span data-srrps="' + escapeHtml(code) + '" data-srrps-mode="top" style="font-size:11.5px;color:var(--dim);cursor:help" title="RPS60 全市场快照获取中…">RPS60 …</span>';
+}
+/* 占位补齐：只刷 [data-srrps] 节点；data-srrps-mode 三态分发 td（表格末列）/ top（详情卡顶部）/ name（股票列徽标）；
+   成功→终值，失败→诚实「未取到」+ 启动指引（name 态股票列用紧凑 RPS—，不刷屏）。 */
+function srRpsPaint(err) {
+  var nodes;
+  try { nodes = document.querySelectorAll('[data-srrps]'); } catch (eQ) { return; }
+  if (!nodes.length) return;
+  var ready = !err && SR_RPS.map && SR_RPS.day === srRpsTodayKey();
+  Array.prototype.forEach.call(nodes, function (nd) {
+    var code = nd.getAttribute('data-srrps');
+    var mode = nd.getAttribute('data-srrps-mode') || 'td';
+    var tag = (mode === 'td') ? 'td' : 'span';
+    var tmp = document.createElement(tag);
+    var html;
+    if (!ready) {
+      var msg = 'RPS60 未取到：' + ((err && err.message) || err || '本地代理不可达') +
+        '。需本地代理 8899 转发腾讯全A快照：请双击「启动钉钉代理.bat」，若已运行则关掉黑窗口重启（旧版本无 relay 路由）；当日取过则已有缓存，隔日自动重取。';
+      if (mode === 'td') html = '<td style="color:var(--dim);cursor:help" title="' + escapeHtml(msg) + '">未取到</td>';
+      else if (mode === 'name') html = '<span style="font-size:10.5px;color:var(--dim);cursor:help" title="' + escapeHtml(msg) + '">RPS—</span>';
+      else html = '<span style="font-size:11.5px;color:var(--dim);cursor:help" title="' + escapeHtml(msg) + '">RPS60 未取到</span>';
+    } else if (mode === 'name') {
+      html = srRpsNameChipFinal(code);
+    } else if (mode === 'top') {
+      html = srRpsTopFinal(code);
+    } else {
+      html = srRpsTdFinal(code, SR_RPS.map[code]);
+    }
+    tmp.innerHTML = html;
+    var inner = tmp.firstChild;
+    if (inner) nd.parentNode.replaceChild(inner, nd);
+    else nd.removeAttribute('data-srrps');
+  });
+}
+/* kick：占位首次出现时触发一次全市场快照拉取（幂等，SR_RPS.kick 去重）；完成/失败后 paint 落地。 */
+function srRpsKick() {
+  srRpsEnsure().then(function () { srRpsPaint(null); }).catch(function (e) { srRpsPaint(e); });
+}
+
 function renderSingle() {
   var arr = SINGLE.results.slice();
   if (!arr.length) return;
@@ -24789,7 +25686,9 @@ function renderSingle() {
       '<td><span class="caret">' + (open ? '▼' : '▶') + '</span>' + escapeHtml(r.quote.name || r.code) +
       ' <span style="color:var(--dim)">' + r.code + '</span>' +
       /* ★ 2026-10-01（用户要求）：股票性格标签（提示该股适配哪套策略） */
-      personaTagHtml(r) + wbbZtTagHtml(r && r.code) + actvChipHtml(r) + digChipHtml(r) + '</td>' +
+      personaTagHtml(r) + wbbZtTagHtml(r && r.code) + actvChipHtml(r) + digChipHtml(r) +
+      /* ★ 2026-11-06（用户要求）：股票名后 RPS 判断结论徽标（涨停台 tdPanel 同口径，五档分级参考层） */
+      srRpsNameChipHtml(r.code) + '</td>' +
       /* ★ 2026-09-29（用户要求）：行业列紧跟股票名 */
       '<td class="sec-cell">' + secOfTxt(null, r) + '</td>' +
       '<td>' + ind.price.toFixed(2) + '</td>' +
@@ -24815,7 +25714,8 @@ function renderSingle() {
       open8Cell(r) +                                   /* ★ 2026-10-02 开盘强弱（用户要求移到「换手」后） */
       (r.cap ? '<td style="color:' + r.cap.verdict.color + '">' + r.cap.verdict.name.split(' ')[0].split('（')[0] + ' <em>' + r.cap.volRatio.toFixed(2) + '</em></td>' : '<td style="color:var(--dim)">—</td>') +
       '<td style="color:var(--dim)">—</td>' +
-      '<td style="color:var(--dim)">—</td>' +
+      /* ★ 2026-11-06（用户要求）：末列「60日涨幅」占位死列（恒 —）升级为 RPS60 列（涨停台 tdPanel §266-268 同口径移植，见 srRps* 数据层） */
+      srRpsCellHtml(r.code) +
       '</tr>' +
       (open ? '<tr class="batch-detail"><td colspan="19">' + buildResultHTML(r.quote, r.ind, r.sr, false, r.source, r.actv, r.cap, r.rec, r.open8, r.m5) + '</td></tr>' : '');   /* ★ 2026-10-02：18→19（+20日动量列），本表无勾选列 */
   }).join('');
@@ -24824,11 +25724,17 @@ function renderSingle() {
   el('resultArea').innerHTML = '<div class="card">' + summary +
     /* ★ 2026-09-29：表头 19→17 列（+行业；dev 移 KDJ 后；开盘强弱移四指标后；12维/辨识度/涨停基因移除），与三处行渲染同步
        ★ 2026-10-01：17→18 列，MA5斜率 后加「MA5斜率往上天数」（用户要求，插在「今昨强弱」前）
-       ★ 2026-10-02：18→19 列，MA5斜率往上天数 后加「20日动量」；「开盘强弱」从四指标后移到「换手」后（纯移列） */
+       ★ 2026-10-02：18→19 列，MA5斜率往上天数 后加「20日动量」；「开盘强弱」从四指标后移到「换手」后（纯移列）
+       ★ 2026-11-06（用户要求）：列数仍 19 不变，末列「60日涨幅」（占位死列，恒 —）升级为「RPS60」（涨停台 tdPanel §266-268 同口径移植：全A百分位+五档分级） */
     '<div style="overflow-x:auto"><table class="batch-table"><thead><tr><th>股票</th><th>行业</th><th>现价</th><th>涨跌幅</th><th>阶段</th><th>KDJ</th><th>dev</th><th>四指标</th><th>ATR%</th>' +
-    '<th>MA5斜率</th><th>MA5斜率往上天数</th><th>20日动量</th><th>今昨强弱</th><th>破线</th><th>换手</th><th>开盘强弱</th><th>主力参与</th><th>主力净流入</th><th>60日涨幅</th></tr></thead><tbody>' + body + '</tbody></table></div></div>';
+    '<th>MA5斜率</th><th>MA5斜率往上天数</th><th>20日动量</th><th>今昨强弱</th><th>破线</th><th>换手</th><th>开盘强弱</th><th>主力参与</th><th>主力净流入</th><th>RPS60</th></tr></thead><tbody>' + body + '</tbody></table></div></div>';
 }
 
+/* ★ 2026-11-07 §277-FIX：深链 ?code= / 涨停台点股票名落地自动展开标志。
+   runSearch 开头会 SINGLE.open = {}，落地页原本只剩一行折叠的 ▶ 批量行，
+   用户从涨停台跳过来会以为「打不开」。此标志只在「深链 + 单只结果」时展开详情，
+   手工多股批量查询的行为逐字不变。 */
+var WBB_AUTO_OPEN = '';
 async function runSearch() {
   if (SINGLE.running) return;
   var raw = el('stockInput').value.trim();
@@ -24873,7 +25779,12 @@ async function runSearch() {
   SINGLE.running = false;
   el('searchBtn').disabled = false;
   if (runId !== SINGLE.runId) return;
-  if (!SINGLE.results.length) { renderError('未获取到任何数据'); return; }
+  if (!SINGLE.results.length) { WBB_AUTO_OPEN = ''; renderError('未获取到任何数据'); return; }
+  /* ★ §277-FIX：仅深链 + 单只结果时自动展开详情行，避免落地页停在折叠态（用户报障「打不开」） */
+  if (WBB_AUTO_OPEN && SINGLE.results.length === 1) {
+    SINGLE.open[SINGLE.results[0].token] = true;
+    WBB_AUTO_OPEN = '';
+  }
   renderSingle();
 }
 
@@ -25071,6 +25982,8 @@ function watchBatchBody() {
       ' <span style="color:var(--dim)">' + r.code + '</span>' +
       /* ★ 2026-10-01（用户要求）：股票性格标签（紧跟行业标签前，股票自身属性提示该用哪把策略尺子） */
       personaTagHtml(r) + wbbZtTagHtml(r && r.code) + actvChipHtml(r) + digChipHtml(r) +
+      /* ★ 2026-11-06（用户要求）：股票名后 RPS 判断结论徽标（与个股诊断表同口径同步） */
+      srRpsNameChipHtml(r.code) +
       (r.actv && r.actv.boardName ? '<br><span style="font-size:10.5px;color:#5b8cff">🏷 ' + escapeHtml(r.actv.boardName) + '</span>' : '') +
       ' <button type="button" class="wl-x" data-act="del" data-code="' + escapeHtml(r.code) + '" title="取消自选">✕</button></td>' +
       /* ★ 2026-09-29（用户要求）：行业列紧跟股票名 */
@@ -30636,6 +31549,7 @@ function switchToSingle(tokens) {
   if (el('view-ztpool')) el('view-ztpool').classList.remove('on');
   el('view-single').classList.add('on');
   el('stockInput').value = tokens;
+  WBB_AUTO_OPEN = String(tokens || '').trim();   /* ★ §277-FIX：与 ?code= 深链同源，落地自动展开详情 */
   runSearch();
 }
 
@@ -33958,8 +34872,8 @@ var ZTPL_COLS = [
   { k: 'o8', t: '开盘强弱', src: 'ana', tip: '开盘八法（当日 5 分钟 K 线形态）。★ 2026-10-03 起钉钉触发须过四维确认闸门（价·势·量·比 评分 ≥ 9.5 且攻击量确认，锚点 10:00）；本列只显示多空归属与量价配合，不表示已入选', cell: function (r) {
       var a = ztpAna(r.code); if (!a) return ztpNa(ztpNaTip(r));
       if (a.open8 && a.open8.ok && a.open8.form) {
-        var c = o8SideColor(a.open8);
-        return '<div style="font-size:12px;color:' + c + ';font-weight:700">' + (a.open8.forecast || '—') + '</div>' +
+        var c = o8ForecastColor(a.open8.forecast);   /* ★ §239：本列只显示全天预判 → 按结论着色 */
+        return '<div style="font-size:12px;color:' + c + ';font-weight:700" title="' + escapeHtml(a.open8.forecastWhy || '—') + '">' + (a.open8.forecast || '—') + '</div>' +
           '<div style="font-size:10px;color:#5d6788;margin-top:2px">' + (a.open8.vp || '') + '</div>';
       }
       return '<span style="color:var(--dim)" title="' + escapeHtml((a.open8 && a.open8.reason) || '未取到当日 5 分钟 K 线') + '">—</span>';
@@ -36550,6 +37464,85 @@ function init() {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); runSearch(); }
   });
   el('resultArea').addEventListener('click', function (e) {
+    /* ★ 2026-11-07 §277：基本面风控门禁（全部自动取数）—— 详情面板 / 重取 / 关闭。
+       只动 .fa-top 与其兄弟 .fa-panel，不整页重渲染（不丢滚动位置、不重跑 K 线图）；
+       命中即认领并 return，不影响下方批量行开合。
+       ★ §277-FIX：整张 .fa-top 卡也可点开详情 —— 用户点卡片文字/空白处不再「没反应」。
+         按钮优先：closest 从 target 向上找，按钮比卡片更近，点「↻ 重取」仍只走重取分支。 */
+    var faBtn = (e.target && e.target.closest)
+      ? e.target.closest('[data-fa-detail],[data-fa-refresh],[data-fa-close]') : null;
+    var faCard = (!faBtn && e.target && e.target.closest)
+      ? e.target.closest('.fa-top[data-fa-code]') : null;
+    if (faBtn || faCard) {
+      e.stopPropagation();
+      var faCode = faCard ? faCard.getAttribute('data-fa-code')
+        : (faBtn.getAttribute('data-fa-detail') || faBtn.getAttribute('data-fa-refresh') ||
+          faBtn.getAttribute('data-fa-close'));
+      /* ★ 2026-11-07 §277-FIX2（报障「点右侧ⓘ详情无反应、无详情内容」）：
+         旧逻辑只要 querySelector 到任一 .fa-panel[data-fa-panel] 就当作「已展开」→ 删除并 return。
+         页面里只要残留一个隐藏 / 孤儿 / 别处的同 code 面板（局部重绘、异步刷新都会留下），
+         第一次点击就静默删掉一个用户看不见的节点 → 看起来完全没反应。真机已复现：
+         构造隐藏残留面板后点击，faPanelHtml 调用 0 次、可见面板 0 个。
+         新逻辑：只认「可见 + 与当前 .fa-top 同父」的面板为已展开；其余一律先清理，
+         保证每次点击要么关掉真正可见的面板，要么一定插入一个新的可见面板。 */
+      var faTopFor = null;
+      try { faTopFor = document.querySelector('.fa-top[data-fa-code="' + faCode + '"]'); } catch (eFq0) {}
+      var faAll = [];
+      try { faAll = [].slice.call(document.querySelectorAll('.fa-panel[data-fa-panel="' + faCode + '"]')); } catch (eFq) {}
+      var faPanel = null, faOrphan = [], fpi;
+      for (fpi = 0; fpi < faAll.length; fpi++) {
+        var pCand = faAll[fpi], pVis = false;
+        try {
+          pVis = !!(pCand.getClientRects && pCand.getClientRects().length) &&
+            getComputedStyle(pCand).display !== 'none' && getComputedStyle(pCand).visibility !== 'hidden';
+        } catch (eVis) {}
+        var pNear = faTopFor ? (pCand.parentElement === faTopFor.parentElement) : true;
+        if (pVis && pNear && !faPanel) faPanel = pCand;
+        else faOrphan.push(pCand);
+      }
+      for (fpi = 0; fpi < faOrphan.length; fpi++) {
+        if (faOrphan[fpi].parentNode) faOrphan[fpi].parentNode.removeChild(faOrphan[fpi]);
+      }
+      if (faBtn && faBtn.hasAttribute('data-fa-close')) {
+        if (faPanel && faPanel.parentNode) faPanel.parentNode.removeChild(faPanel);
+        return;
+      }
+      if (faBtn && faBtn.hasAttribute('data-fa-refresh')) {
+        if (faPanel && faPanel.parentNode) faPanel.parentNode.removeChild(faPanel);
+        /* 先立刻回落「自动取数中…」，再清当日缓存强制重取；失败如实「未取到」 */
+        var faTopNow = null;
+        try { faTopNow = document.querySelector('.fa-top[data-fa-code="' + faCode + '"]'); } catch (eFq2) {}
+        if (faTopNow && faTopNow.parentNode) {
+          var faCtx = FA_SNAP[String(faCode)] || { snap: '行情快照 —', base: null };
+          var faTmp = document.createElement('div');
+          faTmp.innerHTML = faTopPlaceholder(faCode, faCtx.snap, faCtx.base, null);
+          if (faTmp.firstChild) faTopNow.parentNode.replaceChild(faTmp.firstChild, faTopNow);
+        }
+        FA_AUTO_MEM[faCode] = null;
+        delete FA_AUTO_PEND[faCode];
+        faAutoKick(faCode, true);
+        return;
+      }
+      /* 详情：按钮或整卡共用同一 toggle 分支（占位态也常驻「ⓘ 详情」，见 faTopPlaceholder） */
+      if (faPanel && faPanel.parentNode) { faPanel.parentNode.removeChild(faPanel); return; }
+      if (faTopFor) {
+        var faHtml = '';
+        try { faHtml = faPanelHtml(faCode); }
+        catch (ePh) {
+          /* 渲染异常也要给可见反馈，绝不静默吞掉（否则又是一次「点了没反应」） */
+          faHtml = '<div class="fa-panel" data-fa-panel="' + escapeHtml(faCode) + '">' +
+            '<div class="fa-note">详情渲染失败：' + escapeHtml(String((ePh && ePh.message) || ePh)) +
+            '（如实报错，不静默吞掉）</div></div>';
+        }
+        faTopFor.insertAdjacentHTML('afterend', faHtml);
+        /* 面板紧贴卡片下方；窄窗口时做最小滚动把它带进视口，避免「展开了但没看见」 */
+        try {
+          var faNew = document.querySelector('.fa-panel[data-fa-panel="' + faCode + '"]');
+          if (faNew && faNew.scrollIntoView) faNew.scrollIntoView({ block: 'nearest' });
+        } catch (eSv) {}
+      }
+      return;
+    }
     var tr = e.target.closest('tr.batch-row');
     if (!tr) return;
     var token = tr.getAttribute('data-idx');
@@ -38052,6 +39045,7 @@ function wbbHostInit(){
       var inp = document.getElementById('stockInput');
       if(inp){
         inp.value = qc;
+        WBB_AUTO_OPEN = qc;      /* ★ 2026-11-07 §277-FIX：?code= 落地自动展开该股诊断详情 */
         if(typeof switchView === 'function') switchView('single');
         if(typeof runSearch === 'function') runSearch();
       }
