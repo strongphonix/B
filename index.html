@@ -7297,8 +7297,14 @@ function vpPanelHtml(x, sigs, adv, kf, kj, dbl, vpat, wscan, cj, rr) {
      三态同纪律：wscan 未传 / gw 未挂 → 不出现（老调用点兼容）；gw = null → 「数据不足」条；gw = 判定对象 → 正常九框架块。
      ★ 2026-10-13（用户要求删除「📌 策略命中扫描」整块）：原先紧随 vpatBlock 的 wsBlock（弹簧 / 涨停回调 /
        量价口诀 / 涨停前兆 / 转强质量 / MA5 斜率拐点的当根判定 + 全段命中清单 + 口径说明）已整体移除。
-       GWPA（gwBlock）与承接力（cjBlock）是**独立块**，不受影响、照常显示。 */
-  return gwBlock + vpVerdictHtml(v) + vpKeysHtml(v) + rrBlock + kdjBlock + cjBlock + dblBlock + vpatBlock +
+       GWPA（gwBlock）与承接力（cjBlock）是**独立块**，不受影响、照常显示。
+     ★ 2026-11-08（用户要求「移动到K线下方、🎯 四维确认块的上方」）：结论条 .vp-verdict 提到面板**最顶部**
+       （面板整体在 K 线图下方 → 结论条即 K 线正下方第一块），四维确认块（点击时动态插在 .vp-gw-wrap
+       beforebegin）自然落在结论条之后；其后新增 **.vp-sub 占位锚** 承接五判读块 + 量价八法块
+       （它们此前以 .vp-verdict beforebegin/afterend 锚定在结论条周围 → 结论条迁顶后统一改锚 .vp-sub
+       beforeend，同锚后插者在下 → 相对顺序逐块不变）；证据明细（keys / 盈亏比 / KDJ / 承接力 /
+       倍量 / 九宫格 / 四格 / 含义 / 明细折叠）照旧在 GW 之后。契约不变：仍 10 参。 */
+  return vpVerdictHtml(v) + '<div class="vp-sub"></div>' + gwBlock + vpKeysHtml(v) + rrBlock + kdjBlock + cjBlock + dblBlock + vpatBlock +
     '<div class="vp-top">' +
       '<span class="vp-date">' + escapeHtml(x.date) + '</span>' +
       '<span class="vp-tag combo">' + escapeHtml(x.combo) + '</span>' +
@@ -10586,6 +10592,113 @@ function s4ActColor(act, total) {
   if (a.indexOf('观察') >= 0 || a.indexOf('持有') >= 0 || a.indexOf('轻仓') >= 0) return '#ffd166';
   return s4TierColor(total);
 }
+
+/* ★ 2026-11-08（用户要求「在这个区域显示动量T/P,以及判定结果」——生命周期台移植涨停台 §294/§295）：
+   动量双因子「10日动量 T 档 + 20日动量分位 P 档 + 30 格热力图短标结论」纯函数块，
+   与涨停台 index.html §294/§295 同源同口径（矩阵逐格照录、一个数没改）：
+   · 10日动量 = (今收 − 10日前收) ÷ 10日前收 × 100 = ROC(10)（Investopedia / 南方财富网 / K线学院三源一致；
+     ROC 无行业标准阈值，T1~T6 档边界为用户人工经验赋值，非对错问题）。边界左闭右开（18 归 T5）。
+   · 20日动量分位 = 当前 20 日动量在「近 60 日自身 20 日动量序列」中的百分位 —— 时序标准化，
+     只用历史数据、无未来函数。需 ≥80 根日K（60 个动量值 × 各自 20 日回看），不足 → p=null 留白。
+     百分位口径：严格小于计数 pct = #(窗口内值 < 当前值) / (N−1) × 100（并列值不计入、自身除外，0~100 取整）。
+   · P 档：P1<20 低位 / P2 [20,40) 中低 / P3 [40,60) 中位 / P4 [60,80) 中高 / P5 ≥80 高位。
+   · 周期护栏：本口径是日线语义（与 klDaysetHtml「20日/10日动量」徽标同一硬口径）→ 仅日线出卡，
+     周线 / m5 / m30 留白不出现（把 20 周涨幅说成「20日动量」= 静默错标）。
+   只读展示：不发信号、不进钉钉、不参与四指标打分（四指标仍是唯一买卖信号源）。 */
+/* ==== MOMTP-BEGIN ==== */
+var MOM_VD = {   /* [P1, P2, P3, P4, P5]，逐格照录用户矩阵原文（完整清单长文，悬停双标用） */
+  T6: ['观察（谨慎追）', '观望', '规避', '一票否决', '一票否决'],
+  T5: ['黄金：主升初期', '可参与', '持有为宜', '鱼尾·规避', '一票否决'],
+  T4: ['黄金：最佳买点', '黄金', '可参与（偏高）', '高位补涨·谨慎', '诱多·规避'],
+  T3: ['筑底·观察', '观察', '观望', '谨慎观望', '顶部风险·规避'],
+  T2: ['低位回调·观察企稳', '观察', '中性', '减仓', '见顶回落·否决'],
+  T1: ['超跌反弹·需右侧', '中性', '弱势', '弱势规避', '趋势破坏·否决']
+};
+var MOM_VD_S = {   /* [P1, P2, P3, P4, P5] 热力图短标 30 格逐格照录（屏显权威源） */
+  T1: ['观察', '观望', '规避', '规避', '否决'],
+  T2: ['观察', '观察', '观望', '规避', '否决'],
+  T3: ['观察', '观察', '观望', '观望', '规避'],
+  T4: ['黄金', '黄金', '参与', '观望', '规避'],
+  T5: ['黄金', '参与', '观察', '规避', '否决'],
+  T6: ['观察', '观望', '规避', '否决', '否决']
+};
+var MOM_VD_DUP = { 'T5×P3': '持有为主', 'T2×P4': '减仓' };   /* 热力图↔清单冲突格 → 清单原文（悬停双标用） */
+function momVdColor(s) {
+  return s === '黄金' ? '#fbbf24' : (s === '参与' ? '#60a5fa' : ((s === '观察' || s === '中性') ? '#94a3b8'
+    : (s === '观望' ? '#eab308' : (s === '减仓' ? '#fb923c' : (s === '规避' ? '#f97316' : '#ef4444')))));
+}
+function momTierOf(g) {
+  if (g > 18) return { k: 'T6', label: '过热' };
+  if (g >= 10) return { k: 'T5', label: '加速' };
+  if (g >= 3) return { k: 'T4', label: '启动' };
+  if (g >= -3) return { k: 'T3', label: '震荡' };
+  if (g >= -10) return { k: 'T2', label: '回调' };
+  return { k: 'T1', label: '超跌' };
+}
+function momPkOf(p) {
+  if (p >= 80) return { k: 'P5', label: '高位', idx: 4 };
+  if (p >= 60) return { k: 'P4', label: '中高', idx: 3 };
+  if (p >= 40) return { k: 'P3', label: '中位', idx: 2 };
+  if (p >= 20) return { k: 'P2', label: '中低', idx: 1 };
+  return { k: 'P1', label: '低位', idx: 0 };
+}
+/* lcMomOf(kl, i)：动量双因子实算 —— i = 所点 K 线全量下标（null/缺省 = 末根）。
+   切片到该日（slice(0, i+1)）、只用该日及之前数据、无未来函数；bar 字段 .close / .date（与 s4SeriesOf 同源）。
+   返回 { g10, tier, p, pk, vd, vdS, n60, date }；<11 根 / 异常 → null（诚实留白，不伪造）。 */
+function lcMomOf(kl, i) {
+  try {
+    if (!kl || !kl.length) return null;
+    var upto = (i == null) ? kl : kl.slice(0, Math.max(0, Math.min(i + 1, kl.length)));
+    var cs = [], j;
+    for (j = 0; j < upto.length; j++) { var c = upto[j] ? upto[j].close : NaN; cs.push(isFinite(c) ? c : NaN); }
+    var n = cs.length;
+    if (n < 11) return null;
+    var c0 = cs[n - 1], b10 = cs[n - 11];
+    if (!isFinite(c0) || !isFinite(b10) || b10 <= 0) return null;
+    var out = { g10: (c0 / b10 - 1) * 100, p: null, pk: null, vd: null, vdS: null, n60: 0,
+      date: (upto[n - 1] && upto[n - 1].date) || '' };
+    out.tier = momTierOf(out.g10);
+    if (n >= 80) {
+      var vs = [], k, b;
+      for (k = n - 60; k < n; k++) {           /* 60 个 20日动量值（末日回看 20 根 → 最早用 cs[n-80]） */
+        b = cs[k - 20];
+        if (isFinite(cs[k]) && isFinite(b) && b > 0) vs.push((cs[k] / b - 1) * 100);
+      }
+      if (vs.length === 60) {
+        var cur = vs[59], less = 0, m;
+        for (m = 0; m < 60; m++) { if (vs[m] < cur) less++; }
+        var p = Math.round(less / 59 * 100);
+        out.p = p; out.pk = momPkOf(p); out.n60 = 60;
+        out.vd = (MOM_VD[out.tier.k] || [])[out.pk.idx] || null;
+        out.vdS = (MOM_VD_S[out.tier.k] || [])[out.pk.idx] || null;   /* §295 热力图短标（屏显） */
+      }
+    }
+    return out;
+  } catch (eM) { return null; }
+}
+/* 动量 T/P 结论卡 HTML —— 与 s4ColHtml 同布局（复用 .vv-s4 布局类 + .vv-mom 修饰类，零新增 CSS）；
+   结论 ▶ 走热力图短标 MOM_VD_S（momVdColor 六档着色）；不足 80 根 → P 档与结论行留白（诚实缺省）。 */
+function momColHtml(mo) {
+  if (!mo || mo.g10 == null || !mo.tier) return '';
+  var t = mo.tier, pk = mo.pk;
+  var vcol = (mo.vdS != null) ? momVdColor(mo.vdS) : '#8892b0';
+  var tip = '动量 T/P（10日动量档位 × 20日动量分位档位 → 30 格组合判定热力图）' +
+    '\n10日动量 = (今收 − 10日前收) ÷ 10日前收 × 100 = ROC(10)，g10 = ' + mo.g10.toFixed(2) + '% → ' + t.k + ' ' + t.label +
+    (pk ? ('\n20日动量分位 = ' + mo.p + '（近 60 日自身 20 日动量序列的百分位，严格小于计数，无未来函数）→ ' + pk.k + ' ' + pk.label)
+        : '\n20日动量分位：日K 不足 80 根，分位不可算 → 留白（不伪造）') +
+    (mo.vdS ? ('\n▶ 结论：' + mo.vdS + '（组合判定热力图 ' + t.k + '×' + pk.k + ' 格）') : '') +
+    ((mo.vdS && pk && MOM_VD_DUP[t.k + '×' + pk.k]) ? ('\n　⚠ 此格文档两版有出入：热力图=' + mo.vdS + ' / 完整清单原文=' + MOM_VD_DUP[t.k + '×' + pk.k] + '（屏显从热力图）') : '') +
+    '\n\n口径与涨停台 §294/§295 同源同尺（ROC(10) 三源核验一致；T/P 档边界为人工经验赋值）；' +
+    '只读展示：不发信号、不参与四指标打分。';
+  return '<div class="vv-s4 vv-mom" title="' + escapeHtml(tip) + '">' +
+    '<div class="h">动量 T/P</div>' +
+    '<div class="big"><b style="color:' + vcol + '">' + t.k + '</b>' +
+    '<span class="a" style="color:' + vcol + '">' + escapeHtml(t.label) + (pk ? ' · ' + pk.k + escapeHtml(pk.label) : '') + '</span></div>' +
+    '<div class="d">10日 ' + (mo.g10 >= 0 ? '+' : '') + mo.g10.toFixed(1) + '%' + (pk ? ' · 分位 ' + mo.p : '') + '</div>' +
+    (mo.vdS ? '<div class="d" style="color:' + vcol + ';font-weight:700">▶ ' + escapeHtml(mo.vdS) + '</div>' : '') +
+    '</div>';
+}
+/* ==== MOMTP-END ==== */
 
 function klDaysetHtml(ent, gidx, kj, raw, kjChipHtml, per) {
   /* ★ 2026-10-19 §176：周期单位 —— 徽标组里一批**硬口径**标签（前5日均量 / 20日动量 / 10日动量 /
@@ -37767,8 +37880,9 @@ function init() {
        数据 = ST.results[code].m5（已缓存）→ open8DayOf 逐日回算（判型/量比量与 computeOpen8 逐字同源）
        → open8Strategy 纯函数打分（与卡片「四维确认」块 / 钉钉触发**同一份口径**，禁止两处各写一套判据）；
        昨收 = 所点根的上一根日K收盘（首根无昨收 → 诚实留白）；日期归一（kl 的 '2026-11-04' → m5 的 '20261104'）；
-       仅日线面板出块（§175 先例）；先算后插（§150 DOM 时序纪律），锚 = .vp-gw-wrap beforebegin（GW 块正上方），
-       缺失兜底 .vp-verdict beforebegin 且先于动量块执行（落位仍最高）。
+       仅日线面板出块（§175 先例）；先算后插（§150 DOM 时序纪律），锚 = .vp-gw-wrap beforebegin（GW 块正上方、
+       ★ 2026-11-08 结论条迁顶后 = 结论条 + 判读区之后），缺失兜底 .vp-sub afterend（判读区之后）、
+       再缺失兜底面板最前。
        m5 缺失 → noM5 → 懒加载补拉兜底（§263c）。 */
     var o8Block = '';
     try {
@@ -37835,75 +37949,73 @@ function init() {
         var gwElO8 = panel.querySelector('.vp-gw-wrap');
         if (gwElO8) gwElO8.insertAdjacentHTML('beforebegin', o8Block);
         else {
-          var vdO8 = panel.querySelector('.vp-verdict');
-          if (vdO8) vdO8.insertAdjacentHTML('beforebegin', o8Block);
+          var vdO8 = panel.querySelector('.vp-sub');
+          if (vdO8) vdO8.insertAdjacentHTML('afterend', o8Block);
           else panel.insertAdjacentHTML('afterbegin', o8Block);
         }
       }
     } catch (eO8pIns) { /* 插入失败不拖累面板 */ }
     /* ★ 2026-10-31 §237：动量判读块插入 —— 同样必须在 innerHTML 赋值之后（§150 DOM 时序坑）。
-       ★ 2026-10-31 §240（用户要求动量判读「放在小师妹量价前面」）：锚点 = 结论条 .vp-verdict 的
-       **beforebegin**、且**先于**小师妹块执行插入（同锚 beforebegin 先插者在上一）→
-       落位「加仑·伍兹之后 / 动量判读 / 小师妹量价 / 结论条」——先给三窗动量的趋势位置，
-       再看单根量价口诀，最后进结论条（趋势位置 → 单根形态 → 结论的阅读顺序）。
-       结论条异常缺失 → 挂面板最前面，宁可见不隐藏。 */
+       ★ 2026-10-31 §240（用户要求动量判读「放在小师妹量价前面」）：与后续判读块同序、先插者在上一。
+       ★ 2026-11-08（结论条迁顶）：锚点从 .vp-verdict beforebegin 改为 **.vp-sub beforeend**
+       （面板顶部结论条之后的判读占位）—— 同锚后插者在下 → 落位「结论条 / 动量判读 / 超跌反转 /
+       超跌反弹 / 主力状态 / 小师妹量价 / 量价八法」的相对顺序逐块不变。
+       占位缺失兜底 → 挂面板最前面，宁可见不隐藏。 */
     try {
       if (momBlock) {
-        var vdMom = panel.querySelector('.vp-verdict');
-        if (vdMom) vdMom.insertAdjacentHTML('beforebegin', momBlock);
+        var vdMom = panel.querySelector('.vp-sub');
+        if (vdMom) vdMom.insertAdjacentHTML('beforeend', momBlock);
         else panel.insertAdjacentHTML('afterbegin', momBlock);
       }
     } catch (eMomIns) { /* 插入失败不拖累面板 */ }
-    /* ★ 2026-10-31 §245：超跌反转块插入 —— 与动量判读同锚（.vp-verdict beforebegin），
-       晚于动量判读执行 → 落位「动量判读 / 超跌反转 / 小师妹量价 / 结论条」：
-       三窗动量先给趋势位置，深超跌时紧接四阶段判定与策略，再进单根口诀与结论。
+    /* ★ 2026-10-31 §245：超跌反转块插入 —— ★ 2026-11-08 起锚 .vp-sub beforeend（结论条迁顶，
+       判读块落位随之平移，相对顺序不变）→ 落位「结论条 / 动量判读 / 超跌反转 / 小师妹量价 / 结论区」：
+       三窗动量先给趋势位置，深超跌时紧接四阶段判定与策略。
        （仅深超跌出块；osrBlock 为空 = 本段直接跳过。） */
     try {
       if (osrBlock) {
-        var vdOsr = panel.querySelector('.vp-verdict');
-        if (vdOsr) vdOsr.insertAdjacentHTML('beforebegin', osrBlock);
+        var vdOsr = panel.querySelector('.vp-sub');
+        if (vdOsr) vdOsr.insertAdjacentHTML('beforeend', osrBlock);
         else panel.insertAdjacentHTML('afterbegin', osrBlock);
       }
     } catch (eOsrIns) { /* 插入失败不拖累面板 */ }
-    /* ★ 2026-11-04 §262：超跌反弹块插入 —— 同锚（.vp-verdict beforebegin）、时序在超跌反转之后、
-       主力状态之前 → 落位「动量判读 / 超跌反转 / 超跌反弹 / 主力状态 / 小师妹量价 / 结论条」：
-       深超跌语境下先看四阶段位置（超跌反转），再看四条件判定进度（本块），再进主力状态。
+    /* ★ 2026-11-04 §262：超跌反弹块插入 —— 同锚（★ 2026-11-08 起 .vp-sub beforeend）、时序在超跌反转之后、
+       主力状态之前 → 深超跌语境下先看四阶段位置（超跌反转），再看四条件判定进度（本块），再进主力状态。
        （仅超跌出块；cbBlock 为空 = 本段直接跳过；插入失败不拖累面板。） */
     try {
       if (cbBlock) {
-        var vdCb = panel.querySelector('.vp-verdict');
-        if (vdCb) vdCb.insertAdjacentHTML('beforebegin', cbBlock);
+        var vdCb = panel.querySelector('.vp-sub');
+        if (vdCb) vdCb.insertAdjacentHTML('beforeend', cbBlock);
         else panel.insertAdjacentHTML('afterbegin', cbBlock);
       }
     } catch (eCbIns) { /* 插入失败不拖累面板 */ }
-    /* ★ 2026-11-01 §247：主力状态块插入 —— 同锚（.vp-verdict beforebegin）、时序在超跌反转之后、
-       小师妹之前 → 落位「动量判读 / 超跌反转 / 主力状态 / 小师妹量价 / 结论条」。
-       （zlztBlock 为空 = 本段直接跳过；插入失败不拖累面板。） */
+    /* ★ 2026-11-01 §247：主力状态块插入 —— 同锚（★ 2026-11-08 起 .vp-sub beforeend）、时序在超跌反转之后、
+       小师妹之前。（zlztBlock 为空 = 本段直接跳过；插入失败不拖累面板。） */
     try {
       if (zlztBlock) {
-        var vdZlzt = panel.querySelector('.vp-verdict');
-        if (vdZlzt) vdZlzt.insertAdjacentHTML('beforebegin', zlztBlock);
+        var vdZlzt = panel.querySelector('.vp-sub');
+        if (vdZlzt) vdZlzt.insertAdjacentHTML('beforeend', zlztBlock);
         else panel.insertAdjacentHTML('afterbegin', zlztBlock);
       }
     } catch (eZlztIns) { /* 插入失败不拖累面板 */ }
     /* ★ 2026-10-17 §150：小师妹量价口诀块 —— **必须在 innerHTML 赋值之后插入**（原因见上，先插会被整段覆盖）。
-       锚点 = 结论条 .vp-verdict 的 beforebegin → 落位「动量判读（§240）之后 / 结论条之前」；
-       兜底（vpVerdictHtml 返回空串等异常形态）→ 挂面板最前面，宁可见不隐藏。
-       ★ 时序依赖：本块**必须晚于**动量判读块插入（同锚 beforebegin，后插者在下）——勿调换顺序。 */
+       ★ 2026-11-08（结论条迁顶）：锚点改 .vp-sub beforeend → 落位仍在动量判读 / 主力状态之后（同锚
+       后插者在下，相对顺序逐块不变）；占位缺失兜底 → 挂面板最前面，宁可见不隐藏。
+       ★ 时序依赖：本块**必须晚于**动量判读块插入（同锚，后插者在下）——勿调换顺序。 */
     try {
       if (xsmBlock) {
-        var vdXsm = panel.querySelector('.vp-verdict');
-        if (vdXsm) vdXsm.insertAdjacentHTML('beforebegin', xsmBlock);
+        var vdXsm = panel.querySelector('.vp-sub');
+        if (vdXsm) vdXsm.insertAdjacentHTML('beforeend', xsmBlock);
         else panel.insertAdjacentHTML('afterbegin', xsmBlock);
       }
     } catch (eXsmIns) { /* 插入失败不拖累面板 */ }
     /* ★ 2026-10-25 §211：量价八法策略块 —— 同样必须在 innerHTML 赋值之后插。
-       锚点 = 结论条 .vp-verdict 的 **afterend**（结论 → 策略 → 依据，阅读顺序）；
-       兜底（结论条异常缺失）→ append 到面板末尾，宁可见不隐藏。 */
+       ★ 2026-11-08（结论条迁顶）：锚点从 .vp-verdict **afterend** 改为 .vp-sub beforeend（占位尾部、
+       判读块之后）→ 仍保持「结论区之后 → 策略」的阅读顺序；占位缺失兜底 → append 到面板末尾。 */
     try {
       if (vp8Block) {
-        var vdVp8 = panel.querySelector('.vp-verdict');
-        if (vdVp8) vdVp8.insertAdjacentHTML('afterend', vp8Block);
+        var vdVp8 = panel.querySelector('.vp-sub');
+        if (vdVp8) vdVp8.insertAdjacentHTML('beforeend', vp8Block);
         else panel.insertAdjacentHTML('beforeend', vp8Block);
       }
     } catch (eVp8Ins) { /* 插入失败不拖累面板 */ }
