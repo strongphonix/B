@@ -38111,6 +38111,22 @@ function init() {
         else vvEl3.insertAdjacentHTML('beforeend', powHtml);
       }
     } catch (ePowC) { /* 今昨强弱结论失败不拖累面板 */ }
+    /* ★ 2026-11-08（用户要求「在这个区域显示动量T/P,以及判定结果」——生命周期台移植涨停台 §294/§295）：
+       所点根的动量 T/P 结论卡，插到 .vv-s4（四指标打分卡）afterend → 结论条内四指标卡右侧并列。
+       仅日线出卡（周/分钟口径不同 → 诚实留白，§175/§176 同纪律）；lcMomOf 切片到所点根、
+       只用该日及之前数据、无未来函数；不足 80 根 → P 档与 ▶ 结论行留白（不伪造）；
+       失败 / 数据不足 → 空串不出现，不拖累面板。 */
+    try {
+      var vvEl4 = panel.querySelector('.vp-verdict');
+      var momPer4 = (ent && ent.per) ? ent.per : 'day';
+      var moRes4 = (ent && ent.kl && ent.kl.length && momPer4 === 'day') ? lcMomOf(ent.kl, gidx) : null;
+      var moHtml4 = momColHtml(moRes4);
+      if (vvEl4 && moHtml4) {
+        var s4el4 = vvEl4.querySelector('.vv-s4');
+        if (s4el4) s4el4.insertAdjacentHTML('afterend', moHtml4);
+        else vvEl4.insertAdjacentHTML('beforeend', moHtml4);
+      }
+    } catch (eMomC4) { /* 动量 T/P 结论失败不拖累面板 */ }
     /* 徽标条联动：★ 2026-10-13 起不再有整图重绘（关键位已下线），故一律在此补写所点根口径的徽标组；
        默认口径（不传 focus）时 renderChart 出的就是末根徽标，本行按所点根覆写为一致结果。 */
     try {
