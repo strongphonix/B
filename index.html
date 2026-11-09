@@ -10655,8 +10655,21 @@ function lcMomOf(kl, i) {
     var c0 = cs[n - 1], b10 = cs[n - 11];
     if (!isFinite(c0) || !isFinite(b10) || b10 <= 0) return null;
     var out = { g10: (c0 / b10 - 1) * 100, p: null, pk: null, vd: null, vdS: null, n60: 0,
+      dir: null, nh20: null, pstab: null,
       date: (upto[n - 1] && upto[n - 1].date) || '' };
     out.tier = momTierOf(out.g10);
+    /* ★ §296d 三标注（只读、不改判定，缺陷分析后的落改）：
+       dir  = 动量方向（g10 − 3日前g10，正=扩张▲/负=衰减▼）—— 双环传动实证：2026-09 衰减段后跌 vs 10月扩张段后涨，(T,P) 二维缺的判别量；
+       nh20 = 创20日新高（当日收 = 近20日最高）—— 趋势内新高时 P 档因自身历史钉高，规避≠看跌；
+       pstab= 分位稳定度（近5日分位极差 >40pp → unstable）—— 用户经验规则「分位波动巨大基本没有买点」的编码。 */
+    if (n >= 14 && isFinite(cs[n - 4]) && isFinite(cs[n - 14]) && cs[n - 14] > 0) {
+      out.dir = { dd: out.g10 - (cs[n - 4] / cs[n - 14] - 1) * 100 };
+    }
+    if (n >= 20 && isFinite(c0)) {
+      var hi20 = -Infinity, h20;
+      for (h20 = n - 20; h20 < n; h20++) { if (isFinite(cs[h20]) && cs[h20] > hi20) hi20 = cs[h20]; }
+      out.nh20 = (c0 >= hi20);
+    }
     if (n >= 80) {
       var vs = [], k, b;
       for (k = n - 60; k < n; k++) {           /* 60 个 20日动量值（末日回看 20 根 → 最早用 cs[n-80]） */
@@ -10670,6 +10683,22 @@ function lcMomOf(kl, i) {
         out.p = p; out.pk = momPkOf(p); out.n60 = 60;
         out.vd = (MOM_VD[out.tier.k] || [])[out.pk.idx] || null;
         out.vdS = (MOM_VD_S[out.tier.k] || [])[out.pk.idx] || null;   /* §295 热力图短标（屏显） */
+        /* A. 近 5 日分位极差（需 n ≥ 84：d = n-5 的 60 值窗最早用到 mom20(d-59)，即 cs[d-79]） */
+        if (n >= 84) {
+          var mom20At = function (k2) { return (cs[k2] / cs[k2 - 20] - 1) * 100; };
+          var p5 = [], r5, d5;
+          for (r5 = 0; r5 < 5; r5++) {
+            d5 = n - 1 - r5;
+            if (d5 < 79) break;
+            var cd5 = mom20At(d5), less5 = 0, m5;
+            for (m5 = d5 - 59; m5 <= d5; m5++) { if (mom20At(m5) < cd5) less5++; }
+            p5.push(Math.round(less5 / 59 * 100));
+          }
+          if (p5.length === 5) {
+            var rng5 = Math.max.apply(null, p5) - Math.min.apply(null, p5);
+            out.pstab = { rng: rng5, unstable: rng5 > 40 };
+          }
+        }
       }
     }
     return out;
@@ -10687,13 +10716,31 @@ function momColHtml(mo) {
         : '\n20日动量分位：日K 不足 80 根，分位不可算 → 留白（不伪造）') +
     (mo.vdS ? ('\n▶ 结论：' + mo.vdS + '（组合判定热力图 ' + t.k + '×' + pk.k + ' 格）') : '') +
     ((mo.vdS && pk && MOM_VD_DUP[t.k + '×' + pk.k]) ? ('\n　⚠ 此格文档两版有出入：热力图=' + mo.vdS + ' / 完整清单原文=' + MOM_VD_DUP[t.k + '×' + pk.k] + '（屏显从热力图）') : '') +
+    /* §296d 三标注悬停说明 */
+    (mo.dir ? ('\n方向标注：g10 − 3日前g10 = ' + (mo.dir.dd >= 0 ? '+' : '') + mo.dir.dd.toFixed(2) + 'pp（▲扩张=动量增强 / ▼衰减=动量减弱）。' +
+      '实证：双环传动 2026-09 同为 T4/T5×P5 但 g10 12%→3% 衰减 → 后续 -13%；10月底同读数但 g10 1%→31% 扩张 → 后续 +18%。' +
+      '(T,P) 二维读数本身无判别力，方向是缺的第三维。') : '') +
+    (mo.pstab ? ('\n分位稳定度：近5日分位极差 ' + mo.pstab.rng + 'pp' + (mo.pstab.unstable ? '（>40 → ⚠ 分位不稳：崩盘/反弹把 60 日参考分布压成双峰，排名噪声大，当日读数仅参考、不构成买点）' : '（稳）')) : '') +
+    (mo.nh20 === true ? '\n新高标注：创20日新高——趋势内新高时 P 档因「自身历史」长期钉高，此语境规避≠看跌' : '') +
+    '\n\n框架边界（缺陷分析 §296d）：本 30 格仅在 P1~P3 给买入格 = 回调买入框架——趋势股分位长期钉 P5、黄金/参与格不可达，规避≠看跌、只代表贵；' +
+    '趋势延续与否看方向/新高标注，买卖仍以四指标打分为唯一依据。' +
     '\n\n口径与涨停台 §294/§295 同源同尺（ROC(10) 三源核验一致；T/P 档边界为人工经验赋值）；' +
     '只读展示：不发信号、不参与四指标打分。';
+  /* §296d 标注行（第四行，全部只读）：▲扩张/▼衰减 · 创20日高 · ⚠分位不稳 */
+  var mkParts = [];
+  if (mo.dir && isFinite(mo.dir.dd)) {
+    var ddv = mo.dir.dd;
+    mkParts.push('<span style="color:' + (ddv > 0 ? '#ff8080' : (ddv < 0 ? '#5fd8a4' : '#8892b0')) + ';font-weight:700">' +
+      (ddv > 0 ? '▲扩张' : (ddv < 0 ? '▼衰减' : '→走平')) + Math.abs(ddv).toFixed(1) + '</span>');
+  }
+  if (mo.nh20 === true) mkParts.push('<span style="color:#9fb4ff">创20日高</span>');
+  if (mo.pstab && mo.pstab.unstable) mkParts.push('<span style="color:#eab308;font-weight:700">⚠分位不稳' + mo.pstab.rng + 'pp</span>');
   return '<div class="vv-s4 vv-mom" title="' + escapeHtml(tip) + '">' +
     '<div class="h">动量 T/P</div>' +
     '<div class="big"><b style="color:' + vcol + '">' + t.k + '</b>' +
     '<span class="a" style="color:' + vcol + '">' + escapeHtml(t.label) + (pk ? ' · ' + pk.k + escapeHtml(pk.label) : '') + '</span></div>' +
     '<div class="d">10日 ' + (mo.g10 >= 0 ? '+' : '') + mo.g10.toFixed(1) + '%' + (pk ? ' · 分位 ' + mo.p : '') + '</div>' +
+    (mkParts.length ? '<div class="d">' + mkParts.join(' · ') + '</div>' : '') +
     (mo.vdS ? '<div class="d" style="color:' + vcol + ';font-weight:700">▶ ' + escapeHtml(mo.vdS) + '</div>' : '') +
     '</div>';
 }
