@@ -689,18 +689,16 @@
        可以买入 = 红 --up（涨），有风险 = 绿 --down（跌），观察 = 黄，无信号 = 灰。
      ★ 裁决纪律：风险优先（命中任一条强风险即出「有风险」，不被买入信号抵消）；
        买点若落在高位 → 自动降级为「观察」。                                  */
-  .vp-verdict { display:flex; gap:10px; align-items:flex-start; padding:9px 11px; border-radius:9px;
-    border:1px solid var(--line); background:#ffffff08; margin-bottom:8px; }
+  /* ★ 2026-11-09 §296c（用户要求「注意修改排版，均匀分布」）：vv-body 三行文字下线后其空占位
+     也不再有存在意义（原来是 flex:1 把四张卡整体推右、徽章与卡群之间留大片空白）——
+     删占位 + .vp-verdict 改 space-between：徽章贴左 · 动量 T/P 贴右 · 中间三卡均匀分布。 */
+  .vp-verdict { display:flex; gap:10px; align-items:flex-start; justify-content:space-between;
+    padding:9px 11px; border-radius:9px; border:1px solid var(--line); background:#ffffff08; margin-bottom:8px; }
   .vp-verdict .badge { flex:0 0 auto; display:inline-flex; align-items:center; gap:5px;
     padding:5px 13px; border-radius:8px; font-size:14px; font-weight:800; letter-spacing:.4px;
     border:1px solid transparent; white-space:nowrap; }
   .vp-verdict .badge::before { content:''; width:8px; height:8px; border-radius:50%;
     background:currentColor; box-shadow:0 0 7px currentColor; flex:0 0 auto; }
-  .vp-verdict .vv-body { flex:1 1 auto; min-width:0; }
-  .vp-verdict .vv-head { color:var(--text); font-weight:700; font-size:13px; line-height:1.5; }
-  .vp-verdict .vv-action { margin-top:4px; font-size:12px; line-height:1.6; color:var(--muted); }
-  .vp-verdict .vv-action b { color:var(--text); }
-  .vp-verdict .vv-src { margin-top:3px; color:var(--dim); font-size:11px; }
   .vp-verdict.buy  { background:#ff525214; border-color:#ff525266; }
   .vp-verdict.buy  .badge { background:#ff525233; border-color:#ff5252aa; color:#ff9b9b; }
   .vp-verdict.watch{ background:#ffcc6614; border-color:#ffcc6666; }
@@ -729,7 +727,7 @@
   .vp-verdict .vv-cap .act { color:var(--muted); font-size:11px; line-height:1.45; margin-top:1px;
     display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
   @media (max-width:760px) {
-    .vp-verdict { flex-wrap:wrap; }
+    .vp-verdict { flex-wrap:wrap; justify-content:flex-start; } /* 换行模式下 space-between 会把落单卡推到行尾，恢复左聚 */
     .vp-verdict .vv-s4 { flex:1 1 100%; border-left:none; border-top:1px solid var(--line);
       padding-left:0; padding-top:6px; align-items:flex-start; text-align:left; }
     .vp-verdict .vv-cap { flex:1 1 100%; border-left:none; border-top:1px solid var(--line);
@@ -5383,13 +5381,14 @@ function vpVerdict(x, sigs, adv) {
    增量走 append 通道，契约零破坏）。 */
 function vpVerdictHtml(v) {
   if (!v) return '';
+  /* ★ 2026-11-09（用户要求「k线下方『多空信号均不强 → 等确认 / ▸ 不急于动手…/ 仅量价维度…』部分，请删除」）：
+     结论条左半 vv-body 三行文字（head / action / src）整体下线 → 只留状态徽章。
+     ★ §296c：原空 .vv-body 弹性占位（flex:1 把卡片推右）已随「均匀分布」改版一并删除 ——
+     .vp-verdict 改 space-between 后由容器自身分配间隙；原三行文字收进徽章 title 悬停（信息不丢）。 */
+  var tip = [v.head, v.action ? ('▸ ' + v.action) : '', v.src].filter(Boolean).join('\n');
   return '<div class="vp-verdict ' + v.cls + '">' +
-    '<span class="badge">' + escapeHtml(v.label) + '</span>' +
-    '<div class="vv-body">' +
-      '<div class="vv-head">' + escapeHtml(v.head) + '</div>' +
-      '<div class="vv-action">▸ ' + escapeHtml(v.action) + '</div>' +
-      '<div class="vv-src">' + escapeHtml(v.src) + '</div>' +
-    '</div></div>';
+    '<span class="badge" title="' + escapeHtml(tip) + '">' + escapeHtml(v.label) + '</span>' +
+    '</div>';
 }
 
 /* ★ 2026-10-10：多空信号卡右半列 HTML —— **所点那一根 K 线**的四指标打分（不是全序列列表：
