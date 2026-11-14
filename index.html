@@ -8633,7 +8633,12 @@ function renderChart(ind, focus, opt) {
      高度再 +82（面板 68 + 间距 14）→ H 602→684、dateY 580→662、indB（指标栈底）→ 新面板底 640。
      主力状态原料 = 逐日筹码分布推算（需要日K + 流通股本），周K/分钟序列没有对应的日线筹码口径
      （周线一根 = 5 天换手，套日线筹码模型属假读数；分钟图只覆盖半天）→ 与周 KDJ 同一守卫 __wKjShow。 */
-  var W = 1130, H = __wKjShow ? 766 : 602;
+  /* ★ 2026-11-14 §324（用户反馈「ADX 副图宽度不够，曲线挤压在一起了，请增宽」）：副图高度 68→104
+     （0~60 固定映射不变，ADX 实测多在 15~45 → 旧 68px 里三条线挤在 ~23px 窄带；+36px 后曲线纵向
+     有 ~58px 可用带宽，20/25 阈值线间距也从 22.7px 拉开到 34.7px）。栈底整体下移：
+     日线 adxB 722→758、dateY 744→780、H 766→802；非日线 adxB 558→594、dateY 580→616、H 602→638。
+     热区高度 / 纵向网格 y2 都走 indB=adxB 表达式，自动跟随（无第二处字面量）。 */
+  var W = 1130, H = __wKjShow ? 802 : 638;
   var padL = 58, padR = 64, padT = 58;
   var priceT = padT, priceB = 292;
   var volT = 326, volB = 394;
@@ -8651,9 +8656,9 @@ function renderChart(ind, focus, opt) {
      · 高度 +82（面板 68 + 间距 14，与 §210/§247 同款）→ 日线 H 684→766、dateY 662→744；
        非日线 H 520→602、dateY 498→580；indB（指标栈底）→ adxB。
      · SuperTrend 不是副图，是价格面板上的叠加线（画在均线之后），不占新面板。 */
-  var adxT = __wKjShow ? 654 : 490, adxB = __wKjShow ? 722 : 558;
+  var adxT = __wKjShow ? 654 : 490, adxB = __wKjShow ? 758 : 594;   /* ★ §324：面板 68→104 */
   var indB = adxB;
-  var dateY = __wKjShow ? 744 : 580;
+  var dateY = __wKjShow ? 780 : 616;
   var plotL = padL, plotR = W - padR;
 
   /* ---- ★ 2026-10-24 §206：60 根波段高点 → 压力位（必须在价格刻度之前算：它的价位要并入上沿）---- */
@@ -10458,7 +10463,7 @@ function renderChart(ind, focus, opt) {
   } catch (eAx) { __adxOk = false; __adxWin = null; __pdiWin = null; __mdiWin = null; }
 
   /* ===== ★ 2026-11-14 §318（用户要求「SuperTrend + ADX 示意图要在 k线图上显示出来」）ADX 副图 =====
-     · 与 KDJ 副图同款式：高 68、间距 14、左侧标签、右侧末根数值角标；**所有周期都画**。
+     · 与 KDJ 副图同款式（★ §324 加高：面板高 104、间距 14），左侧标签、右侧末根数值角标；**所有周期都画**。
      · 三线：ADX 黄 #ffc857（趋势强度）/ +DI 红 #ff5252（多方方向）/ −DI 绿 #26c281（空方方向）——
        红绿沿用 A 股涨红跌绿口径；黄与 KDJ 的 D 同色但不同面板（同列内一色一义：KDJ 列黄=D，ADX 列黄=ADX）。
      · 参考线：20 无趋势/震荡（绿虚）· 25 强趋势（红虚）—— Wilder 经典阈值，与用户参考图一致：
@@ -10474,12 +10479,60 @@ function renderChart(ind, focus, opt) {
       return;
     }
     function YX(v) { return adxB - (adxB - adxT) * (v / 60); }
+    /* ★ 2026-11-14 §323 + §325（用户要求「ADX多头强势区用醒目的背景色标记」→ §325 追加「ADX大于50以上属于超买，用不同背景颜色标记」）：
+       背景带按根分级，两类互斥：
+       · 超买类（紫底带 #b45cff）：当根 **ADX > 50（严格大于）** —— 不问 ±DI 方向（超买是强度语义，
+         −DI 主导的空头强趋势 ADX>50 同样极端）；50 是参考图最上档（50~60 极强趋势、>60 极端超买超卖）的分界；
+       · 多头强势类（红底带 #ff5252，§323 口径不变）：当根 **ADX ≥ 25 且 +DI > −DI（多头方向）** 两条件同时成立
+         （只看 ADX 会把空头强趋势一起染红，方向语义就错了）；ADX>50 已被超买类收走，红带隐含 ≤50；
+       · 分级优先级：同一根先判超买、再判多头强势 —— 超买段语义更强、单独成段不与红带重叠；
+       · 连续同类成立根合并成一段 rect（红带先画、紫带后画 → 超买压顶；先画背景后画线 → 阈值线 / 三线压在上面）；
+       · null（起算段前 / 脏根）断段不桥接（诚实缺省，与副图三线断线同纪律）；
+       · 悬停各自报起止日期 + 根数 + 段内 ADX 峰值 + 口径全文（给定义不给名字，教训同 §318 箭头）；
+       · 参考层：不计分、不进四指标、不进钉钉、不发买卖信号。 */
+    var __bsegs325 = [];
+    (function () {
+      var s0 = null, sCls = null, pk = null;
+      for (var bi = 0; bi < __adxWin.length; bi++) {
+        var aB = __adxWin[bi], pB = __pdiWin[bi], mB = __mdiWin[bi];
+        var cls = null;
+        if (aB != null && isFinite(aB)) {
+          if (aB > 50) cls = 'ob';
+          else if (aB >= 25 && pB != null && isFinite(pB) && mB != null && isFinite(mB) && pB > mB) cls = 'bull';
+        }
+        if (cls !== sCls) {
+          if (sCls !== null) __bsegs325.push({ cls: sCls, i0: s0, i1: bi - 1, peak: pk });
+          s0 = (cls !== null) ? bi : null;
+          sCls = cls;
+          pk = (cls !== null) ? aB : null;
+        } else if (cls !== null && aB > pk) pk = aB;
+      }
+      if (sCls !== null) __bsegs325.push({ cls: sCls, i0: s0, i1: __adxWin.length - 1, peak: pk });
+    })();
+    [{ cls: 'bull', col: '#ff5252', name: '多头强势区', tag: '§323',
+       def: '口径 = ADX ≥ 25（强趋势档）且 +DI > −DI（多头方向），两条件同时成立才染红；ADX>50 已归超买紫带' },
+     { cls: 'ob', col: '#b45cff', name: '超买区', tag: '§325',
+       def: '口径 = ADX > 50（严格大于）即超买区，不问 ±DI 方向（空头强趋势同样极端），参考图最上档分界' }]
+    .forEach(function (K) {
+      __bsegs325.filter(function (sgB) { return sgB.cls === K.cls; }).forEach(function (sgB) {
+        var xB0 = X(sgB.i0) - bw / 2, xB1 = X(sgB.i1) + bw / 2;
+        svg += '<rect x="' + xB0.toFixed(1) + '" y="' + adxT + '" width="' + (xB1 - xB0).toFixed(1) + '" height="' + (adxB - adxT) +
+          '" fill="' + K.col + '" fill-opacity="0.14" clip-path="url(#' + uid + 'adxclip)"><title>' +
+          escapeHtml('ADX ' + K.name + '（' + K.tag + '）：' + klDateTxt(ks[sgB.i0].tt || ks[sgB.i0].date) + ' ~ ' +
+            klDateTxt(ks[sgB.i1].tt || ks[sgB.i1].date) + '，共 ' + (sgB.i1 - sgB.i0 + 1) + ' 根。' +
+            K.def + '；段内 ADX 峰值 ' + sgB.peak.toFixed(1) + '。参考层，不计分') + '</title></rect>';
+      });
+    });
     svg += '<line x1="' + plotL + '" y1="' + YX(20).toFixed(1) + '" x2="' + plotR + '" y2="' + YX(20).toFixed(1) +
       '" stroke="#26c281" stroke-width="1" stroke-opacity="0.38" stroke-dasharray="4 5"/>';
     svg += '<line x1="' + plotL + '" y1="' + YX(25).toFixed(1) + '" x2="' + plotR + '" y2="' + YX(25).toFixed(1) +
       '" stroke="#ff5252" stroke-width="1" stroke-opacity="0.38" stroke-dasharray="4 5"/>';
+    /* ★ §325：50 阈值虚线（紫）+ 轴标 —— 超买带的上界可视化锚点，与 20/25 阈值线同款式。 */
+    svg += '<line x1="' + plotL + '" y1="' + YX(50).toFixed(1) + '" x2="' + plotR + '" y2="' + YX(50).toFixed(1) +
+      '" stroke="#b45cff" stroke-width="1" stroke-opacity="0.38" stroke-dasharray="4 5"/>';
     svg += '<text x="' + (padL - 8) + '" y="' + (YX(20) + 3.3).toFixed(1) + '" fill="#6b779b" font-size="9.5" text-anchor="end" font-family="' + M + '">20</text>';
     svg += '<text x="' + (padL - 8) + '" y="' + (YX(25) + 3.3).toFixed(1) + '" fill="#6b779b" font-size="9.5" text-anchor="end" font-family="' + M + '">25</text>';
+    svg += '<text x="' + (padL - 8) + '" y="' + (YX(50) + 3.3).toFixed(1) + '" fill="#6b779b" font-size="9.5" text-anchor="end" font-family="' + M + '">50</text>';
     var ADX_LINES = [{ a: __pdiWin, c: '#ff5252', n: '+DI' }, { a: __mdiWin, c: '#26c281', n: '-DI' }, { a: __adxWin, c: '#ffc857', n: 'ADX' }];
     svg += '<g clip-path="url(#' + uid + 'adxclip)">';
     ADX_LINES.forEach(function (L) {
@@ -10523,10 +10576,18 @@ function renderChart(ind, focus, opt) {
           escapeHtml(klDateTxt(ks[ai].tt || ks[ai].date)) + '　' + evA.txt + '（参考层，不计分）</title></path>';
       }
     }
-    var ali = ks.length - 1;
-    svg += '<text x="' + (plotR + 6) + '" y="' + (adxT + 11) + '" fill="#ffc857" font-size="10" font-family="' + M + '">ADX ' + (__adxWin[ali] != null ? __adxWin[ali].toFixed(1) : '—') + '</text>';
-    svg += '<text x="' + (plotR + 6) + '" y="' + (adxT + 23) + '" fill="#ff5252" font-size="10" font-family="' + M + '">+DI ' + (__pdiWin[ali] != null ? __pdiWin[ali].toFixed(1) : '—') + '</text>';
-    svg += '<text x="' + (plotR + 6) + '" y="' + (adxT + 35) + '" fill="#26c281" font-size="10" font-family="' + M + '">-DI ' + (__mdiWin[ali] != null ? __mdiWin[ali].toFixed(1) : '—') + '</text>';
+    /* ★ 2026-11-14 §324（用户要求「点击每一根k线，最右侧显示对应的ADX,+DI,-DI数值」）：
+       角标跟随基准根 —— 点击任意历史 K 线（focus < 末根）→ 右侧三行改为显示**那根**的 ADX / ±DI
+       （同一份 __adxWin 序列按可见窗下标取，只读不重算、无未来函数）；默认态 / 点末根 → 仍是最新值。
+       非最新根时标签带「(至该日)」后缀（与徽标 ADX chip 口径一致）；__focusVi 夹紧防越界。 */
+    var ali = __focusDefault ? (ks.length - 1) : Math.min(ks.length - 1, Math.max(0, __focusVi));
+    var aliSfx = __focusDefault ? '' : '(至该日)';
+    /* ★ §324 追加（用户反馈「右侧 ADX 数值被画布右缘截断，请往左移」）：角标改为**画布内右对齐**
+       （x = plotR − 8 + text-anchor="end"）——「(至该日)」长后缀也永不溢出；paint-order 描边保证
+       压在 DI 线上时仍可读。 */
+    svg += '<text class="kl-adxcor" data-k="adx" x="' + (plotR - 8) + '" y="' + (adxT + 11) + '" fill="#ffc857" font-size="10" font-family="' + M + '" text-anchor="end" paint-order="stroke" stroke="#101830" stroke-width="2.6" stroke-linejoin="round">ADX' + aliSfx + ' ' + (__adxWin[ali] != null ? __adxWin[ali].toFixed(1) : '—') + '</text>';
+    svg += '<text class="kl-adxcor" data-k="pdi" x="' + (plotR - 8) + '" y="' + (adxT + 23) + '" fill="#ff5252" font-size="10" font-family="' + M + '" text-anchor="end" paint-order="stroke" stroke="#101830" stroke-width="2.6" stroke-linejoin="round">+DI' + aliSfx + ' ' + (__pdiWin[ali] != null ? __pdiWin[ali].toFixed(1) : '—') + '</text>';
+    svg += '<text class="kl-adxcor" data-k="mdi" x="' + (plotR - 8) + '" y="' + (adxT + 35) + '" fill="#26c281" font-size="10" font-family="' + M + '" text-anchor="end" paint-order="stroke" stroke="#101830" stroke-width="2.6" stroke-linejoin="round">-DI' + aliSfx + ' ' + (__mdiWin[ali] != null ? __mdiWin[ali].toFixed(1) : '—') + '</text>';
   })();
 
   /* 悬停热区已并入每根蜡烛的 <g class="cd">（见上方蜡烛循环）—— 不再单独画一层。
@@ -10536,12 +10597,12 @@ function renderChart(ind, focus, opt) {
        并明示末根未完成 —— 不然用户会把「本周才走了两天」当成「周线缩量」。 */
   svg += '<text x="' + plotL + '" y="' + (H - 6) + '" fill="#5d6788" font-size="10">近 ' + ks.length +
     (__isMin
-      ? (' 根 · ' + MIN_PERIOD[__per] + ' · 均线/KDJ/形态按该周期K同口径重算 · 底=ADX/DI(黄=ADX 趋势强度,虚线 20/25 阈值) · 悬停看开高低收 · 点击柱子看量价关系')
+      ? (' 根 · ' + MIN_PERIOD[__per] + ' · 均线/KDJ/形态按该周期K同口径重算 · 底=ADX/DI(黄=ADX 趋势强度,虚线 20/25/50 阈值,红底带=多头强势区 ADX≥25 且 +DI>-DI,紫底带=超买区 ADX>50) · 悬停看开高低收 · 点击柱子看量价关系')
       : (__isWeek
-        ? ' 周 · 前复权 · MA5/20/60 = 5/20/60 周均线，KDJ(9,3,3) = 9 周 · 末根为本周进行中（量能偏小） · 底=ADX/DI 副图 · 点击柱子看量价关系'
+        ? ' 周 · 前复权 · MA5/20/60 = 5/20/60 周均线，KDJ(9,3,3) = 9 周 · 末根为本周进行中（量能偏小） · 底=ADX/DI 副图(红底带=多头强势区 · 紫底带=超买区 ADX>50) · 点击柱子看量价关系'
         : (__isMonth
-          ? ' 月 · 前复权 · MA5/20/60 = 5/20/60 月均线，KDJ(9,3,3) = 9 月 · 末根为本月进行中（量能偏小） · 底=ADX/DI 副图 · 点击柱子看量价关系'
-          : ' 日 · 前复权 · 副图：上=日KDJ / 中=周KDJ(9,3,3) / 下=主力状态(红=中线强势 黄=主力控盘 紫=短线资金 · 近似复刻) / 底=ADX/DI(黄=ADX 趋势强度 · 红=+DI · 绿=-DI · 虚线 20/25 阈值) · 主图红/绿粗线=SuperTrend(多头红支撑/空头绿阻力,▲▼=翻转) · 悬停看开高低收 · 点击柱子看当日量价关系'))) + '</text>';
+          ? ' 月 · 前复权 · MA5/20/60 = 5/20/60 月均线，KDJ(9,3,3) = 9 月 · 末根为本月进行中（量能偏小） · 底=ADX/DI 副图(红底带=多头强势区 · 紫底带=超买区 ADX>50) · 点击柱子看量价关系'
+          : ' 日 · 前复权 · 副图：上=日KDJ / 中=周KDJ(9,3,3) / 下=主力状态(红=中线强势 黄=主力控盘 紫=短线资金 · 近似复刻) / 底=ADX/DI(黄=ADX 趋势强度 · 红=+DI · 绿=-DI · 虚线 20/25/50 阈值 · 红底带=多头强势区 ADX≥25 且 +DI>-DI · 紫底带=超买区 ADX>50) · 主图红/绿粗线=SuperTrend(多头红支撑/空头绿阻力,▲▼=翻转) · 悬停看开高低收 · 点击柱子看当日量价关系'))) + '</text>';
   svg += '</svg>';
 
   /* 顶部图例 chip：颜色与图上线条一一对应（★ 2026-10-04 起由 klDaysetHtml 统一生成，见 renderChart 之后） */
@@ -38996,6 +39057,25 @@ function init() {
          这条路径是「点某根 K 线后重写徽标组」，拿不到 renderChart 的局部变量。 */
       if (ds && ent) ds.innerHTML = klDaysetHtml(ent, ent.start + i, kj, raw, null, ent.per);
     } catch (eDsV) { /* 徽标条联动失败不拖累面板 */ }
+    /* ★ 2026-11-14 §324（用户要求「点击每一根k线，最右侧显示对应的ADX,+DI,-DI数值」）：
+       ADX 副图右侧三行角标跟随所点根 —— 点击**不整图重绘**（2026-10-13 纪律），角标原地改写 textContent：
+       数据源 = renderChart 首绘时缓存的 ind.__adxCtx.out（klAdxSeries 全量序列，与副图三线/徽标 chip 同一份），
+       按全量下标 gidx = ent.start + i 取值（无未来函数）；非末根 → 标签带「(至该日)」后缀，与徽标 chip 口径一致；
+       序列未就绪（首绘降级）→ 原地不动，不硬算不伪造。 */
+    try {
+      var corSvg = wrap ? wrap.querySelector('svg.chart') : null;
+      var corAxc = (ent && ent.ind && ent.ind.__adxCtx && ent.ind.__adxCtx.out && ent.ind.__adxCtx.out.ok) ? ent.ind.__adxCtx.out : null;
+      if (corSvg && corAxc && gidx != null) {
+        var corSfx = (gidx >= ((ent.ind.klines && ent.ind.klines.length) ? ent.ind.klines.length - 1 : gidx)) ? '' : '(至该日)';
+        var corMap324 = [['adx', 'ADX'], ['pdi', '+DI'], ['mdi', '-DI']];
+        for (var corI = 0; corI < corMap324.length; corI++) {
+          var corEl = corSvg.querySelector('text.kl-adxcor[data-k="' + corMap324[corI][0] + '"]');
+          if (!corEl) continue;
+          var corV = corAxc[corMap324[corI][0]][gidx];
+          corEl.textContent = corMap324[corI][1] + corSfx + ' ' + (corV != null && isFinite(corV) ? corV.toFixed(1) : '—');
+        }
+      }
+    } catch (eCor324) { /* 角标联动失败不拖累面板 */ }
     /* 选中标记：把当前 DOM 里的蜡烛高亮切到所点根（不再有重绘，节点引用始终有效） */
     try {
       var svgEl = wrap ? wrap.querySelector('svg.chart') : null;
