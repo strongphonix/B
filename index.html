@@ -555,7 +555,9 @@
   /* ---------- ★ 2026-10-19 §175：K 线周期切换条（日线 / 5分钟 / 30分钟） ----------
      标题行右侧一组分段按钮，选中态用主题蓝实心（与 sticky nav 同色系），未选中只描边，弱于数据本身。 */
   .kl-ctitle { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
-  .kl-periods { display:inline-flex; gap:3px; padding:2px; border:1px solid var(--line);
+  /* ★ 2026-11-14 §319：第 6 枚按钮（分时体检）加入后 375/360px 窄屏溢出（_test_layout 实测 w=331 越右 49）
+     → 允许按钮条换行（.kl-ctitle 本身已 flex-wrap:wrap，子项换行后卡片仍收得住）。 */
+  .kl-periods { display:inline-flex; flex-wrap:wrap; max-width:100%; gap:3px; padding:2px; border:1px solid var(--line);
     border-radius:9px; background:#ffffff06; flex:none; }
   .kl-periods .klp { appearance:none; -webkit-appearance:none; border:0; background:transparent;
     color:var(--muted); font:inherit; font-size:12px; line-height:1.5; padding:3px 10px;
@@ -2910,15 +2912,17 @@ var __tencentFail = 0;
       「够不够 60 周」是**上层** weekIndOf 的职责，它才能报出「周K线仅 30 周（需 ≥60 周）」这种可读原因。
       若在取数层就卡 22，次新股会一路跌到「腾讯周K接口均不可用」，把人引向错误的排查方向。 */
 function pickKlines(obj, sym, period) {
-  var wk = (period === 'week');
-  var needMin = wk ? 1 : 22;
+  var wk = (period === 'week'), mo = (period === 'month');   // ★ §317：月线（周期位 param=month，返回节点 qfqmonth，行格式与周K逐字段同构）
+  var needMin = (wk || mo) ? 1 : 22;                          // ★ §317：月线同样放宽到 1 —— 「够不够 60 月」是上层 monthIndOf 的职责
   var node = obj && obj.data && obj.data[sym];
-  var arr = wk ? (node && (node.qfqweek || node.week)) : (node && (node.qfqday || node.day));
-  if (!arr || arr.length < needMin) throw new Error('K线仅 ' + (arr ? arr.length : 0) + (wk ? ' 周' : ' 日'));
+  var arr = mo ? (node && (node.qfqmonth || node.month))     // ★ §317：月线键名 qfqmonth（实测三源一致），仍兜裸 month
+            : wk ? (node && (node.qfqweek || node.week))
+            : (node && (node.qfqday || node.day));
+  if (!arr || arr.length < needMin) throw new Error('K线仅 ' + (arr ? arr.length : 0) + (mo ? ' 月' : (wk ? ' 周' : ' 日')));
   var klines = arr.map(function (r) {
     return { date: r[0], open: +r[1], close: +r[2], high: +r[3], low: +r[4], volume: +r[5] };
   }).filter(function (x) { return x.date && isFinite(x.close) && x.close > 0; });
-  if (klines.length < needMin) throw new Error('K线解析后不足' + needMin + (wk ? '周' : '日'));
+  if (klines.length < needMin) throw new Error('K线解析后不足' + needMin + (mo ? '月' : (wk ? '周' : '日')));
   var quote = (node.qt && node.qt[sym]) ? parseTencentQuote(node.qt[sym], sym) : null;
   return { klines: klines, quote: quote, source: '腾讯行情' };
 }
@@ -3018,6 +3022,57 @@ async function fetchWeekKline(sym, bars, retried) {
   }
   __weekFail++; __weekFailAt = Date.now();
   throw (lastErr || new Error('腾讯周K接口均不可用'));
+}
+
+/* ★ 2026-11-14 §317（用户要求「股票k线图增加月线k线图」）：月线取数 —— 与 §176 周线完全对称，
+   复用同一条 fqkline 通道，只把 param 的周期位换成 `month`（实测三源全可达：
+   web.ifzq.gtimg.cn / ifzq.gtimg.cn / proxy.finance.qq.com newfqkline，返回节点 qfqmonth，
+   茅台从 2001-08 起，320 根足够 MA60 = 60 月 ≈ 5 年）。
+   三条纪律逐条照抄 §176：
+   ① **源健康度独立**：MONTH_SRC 是 KLINE_SRC 的副本，不是引用 —— 月线挂三次只冷却月线的源，
+      绝不连坐日K/周K通道；
+   ② **独立上次成功源**（__monthIdx）；
+   ③ **不调 slowDown()**：月线同样是用户点按钮触发的低频单次请求，失败就失败。 */
+var MONTH_SRC = KLINE_SRC.map(function (s) { return { host: s.host, fail: 0 }; });
+var __monthIdx = 0, __monthFail = 0, __monthFailAt = 0;
+var MONTH_COOL = 30000;   /* 月K通道整体熔断的冷却（ms）—— 与 WEEK_COOL 同款按时间窗自动复位，避免永久死锁 */
+async function fetchMonthKline(sym, bars, retried) {
+  if (__monthFail >= 8) {
+    if ((Date.now() - __monthFailAt) < MONTH_COOL) throw new Error('月K接口连续失败，冷却中（30 秒后可重试）');
+    __monthFail = 0;
+  }
+  var need = bars || 320;
+  var pref = (sym.slice(0, 2) === 'bj') ? 2 : (__monthIdx || 0);
+  var order = [];
+  for (var i = 0; i < MONTH_SRC.length; i++) order.push((pref + i) % MONTH_SRC.length);
+  var lastErr = null, anyTried = false;
+  for (var k = 0; k < order.length; k++) {
+    var idx = order[k], src = MONTH_SRC[idx];
+    if (src.fail >= 3) continue;                 // 连续失败 3 次则暂时跳过该源
+    anyTried = true;
+    var tail = '&param=' + sym + ',month,,,' + need + ',qfq';
+    // ① fetch 通道
+    try {
+      var obj = await fetchJson(src.host + '?' + tail.slice(1) + '&_=' + Date.now(), 12000);
+      var got = pickKlines(obj, sym, 'month');
+      src.fail = 0; __monthIdx = idx; __monthFail = 0;
+      return got;
+    } catch (e) { lastErr = e; }
+    // ② JSONP 兜底通道（file:// 打开时 fetch 可能被拦，与日K/周K通道同策略）
+    try {
+      var vn = 'mdata_' + Math.random().toString(36).slice(2);
+      var obj2 = await loadScriptVar(src.host + '?_var=' + vn + tail, vn, null, 12000);
+      var got2 = pickKlines(obj2, sym, 'month');
+      src.fail = 0; __monthIdx = idx; __monthFail = 0;
+      return got2;
+    } catch (e2) { src.fail++; lastErr = e2; }
+  }
+  if (!anyTried && !retried) {                   // 全部熔断 → 复位后再试一轮
+    MONTH_SRC.forEach(function (s) { s.fail = 0; });
+    return fetchMonthKline(sym, bars, true);
+  }
+  __monthFail++; __monthFailAt = Date.now();
+  throw (lastErr || new Error('腾讯月K接口均不可用'));
 }
 
 // 腾讯实时快照（补快照用）
@@ -3198,9 +3253,33 @@ async function weekIndOf(sym) {
   __WEEK_CACHE[key] = { ind: ind, at: Date.now() };
   return { ind: ind, cached: false };
 }
+/* ★ 2026-11-14 §317：月线指标入口 —— 与 weekIndOf 逐行对称。
+   ① 月K一根 = 一个自然月（≈21 个交易日），MA60 = 60 个月 ≈ 5 年，MONTH_MINBARS 取 60
+      （周线同为 60，口径一致：均线与形态判定要的最小窗口）；
+   ② 末根是「本月进行中」的未完成月K（腾讯月K口径，与周K同构）—— 月中看盘时只含本月已走的几天，
+      量能天然偏小，不能用它判缩量/放量（renderChart 的 __isMonth 分支与页脚已明示）；
+   ③ 缓存 TTL 仍取 60s：月K在交易时段内会随现价变动（本月那根在长）。 */
+var __MONTH_CACHE = {}, MONTH_TTL = 60000, MONTH_MINBARS = 60, MONTH_CACHE_CAP = 16;
+async function monthIndOf(sym) {
+  var key = String(sym || ''), c = __MONTH_CACHE[key];
+  if (c && c.ind && (Date.now() - c.at) < MONTH_TTL) return { ind: c.ind, cached: true };
+  var got = await fetchMonthKline(sym, 320);
+  var bars = (got && got.klines) ? got.klines : null;
+  var n = (bars && bars.length) ? bars.length : 0;
+  if (n < MONTH_MINBARS) throw new Error('月K线仅 ' + n + ' 月（需 ≥' + MONTH_MINBARS + ' 月才够 MA60 与形态判定）');
+  /* quote 传 null（月K末根进行中，实时快照口径对不上，与周线同理由）；第 3 参只取 6 位代码 */
+  var ind = computeIndicators(bars, null, String(sym || '').slice(2));
+  if (!ind) throw new Error('月K线不足，指标无法计算');
+  var keys = Object.keys(__MONTH_CACHE);
+  if (keys.length >= MONTH_CACHE_CAP) delete __MONTH_CACHE[keys[0]];
+  __MONTH_CACHE[key] = { ind: ind, at: Date.now() };
+  return { ind: ind, cached: false };
+}
 /* 周期显示名（日线/周线/分钟共用一处，避免 UI 层再写一遍 if-else） */
 function klPerLab(p) {
   if (p === 'week') return '周线';
+  if (p === 'month') return '月线';
+  if (p === 'it') return '分时体检';
   if (p === 'day') return '日线';
   return MIN_PERIOD[p] || String(p || '');
 }
@@ -3305,11 +3384,6 @@ function computeIndicators(rawKlines, quote, code) {
      ma60 除原有的「辨识度 / 年线」用途外，**另挂到 ind.ma60 数组上供 K 线图叠加线使用**。
      ma10 保留全部既有用途（maRepair 金叉判定 / 个股诊断卡 / 筛选器 aboveMA10·bullMA），只是不再画在 K 线图上。 */
   var ma60 = calcMA(closes, 60), ma250 = calcMA(closes, 250);   // 辨识度用：季线 / 年线
-  /* ★ 2026-11-07 §263：3 日加权成本全量数组（klWc3Of 逐根调用，函数声明提升保证此处可用），
-     挂 ind.wc3 —— 同 ma5/ma20/ma60 的「图上叠加线 + 日徽标 chip 同源取值」模式；
-     renderChart 只做 slice(start) 对齐可见窗，不在图里另写第二套算法。 */
-  var wc3 = [];
-  for (var tW3 = 0; tW3 < n; tW3++) wc3.push(klWc3Of(klines, tW3));
   var i = n - 1;
   var price = closes[i];
   var cMA5 = ma5[i], cMA10 = ma10[i], cMA20 = ma20[i];
@@ -3658,7 +3732,7 @@ function computeIndicators(rawKlines, quote, code) {
     w60h: isFinite(w60.h) ? w60.h : null, w60l: isFinite(w60.l) ? w60.l : null,
     /* ★ 2026-10-16：ma60 **数组**上挂（同 ma5/ma10/ma20），供 K 线图叠加线 + 日徽标组 MA60 chip 取该根值。
        ma60v（标量，末根值）原本就在下方一行 —— 两者一全量序列、一末根快照，不要合并。 */
-    klines: klines, closes: closes, ma5: ma5, ma10: ma10, ma20: ma20, ma60: ma60, wc3: wc3, i: i,
+    klines: klines, closes: closes, ma5: ma5, ma10: ma10, ma20: ma20, ma60: ma60, i: i,
     price: price, ma5v: cMA5, ma10v: cMA10, ma20v: cMA20,
     dev: dev, ma5Slope: ma5Slope, ma5SlopePct: ma5SlopePct, breakDays: breakDays,
     volRatio: volRatio, shrinkRatio: shrinkRatio, turnover: turnover,
@@ -5440,7 +5514,8 @@ function capConclHtml(cap, srcTag) {
 function powConclHtml(p, per) {
   if (!p || !p.label) return '';
   var col = POW_ACT_COLOR[p.actCls] || '#8892b0';
-  var perTxt = (per === 'week') ? '周K（「昨日」读作上一周）' : '日K';
+  /* ★ §317：月线同样保留（结构与操作结论同义，「昨日」读作上一月），口径写进 tooltip */
+  var perTxt = (per === 'month') ? '月K（「昨日」读作上一月）' : (per === 'week') ? '周K（「昨日」读作上一周）' : '日K';
   var tip = '今昨强弱（昨日K线 × 今日路径）—— ' + p.id + ' ' + p.label +
     '\n周期：' + perTxt +
     '\n矩阵单元格 ' + p.matrix + '：' + p.label +
@@ -7870,54 +7945,6 @@ function klPressOf(kl, i, n) {
   };
 }
 
-/* ===== ★ 2026-11-07 §263（用户要求「在股票k线图中绘制3日加权成本曲线」）：
-   3 日加权成本线 WC3 —— 近 3 根（**含当根**）的「成交量加权平均成本」：
-     WC3(i) = Σ( close[j] × volume[j] ), j = i-2..i ÷ Σ( volume[j] ), j = i-2..i
-   即**滚动 3 日 VWAP**（分时 VWAP 是「当日累计」口径，本线是「近 3 根滚动」口径 —— 同一思想、不同窗口）。
-   ----------------------------------------------------------------------------
-   ① 为什么含当根：与 MA3 / MA5 的窗口约定一致（当根参与均值）。「成本」问的是「到现在为止，
-      最近 3 根成交的持仓成本摊在多少」—— 不含当根就答错了日期。
-   ② 无未来函数：只用 kl[0..i]，与全台口径一致；换周期（周 / 分钟）按「根」重算，口径不变。
-   ③ null 语义（诚实留白三档）：
-      · i < 2（窗口不满）→ null，曲线起点如实断开；
-      · 窗口内任一根 close 无效（null / 非数值）→ null（脏数据不凑数，同 klHiWinOf ③）；
-      · Σvolume ≤ 0（连续零量，极端罕见）→ null（没有成交就没有成本，不硬算）。
-   ④ volume 缺失（null / 非数值）**单独**按权重 0 处理、不作废整窗：
-      量缺失 ≠ 有量，按 0 权重 = 「该根成本不可知、不参与摊薄」，数学上与「当日无量」同解，
-      比凭空造一个权重诚实；而 close 无效连「这一天价格是多少」都不知道 → 只能整窗作废。
-      （日 K 的 volume 实际几乎恒有值，此档是防御性设计：避免一根脏量把整条线打成碎段。）
-   ⑤ 用途定位：**参考层** —— 只画线 + 右侧轴签 + 日徽标 chip + 图例 chip，不计分、不进四指标 / VPS、
-      不进钉钉推送、不发买卖指令（同 §205/§206/§208 的纪律）。
-   ⑥ 与 MA5 的读法差异（本线存在的意义）：MA5 是等权收盘均价，无量暴涨日会把它拉高；
-      WC3 按成交量摊 —— 缩量冲高日 WC3 明显低于 MA5 = 「涨得高、参与的人少」，成本并未跟上。 */
-var KL_WC3_N = 3;
-/* 白色 #ffffff（★ 2026-11-07 用户明确指定「颜色改为白色」，原拟长春花蓝 #8a7dff 作废）。
-   已知共存关系（如实记录，不隐瞒）：
-   · m5 周期的 VWAP 线是近白 #dfe6f3（同为虚线）——两者同图时靠**窗口窗口错开**不了，只能靠读数区
-     （VWAP=当日累计、WC3=近3根滚动），m5 上并看时以右侧轴签「WC3 / VWAP」文字为准；
-   · 买点轨 ATR 方块 SIG_COL.atr = #ffffff（6px 小方块）与本条 1.3px 虚线形状差一个量级，可辨。
-   白色在主价格面板（日线 / 周线）此前未被任何线占用（K线红绿 / MA 黄紫蓝 / 收盘虚线红绿），一眼可辨。 */
-var KL_WC3_COLOR = '#ffffff';
-
-/* 单根取值（**唯一真源**）：renderChart 叠加线、ind.wc3 全量数组（→ 右侧轴签 / 日徽标 chip）都走这里，
-   绝不各写一份 —— 否则「图上画的」与「chip 报的」会各说各话。 */
-function klWc3Of(kl, i) {
-  if (!kl || !(i >= KL_WC3_N - 1) || !kl[i]) return null;
-  var cv = 0, vv = 0, j, p, c, v;
-  for (j = i - KL_WC3_N + 1; j <= i; j++) {
-    p = kl[j];
-    if (!p) return null;
-    c = p.close;
-    /* ⚠️ `c == null` 必须单独判：`isFinite(null) === true`（null 被 Number() 转成 0），
-       只写 !isFinite 会让缺收盘的根以 0 元参与加权 → 成本被砸成假低位。 */
-    if (c == null || !isFinite(c)) return null;      /* 窗口内价格脏 → 整窗不作答（宁可断线，不凑数） */
-    v = p.volume;
-    if (v == null || !isFinite(v) || v < 0) v = 0;   /* 量缺失 / 非法 → 权重 0（见 ④），不作废整窗 */
-    cv += c * v; vv += v;
-  }
-  return (vv > 0) ? (cv / vv) : null;                /* 全窗零量 → null（没有成交就没有成本） */
-}
-
 /* ==========================================================================
    ★ 2026-10-06（用户要求）：「K 线图自动标注支撑 / 压力关键位」—— 少而精，不密集划线
    --------------------------------------------------------------------------
@@ -8427,6 +8454,7 @@ function renderChart(ind, focus, opt) {
   if (opt && opt.period) {
     if (typeof MIN_PERIOD !== 'undefined' && MIN_PERIOD[opt.period]) __per = opt.period;  // m5 / m30
     else if (opt.period === 'week') __per = 'week';                                       // §176 周线
+    else if (opt.period === 'month') __per = 'month';                                     // §317 月线
   }
   var __isMin = (__per === 'm5' || __per === 'm30');
   /* 周线**不是**分钟线，也不是日线：横轴/结构带沿用日线行为，只有页脚、角标与量价面板提示另说。
@@ -8435,6 +8463,10 @@ function renderChart(ind, focus, opt) {
      （判断中期处在哪个阶段、离 90 周高低点回撤多少）。这与分钟周期相反：30 根 5 分钟只覆盖半天，
      同一套判定会在几小时内反复翻转，属假读数，故 30 根窗口必须在分钟图上停用。 */
   var __isWeek = (__per === 'week');
+  /* ★ §317：月线与周线同一组取舍 —— 结构带保留（「最近 N 月」）、涨跌停刻度/图例关闭、
+     周 KDJ / 主力状态副图不画（月K 序列喂同一套引擎，再画一块是复制品）、日线专属带按既有
+     `__per === 'day'` 守卫自动排除（月K 一根 ≈ 21 个交易日，「开盘半小时定基调」等日级语义不成立）。 */
+  var __isMonth = (__per === 'month');
   var start = Math.max(0, n - 70);
   var ks = kl.slice(start);
   /* ★ 2026-10-16（用户要求「工作台，k线图均线改为5日，20日，60日」）：图上叠加线由 MA5/10/20 改为 MA5/20/60。
@@ -8596,12 +8628,12 @@ function renderChart(ind, focus, opt) {
      高度 +82（面板 68 + 间距 14），日期刻度与页脚同步下移 82 → H 520→602、dateY 498→580。
      `indB` = **指标栈底**：族级铺色 / 族级竖线 / 纵向网格 / 分钟换日线 / 蜡烛热区一律延伸到它 ——
        「在任意一块副图的列上悬停或点击，命中的仍是同一天」这条既有性质，在新高度下继续成立。 */
-  var __wKjShow = (!__isMin && !__isWeek);
+  var __wKjShow = (!__isMin && !__isWeek && !__isMonth);   /* ★ §317：月线与周线同理，不重复画 KDJ/主力状态副图 */
   /* ★ 2026-11-01 §247（主力状态三色柱）：周 KDJ 之下再挂一块「主力状态」副图 —— 同样**只在日线周期**。
      高度再 +82（面板 68 + 间距 14）→ H 602→684、dateY 580→662、indB（指标栈底）→ 新面板底 640。
      主力状态原料 = 逐日筹码分布推算（需要日K + 流通股本），周K/分钟序列没有对应的日线筹码口径
      （周线一根 = 5 天换手，套日线筹码模型属假读数；分钟图只覆盖半天）→ 与周 KDJ 同一守卫 __wKjShow。 */
-  var W = 1130, H = __wKjShow ? 684 : 520;
+  var W = 1130, H = __wKjShow ? 766 : 602;
   var padL = 58, padR = 64, padT = 58;
   var priceT = padT, priceB = 292;
   var volT = 326, volB = 394;
@@ -8613,8 +8645,15 @@ function renderChart(ind, focus, opt) {
   var wKdjT = 490, wKdjB = 558;
   /* ★ 2026-11-01 §247：主力状态副图 —— 同高（68）同间距（14），zlT 572~ zlB 640。 */
   var zlT = 572, zlB = 640;
-  var indB = __wKjShow ? zlB : kdjB;
-  var dateY = __wKjShow ? 662 : 498;
+  /* ★ 2026-11-14 §318（用户要求「SuperTrend + ADX 示意图要在 k线图上显示出来」）：栈底再挂「ADX / DI」副图。
+     · **所有周期都画**（ADX 按「根」算，日/周/月/分钟序列无差别 —— 与 KDJ 同层，不像周KDJ/主力状态
+       那样只在日线画：那两块的原料是「日线筹码 / 周K对齐」，ADX 的原料就是当前序列本身）；
+     · 高度 +82（面板 68 + 间距 14，与 §210/§247 同款）→ 日线 H 684→766、dateY 662→744；
+       非日线 H 520→602、dateY 498→580；indB（指标栈底）→ adxB。
+     · SuperTrend 不是副图，是价格面板上的叠加线（画在均线之后），不占新面板。 */
+  var adxT = __wKjShow ? 654 : 490, adxB = __wKjShow ? 722 : 558;
+  var indB = adxB;
+  var dateY = __wKjShow ? 744 : 580;
   var plotL = padL, plotR = W - padR;
 
   /* ---- ★ 2026-10-24 §206：60 根波段高点 → 压力位（必须在价格刻度之前算：它的价位要并入上沿）---- */
@@ -8624,12 +8663,37 @@ function renderChart(ind, focus, opt) {
   var __press = null;
   try { __press = (typeof klPressOf === 'function') ? klPressOf(kl, __focusEnd, __prN) : null; } catch (ePr) { __press = null; }
 
+  /* ---- ★ 2026-11-14 §318：SuperTrend 序列（必须在价格刻度之前算：它的价位要并入刻度上下沿）----
+     · 全量递推（klSuperTrend）后 slice(start) 对齐可见窗；缓存在 ind.__stCache
+       （key = 根数|末根日期，与 __stageBands / __digBands 同口径）→ 点击 K 线重渲染零重算；
+     · trailing 值并入价格刻度（与 MA5/20/60 同一待遇）—— 多头段的 trailing 支撑可能远低于
+       窗内最低价（长牛后），不并入会被 Y() 映射出面板、线静默消失（§206 压力位同一教训）；
+     · typeof 守卫：切片沙箱（_test_klchart.js 等）没有 klSuperTrend 时整段跳过，诚实留白不挂图。 */
+  var __stOk = false, __stWin = null, __stDirWin = null;
+  try {
+    if (typeof klSuperTrend === 'function') {
+      var __stKey = kl.length + '|' + String((kl[n - 1] && kl[n - 1].date) || '');
+      var __stC = (ind && ind.__stCache && ind.__stCache.key === __stKey) ? ind.__stCache.out : null;
+      if (!__stC) {
+        __stC = klSuperTrend(kl, 14, 3);
+        if (ind) ind.__stCache = { key: __stKey, out: __stC };
+      }
+      if (__stC && __stC.ok) {
+        __stWin = __stC.st.slice(start);
+        __stDirWin = __stC.dir.slice(start);
+        __stOk = __stWin.length === ks.length;
+      }
+    }
+  } catch (eSt) { __stOk = false; __stWin = null; __stDirWin = null; }
+
   /* ---- 价格刻度（含均线极值，避免线跑出画布）---- */
   var lo = Infinity, hi = -Infinity;
   ks.forEach(function (k) { lo = Math.min(lo, k.low); hi = Math.max(hi, k.high); });
   [m5, m20, m60].forEach(function (arr) {
     arr.forEach(function (v) { if (v != null && isFinite(v)) { lo = Math.min(lo, v); hi = Math.max(hi, v); } });
   });
+  /* ★ §318：SuperTrend trailing 值并入刻度（与均线同待遇；否则多头段 trailing 支撑在窗外、线被截掉） */
+  if (__stOk) __stWin.forEach(function (v) { if (v != null && isFinite(v)) { lo = Math.min(lo, v); hi = Math.max(hi, v); } });
   /* ★ 2026-10-13（用户要求删除「K 线图上的支撑/压力关键位」）：原先在此处先算 srZoneScan 关键位、
      再把它选出的价格区间并入价格刻度（防「高于窗口最高价」的压力位被映射到面板之外）。
      关键位（图上横线 + 区间带 + 图例 chip + 基准根口径）已整体下线 → 该并入段同步移除，
@@ -8678,7 +8742,7 @@ function renderChart(ind, focus, opt) {
        ★ §176：周线**关闭**该判定 —— klLimitTickOf 的口径是「收盘 = 前一根收盘 ×(1+板制幅度)」，
          那是**单日**涨跌停的定义。铺到周K上会变成「本周涨幅 ≥10% 就算涨停」，一只普通股票一周涨 10%
          会被标成金色涨停，是硬性误标。周线没有涨跌停概念（A 股涨停只发生在交易日内），故直接留空。 */
-    var _tk = __isWeek ? '' : klLimitTickOf(kl, start + idx, __klCode, __klName);
+    var _tk = (__isWeek || __isMonth) ? '' : klLimitTickOf(kl, start + idx, __klCode, __klName);
     /* ★ 2026-10-06：悬停明细同步标注**当日**所处生命周期阶段（与背景带同一份时点对齐判定，不另算） */
     var __tsF = stageFamOf(__stageOfDay ? __stageOfDay[idx] : null);
     /* ★ 2026-10-17 §152：悬停明细同步标注**当日**挖土机区域（与顶部区域带同一份时点对齐判定，不另算） */
@@ -8815,8 +8879,8 @@ function renderChart(ind, focus, opt) {
     return klDateTxt(k.tt || k.date) + '　开 ' + k.open.toFixed(2) + '　高 ' + k.high.toFixed(2) + '　低 ' + k.low.toFixed(2) +
       /* ★ §176：周线把「收 / +x%」改写成「周收 / 本周 +x%」—— chgOf 算的是「相对上一根收盘」，
          在周K上天然就是周涨跌幅，但沿用日线的「收 +2.1%」会被读成「今日涨 2.1%」，属口径歧义。 */
-      '　' + (__isWeek ? '周收 ' : '收 ') + k.close.toFixed(2) +
-      '（' + (__isWeek ? '本周 ' : '') + (c >= 0 ? '+' : '') + c.toFixed(2) + '%）　量 ' + fmtWan(k.volume) +
+      '　' + (__isMonth ? '月收 ' : (__isWeek ? '周收 ' : '收 ')) + k.close.toFixed(2) +
+      '（' + (__isMonth ? '本月 ' : (__isWeek ? '本周 ' : '')) + (c >= 0 ? '+' : '') + c.toFixed(2) + '%）　量 ' + fmtWan(k.volume) +
       (_tk === 'zt' ? '　【涨停封板】' : (_tk === 'dt' ? '　【跌停封底】' : (_tk === 'zb' ? '　【涨停炸板】' : ''))) +
       __gbtxt +
       ((__kjRowOk && idx < __kjRowK.length)
@@ -9000,6 +9064,8 @@ function renderChart(ind, focus, opt) {
     '<clipPath id="' + uid + 'kjclip"><rect x="' + plotL + '" y="' + (kdjT - 1) + '" width="' + (plotR - plotL) + '" height="' + (kdjB - kdjT + 2) + '"/></clipPath>' +
     /* ★ 2026-10-25 §210：周 KDJ 副图自己一份裁剪窗（两块面板几何不同，不能复用同一个 id） */
     (__wKjShow ? '<clipPath id="' + uid + 'wkjclip"><rect x="' + plotL + '" y="' + (wKdjT - 1) + '" width="' + (plotR - plotL) + '" height="' + (wKdjB - wKdjT + 2) + '"/></clipPath>' : '') +
+    /* ★ §318：ADX 副图裁剪窗（股票 ADX 极少超 60，纵轴固定 0~60；越界段裁掉不 clamp，与 KDJ 的 J 同纪律） */
+    '<clipPath id="' + uid + 'adxclip"><rect x="' + plotL + '" y="' + (adxT - 1) + '" width="' + (plotR - plotL) + '" height="' + (adxB - adxT + 2) + '"/></clipPath>' +
     '</defs>';
 
   /* 底板 + 两个面板底色 */
@@ -9010,6 +9076,8 @@ function renderChart(ind, focus, opt) {
   if (__wKjShow) svg += '<rect x="' + plotL + '" y="' + wKdjT + '" width="' + (plotR - plotL) + '" height="' + (wKdjB - wKdjT) + '" rx="4" fill="#ffffff" fill-opacity="0.012"/>';
   /* ★ 2026-11-01 §247：主力状态面板底色（与周 KDJ 同款 1.2% 白） */
   if (__wKjShow) svg += '<rect x="' + plotL + '" y="' + zlT + '" width="' + (plotR - plotL) + '" height="' + (zlB - zlT) + '" rx="4" fill="#ffffff" fill-opacity="0.012"/>';
+  /* ★ 2026-11-14 §318：ADX 副图面板底色（所有周期都有 —— ADX 按「根」算，周期无差别） */
+  svg += '<rect x="' + plotL + '" y="' + adxT + '" width="' + (plotR - plotL) + '" height="' + (adxB - adxT) + '" rx="4" fill="#ffffff" fill-opacity="0.012"/>';
 
   /* ===== ★ 2026-10-17 §152（用户要求）：挖土机区域带（机头A / 机身B / 铲斗C区 · 三色互斥）=====
      画在生命周期带**之上**（y 14~31，17px）：段内铺色 + 段名；
@@ -9504,7 +9572,7 @@ function renderChart(ind, focus, opt) {
        影线与实体共用同一个 col，故一处改色即可；量能柱仍按红涨绿跌不动。
        判定失败 / 非涨跌停 → 保持原红绿。口径见 klLimitTickOf。
        ★ §176：周线跳过（理由同 tipOf 处：涨停是单日概念，周K上用同一判定会把「周涨 10%」误标成涨停）。 */
-    var tick = __isWeek ? '' : klLimitTickOf(kl, start + idx, __klCode, __klName);
+    var tick = (__isWeek || __isMonth) ? '' : klLimitTickOf(kl, start + idx, __klCode, __klName);
     if (tick === 'zt') col = ZTK_COLOR.zt;
     else if (tick === 'dt') col = ZTK_COLOR.dt;
     else if (tick === 'zb') col = ZTK_COLOR.zb;  /* ★ 2026-10-04 涨停炸板：橙 #ff6a00 */
@@ -9985,22 +10053,52 @@ function renderChart(ind, focus, opt) {
     svg += '<path d="' + d + '" fill="none" stroke="' + L.c + '" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>';
   });
 
-  /* ★ 2026-11-07 §263（用户要求「K线图中绘制3日加权成本曲线」）：
-     3 日加权成本线 WC3 —— 虚线贴价，画在均线之后（压在 MA 之上，同为贯穿全图的基础设施层）。
-     · 数据源 = ind.wc3（klWc3Of 全量数组，§263 ①），此处只 slice(start) 对齐可见窗 ——
-       与 m5/m20/m60 完全同一套取数方式，不在图里另写第二套算法；
-     · null 如实断线（path() 既有行为：缺口不连跨直线）；Σ量=0 / 窗口脏数据 → 整段留白；
-     · 周期无差别（按「根」算）：日 / 周 / 分钟线同画；与 m5 VWAP 分属「3根滚动 / 当日累计」两层口径；
-     · 参考层：不计分、不进四指标、不进钉钉推送、不发买卖指令。 */
-  var __wc3Col = (typeof KL_WC3_COLOR === 'string') ? KL_WC3_COLOR : '#ffffff';
-  var __wc3Arr = (ind.wc3 || []).slice(start);
-  var __wc3Has = false, __wi;
-  for (__wi = 0; __wi < __wc3Arr.length; __wi++) {
-    if (__wc3Arr[__wi] != null && isFinite(__wc3Arr[__wi])) { __wc3Has = true; break; }
-  }
-  var __dW3 = __wc3Has ? path(__wc3Arr) : '';
-  if (__dW3) {
-    svg += '<path d="' + __dW3 + '" fill="none" stroke="' + __wc3Col + '" stroke-width="1.3" stroke-dasharray="5 3" stroke-opacity="0.95" stroke-linejoin="round" stroke-linecap="round"/>';
+  /* ★ 2026-11-14 §318（用户要求「SuperTrend + ADX 示意图要在 k线图上显示出来」）：SuperTrend 叠加线。
+     · 画在均线之后（叠加层）；**方向分段着色**（A 股口径：多头=红·线在价下作支撑，空头=绿·线在价上作阻力）；
+     · 方向翻转处**断开**（不画跨色直线连着 —— 颜色变了线还连着会误读成一条线换了色）；
+     · 翻转根打 ▲(转多·红·低点下方) / ▼(转空·绿·高点上方) 三角，悬停给日期与新止损/阻力位
+       （与 §IT VWAP 三角标同一画法同一描边，图上形状语义一致：三角=事件点）；
+     · 单点段不画线只留三角（一段只有一根时连线无从谈起 —— 诚实缺省）；
+     · 参考层：不计分、不进四指标、不发买卖信号（四指标打分是唯一买卖依据，纪律不变）。 */
+  if (__stOk) {
+    var __stSegs = [];
+    (function () {
+      var cur = null;
+      for (var sv = 0; sv < __stWin.length; sv++) {
+        var v2 = __stWin[sv], d2 = __stDirWin[sv];
+        if (v2 == null || !isFinite(v2) || d2 == null) { if (cur) { __stSegs.push(cur); cur = null; } continue; }
+        if (!cur || cur.d !== d2) { if (cur) __stSegs.push(cur); cur = { d: d2, pts: [] }; }
+        cur.pts.push([sv, v2]);
+      }
+      if (cur) __stSegs.push(cur);
+    })();
+    __stSegs.forEach(function (sg) {
+      if (sg.pts.length < 2) return;
+      var dS = '';
+      sg.pts.forEach(function (pt, pi) { dS += (pi ? ' L' : 'M') + X(pt[0]).toFixed(1) + ' ' + Y(pt[1]).toFixed(1); });
+      var colS = sg.d === 1 ? '#ff5252' : '#26c281';
+      svg += '<path d="' + dS + '" fill="none" stroke="' + colS + '" stroke-opacity="0.20" stroke-width="3.4" stroke-linejoin="round" stroke-linecap="round"/>';
+      svg += '<path d="' + dS + '" fill="none" stroke="' + colS + '" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>';
+    });
+    for (var sv2 = 1; sv2 < __stWin.length; sv2++) {
+      if (__stDirWin[sv2] == null || __stDirWin[sv2 - 1] == null) continue;
+      if (__stDirWin[sv2] === __stDirWin[sv2 - 1]) continue;
+      var upS = __stDirWin[sv2] === 1;
+      var kS = ks[sv2], xS = X(sv2), stV = __stWin[sv2];
+      if (upS) {
+        var yA = Math.min(priceB - 14, Y(kS.low) + 9);
+        svg += '<path d="M' + (xS - 4).toFixed(1) + ' ' + (yA + 7).toFixed(1) + 'L' + (xS + 4).toFixed(1) + ' ' + (yA + 7).toFixed(1) +
+          'L' + xS.toFixed(1) + ' ' + yA.toFixed(1) + 'Z" fill="#ff5252" stroke="#0b1020" stroke-width="0.5"><title>' +
+          escapeHtml(klDateTxt(kS.tt || kS.date)) + ' SuperTrend 转多：trailing 支撑上翻至 ' + (stV != null ? stV.toFixed(2) : '—') +
+          '（红=多头持有；参考层，不计分）</title></path>';
+      } else {
+        var yA2 = Math.max(priceT + 14, Y(kS.high) - 9);
+        svg += '<path d="M' + (xS - 4).toFixed(1) + ' ' + (yA2 - 7).toFixed(1) + 'L' + (xS + 4).toFixed(1) + ' ' + (yA2 - 7).toFixed(1) +
+          'L' + xS.toFixed(1) + ' ' + yA2.toFixed(1) + 'Z" fill="#26c281" stroke="#0b1020" stroke-width="0.5"><title>' +
+          escapeHtml(klDateTxt(kS.tt || kS.date)) + ' SuperTrend 转空：trailing 阻力下压至 ' + (stV != null ? stV.toFixed(2) : '—') +
+          '（绿=空头回避；参考层，不计分）</title></path>';
+      }
+    }
   }
 
   /* ★ 2026-10-31 §IT（用户要求「分时诱多/诱空整合到个股分析 · 图表 VWAP 叠加」）：
@@ -10096,8 +10194,7 @@ function renderChart(ind, focus, opt) {
       { nm: 'MA5', v: m5[m5.length - 1], c: '#ffd54f' },
       { nm: 'MA20', v: m20[m20.length - 1], c: '#ce93d8' },
       { nm: 'MA60', v: m60[m60.length - 1], c: '#5b8cff' }
-    ].concat(__wc3Has ? [{ nm: 'WC3', v: __wc3Arr[__wc3Arr.length - 1], c: __wc3Col }] : [])
-     .concat((__per === 'm5' && __vwapLast != null && isFinite(__vwapLast)) ? [{ nm: 'VWAP', v: __vwapLast, c: '#dfe6f3' }] : []).filter(function (it) { return it.v != null && isFinite(it.v); })
+    ].concat((__per === 'm5' && __vwapLast != null && isFinite(__vwapLast)) ? [{ nm: 'VWAP', v: __vwapLast, c: '#dfe6f3' }] : []).filter(function (it) { return it.v != null && isFinite(it.v); })
       .map(function (it) { return { nm: it.nm, v: it.v, c: it.c, y: Y(it.v) }; });
     if (!items.length) return;
     var GAP = 10.5, top = priceT + 8, bot = priceB - 4, i;
@@ -10338,6 +10435,100 @@ function renderChart(ind, focus, opt) {
       'font-family="' + M + '">套 ' + Math.round(__zlSer.zshtl[zlg2]) + '</text>';
   })();
 
+  /* ---- ★ 2026-11-14 §318：ADX / DI 序列（画 ADX 副图前算好；缓存口径与 __stCache 相同）----
+     klAdxSeries 全量递推 + slice(start) 对齐可见窗；首个有效值在 klines 下标 2×14=28（Wilder 起算门槛，
+     与 ATRC 闸②的 atrcADX 同一要求）→ 可见窗前段如实 null（次新股早期不硬算）。
+     typeof 守卫：切片沙箱没有 klAdxSeries 时 __adxOk=false → 副图明写「数据不足」，不挂图。 */
+  var __adxOk = false, __adxWin = null, __pdiWin = null, __mdiWin = null;
+  try {
+    if (typeof klAdxSeries === 'function') {
+      var __axKey = kl.length + '|' + String((kl[n - 1] && kl[n - 1].date) || '');
+      var __axC = (ind && ind.__adxCtx && ind.__adxCtx.key === __axKey) ? ind.__adxCtx.out : null;
+      if (!__axC) {
+        __axC = klAdxSeries(kl, 14);
+        if (ind) ind.__adxCtx = { key: __axKey, out: __axC };
+      }
+      if (__axC && __axC.ok) {
+        __adxWin = __axC.adx.slice(start);
+        __pdiWin = __axC.pdi.slice(start);
+        __mdiWin = __axC.mdi.slice(start);
+        __adxOk = __adxWin.length === ks.length;
+      }
+    }
+  } catch (eAx) { __adxOk = false; __adxWin = null; __pdiWin = null; __mdiWin = null; }
+
+  /* ===== ★ 2026-11-14 §318（用户要求「SuperTrend + ADX 示意图要在 k线图上显示出来」）ADX 副图 =====
+     · 与 KDJ 副图同款式：高 68、间距 14、左侧标签、右侧末根数值角标；**所有周期都画**。
+     · 三线：ADX 黄 #ffc857（趋势强度）/ +DI 红 #ff5252（多方方向）/ −DI 绿 #26c281（空方方向）——
+       红绿沿用 A 股涨红跌绿口径；黄与 KDJ 的 D 同色但不同面板（同列内一色一义：KDJ 列黄=D，ADX 列黄=ADX）。
+     · 参考线：20 无趋势/震荡（绿虚）· 25 强趋势（红虚）—— Wilder 经典阈值，与用户参考图一致：
+       ADX<20 不交易 SuperTrend / 20~25 弱趋势轻仓 / >25 强趋势可正常仓位。
+     · 纵轴 0~60 固定映射（股票 ADX 极少超 60），越界段由 adxclip 裁掉不 clamp（与 KDJ 的 J 同纪律）。
+     · 数据不足（< 2×14 根）→ 明写「ADX 数据不足」，不画线不硬算（诚实留白，与 KDJ 副图同一条纪律）。
+     · 参考层：不计分、不进四指标、不进钉钉、不发买卖信号。 */
+  (function () {
+    svg += '<text x="' + (padL - 8) + '" y="' + (adxT + 11) + '" fill="#6b779b" font-size="10.5" font-weight="600" text-anchor="end">ADX</text>';
+    if (!__adxOk) {
+      svg += '<text x="' + ((plotL + plotR) / 2).toFixed(1) + '" y="' + ((adxT + adxB) / 2 + 3.5).toFixed(1) +
+        '" fill="#5d6788" font-size="10.5" text-anchor="middle">ADX 数据不足（K线少于 2×14 根 —— Wilder 口径起算门槛，与 ATR 通道闸②同一把尺）</text>';
+      return;
+    }
+    function YX(v) { return adxB - (adxB - adxT) * (v / 60); }
+    svg += '<line x1="' + plotL + '" y1="' + YX(20).toFixed(1) + '" x2="' + plotR + '" y2="' + YX(20).toFixed(1) +
+      '" stroke="#26c281" stroke-width="1" stroke-opacity="0.38" stroke-dasharray="4 5"/>';
+    svg += '<line x1="' + plotL + '" y1="' + YX(25).toFixed(1) + '" x2="' + plotR + '" y2="' + YX(25).toFixed(1) +
+      '" stroke="#ff5252" stroke-width="1" stroke-opacity="0.38" stroke-dasharray="4 5"/>';
+    svg += '<text x="' + (padL - 8) + '" y="' + (YX(20) + 3.3).toFixed(1) + '" fill="#6b779b" font-size="9.5" text-anchor="end" font-family="' + M + '">20</text>';
+    svg += '<text x="' + (padL - 8) + '" y="' + (YX(25) + 3.3).toFixed(1) + '" fill="#6b779b" font-size="9.5" text-anchor="end" font-family="' + M + '">25</text>';
+    var ADX_LINES = [{ a: __pdiWin, c: '#ff5252', n: '+DI' }, { a: __mdiWin, c: '#26c281', n: '-DI' }, { a: __adxWin, c: '#ffc857', n: 'ADX' }];
+    svg += '<g clip-path="url(#' + uid + 'adxclip)">';
+    ADX_LINES.forEach(function (L) {
+      var d = '', started = false;
+      L.a.forEach(function (v, idx) {
+        if (v == null || !isFinite(v)) { started = false; return; }
+        d += (started ? ' L' : ' M') + X(idx).toFixed(1) + ' ' + YX(v).toFixed(1);
+        started = true;
+      });
+      if (!d) return;
+      svg += '<path d="' + d.trim() + '" fill="none" stroke="' + L.c + '" stroke-opacity="0.22" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>';
+      svg += '<path d="' + d.trim() + '" fill="none" stroke="' + L.c + '" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round"/>';
+    });
+    svg += '</g>';
+    /* ★ 2026-11-14 §318（用户要求「在对应 ADX 震荡市 / 弱趋势 / 强趋势转折处用箭头进行标注」）：
+       ADX 穿越 20 / 25 阈值的转折根画小箭头（与独立示意图 supertrend_adx_demo.png 的三支转折箭头同口径）：
+         上穿 20：震荡 → 弱趋势（轻仓试趋势）· 上穿 25：弱趋势 → 强趋势
+         下穿 25：强趋势 → 弱趋势（趋势衰减）· 下穿 20：趋势 → 震荡（不交易 SuperTrend）。
+       · 箭头点在该根 ADX 线上（YX(adx)），上穿朝上 / 下穿朝下；同根同穿只画一支（else-if 链天然互斥）；
+       · 前一根必须有效（a0 != null）—— 没有前值就无从判「穿越」，窗口起算段（< 2n）不硬标；
+       · 悬停给日期 + 档位含义 + 当根 ADX 实测值（不写「转折」两个字就完事 —— 用名字代替定义的教训同 §152）。 */
+    for (var ai = 1; ai < __adxWin.length; ai++) {
+      var a0 = __adxWin[ai - 1], a1 = __adxWin[ai];
+      if (a0 == null || a1 == null) continue;
+      var evA = null;
+      if (a0 < 20 && a1 >= 20) evA = { txt: '上穿 20：震荡 → 弱趋势（轻仓试趋势，ADX ' + a1.toFixed(1) + '）', col: '#f5a623', up: true };
+      else if (a0 < 25 && a1 >= 25) evA = { txt: '上穿 25：弱趋势 → 强趋势（趋势可正常仓位，ADX ' + a1.toFixed(1) + '）', col: '#ff5252', up: true };
+      else if (a0 >= 25 && a1 < 25) evA = { txt: '下穿 25：强趋势 → 弱趋势（趋势衰减，ADX ' + a1.toFixed(1) + '）', col: '#f5a623', up: false };
+      else if (a0 >= 20 && a1 < 20) evA = { txt: '下穿 20：趋势 → 震荡（不交易 SuperTrend，ADX ' + a1.toFixed(1) + '）', col: '#26c281', up: false };
+      if (!evA) continue;
+      var axX = X(ai), axY = YX(a1);
+      if (evA.up) {
+        var ayU = Math.max(adxT + 4, axY - 8);
+        svg += '<path d="M' + (axX - 3.4).toFixed(1) + ' ' + (ayU + 6).toFixed(1) + 'L' + (axX + 3.4).toFixed(1) + ' ' + (ayU + 6).toFixed(1) +
+          'L' + axX.toFixed(1) + ' ' + ayU.toFixed(1) + 'Z" fill="' + evA.col + '" stroke="#0b1020" stroke-width="0.5"><title>' +
+          escapeHtml(klDateTxt(ks[ai].tt || ks[ai].date)) + '　' + evA.txt + '（参考层，不计分）</title></path>';
+      } else {
+        var ayD = Math.min(adxB - 4, axY + 8);
+        svg += '<path d="M' + (axX - 3.4).toFixed(1) + ' ' + (ayD - 6).toFixed(1) + 'L' + (axX + 3.4).toFixed(1) + ' ' + (ayD - 6).toFixed(1) +
+          'L' + axX.toFixed(1) + ' ' + ayD.toFixed(1) + 'Z" fill="' + evA.col + '" stroke="#0b1020" stroke-width="0.5"><title>' +
+          escapeHtml(klDateTxt(ks[ai].tt || ks[ai].date)) + '　' + evA.txt + '（参考层，不计分）</title></path>';
+      }
+    }
+    var ali = ks.length - 1;
+    svg += '<text x="' + (plotR + 6) + '" y="' + (adxT + 11) + '" fill="#ffc857" font-size="10" font-family="' + M + '">ADX ' + (__adxWin[ali] != null ? __adxWin[ali].toFixed(1) : '—') + '</text>';
+    svg += '<text x="' + (plotR + 6) + '" y="' + (adxT + 23) + '" fill="#ff5252" font-size="10" font-family="' + M + '">+DI ' + (__pdiWin[ali] != null ? __pdiWin[ali].toFixed(1) : '—') + '</text>';
+    svg += '<text x="' + (plotR + 6) + '" y="' + (adxT + 35) + '" fill="#26c281" font-size="10" font-family="' + M + '">-DI ' + (__mdiWin[ali] != null ? __mdiWin[ali].toFixed(1) : '—') + '</text>';
+  })();
+
   /* 悬停热区已并入每根蜡烛的 <g class="cd">（见上方蜡烛循环）—— 不再单独画一层。
      ★ 拆成两层时 :hover 只到最上层，蜡烛的 `:hover .kb` 会变成死 CSS（本卡第一版踩过）。 */
   /* ★ §175：页脚口径随周期改写 —— 分钟图不能写「前复权」（分时数据本就是原始成交价）
@@ -10345,10 +10536,12 @@ function renderChart(ind, focus, opt) {
        并明示末根未完成 —— 不然用户会把「本周才走了两天」当成「周线缩量」。 */
   svg += '<text x="' + plotL + '" y="' + (H - 6) + '" fill="#5d6788" font-size="10">近 ' + ks.length +
     (__isMin
-      ? (' 根 · ' + MIN_PERIOD[__per] + ' · 均线/KDJ/形态按该周期K同口径重算 · 悬停看开高低收 · 点击柱子看量价关系')
+      ? (' 根 · ' + MIN_PERIOD[__per] + ' · 均线/KDJ/形态按该周期K同口径重算 · 底=ADX/DI(黄=ADX 趋势强度,虚线 20/25 阈值) · 悬停看开高低收 · 点击柱子看量价关系')
       : (__isWeek
-        ? ' 周 · 前复权 · MA5/20/60 = 5/20/60 周均线，KDJ(9,3,3) = 9 周 · 末根为本周进行中（量能偏小） · 点击柱子看量价关系'
-        : ' 日 · 前复权 · 副图：上=日KDJ / 中=周KDJ(9,3,3) / 下=主力状态(红=中线强势 黄=主力控盘 紫=短线资金 · 近似复刻) · 悬停看开高低收 · 点击柱子看当日量价关系')) + '</text>';
+        ? ' 周 · 前复权 · MA5/20/60 = 5/20/60 周均线，KDJ(9,3,3) = 9 周 · 末根为本周进行中（量能偏小） · 底=ADX/DI 副图 · 点击柱子看量价关系'
+        : (__isMonth
+          ? ' 月 · 前复权 · MA5/20/60 = 5/20/60 月均线，KDJ(9,3,3) = 9 月 · 末根为本月进行中（量能偏小） · 底=ADX/DI 副图 · 点击柱子看量价关系'
+          : ' 日 · 前复权 · 副图：上=日KDJ / 中=周KDJ(9,3,3) / 下=主力状态(红=中线强势 黄=主力控盘 紫=短线资金 · 近似复刻) / 底=ADX/DI(黄=ADX 趋势强度 · 红=+DI · 绿=-DI · 虚线 20/25 阈值) · 主图红/绿粗线=SuperTrend(多头红支撑/空头绿阻力,▲▼=翻转) · 悬停看开高低收 · 点击柱子看当日量价关系'))) + '</text>';
   svg += '</svg>';
 
   /* 顶部图例 chip：颜色与图上线条一一对应（★ 2026-10-04 起由 klDaysetHtml 统一生成，见 renderChart 之后） */
@@ -10400,7 +10593,6 @@ function renderChart(ind, focus, opt) {
     per: __per,
     /* ★ 2026-10-16：缓存数组与图上叠加线**同口径** —— 改为 ma5/ma20/ma60（MA10 已不上图，不再缓存）。 */
     ma5: ind.ma5 || null, ma20: ind.ma20 || null, ma60: ind.ma60 || null,
-    wc3: ind.wc3 || null,   /* ★ 2026-11-07 §263：3日加权成本全量数组 → 日徽标 WC3 chip 同源取值 */
     ind: ind || null,
     vr: (ind.volRatio != null && isFinite(ind.volRatio)) ? ind.volRatio : null };
 
@@ -10427,7 +10619,11 @@ function renderChart(ind, focus, opt) {
         ? '<span class="kl-chip" style="border-color:#5b8cff" title="当前为周线 K 线（腾讯 fqkline 前复权周K，每股 320 周）。分析口径与日线同一套代码：MA5/MA20/MA60 = 5/20/60 周均线，KDJ(9,3,3) = 9 周，MACD / ATR / 5 周均量同样按周根重算，突破/假突破/IOI/多头反转沿用同一判定器。'
           + '日线级结构带（生命周期阶段、挖土机回撤、关键位）在周线上**照常叠加**——它们都是「最近 N 根」窗口，在周K上读作「最近 N 周」，正是中期判断要看的东西（与分钟图相反：30 根 5 分钟只覆盖半天，同口径判定会几小时内反复翻转，故分钟图停用这些带）。'
           + '⚠️ 最后一根是**本周进行中**的未完成周K，量能与振幅天然偏小，别拿它判缩量/放量。参考层，不计分、不发买卖信号。">📆 <b>周线</b> 周期</span>'
-        : '')) +
+        : (__isMonth
+          ? '<span class="kl-chip" style="border-color:#5b8cff" title="当前为月线 K 线（腾讯 fqkline 前复权月K，最多 320 月；高分红股早期前复权价为负的月份会被剔除，历史可能短于此）。分析口径与日线同一套代码：MA5/MA20/MA60 = 5/20/60 月均线，KDJ(9,3,3) = 9 月，MACD / ATR / 5 月均量同样按月根重算，突破/假突破/IOI/多头反转沿用同一判定器。'
+            + '日线级结构带（生命周期阶段、挖土机回撤、关键位）在月线上**照常叠加**——它们都是「最近 N 根」窗口，在月K上读作「最近 N 月」（MA60 = 60 月 ≈ 5 年），看长周期位置正合适。'
+            + '⚠️ 最后一根是**本月进行中**的未完成月K，量能与振幅天然偏小，别拿它判缩量/放量；涨跌停是单日概念，月线上不标停板色。参考层，不计分、不发买卖信号。">🗓 <b>月线</b> 周期</span>'
+          : ''))) +
     /* ★ 2026-10-04（用户要求）：当日徽标组 .kl-dayset —— 默认=最新一根；点击某根 K 线后整组联动为该日数据。
        数据取自 ind.ma5/ma20/ma60 数组与该日 K 线本体（与图上曲线同源同口径），不另起算法；
        新增「量能」chip（成交量 + 量/前5日均量）；量比（实时口径）只对最新一根有意义 → 历史日该 chip 消失（诚实缺省）。
@@ -10479,7 +10675,7 @@ function renderChart(ind, focus, opt) {
          其余柱子照旧红涨绿跌 —— 例外只此一档，且已由 .kl-hint 与左侧角标同时披露。
        ★ §176：周线上这三枚图例**整组隐藏** —— 停机判定已按周期关闭（周K没有涨跌停），
          保留图例等于告诉用户「图上会出现金色蜡烛」，而实际上永远不会出现。图例必须与图的真实着色能力一致。 */
-    (__isWeek ? '' : (
+    ((__isWeek || __isMonth) ? '' : (
     '<span class="kl-chip"><i class="sh sh-cnd" style="color:#ffcc00"></i><b>涨停 K 线</b></span>' +
     '<span class="kl-chip"><i class="sh sh-cnd" style="color:#00c8ff"></i><b>跌停 K 线</b></span>' +
     '<span class="kl-chip"><i class="sh sh-cnd" style="color:#ff6a00"></i><b>涨停炸板 K 线</b></span>')) +
@@ -10502,9 +10698,24 @@ function renderChart(ind, focus, opt) {
       '周线 / 5·30 分钟线按「根」重算（' + __prN + ' 根 = ' + __prN + ' 周 / ' + __prN + ' 个 5 分钟）。' +
       '参考层：只标注，不计分、不进四指标 / VPS、不进钉钉、不发买卖信号。"><i class="sh sh-pline" style="color:' + __prCol + '"></i><b>' +
       __prN + ' 根高 ' + __press.hi.toFixed(2) + (__press.broke ? ' · 已突破' : ' · 压力位') + '</b></span>' : '') +
-    /* ★ 2026-11-07 §263：3日加权成本 WC3 图例 —— 虚线横线图标（sh-pline，与图上 stroke-dasharray="5 3" 同形）。
-       与图一致原则（§176 那条）：可见窗内一条 WC3 都算不出来（全 null）→ 图上没有这条线 → chip 不出现。 */
-    (__wc3Has ? '<span class="kl-chip" title="3日加权成本（WC3）= 近 3 根（含当根）Σ(收盘×成交量) ÷ Σ(成交量)，即滚动 3 日 VWAP（klWc3Of 单一真源，与右侧轴签 / 日徽标 chip 同源）。&#10;为什么有用：MA5 是等权收盘均值，无量暴涨 / 缩量拉升日会被拉高；WC3 按成交量摊 —— WC3 明显低于 MA5 = 涨得高、参与的人少（无量虚涨）；WC3 上穿价格 = 短线套牢盘解套区下移。&#10;口径：含当根、无未来函数、换周期（周/分钟）按根重算；量缺失按权重 0、Σ量=0 / 收盘脏数据 → 如实断线留白。&#10;参考层：只画线，不计分、不进四指标 / VPS、不进钉钉推送、不发买卖信号。"><i class="sh sh-pline" style="color:' + __wc3Col + '"></i><b>WC3 加权成本</b></span>' : '') +
+    /* ★ 2026-11-14 §318：SuperTrend / ADX 状态 chip —— 数值取图上同一份序列（__stWin / __adxWin 末根），
+       不另算第二套；序列缺失（切片沙箱 / 数据不足）→ 整枚 chip 不出（诚实缺省，不印「ST —」占位）。 */
+    (function () {
+      if (!__stOk) return '';
+      var ld = null, lv = null, sv3;
+      for (sv3 = __stWin.length - 1; sv3 >= 0; sv3--) {
+        if (__stWin[sv3] != null && __stDirWin[sv3] != null) { ld = __stDirWin[sv3]; lv = __stWin[sv3]; break; }
+      }
+      if (ld == null) return '';
+      var axV = (__adxOk && __adxWin && __adxWin[__adxWin.length - 1] != null) ? __adxWin[__adxWin.length - 1].toFixed(1) : null;
+      var tip = 'SuperTrend（ATR14×3 trailing 止损线）：红=多头（线在价格下方作支撑）· 绿=空头（线在上方作阻力）· ▲/▼ = 方向翻转根（悬停三角看日期与新位）。' +
+        '\nADX 副图：黄线=ADX 趋势强度（<20 震荡·不交易 / 20~25 弱趋势·轻仓 / >25 强趋势），红=+DI 多方方向 · 绿=-DI 空方方向；' +
+        '穿越 20/25 阈值的转折根带箭头标注（悬停看日期与档位）。' +
+        '\n参考层：不计分、不进四指标打分、不进钉钉推送、不发买卖信号（买卖决策仍以四指标打分为唯一依据）。';
+      return '<span class="kl-chip" title="' + escapeHtml(tip).replace(/\n/g, '&#10;') + '">🧭 ST ' +
+        '<b style="color:' + (ld === 1 ? '#ff5252' : '#26c281') + '">' + (ld === 1 ? '多头 ' : '空头 ') + (lv != null ? lv.toFixed(2) : '—') + '</b>' +
+        (axV ? ' · ADX <b>' + axV + '</b>' : '') + '</span>';
+    })() +
     /* ★ 2026-10-18 §166（用户要求「突破震荡结构的那根 k 线请用特殊颜色标记」）：
        洋红框 = 加仑·伍兹「区间突破」根（gwRangeState st='break'）。方向看三角：▲ 向上 / ▼ 向下。
        口径与点击面板同一份判定；参考层，不计分、不发信号。 */
@@ -10542,10 +10753,11 @@ function renderChart(ind, focus, opt) {
        （★ 2026-10-12 已先删：紫菱形 / 红叉 —— 2B 买点 / 卖点。） */
     /* ★ 2026-10-04 用户要求：倍量形态双柱图标 —— 与图上 .ws-dbl 同形同色：
        蓝 = 左倍量（前长后短 / 放量后缩量）· 橙 = 右倍量（前短后长 / 逐步放量）。
-       口径 = 「同色相邻两柱长短不同即成立」（用户明示忠实原定义、不加额外倍量门槛），
-       与点击面板 ④.5「倍量形态 × 倍量位置」逐字同源；同色同长（确认量）与异色不标。 */
-    '<span class="kl-chip"><i class="sh sh-dblL" style="color:#60a5fa"></i>左倍量（前长后短）</span>' +
-    '<span class="kl-chip"><i class="sh sh-dblR" style="color:#fb923c"></i>右倍量（前短后长）</span>' +
+       口径 = 「同色相邻两柱长短不同」（用户 2026-10-04 明示忠实原定义）+ ★ §321（2026-11-14 用户要求）
+       长柱量比 > KL_VR15_HOT(1.5) 放量门槛（口径 vpRawOf 的 r5，与放量柱 / 量比(近似) chip 同源）；
+       与点击面板 ④.5「倍量形态 × 倍量位置」同源（面板为纯形态描述，图上标记另加显示层门槛）；同色同长（确认量）与异色不标。 */
+    '<span class="kl-chip" title="左倍量形态 = 同色相邻两柱前长后短（放量后缩量）→ 双柱图标（蓝）。&#10;★ §321（2026-11-14 用户要求）量比门槛：长柱（左倍量 = 前根）量比必须 &gt; 1.5（口径 = 该根量 ÷ 前 5 根均量不含当根，与量能副图「量比&gt;1.5 放量柱」/ 点击面板「量比(近似)」chip 同源同尺）—— 长柱本身不是显著放量就不标，缺失 ≠ 通过。"><i class="sh sh-dblL" style="color:#60a5fa"></i>左倍量（前长后短·量比&gt;1.5）</span>' +
+    '<span class="kl-chip" title="右倍量形态 = 同色相邻两柱前短后长（逐步放量）→ 双柱图标（橙）。&#10;★ §321（2026-11-14 用户要求）量比门槛：长柱（右倍量 = 当根）量比必须 &gt; 1.5（口径 = 该根量 ÷ 前 5 根均量不含当根，与量能副图「量比&gt;1.5 放量柱」/ 点击面板「量比(近似)」chip 同源同尺）—— 长柱本身不是显著放量就不标，缺失 ≠ 通过。"><i class="sh sh-dblR" style="color:#fb923c"></i>右倍量（前短后长·量比&gt;1.5）</span>' +
     /* ★ 2026-10-13（用户要求）：MA5 斜率上拐 / 下拐 两枚图例 chip 已随「策略命中扫描」整块删除
        （该块是本图例唯一的来源；「MA5 斜率」本身仍在 K 线头部 chip 与表格列中正常显示）。
        ★ 2026-10-06 起的支撑 / 压力关键位图例（.sh-hline 横线图标 + 「关键位 N 条」chip）已按用户要求删除。 */
@@ -10800,14 +11012,15 @@ function klDaysetHtml(ent, gidx, kj, raw, kjChipHtml, per) {
        __u = '日'（日线，未传 per 时的默认，逐字不变）／'周'（周线）／'根'（分钟线）。
      ⚠️ 分钟周期同样受益：§175 当时没改这批标签，分钟图上的「20日动量」其实也是 20 根 5 分钟，
         这里一并修正 —— 两处是同一个 bug，不修反而成了「周线对、分钟错」的不一致。 */
-  var __u = (per === 'week') ? '周' : ((per === 'm5' || per === 'm30') ? '根' : '日');
-  /* __dn = 全称单位（塞进「20个___前收盘」这类句式里）：周 / 根 / 交易日 */
-  var __dn = (per === 'week') ? '周' : ((per === 'm5' || per === 'm30') ? '根' : '交易日');
+  /* ★ §317：月线 → '月'。MA5 斜率 = 5 月均线斜率，「20日动量」= 20 月涨幅，写「日」就是错标（周线先例） */
+  var __u = (per === 'month') ? '月' : ((per === 'week') ? '周' : ((per === 'm5' || per === 'm30') ? '根' : '日'));
+  /* __dn = 全称单位（塞进「20个___前收盘」这类句式里）：月 / 周 / 根 / 交易日 */
+  var __dn = (per === 'month') ? '月' : ((per === 'week') ? '周' : ((per === 'm5' || per === 'm30') ? '根' : '交易日'));
   /* __cnt / __cntNm = 计数单位。⚠️ 日线必须还原成「天数 / N天」（**不是**「日数 / N日」）——
      「斜率往上天数」是用户在选股器 F2、页面列、文档里看了很久的固定叫法，改动即为回归
      （第一版偷懒复用 __u 得到「斜率往上日数 3日」，被 _test_klchart 的 D3/D9 当场抓出）。 */
-  var __cnt = (per === 'week') ? '周' : ((per === 'm5' || per === 'm30') ? '根' : '天');
-  var __cntNm = (per === 'week') ? '周数' : ((per === 'm5' || per === 'm30') ? '根数' : '天数');
+  var __cnt = (per === 'month') ? '月' : ((per === 'week') ? '周' : ((per === 'm5' || per === 'm30') ? '根' : '天'));
+  var __cntNm = (per === 'month') ? '月数' : ((per === 'week') ? '周数' : ((per === 'm5' || per === 'm30') ? '根数' : '天数'));
   var kl = (ent && ent.kl) ? ent.kl : null, kD = kl ? kl[gidx] : null;
   if (!kD) return '';
   function mChip(nm, v, col) {
@@ -10932,14 +11145,62 @@ function klDaysetHtml(ent, gidx, kj, raw, kjChipHtml, per) {
       (isLast ? '四指标打分' : '四指标打分(至该' + __u + ')') + ' <b style="color:' + s4col + '">' + s4d.total + '</b>' +
       ' <em style="font-style:normal;color:' + (s4d.veto ? '#3ddc97' : s4ActColor(s4d.act, s4d.total)) + '">' + escapeHtml(s4act) + '</em></span>';
   }
-  /* ★ 2026-10-10（用户要求「四指标打分后，增加dev、MA5斜率往上天数、换手率显示」）：四指标打分之后追加三枚 chip。
+  /* ★ 2026-11-14 §320（用户要求「在四指标打分后标注每一根k线对应的ADX」）：四指标打分 chip 之后追加 ADX chip。
+     · 数值 = 基准根 gidx 的 ADX(14)（Wilder 口径）—— 与 ADX 副图**同一份序列**（ind.__adxCtx，
+       renderChart 画副图时已算好并缓存，此处只读不重算）；点击历史 K 线 → gidx 变 → 读该根的值，
+       天然「每一根 K 线对应自己的 ADX」，且 ADX 递推只用该根及之前数据（无未来函数）；
+     · 该根早于 2×14 起算门槛 / 序列缺失（批量行 / 降级沙箱）→ chip 消失（诚实缺省，缺失 ≠ 0）；
+     · 着色按档位（与 ADX 副图 20/25 阈值虚线同一把尺）：≥25 红=强趋势 · 20~25 橙=弱趋势 · <20 灰=震荡；
+     · 参考层：不计分、不进四指标打分、不发买卖信号。 */
+  var adxChip = '';
+  var __adxC = (ent && ent.ind && ent.ind.__adxCtx && ent.ind.__adxCtx.out) ? ent.ind.__adxCtx.out : null;
+  if (__adxC && __adxC.ok && __adxC.adx && __adxC.adx[gidx] != null && isFinite(__adxC.adx[gidx])) {
+    var adxV = __adxC.adx[gidx];
+    var adxCol = adxV >= 25 ? '#ff5252' : (adxV >= 20 ? '#f5a623' : '#8892b0');
+    var adxZone = adxV >= 25 ? '强趋势（可正常仓位）' : (adxV >= 20 ? '弱趋势（轻仓）' : '震荡（不交易 SuperTrend）');
+    /* ★ 2026-11-14 §322（用户追加）：ADX 数值前按 ±DI 相对位置加方向前缀 ——
+       +DI 在 -DI 上方 → 多头（红）/ 下方 → 空头（绿）；pdi == mdi（罕见）→ 不加前缀（不硬猜）。
+       pdi / mdi 与 ADX 同一份序列（ind.__adxCtx.out，klAdxSeries 返回体），只读不重算、无未来函数。 */
+    var __adxDirTx = '';
+    var __adxDirCol = '';
+    if (__adxC.pdi && __adxC.mdi && __adxC.pdi[gidx] != null && __adxC.mdi[gidx] != null &&
+        isFinite(__adxC.pdi[gidx]) && isFinite(__adxC.mdi[gidx])) {
+      if (__adxC.pdi[gidx] > __adxC.mdi[gidx]) { __adxDirTx = '多头'; __adxDirCol = '#ff5252'; }
+      else if (__adxC.pdi[gidx] < __adxC.mdi[gidx]) { __adxDirTx = '空头'; __adxDirCol = '#26c281'; }
+    }
+    /* ★ 2026-11-14 §322（用户要求「ADX(至该日)数值后增加显示supertrend的数值」）：同一根的 SuperTrend
+       trailing 值 + 方向 —— 与主图叠加线**同一份序列**（ind.__stCache，klSuperTrend 全量递推后缓存，
+       renderChart 画线时已算好，此处只读不重算）；dir=1 多头（红）/ −1 空头（绿）。
+       · 该根未起算（ATR 门槛前 st=null）/ 缓存缺失（批量行、降级沙箱）→ ST 段不出现、只显示 ADX
+         （诚实缺省，缺失 ≠ 0，绝不拿末根值冒充该根）；
+       · 无未来函数：st[gidx] 的递推只用 kl[0..gidx]。 */
+    var __stTx322 = '';
+    var __stC322 = (ent && ent.ind && ent.ind.__stCache && ent.ind.__stCache.out && ent.ind.__stCache.out.ok) ? ent.ind.__stCache.out : null;
+    if (__stC322 && __stC322.st && __stC322.st[gidx] != null && isFinite(__stC322.st[gidx]) &&
+        __stC322.dir && __stC322.dir[gidx] != null) {
+      var __stDir = __stC322.dir[gidx];
+      __stTx322 = ' <em style="font-style:normal;color:#5d6788">·</em> <em style="font-style:normal;color:' +
+        (__stDir === 1 ? '#ff5252' : '#26c281') + '">ST ' + (__stDir === 1 ? '多头 ' : '空头 ') +
+        __stC322.st[gidx].toFixed(2) + '</em>';
+    }
+    adxChip = '<span class="kl-chip" title="ADX(14) = 该' + __u + '的趋势强度（Wilder 口径，与下方 ADX 副图同一份序列 ind.__adxCtx，只读不重算；点击任意一根 K 线即显示那根对应的 ADX；ADX 递推只用该根及之前数据，无未来函数）。&#10;' +
+      '档位（Wilder 经典阈值，与副图 20/25 虚线同一把尺）：≥25 强趋势 · 20~25 弱趋势 · <20 震荡（<20 不交易 SuperTrend）。&#10;' +
+      '方向前缀（§322）：+DI 在 -DI 上方 → 多头 / 下方 → 空头（pdi/mdi 与 ADX 同一份序列）；两者相等 → 不加前缀。&#10;' +
+      '该根实测：ADX ' + adxV.toFixed(1) + ' → ' + adxZone +
+      ((__adxDirTx && __adxC.pdi && __adxC.pdi[gidx] != null && __adxC.mdi && __adxC.mdi[gidx] != null) ? ('（+DI ' + __adxC.pdi[gidx].toFixed(1) + ' / -DI ' + __adxC.mdi[gidx].toFixed(1) + '）') : '') + '。&#10;' +
+      'ST（SuperTrend trailing，§322）= 同一根的止损/反转参考线，与主图红/绿叠加线同一份序列（ind.__stCache）：多头=红线支撑位、空头=绿线阻力位；该根未起算 → 不显示。&#10;' +
+      '参考层：不计分、不进四指标打分、不发买卖信号。">' +
+      (isLast ? 'ADX' : 'ADX(至该' + __u + ')') +
+      (__adxDirTx ? ' <em style="font-style:normal;color:' + __adxDirCol + '">' + __adxDirTx + '</em>' : '') +
+      ' <b style="color:' + adxCol + '">' + adxV.toFixed(1) + '</b>' + __stTx322 + '</span>';
+  }
+  /* ★ 2026-10-10（用户要求「四指标打分后，增加dev、MA5斜率往上天数、换手率显示」）：四指标打分之后追加 chip。
      ① dev（偏离度）=（该日收盘 − 该日 MA5）÷ 该日 MA5 × 100（与「dev」列 / F14 同源公式，只读该日及之前）；
         参考带：0~6% 平台健康区（MA5 策略③不追高区）· >8% 超涨注意 · <0 收盘在 MA5 下方；着色随符号（红正绿负）。
      ② MA5斜率往上天数 = 截至 该日，MA5 斜率（ma5[t]−ma5[t−1]>0）连续为正的交易日数（1 = 翻上当天），
         与「MA5斜率往上天数」列 ma5UpDaysOf / 选股器 F2 同口径 —— 此处按该日截断逐日回数（历史日即「至该日」口径）；
         序列中遇 null / 数据不足即停（诚实缺省），gidx<1 时 chip 消失。
-     ③ 换手率 = 实时快照口径（ind.turnover，东财 f8 / 腾讯 a[38]）—— 仅最新根显示；
-        日 K 无逐日换手率字段，历史日 chip 消失（诚实缺省，与量价面板脚注同一约定），不拿当日值冒充历史。 */
+     ③ 换手率 ★ 2026-11-14 §322 已移到量比 chip 之后并放开历史根（近似口径），见下方 §322 注释块。 */
   var devChip = '', upChip = '', torChip = '';
   if (ent.ma5 && ent.ma5[gidx] != null && isFinite(ent.ma5[gidx]) && ent.ma5[gidx] > 0 && isFinite(kD.close)) {
     var devV = (kD.close - ent.ma5[gidx]) / ent.ma5[gidx] * 100;
@@ -10956,8 +11217,42 @@ function klDaysetHtml(ent, gidx, kj, raw, kjChipHtml, per) {
     upChip = '<span class="kl-chip' + (ud > 0 ? ' up' : '') + '" title="MA5斜率往上天数 = 截至该日，MA5 斜率（ma5[t]−ma5[t−1]>0）连续为正的交易日数（1 = 翻上当天；与页面「MA5斜率往上天数」列 / 选股器 F2 同口径）。&#10;只用该日及之前数据，无未来函数；序列中断（跌破/数据不足）即停。仅描述均线状态，不构成买卖依据。">' +
       (isLast ? '斜率往上' + __cntNm : '斜率往上' + __cntNm + '(至该' + __u + ')') + ' <b>' + ud + __cnt + '</b></span>';
   }
+  /* ★ 2026-11-14 §322（用户要求「量比(近似)后增加换手率」「MA5前增加对应k线的涨跌幅」）：两枚 chip。
+     ① 涨跌幅 chip —— 位置在 MA5 之前：该根收盘 ÷ 前一根收盘 − 1 × 100（对应 K 线自身涨跌幅度，
+        与图上红绿 K 线同源；点击历史根即显示那根自己的涨跌幅）。
+        · gidx=0（下载历史起点，无前一根）/ 前收 ≤0 / 脏数据 → chip 消失（诚实缺省）；
+        · 单根属性、无「(至该日)」后缀（它不是截至量，就是那一根的事）；红涨绿跌（.up/.down 与区间 / 动量 chip 同律）。
+     ② 换手率 chip —— 从「仅最新根 · 斜率往上天数之后」移到量比 chip 之后（用户指定位置），并放开到历史根：
+        · 最新根且有实时快照（ind.turnover，东财 f8 / 腾讯 a[38]）→ 真值，标签「换手率」；
+        · 历史根（或快照缺失）→ 近似 = 该根量(手)×100 ÷ 流通股本 × 100，流通股本走 zlztFloatSharesOf
+          （流通市值主路 / 换手率自校准兜底，与主力状态副图同一来源）→ 标签「换手率(近似)」；
+          ⚠️ 流通股本是**当前快照**：历史区间内有送转 / 增发时逐日值有系统偏差（title 如实披露，仅量级参考）；
+        · 流通股本取不到 / 成交量缺失 → chip 消失（诚实缺省，缺失 ≠ 0）。 */
+  var pctChip = '';
+  if (gidx >= 1 && kl[gidx - 1] && kl[gidx - 1].close != null && isFinite(kl[gidx - 1].close) &&
+      kl[gidx - 1].close > 0 && kD.close != null && isFinite(kD.close)) {
+    var pctV322 = (kD.close - kl[gidx - 1].close) / kl[gidx - 1].close * 100;
+    pctChip = '<span class="kl-chip ' + (pctV322 >= 0 ? 'up' : 'down') + '" title="涨跌幅 = 该根收盘 ÷ 前一根收盘 − 1 × 100（对应 K 线自身的涨跌幅度，与图上红绿 K 线同源；无未来函数）。&#10;红涨绿跌；下载历史第一根（无前一根）不显示。">涨跌幅 <b>' +
+      (pctV322 >= 0 ? '+' : '') + pctV322.toFixed(2) + '%</b></span>';
+  }
+  var torChip = '';
+  var __torV = null, __torNear = false;
   if (isLast && ent.ind && ent.ind.turnover != null && isFinite(ent.ind.turnover)) {
-    torChip = '<span class="kl-chip" title="换手率（实时口径）：当日成交量 ÷ 流通股本 × 100，取实时快照（东财 f8 / 腾讯 a[38]，与「换手」列同源）。&#10;日 K 无逐日换手率字段 → 历史日 chip 消失（诚实缺省，不拿当日值冒充历史）。">换手率 <b>' + (+ent.ind.turnover).toFixed(2) + '%</b></span>';
+    __torV = +ent.ind.turnover;
+  } else {
+    var __fs322 = (typeof zlztFloatSharesOf === 'function') ? zlztFloatSharesOf(ent.ind || null) : null;
+    if (__fs322 != null && isFinite(__fs322) && __fs322 > 0 && vol != null && vol > 0) {
+      __torV = vol * 100 / __fs322 * 100;
+      __torNear = true;
+    }
+  }
+  if (__torV != null && isFinite(__torV) && __torV >= 0) {
+    torChip = '<span class="kl-chip" title="换手率' + (__torNear ? '（近似）' : '（实时口径）') +
+      ' = 当' + __u + '成交量 ÷ 流通股本 × 100' + (__torNear
+      ? '。&#10;⚠️ 历史根用「当前流通股本快照」近似（zlztFloatSharesOf：流通市值主路 / 换手率自校准兜底，与主力状态副图同源）—— 区间内有送转 / 增发时逐日值有系统偏差，仅供量级参考。'
+      : '，取实时快照（东财 f8 / 腾讯 a[38]，与「换手」列同源）。') +
+      '&#10;流通股本取不到 / 成交量缺失 → chip 消失（诚实缺省）。">换手率' + (__torNear ? '(近似)' : '') +
+      ' <b>' + __torV.toFixed(2) + '%</b></span>';
   }
   /* ★ 2026-10-13 §112（用户要求「分位 / 10日动量 数值在 K 线 换手率后显示」）：
      两枚 chip 直接复用 §111 的 dingMomPosOf（与钉钉推送「动量状态」同一把尺子，不在此另写判据）：
@@ -11029,14 +11324,12 @@ function klDaysetHtml(ent, gidx, kj, raw, kjChipHtml, per) {
   return '<span class="kl-chip" style="border-color:#5b8cff">📅 <b>' + escapeHtml(klDateTxt(kD.tt || kD.date)) + '</b>' + (isLast ? '（最新）' : '') + '</span>' +
     /* ★ 2026-10-16（用户要求「工作台，k线图均线改为5日，20日，60日」）：本组 MA chip 与图上叠加线
        **一一对应 · 同色同序**（背离就会「看图要猜」）→ MA5 黄 / MA20 紫 / MA60 蓝。
-       取值 = 基准根 gidx 那一根（默认末根；点击历史根即「至该日」口径），空值 mChip 自渲染「—」。 */
+       取值 = 基准根 gidx 那一根（默认末根；点击历史根即「至该日」口径），空值 mChip 自渲染「—」。
+       ★ 2026-11-14 §322（用户指定位置）：日期之后、MA5 之前 → 涨跌幅（该根本身涨跌幅度）。 */
+    pctChip +
     mChip('MA5', ent.ma5 ? ent.ma5[gidx] : null, '#ffd54f') +
     mChip('MA20', ent.ma20 ? ent.ma20[gidx] : null, '#ce93d8') +
     mChip('MA60', ent.ma60 ? ent.ma60[gidx] : null, '#5b8cff') +
-    /* ★ 2026-11-07 §263：3日加权成本 chip —— 与图上 WC3 虚线同色同源（ind.wc3 全量数组、klWc3Of 逐根值）。
-       口径写进 title 随时可查（含与 MA5 的读法差异）；数据不足 / 全零量 → 「—」诚实缺省。参考层。 */
-    '<span class="kl-chip" title="3日加权成本（WC3）= 近 3 根（含当根）Σ(收盘×成交量) ÷ Σ(成交量) ≈ 滚动 3 日 VWAP（klWc3Of 单一真源；只用该根及之前数据，无未来函数；换周期按根重算）。&#10;与 MA5 的读法差异：MA5 是等权收盘均值，无量暴涨日会被拉高；WC3 按成交量摊 —— 缩量冲高日 WC3 明显低于 MA5 = 涨得高、参与的人少，成本并未跟上。&#10;量缺失按权重 0 不作废整窗；Σ量=0 / 收盘脏数据 → 如实留白。参考层：不计分、不进四指标、不构成买卖依据。"><i class="dot" style="background:' + ((typeof KL_WC3_COLOR === 'string') ? KL_WC3_COLOR : '#ffffff') + '"></i>WC3 <b>' +
-    (ent.wc3 && ent.wc3[gidx] != null && isFinite(ent.wc3[gidx]) ? (+ent.wc3[gidx]).toFixed(2) : '—') + '</b></span>' +
     '<span class="kl-chip ' + (rngD >= 0 ? 'up' : 'down') + '">' + (isLast ? '区间' : '区间(至该' + __u + ')') +
     ' <b>' + (rngD >= 0 ? '+' : '') + rngD.toFixed(2) + '%</b></span>' +
     '<span class="kl-chip">' + (isLast ? '区间高/低' : '区间高/低(至该' + __u + ')') + ' <b>' +
@@ -11049,16 +11342,19 @@ function klDaysetHtml(ent, gidx, kj, raw, kjChipHtml, per) {
       (isLast ? '20' + __u + '动量' : '20' + __u + '动量(至该' + __u + ')') + ' <b>' + (mom20v >= 0 ? '+' : '') + mom20v.toFixed(2) + '%</b></span>' : '') +
     ma20slChip +
     vrChip +
+    /* ★ 2026-11-14 §322（用户指定位置）：量比之后 → 换手率（最新根实时快照真值 / 历史根当前流通股本近似） */
+    torChip +
     atrChip +
     kjChip +
     mom5Chip +
     slopeChip +
-    /* ★ 2026-10-10（用户指定位置）：MA5 斜率之后 → 四指标打分（逐根，s4kBuyDay 同口径）→ dev → 斜率往上天数 → 换手率
+    /* ★ 2026-10-10（用户指定位置）：MA5 斜率之后 → 四指标打分（逐根，s4kBuyDay 同口径）→ dev → 斜率往上天数
+       （★ 2026-11-14 §322：换手率 chip 已移到量比之后，此处不再拼接）
        ★ 2026-10-13 §112（用户指定位置）：换手率之后 → 分位 → 10日动量（§111 同源口径）
        ★ 2026-10-17 §152：§151 的「挖土机位置」chip 已移除（改为图顶部区域带，见 renderChart __digBands）
        ★ 2026-11-01 §247：10日动量之后 → 主力状态（红/黄/紫/套牢 + 事件，仅日线）
        ★ 2026-11-07 §240：5日动量 紧贴 MA5斜率 之前（用户口令「MA5斜率(至该日) 前增加显示 5日动量(至该日)」） */
-    s4chip + devChip + upChip + torChip + posChip + mom10Chip + zlztChip;
+    s4chip + adxChip + devChip + upChip + posChip + mom10Chip + zlztChip;
 }
 
 function indItem(label, value, desc, status) {
@@ -12651,11 +12947,14 @@ function itTrapScan(m5, ctx) {
   return out;
 }
 
-/* 当日分时体检卡：迷你分时线（收盘价 vs VWAP）+ 信号标记 + 信号清单 */
-function itTrapCardHtml(sc) {
+/* 当日分时体检卡：迷你分时线（收盘价 vs VWAP）+ 信号标记 + 信号清单
+   ★ 2026-11-14 §319：第二参 innerOnly = true 时输出**内芯**（无 .card 外壳）——
+   供 K 线卡「分时体检」档位嵌进 .kl-body（kl-body 已在卡片内，再套一层 .card = 卡中卡）；
+   默认 / undefined 保持旧输出逐字不变（历史调用点只有 buildResultHTML §IT 块，该块 §319 起已移除）。 */
+function itTrapCardHtml(sc, innerOnly) {
   if (!sc || !sc.ok) return '';
   var i;
-  var head = '<div class="card"><div class="card-title">当日分时体检 · 诱多/诱空扫描（5分钟K）</div>' +
+  var head = (innerOnly ? '' : '<div class="card">') + '<div class="card-title">当日分时体检 · 诱多/诱空扫描（5分钟K）</div>' +
     '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">' +
     '<b style="font-size:13.5px;color:' + sc.vcol + '">' + escapeHtml(sc.verdict) + '</b>' +
     '<span style="font-size:11.5px;color:#8fa3c8">' + escapeHtml((function (_d) { _d = String(_d || ''); return _d.length === 8 ? (_d.slice(0, 4) + '-' + _d.slice(4, 6) + '-' + _d.slice(6, 8)) : _d; })(sc.date)) + ' · ' + sc.n + ' 根5分钟K</span>' +
@@ -12743,7 +13042,7 @@ function itTrapCardHtml(sc) {
   var foot = '<div class="stage-desc" style="font-size:11px;color:#5d6788;margin-top:4px">口径：均价线=典型价(H+L+C)/3×量累计近似VWAP（5分钟K无成交额字段，非真实金额加权）；「跌破均价线不收回」按 5 分钟粒度放宽为「下一根K收回」；' +
     '位置权重：60日分位≥60% 诱多 ×1.25、≤45% 诱空 ×1.25；≥2 条同类信号才下方向结论。' +
     '<b style="color:#8fa3c8">盘口维度（托单/压单/撤单/内外盘）属 Level-2 数据，本台不可算 —— 需人工看盘口。</b>本卡为形态描述层：不进四指标打分、不生成买卖信号。</div>';
-  return head + stat + svg + list + foot + '</div>';
+  return head + stat + svg + list + foot + (innerOnly ? '' : '</div>');
 }
 
 function renderOpen8Card(o8) {
@@ -13898,6 +14197,14 @@ function buildResultHTML(quote, ind, sr, compact, source, actv, cap, rec, open8,
         /* ★ §176：周线排在日线之后、分钟之前 —— 阅读顺序按「周期跨度」递减（日 → 周 → 5 分 → 30 分），
            而不是按实现顺序（分钟先做）。按钮位置不承载功能语义，但承载用户的心智顺序。 */
         '<button type="button" class="klp" data-p="week" title="周线 K 线（腾讯 fqkline 前复权周K，每股 320 周）。MA5/20/60 = 5/20/60 周均线，KDJ(9,3,3) = 9 周；生命周期/挖土机/关键位等结构带保留（读作「最近 N 周」）。末根为本周进行中。">周线</button>' +
+        /* ★ §317：月线排在周线之后、分钟之前 —— 阅读顺序仍按「周期跨度」递减（日 → 周 → 月 → 5 分 → 30 分）。
+           月K走同一条 fqkline 通道（param 周期位 month，节点 qfqmonth），源健康度与周线完全独立（MONTH_SRC）。 */
+        '<button type="button" class="klp" data-p="month" title="月线 K 线（腾讯 fqkline 前复权月K，最多 320 月 ≈ 26 年）。MA5/20/60 = 5/20/60 月均线（MA60 = 60 月 ≈ 5 年），KDJ(9,3,3) = 9 月；生命周期/挖土机/关键位等结构带保留（读作「最近 N 月」）。末根为本月进行中（量能偏小）；涨跌停是单日概念，月线不标停板色。⚠️ 高分红股（如茅台）早期月份的前复权价为负值，这些月份会被剔除 —— 历史可能明显短于 320 月（茅台自 2016-07 起，仍足够 MA60）。">月线</button>' +
+        /* ★ 2026-11-14 §319（用户要求「当日分时体检整合到k线图，列在5分钟前」）：新增「分时体检」档位 ——
+           排在月线之后、5分钟之前（仍按用户心智顺序：结构周期 日→周→月 之后是当日 5 分钟形态层，再进纯 5 分钟K）。
+           点击后 .kl-body 渲染 itTrapCardHtml(sc, true) 内芯（无 .card 外壳，避免卡片套卡片）；
+           数据优先复用 buildResultHTML 已写入 window.__IT_TRAP 的扫描结果（零请求），缺失时 minIndOf('m5') 现算。 */
+        '<button type="button" class="klp" data-p="it" title="当日分时体检 · 诱多/诱空扫描（5分钟K）：收盘价 vs VWAP 均价线迷你分时 + 诱多/诱空信号清单 + 口径说明。优先复用本次分析已算好的扫描结果（零网络请求）；缺失时自动取 5 分钟K现算（取不到时如实报错，不退化成日线冒充）。形态描述层：不进四指标打分、不发买卖信号、不进钉钉。">分时体检</button>' +
         '<button type="button" class="klp" data-p="m5" title="5 分钟 K 线（腾讯 mkline，每股 320 根）。指标与形态判定与日线同一套代码，只是输入粒度换成 5 分钟根。">5分钟</button>' +
         '<button type="button" class="klp" data-p="m30" title="30 分钟 K 线（腾讯 mkline）。同上：同一套指标/形态判定，按 30 分钟根重算。">30分钟</button>' +
         '</span></div>' +
@@ -13972,11 +14279,12 @@ function buildResultHTML(quote, ind, sr, compact, source, actv, cap, rec, open8,
   // 早盘5分钟K线诊断（开盘八法）— 实时基于当日前3根5分钟K线
   if (open8) html += renderOpen8Card(open8);
 
-  /* ★ 2026-10-31 §IT（用户要求）：当日分时体检卡（诱多/诱空扫描）—— 排在开盘八法卡之后。
-     数据复用本函数入参 m5（analyzeStock 已抓的当日 5 分钟K），零新增网络请求。
-     扫描结果写入 window.__IT_TRAP[ckey]（FIFO 上限 24），供 5 分钟K线图（renderChart §IT 分支）
-     叠加 VWAP 线与信号标记 —— 同一次分析的卡与图必然读同一份结果。无 m5 数据时整卡省略
-     （开盘八法卡已报告取数失败原因，不重复刷屏）。 */
+  /* ★ 2026-10-31 §IT（用户要求：当日分时体检诱多/诱空扫描）；★ 2026-11-14 §319 起只算不渲染：
+     独立卡已迁入 K 线卡「分时体检」档位（见 init 的 .klp 委托 it 分支），本块保留三件事：
+     ① 数据复用本函数入参 m5（analyzeStock 已抓的当日 5 分钟K），零新增网络请求；
+     ② 扫描结果写入 window.__IT_TRAP[ckey]（FIFO 上限 24），供 5 分钟K线图（renderChart §IT 分支）
+       叠加 VWAP 线与信号标记 —— 同一次分析的卡与图必然读同一份结果；
+     ③ 分时体检档位点击时优先复用（不重算）。无 m5 数据时跳过（不写缓存，档位点击走现算路径）。 */
   try {
     if (m5 && m5.length >= 20) {
       var __pcIt = (quote && isFinite(quote.prevClose) && quote.prevClose > 0) ? quote.prevClose : null;
@@ -14002,7 +14310,11 @@ function buildResultHTML(quote, ind, sr, compact, source, actv, cap, rec, open8,
           var __itKeys = Object.keys(window.__IT_TRAP);
           while (__itKeys.length > 24) { delete window.__IT_TRAP[__itKeys[0]]; __itKeys.shift(); }
         } catch (eITc) {}
-        html += itTrapCardHtml(__scIt);
+        /* ★ 2026-11-14 §319（用户要求「当日分时体检整合到k线图，列在5分钟前」）：独立卡**移除** ——
+           整档迁入 K 线卡周期档位「分时体检」（月线之后、5分钟之前；渲染走 init 内 .klp 委托的 it 分支）。
+           这里只保留扫描 + window.__IT_TRAP 写入，两个消费方都不许断粮：
+           ① 5 分钟图（renderChart §IT 分支）的 VWAP 叠加信号三角标读 __IT_TRAP；
+           ② 分时体检档位点击时优先复用这份结果（零重复计算、零网络请求）。 */
       }
     }
   } catch (eItCard) {}
@@ -18551,8 +18863,10 @@ function dblVolOf(klines) {
    而图上要逐根取标记 → 需要「第 i 根当时的形态」。
    实现上**不重写第二套口径**：dblVolOf(kl.slice(0, i + 1)) 就是「第 i 根当时」的同一判定 → 与点击面板 ④.5
    「倍量形态 × 倍量位置」逐字同源，永不漂移（口径只此一份）。
-   用户口径（2026-10-04 明示）：**忠实原定义 —— 同色相邻两柱长短不同即标**（哪怕只差 1/4），
+   用户口径（2026-10-04 明示）：**忠实原定义 —— 同色相邻两柱长短不同即标**（哪怕只差 1/4）；
    不加额外倍量门槛；同色同长 = 确认量、异色 = 不构成形态关系 → 一律**不标**。
+   ★ 2026-11-14 §321（用户要求）：门槛收紧 —— 长柱（量大那根）量比 > KL_VR15_HOT(1.5) 才标
+   （口径 = vpRawOf 的 r5，与放量柱 / 量比(近似) chip 同源；取不到不标，缺失 ≠ 通过）。
    ⚠️ 分层纪律：只描述、不计分、不改 VPS/四指标、不进钉钉推送、不发买卖指令（与 dblVolOf 同层）。 */
 function wsDblFormOf(kl, i) {
   if (!kl || !kl.length || i == null || i < 0 || i > kl.length - 1) return { ok: false, why: '下标越界' };
@@ -18562,9 +18876,43 @@ function wsDblFormOf(kl, i) {
   if (!d || !d.ok) return { ok: false, why: (d && d.why) || '判定失败' };
   if (d.kind === 'none') return { ok: false, why: '前两根量柱不同色 → 不构成倍量形态关系' };
   if (d.kind === 'confirm') return { ok: false, why: '同色同长 = 确认量（不属左 / 右倍量）' };
+  /* ★ 2026-11-14 §321（用户要求「左倍量（前长后短）右倍量（前短后长），量比必须大于1.5」）：
+     长柱量比闸 —— 形态档原本「长短不同即成立（哪怕只差 1/4）」（2026-10-04 口径），按用户新要求收紧：
+     「倍量」必须真的是显著放量 —— **长柱**（两柱中量大的那根）量比必须 > KL_VR15_HOT(1.5)：
+       · 左倍量（前长后短）→ 长柱 = 前根 kl[i-1]；右倍量（前短后长）→ 长柱 = 当根 kl[i]；
+       · 量比口径 = 该根量 ÷ 该根之前 5 根均量（不含当根）—— 与量能副图「量比>1.5 放量柱」**同一把尺**
+         （同为严格版：前 5 根任一根 volume 为 null / 非有限数 → 该根不判；比「量比(近似)」chip 的
+         vpRawOf.r5 严一格，理由同 §212 放量柱注释：isFinite(null)===true 的坑，宁可少标不凑数）；
+       · 取不到（前 5 根脏量 / 均量 0 / 次新不足 5 根）→ 不标（诚实缺省：缺失 ≠ 通过）；
+       · 无未来函数：长柱的 r5 只读该根及之前 5 根；形态判定本身也只读 kl[0..i]。
+     分层纪律不变：只描述、不计分、不改 VPS / 四指标、不进钉钉推送、不发买卖指令。 */
+  var __vrTh321 = (typeof KL_VR15_HOT === 'number' && isFinite(KL_VR15_HOT) && KL_VR15_HOT > 0) ? KL_VR15_HOT : 1.5;
+  var __longI321 = d.isLeft ? (i - 1) : i;
+  var __vr5 = null;
+  try {
+    if (__longI321 >= 5) {
+      var __s5321 = 0, __ok5321 = true, __a321;
+      for (__a321 = __longI321 - 5; __a321 < __longI321; __a321++) {
+        var __v5b321 = kl[__a321] && kl[__a321].volume;
+        if (__v5b321 == null || !isFinite(__v5b321)) { __ok5321 = false; break; }
+        __s5321 += __v5b321;
+      }
+      var __sv321 = kl[__longI321] && kl[__longI321].volume;
+      if (__ok5321 && __s5321 > 0 && __sv321 != null && isFinite(__sv321) && __sv321 > 0) {
+        __vr5 = +(__sv321 / (__s5321 / 5)).toFixed(2);
+      }
+    }
+  } catch (eVr321) { __vr5 = null; }
+  if (!(__vr5 != null && isFinite(__vr5) && __vr5 > __vrTh321)) {
+    return { ok: false, why: (d.isLeft ? '前根（长柱）' : '当根（长柱）') + '量比' +
+      (__vr5 != null && isFinite(__vr5) ? ' = ×' + __vr5.toFixed(2) + ' ≤ ' + __vrTh321 : '取不到（数据不足）') +
+      ' → 未达放量门槛，不标（§321）' };
+  }
   return { ok: true, idx: i, date: kl[i].date, isLeft: !!d.isLeft, formName: d.formName, kind: d.kind,
     colA: d.colA, colB: d.color, ratio: d.ratio, pos: d.pos, band: d.band, posName: d.posName,
-    formTxt: d.formTxt, comboTxt: d.comboTxt, t: d.t };
+    vrLong: __vr5,
+    formTxt: d.formTxt, comboTxt: d.comboTxt,
+    t: d.t + '｜长柱（' + (d.isLeft ? '前根' : '当根') + '）量比 ×' + __vr5.toFixed(2) + ' > ' + __vrTh321 + ' ✓（§321 放量门槛）' };
 }
 /* ==== 超跌反弹判定（★ 2026-11-04 §262：用户要求「把超跌反弹的思路增加到生命周期平台k线提示」）====
    口径 = 本会话给用户的通达信【超跌反弹·精简版】逐字同源（四条件 AND，全滞后、只用 kl[0..i]）：
@@ -20151,7 +20499,7 @@ function open8StratPanelHtml(o8day, st) {
        ① 量开幅 gap = (开−昨收)/昨收：|gap| ≥ 1% 才算「有效开向」（图①口径）；
        ② 量比 ≈ 当日量 ÷ 前5日均量（不含当日，≥3根有效才作答）——近似原文「9:30~10:00 同期量比」，
          阈值沿用图③：1.5 倍放量 / 0.7 倍缩量；**近似口径必须在块内披露**；
-       ③ 均价线 ≈ 当日典型价 TP=(H+L+2C)/4（日K无逐笔成交额；kl 无 amount 字段，WC3 同款约束），
+       ③ 均价线 ≈ 当日典型价 TP=(H+L+2C)/4（日K无逐笔成交额；kl 无 amount 字段，同款约束），
          收盘 ≥ TP → 收在线上（主动承接）；
        ④ 缺口回补（近似）：高开且当日最低 ≤ 昨收 → 缺口当日已回补（图③「回补力度减半」的日线近似）；
        ⑤ 三档基调（互斥、按优先级）：
@@ -20708,6 +21056,108 @@ function atrcADX(klines, i, n) {
   out.adx = adx;
   out.pdi = str > 0 ? 100 * sp / str : 0;
   out.mdi = str > 0 ? 100 * sm / str : 0;
+  return out;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ★ 2026-11-14 §318（用户要求「SuperTrend + ADX 示意图要在 k线图上显示出来」）：
+   K 线图叠加层的两个序列计算器。与 2026-11-14 独立示意图 supertrend_adx_demo.py 同一套公式。
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* SuperTrend(n=14, mult=3) —— ATR trailing 止损线（常用口径）：
+   · ATR 用 Wilder 递推：首值 = 前 n 根 TR 均值，之后 New = Old×(n−1)/n + TR/n；
+   · 基本带 ub/lb = (H+L)/2 ∓ mult×ATR；finalUB 只下移（close 上穿则放开重置）、finalLB 只上移（close 下穿则放开重置）；
+   · 方向：多头跌破**前一根** finalLB（trailing 支撑）才转空；空头升破**前一根** finalUB（trailing 阻力）才转多；
+     ⚠️ 翻转条件必须对比**前一根**的 final 带 —— 示意图第一版误用当根/错带导致每根都翻转（Buy/Sell 刷屏），已踩；
+   · 颜色 A 股口径（renderChart 消费）：多头 = 红（线在价下作支撑）、空头 = 绿（线在价上作阻力）。
+   返回 { ok, st[], dir[], n0 }；st/dir 与 klines **按下标对齐**（i=0 及 ATR 未满 n 根 → null）。
+   脏数据根（OHLC 非正）→ 该根 null 且不推进 ATR（脏根不污染递推）。
+   只读 klines[0..i]（递推天然无未来）；参考层：不计分、不进四指标、不进钉钉、不发买卖信号。 */
+function klSuperTrend(klines, n, mult) {
+  var out = { ok: false, st: [], dir: [], n0: -1 };
+  if (!Array.isArray(klines) || klines.length < 2) return out;
+  if (n == null || !(n >= 1)) n = 14;
+  if (mult == null || !(mult > 0)) mult = 3;
+  var len = klines.length, i;
+  out.st.push(null); out.dir.push(null);               /* i=0：无前收，TR 无法定义 → null 对齐 */
+  var atr = 0, trCnt = 0, fub = 0, flb = 0, dir = 1, started = false;
+  for (i = 1; i < len; i++) {
+    var k = klines[i], p = klines[i - 1];
+    if (!k || !p || !(k.high > 0) || !(k.low > 0) || !(k.close > 0) || !(p.close > 0)) {
+      out.st.push(null); out.dir.push(null); continue;
+    }
+    var tr = Math.max(k.high - k.low, Math.abs(k.high - p.close), Math.abs(k.low - p.close));
+    if (trCnt < n) {
+      atr += tr; trCnt++;
+      if (trCnt < n) { out.st.push(null); out.dir.push(null); continue; }
+      atr /= n;                                        /* 首值 = 前 n 根 TR 均值 */
+    } else {
+      atr = (atr * (n - 1) + tr) / n;                  /* Wilder 递推 */
+    }
+    var mid = (k.high + k.low) / 2;
+    var ub = mid + mult * atr, lb = mid - mult * atr;
+    if (!started) { fub = ub; flb = lb; dir = 1; started = true; out.n0 = i; }
+    else {
+      var pfub = fub, pflb = flb;                      /* 翻转判定用**前一根** final 带 */
+      fub = (ub < fub || p.close > fub) ? ub : fub;
+      flb = (lb > flb || p.close < flb) ? lb : flb;
+      dir = (dir === 1) ? (k.close < pflb ? -1 : 1) : (k.close > pfub ? 1 : -1);
+    }
+    out.st.push(dir === 1 ? flb : fub);
+    out.dir.push(dir);
+  }
+  out.ok = started && out.n0 >= 0;
+  return out;
+}
+
+/* ADX / +DI / −DI 全量序列 —— Wilder 原版，公式与 atrcADX（上方，ATRC 闸②单下标版）**逐字同口径**：
+   首值 = 前 n 项和；之后 New = Old + (Cur − Old)/n（当前项必须除以 n，漏掉会跑飞 —— 见 atrcADX 注）；
+   DX 从 tr 下标 n 起；ADX 首值 = 前 n 个 DX 的简单均值，之后再 Wilder 平滑。
+   对齐：tr[q] 对应 klines 下标 q+1 → 序列首个有效 ADX 落在 klines 下标 2n（与 atrcADX 的 i≥2n 门槛一致）。
+   为什么不复用 atrcADX 逐根调：那是单下标函数、每根 O(i) 重建 TR/DM，画 70 根要 70 次全量重算；
+   序列版一次递推 O(len)。一致性由 _test_supertrend.js 对账：末根 adx/pdi/mdi 必须与 atrcADX 相等（容差 1e-9）。
+   返回 { ok, adx[], pdi[], mdi[], n0 }；数组与 klines 按下标对齐（< 2n → null，诚实留白）。 */
+function klAdxSeries(klines, n) {
+  var out = { ok: false, adx: [], pdi: [], mdi: [], n0: -1 };
+  if (!Array.isArray(klines) || klines.length < 2) return out;
+  if (n == null || !(n >= 2)) n = 14;
+  var len = klines.length, i;
+  for (i = 0; i < len; i++) { out.adx.push(null); out.pdi.push(null); out.mdi.push(null); }
+  var tr = [], pdm = [], mdm = [];
+  for (i = 1; i < len; i++) {
+    var k = klines[i], p = klines[i - 1];
+    if (!k || !p || !(k.high > 0) || !(k.low > 0) || !(p.close > 0)) { tr.push(0); pdm.push(0); mdm.push(0); continue; }
+    tr.push(Math.max(k.high - k.low, Math.abs(k.high - p.close), Math.abs(k.low - p.close)));
+    var upM = k.high - p.high, dnM = p.low - k.low;
+    pdm.push((upM > dnM && upM > 0) ? upM : 0);
+    mdm.push((dnM > upM && dnM > 0) ? dnM : 0);
+  }
+  if (tr.length < 2 * n) return out;                   /* 样本不足：全 null（诚实留白，不硬算） */
+  var str = 0, sp = 0, sm = 0, q, w;
+  var dxs = [];
+  for (q = 0; q < tr.length; q++) {
+    if (q < n) { str += tr[q]; sp += pdm[q]; sm += mdm[q]; continue; }   /* 首值 = 前 n 项和 */
+    str = str + (tr[q] - str) / n;
+    sp = sp + (pdm[q] - sp) / n;
+    sm = sm + (mdm[q] - sm) / n;
+    var pdi = str > 0 ? 100 * sp / str : 0, mdi = str > 0 ? 100 * sm / str : 0;
+    var s = pdi + mdi;
+    var dx = s > 0 ? 100 * Math.abs(pdi - mdi) / s : 0;
+    var ki = q + 1;                                    /* tr[q] 对应 klines 下标 q+1 */
+    if (dxs.length < n) {
+      dxs.push(dx);
+      if (dxs.length === n) {
+        var adx0 = 0;
+        for (w = 0; w < n; w++) adx0 += dxs[w];
+        adx0 /= n;                                     /* ADX 首值 = 前 n 个 DX 简单均值 */
+        out.n0 = ki; out.adx[ki] = adx0; out.pdi[ki] = pdi; out.mdi[ki] = mdi;
+      }
+    } else {
+      var adx = out.adx[ki - 1] + (dx - out.adx[ki - 1]) / n;
+      out.adx[ki] = adx; out.pdi[ki] = pdi; out.mdi[ki] = mdi;
+    }
+  }
+  out.ok = out.n0 >= 0;
   return out;
 }
 
@@ -38046,25 +38496,77 @@ function init() {
       card.__klDayTitle = title ? title.textContent : null;
       card.__klDayPanel = panel ? panel.innerHTML : null;
     }
+    /* ★ 2026-11-14 §319（用户要求「当日分时体检整合到k线图，列在5分钟前」）：分时体检档 ——
+       ① 数据三级来源：window.__IT_TRAP[ckey]（buildResultHTML §IT 块写入，同一次分析零重复计算）
+         → 按卡上 data-klcode 扫前缀取日期最新的一条；缓存缺失时 minIndOf(sym,'m5') 现算（60s 缓存复用）；
+       ② 现算时 posPct / trendUp 不可得（当日日K上下文不在卡上）→ 如实传 null，扫描器自己留白
+         （60日分位行不印、位置加权不生效），**绝不拿现价凑一个假分位**；
+       ③ 渲染走 itTrapCardHtml(sc, true) 内芯（无 .card 外壳）—— kl-body 本身已在卡片里，套壳 = 卡中卡；
+       ④ 取不到 / 不足 20 根 → 明写「无可用数据」不硬给结论（纪律：缺失 ≠ 0、缺失 ≠ 通过）。 */
+    if (p === 'it') {
+      body.className = 'kl-body kl-min';
+      if (title) title.textContent = '📈 当日分时体检 · 诱多/诱空扫描（5分钟K）';
+      if (panel) panel.innerHTML = '<div class="vp-empty">分时体检档不提供逐根「量价关系」解读（该档是当日 5 分钟K的形态扫描汇总，不逐根点击）。要看带 VWAP 叠加的 5 分钟K线，切「5分钟」。</div>';
+      var symIt = card.getAttribute('data-klsym') || '';
+      var codeIt = card.getAttribute('data-klcode') || '';
+      if (!symIt) { body.innerHTML = '<div class="kl-msg err">⚠ 缺少标的代码，无法计算当日分时体检。</div>'; return; }
+      var scIt = null;
+      try {
+        var itKeys = (typeof window !== 'undefined' && window.__IT_TRAP) ? Object.keys(window.__IT_TRAP) : [];
+        for (var ik = 0; ik < itKeys.length; ik++) {
+          if (String(itKeys[ik]).indexOf(String(codeIt) + '|') !== 0) continue;
+          var candIt = window.__IT_TRAP[itKeys[ik]];
+          if (candIt && candIt.ok && (!scIt || String(candIt.date) > String(scIt.date))) scIt = candIt;
+        }
+      } catch (eItLk) { scIt = null; }
+      if (!scIt) {
+        body.innerHTML = '<div class="kl-msg">⏳ 正在取 5 分钟 K 现算分时体检…</div>';
+        try {
+          var rIt = await minIndOf(symIt, 'm5');
+          scIt = itTrapScan((rIt && rIt.ind && rIt.ind.klines) ? rIt.ind.klines : null, { code: codeIt, posPct: null, trendUp: false });
+          if (scIt && scIt.ok) {
+            try {
+              window.__IT_TRAP = window.__IT_TRAP || {};
+              window.__IT_TRAP[scIt.ckey] = scIt;              /* 写回共享缓存：m5 图 VWAP 三角标同源可用 */
+            } catch (eItSt) {}
+          }
+        } catch (eItF) {
+          if (!btn.classList.contains('on')) return;           /* 竞态：等待期间已切走 */
+          body.innerHTML = '<div class="kl-msg err">⚠ 分时体检现算失败：' + escapeHtml((eItF && eItF.message) ? eItF.message : '未知错误') +
+            '<br>（当日 5 分钟K取不到时本档不可用 —— 接口限流 / 休市 / 新股。可切「日线」返回，或稍后重试。）</div>';
+          return;
+        }
+      }
+      if (!btn.classList.contains('on')) return;               /* 竞态：等待期间已切到别的周期 */
+      if (!scIt || !scIt.ok) {
+        body.innerHTML = '<div class="kl-msg err">⚠ 当日分时体检无可用数据：当日 5 分钟K不足（休市 / 接口限流 / 新股）。</div>' +
+          '<div class="kl-msg">缺失 ≠ 0 —— 不给「无信号」结论。可稍后重试，或切「5分钟」看原始K线。</div>';
+        return;
+      }
+      body.innerHTML = itTrapCardHtml(scIt, true);
+      return;
+    }
     /* ★ §176：周期显示名 / 取数函数 / 单位 / 失败原因**四处都要分流**，一处漏了就会出现
-       「周线取数失败：该标的无分钟数据」这类自相矛盾的提示。集中在一处判定（isWk），下面全部按它走。 */
+       「周线取数失败：该标的无分钟数据」这类自相矛盾的提示。集中在一处判定（isWk），下面全部按它走。
+       ★ §317：月线加入同一处分流（isMth）—— 月K走 weekIndOf 的对称入口 monthIndOf，失败原因按月口径报。 */
     var lab = klPerLab(p);
     var isWk = (p === 'week');
+    var isMth = (p === 'month');
     var sym = card.getAttribute('data-klsym') || '';
-    body.className = 'kl-body ' + (isWk ? 'kl-week' : 'kl-min');
+    body.className = 'kl-body ' + (isWk ? 'kl-week' : (isMth ? 'kl-month' : 'kl-min'));
     if (!sym) { body.innerHTML = '<div class="kl-msg err">⚠ 缺少标的代码，无法取 ' + lab + ' K 线。</div>'; return; }
     body.innerHTML = '<div class="kl-msg">⏳ 正在取 ' + lab + ' K 线…</div>';
-    if (title) title.textContent = isWk ? '📈 K线走势（周线 · 近 70 周 · 前复权）' : ('📈 K线走势（' + lab + ' · 近 70 根）');
+    if (title) title.textContent = isWk ? '📈 K线走势（周线 · 近 70 周 · 前复权）' : (isMth ? '📈 K线走势（月线 · 近 70 月 · 前复权）' : ('📈 K线走势（' + lab + ' · 近 70 根）'));
     if (panel) panel.innerHTML = '<div class="vp-empty">👆 点击图中任意一根 ' + lab + ' K 线，查看该根「量价关系」解读（与日线同一套量价分类，输入换成' +
-      (isWk ? '周K' : lab + '根') + '）。' +
-      (isWk ? '<br>⚠️ 最后一根是<b>本周进行中</b>的未完成周K，量能 / 振幅天然偏小，别用它判缩量放量。' : '') + '</div>';
+      (isMth ? '月K' : (isWk ? '周K' : lab + '根')) + '）。' +
+      ((isWk || isMth) ? '<br>⚠️ 最后一根是<b>' + (isMth ? '本月' : '本周') + '进行中</b>的未完成' + (isMth ? '月' : '周') + 'K，量能 / 振幅天然偏小，别用它判缩量放量。' : '') + '</div>';
     var r = null, err = null;
-    try { r = isWk ? await weekIndOf(sym) : await minIndOf(sym, p); } catch (eMin) { err = eMin; }
+    try { r = isWk ? await weekIndOf(sym) : (isMth ? await monthIndOf(sym) : await minIndOf(sym, p)); } catch (eMin) { err = eMin; }
     if (!btn.classList.contains('on')) return;  /* 竞态：等待期间已切到别的周期 */
     if (!r || !r.ind) {
       body.innerHTML = '<div class="kl-msg err">⚠ ' + lab + ' K 线取数失败：' +
         escapeHtml((err && err.message) ? err.message : '未知错误') +
-        '<br>可能原因：接口限流 / ' + (isWk ? '该标的上市不足 60 周或长期停牌' : '该标的无分钟数据（新股、停牌、港股）') +
+        '<br>可能原因：接口限流 / ' + (isWk ? '该标的上市不足 60 周或长期停牌' : (isMth ? '该标的上市不足 60 个月或长期停牌' : '该标的无分钟数据（新股、停牌、港股）')) +
         ' ／ 网络不可达。可点「日线」切回，或稍后重试。</div>';
       return;
     }
