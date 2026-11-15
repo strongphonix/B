@@ -728,6 +728,12 @@
   .vp-verdict .vv-pow { max-width:210px; }
   .vp-verdict .vv-cap .act { color:var(--muted); font-size:11px; line-height:1.45; margin-top:1px;
     display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  /* ★ 2026-11-15 §330（用户要求「点击每一根 K 线，在最左侧显示对应的形态特征，取消最左侧观察提示语」）：
+     结论栏最左侧「价格行为 · 该根形态」块，替换原 .badge「● 观察」徽标。
+     复用 .vv-cap 三行布局（lab / nm / act），仅覆盖宽度与左边框；
+     窄屏沿用下方 media 中 .vp-verdict .vv-cap 的换行规则（放其之前，media 后定义者赢）。 */
+  .vp-verdict .vv-brooks { flex:0 1 236px; max-width:236px; border-left:none; padding-left:0; }
+  .vp-verdict .vv-brooks .nm { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   @media (max-width:760px) {
     .vp-verdict { flex-wrap:wrap; justify-content:flex-start; } /* 换行模式下 space-between 会把落单卡推到行尾，恢复左聚 */
     .vp-verdict .vv-s4 { flex:1 1 100%; border-left:none; border-top:1px solid var(--line);
@@ -2621,8 +2627,13 @@ function sinaBstockUrl(node, page) {
     '&sort=symbol&asc=1&node=' + encodeURIComponent(node) + '&symbol=&_s_r_a=page&_=' + Date.now();
 }
 async function bstocksFromSinaNode(node) {
+  /* ★ §326：入口正则从「/^new_/」放宽为「小写字母前缀 + 下划线」（new_/gn_/地域前缀等）——
+     实测概念 gn_ 码（如 gn_hwqc 华为汽车）与行业 new_ 码打 Market_Center.getHQNodeData 同样码对码直取
+     （本机 2026-11-15 探针实测 gn_hwqc n=97 / new_blhy n=19 均返回全量成分带 changepercent）。
+     东财 BK / 腾讯 pt 码是数字/大写且不含下划线，不会误命中（东财源下板块码本来就是 BK 码，走 F10 链）；
+     板块列表来自新浪时 b.code 本身就是新浪 node 码，放宽后概念/地域板块的广度补齐与详情成分同步受益。 */
   var nd = String(node || '').trim();
-  if (!/^new_[a-z0-9_]+$/i.test(nd)) return null;        // 只处理新浪 node 码，其它码交给 F10 / 涨停池通道
+  if (!/^[a-z][a-z0-9]{0,7}_[a-z0-9_]+$/i.test(nd)) return null;   // 只处理新浪风格 node 码（含下划线），数字 BK/pt 码交给 F10 / 涨停池通道
   var raw = [], page, lastSig = '';
   for (page = 1; page <= SINA_BSTOCK_MAXPAGE; page++) {
     var arr;
@@ -8932,6 +8943,9 @@ function renderChart(ind, focus, opt) {
         if (vi >= 0 && vi < ks.length) __kjRowCross.push({ i: vi, type: c.type });
       });
       __kjRowOk = (__kjRowK.length === ks.length);
+      /* ★ §328：全量序列缓存到 ind.__kdjCtx —— 点击 K 线后委托按全量下标 gidx 取该根 K/D/J
+         （存 __kjRowFull 全量序列而非窗口切片，gidx = start + i 才取得到；与 __adxCtx 同一缓存纪律） */
+      if (ind && __kjRowOk) ind.__kdjCtx = { key: kl.length + '|' + String((kl[kl.length - 1] && kl[kl.length - 1].date) || ''), K: __kjRowFull.K, D: __kjRowFull.D, J: __kjRowFull.J, ok: true };
     }
   } catch (eKjRow) { __kjRowOk = false; }
   /* ===== ★ 2026-10-25 §210（用户要求「k线图中，日kdj下方，增加周kdj指标」）：周 KDJ 副图的数据 =====
@@ -8958,6 +8972,8 @@ function renderChart(ind, focus, opt) {
           else if (__wa0 >= 0 && __wa1 < 0) __wKjCross.push({ i: __wci, type: 'dead' });
         }
         __wKjOk = (__wKjK.length === ks.length);
+        /* ★ §328：全量周 KDJ 序列缓存到 ind.__wkjCtx（同 __kdjCtx 纪律；仅日线面板消费，委托侧再按 per 守卫） */
+        if (ind && __wKjOk) ind.__wkjCtx = { key: kl.length + '|' + String((kl[kl.length - 1] && kl[kl.length - 1].date) || ''), K: __wKjFull.K, D: __wKjFull.D, J: __wKjFull.J, ok: true };
       } else if (__wKjFull) { __wKjWhy = __wKjFull.why || ''; }
     } catch (eWkRow) { __wKjOk = false; }
   }
@@ -9228,6 +9244,26 @@ function renderChart(ind, focus, opt) {
     'text-anchor="end">量能</text>';
   svg += '<text x="' + (plotR + 6) + '" y="' + (volT + 11) + '" fill="#5d6788" font-size="10" ' +
     'font-family="' + M + '">' + escapeHtml(fmtWan(vmax)) + '</text>';
+  /* ★ §328：右侧补两行点击跟随角标（量 = 该根成交量 · 比 = 量比 r5，÷ 前 5 根均量不含当根，§212 同一公式）。
+     默认显示末根值；点击 K 线后委托原地改写 textContent（§324 ADX 同模式）；
+     任一根量缺失 → 「—」诚实留白（显式判 null —— isFinite(null)===true，未知量绝不能当 0 进均量）。 */
+  (function () {
+    var _vli = ks.length - 1, _vg = start + _vli;
+    var _vk = ks[_vli] && ks[_vli].volume;
+    svg += '<text class="kl-volcor" data-k="vol" x="' + (plotR - 8) + '" y="' + (volT + 23) + '" fill="#8fa3c8" font-size="10" ' +
+      'font-family="' + M + '" text-anchor="end" paint-order="stroke" stroke="#101830" stroke-width="2.6" stroke-linejoin="round">量 ' + ((_vk != null && isFinite(_vk) && _vk > 0) ? fmtWan(_vk) : '—') + '</text>';
+    var _s5 = 0, _ok5 = (_vg >= 5 && _vk != null && isFinite(_vk) && _vk > 0);
+    if (_ok5) {
+      for (var _a5c = _vg - 5; _a5c < _vg; _a5c++) {
+        var _v5c = kl[_a5c] && kl[_a5c].volume;
+        if (_v5c == null || !isFinite(_v5c)) { _ok5 = false; break; }
+        _s5 += _v5c;
+      }
+    }
+    var _r5c = (_ok5 && _s5 > 0) ? _vk / (_s5 / 5) : null;
+    svg += '<text class="kl-volcor" data-k="vr5" x="' + (plotR - 8) + '" y="' + (volT + 35) + '" fill="#8fa3c8" font-size="10" ' +
+      'font-family="' + M + '" text-anchor="end" paint-order="stroke" stroke="#101830" stroke-width="2.6" stroke-linejoin="round">比 ' + ((_r5c != null && isFinite(_r5c)) ? _r5c.toFixed(2) : '—') + '</text>';
+  })();
 
   /* ===== ★ 2026-10-31 §246（用户要求「双深超跌 + 缩至前日 0.7 倍以下」的量柱特殊标注）=====
      逐根判「深超跌地量」并记进 __osdlMap。判据与判定器见常量块（klOsDryOf 单一真源）：
@@ -10290,12 +10326,13 @@ function renderChart(ind, focus, opt) {
     svg += '</g>';
     /* 右侧角标：末根 K / D / J 数值，线色与数值同色（省掉一件额外图例） */
     var li = ks.length - 1;
-    svg += '<text x="' + (plotR + 6) + '" y="' + (kdjT + 11) + '" fill="#ffffff" font-size="10" ' +
-      'font-family="' + M + '">K ' + Math.round(__kjRowK[li]) + '</text>';
-    svg += '<text x="' + (plotR + 6) + '" y="' + (kdjT + 23) + '" fill="#ffc857" font-size="10" ' +
-      'font-family="' + M + '">D ' + Math.round(__kjRowD[li]) + '</text>';
-    svg += '<text x="' + (plotR + 6) + '" y="' + (kdjT + 35) + '" fill="#c792ea" font-size="10" ' +
-      'font-family="' + M + '">J ' + Math.round(__kjRowJ[li]) + '</text>';
+    /* ★ §328：角标加 class/data-k 寻址 —— 点击 K 线后委托原地改写 textContent（§324 ADX 同模式） */
+    svg += '<text class="kl-kdjcor" data-k="k" x="' + (plotR - 8) + '" y="' + (kdjT + 11) + '" fill="#ffffff" font-size="10" ' +
+      'font-family="' + M + '" text-anchor="end" paint-order="stroke" stroke="#101830" stroke-width="2.6" stroke-linejoin="round">K ' + Math.round(__kjRowK[li]) + '</text>';
+    svg += '<text class="kl-kdjcor" data-k="d" x="' + (plotR - 8) + '" y="' + (kdjT + 23) + '" fill="#ffc857" font-size="10" ' +
+      'font-family="' + M + '" text-anchor="end" paint-order="stroke" stroke="#101830" stroke-width="2.6" stroke-linejoin="round">D ' + Math.round(__kjRowD[li]) + '</text>';
+    svg += '<text class="kl-kdjcor" data-k="j" x="' + (plotR - 8) + '" y="' + (kdjT + 35) + '" fill="#c792ea" font-size="10" ' +
+      'font-family="' + M + '" text-anchor="end" paint-order="stroke" stroke="#101830" stroke-width="2.6" stroke-linejoin="round">J ' + Math.round(__kjRowJ[li]) + '</text>';
   })();
 
   /* ===== ★ 2026-10-25 §210（用户要求「k线图中，日kdj下方，增加周kdj指标」）周 KDJ 副图 =====
@@ -10359,12 +10396,13 @@ function renderChart(ind, focus, opt) {
     svg += '</g>';
     /* 右侧角标：末根（= 截至最新交易日）的周 K/D/J */
     var wli = ks.length - 1;
-    svg += '<text x="' + (plotR + 6) + '" y="' + (wKdjT + 11) + '" fill="#ffffff" font-size="10" ' +
-      'font-family="' + M + '">K ' + Math.round(__wKjK[wli]) + '</text>';
-    svg += '<text x="' + (plotR + 6) + '" y="' + (wKdjT + 23) + '" fill="#ffc857" font-size="10" ' +
-      'font-family="' + M + '">D ' + Math.round(__wKjD[wli]) + '</text>';
-    svg += '<text x="' + (plotR + 6) + '" y="' + (wKdjT + 35) + '" fill="#c792ea" font-size="10" ' +
-      'font-family="' + M + '">J ' + Math.round(__wKjJ[wli]) + '</text>';
+    /* ★ §328：角标加 class/data-k 寻址（kl-wkjcor · wk/wd/wj，与日 KDJ 面板各自独立寻址） */
+    svg += '<text class="kl-wkjcor" data-k="wk" x="' + (plotR - 8) + '" y="' + (wKdjT + 11) + '" fill="#ffffff" font-size="10" ' +
+      'font-family="' + M + '" text-anchor="end" paint-order="stroke" stroke="#101830" stroke-width="2.6" stroke-linejoin="round">K ' + Math.round(__wKjK[wli]) + '</text>';
+    svg += '<text class="kl-wkjcor" data-k="wd" x="' + (plotR - 8) + '" y="' + (wKdjT + 23) + '" fill="#ffc857" font-size="10" ' +
+      'font-family="' + M + '" text-anchor="end" paint-order="stroke" stroke="#101830" stroke-width="2.6" stroke-linejoin="round">D ' + Math.round(__wKjD[wli]) + '</text>';
+    svg += '<text class="kl-wkjcor" data-k="wj" x="' + (plotR - 8) + '" y="' + (wKdjT + 35) + '" fill="#c792ea" font-size="10" ' +
+      'font-family="' + M + '" text-anchor="end" paint-order="stroke" stroke="#101830" stroke-width="2.6" stroke-linejoin="round">J ' + Math.round(__wKjJ[wli]) + '</text>';
   })();
 
   /* ===== ★ 2026-11-01 §247：主力状态副图（只在日线，参考层） =====
@@ -10430,14 +10468,15 @@ function renderChart(ind, focus, opt) {
     }
     /* 右侧角标：末根（= 截至最新交易日）四读数 */
     var zli2 = ks.length - 1, zlg2 = start + zli2;
-    svg += '<text x="' + (plotR + 6) + '" y="' + (zlT + 11) + '" fill="' + __zlRed + '" font-size="10" ' +
-      'font-family="' + M + '">红 ' + (__zlSer.red[zlg2] || 0).toFixed(1) + '</text>';
-    svg += '<text x="' + (plotR + 6) + '" y="' + (zlT + 23) + '" fill="' + __zlYel + '" font-size="10" ' +
-      'font-family="' + M + '">黄 ' + (__zlSer.yellow[zlg2] || 0).toFixed(1) + '</text>';
-    svg += '<text x="' + (plotR + 6) + '" y="' + (zlT + 35) + '" fill="' + __zlPur + '" font-size="10" ' +
-      'font-family="' + M + '">紫 ' + (__zlSer.purple[zlg2] || 0).toFixed(1) + '</text>';
-    svg += '<text x="' + (plotR + 6) + '" y="' + (zlT + 47) + '" fill="' + __zlPit + '" font-size="10" ' +
-      'font-family="' + M + '">套 ' + Math.round(__zlSer.zshtl[zlg2]) + '</text>';
+    /* ★ §328：角标加 class/data-k 寻址（kl-zlcor · zr/zy/zp/zt），点击跟随与日/周 KDJ 同一套 */
+    svg += '<text class="kl-zlcor" data-k="zr" x="' + (plotR - 8) + '" y="' + (zlT + 11) + '" fill="' + __zlRed + '" font-size="10" ' +
+      'font-family="' + M + '" text-anchor="end" paint-order="stroke" stroke="#101830" stroke-width="2.6" stroke-linejoin="round">红 ' + (__zlSer.red[zlg2] || 0).toFixed(1) + '</text>';
+    svg += '<text class="kl-zlcor" data-k="zy" x="' + (plotR - 8) + '" y="' + (zlT + 23) + '" fill="' + __zlYel + '" font-size="10" ' +
+      'font-family="' + M + '" text-anchor="end" paint-order="stroke" stroke="#101830" stroke-width="2.6" stroke-linejoin="round">黄 ' + (__zlSer.yellow[zlg2] || 0).toFixed(1) + '</text>';
+    svg += '<text class="kl-zlcor" data-k="zp" x="' + (plotR - 8) + '" y="' + (zlT + 35) + '" fill="' + __zlPur + '" font-size="10" ' +
+      'font-family="' + M + '" text-anchor="end" paint-order="stroke" stroke="#101830" stroke-width="2.6" stroke-linejoin="round">紫 ' + (__zlSer.purple[zlg2] || 0).toFixed(1) + '</text>';
+    svg += '<text class="kl-zlcor" data-k="zt" x="' + (plotR - 8) + '" y="' + (zlT + 47) + '" fill="' + __zlPit + '" font-size="10" ' +
+      'font-family="' + M + '" text-anchor="end" paint-order="stroke" stroke="#101830" stroke-width="2.6" stroke-linejoin="round">套 ' + Math.round(__zlSer.zshtl[zlg2]) + '</text>';
   })();
 
   /* ---- ★ 2026-11-14 §318：ADX / DI 序列（画 ADX 副图前算好；缓存口径与 __stCache 相同）----
@@ -11326,7 +11365,7 @@ function klDaysetHtml(ent, gidx, kj, raw, kjChipHtml, per) {
      · 数据不足（不足 11 根算不出 g10 / 20 日窗口无有效高低）→ 该枚 chip 消失（诚实留白不硬算）。 */
   var mp = null;
   try { mp = dingMomPosOf(kl.slice(0, gidx + 1)); } catch (eMp) { mp = null; }
-  var posChip = '', mom10Chip = '', mom5Chip = '';
+  var posChip = '', mom10Chip = '', mom5Chip = '', brkChip = '';
   if (mp && mp.pos20 != null) {
     var posCol = (mp.posKey === 'p5') ? '#ffb74d' : (mp.posKey === 'p1') ? '#64b5f6' : '';
     posChip = '<span class="kl-chip"' + (posCol ? ' style="color:' + posCol + '"' : '') +
@@ -11335,6 +11374,17 @@ function klDaysetHtml(ent, gidx, kj, raw, kjChipHtml, per) {
       (mp.tag ? '（与 10 日动量合读：' + mp.tag + '）' : '') + '&#10;' +
       '与钉钉推送「动量状态」同一口径（dingMomPosOf）；只用该日及之前数据，无未来函数；仅描述位置，不构成买卖依据。">' +
       (isLast ? '分位' : '分位(至该' + __u + ')') + ' <b>' + mp.pos20.toFixed(2) + '</b></span>';
+  }
+  /* ★ 2026-11-15 §327（用户确认「实现突破型高位 chip」）：「▲ 突破型高位」chip —— 判别走 dingBrkAt
+     （与钉推送「·突破型」后缀同一把尺子，绝不另写判据）；仅 brk.ok 时出现，不 ok 诚实留白不硬贴。
+     语义：该日 pos20 ≥0.80 且 ≤3 个交易日前还在 <0.50（分位陡升 = 刚突破上来）→ 属「买点窗口」格，
+     与磨顶型高位（pos20 长期贴顶）区分；放量 + 收阳为确认条件；10 日动量在该日通常仍 <+10%
+     （g10 是 10 日滞后量，突破首日必然还小）。 */
+  if (mp && mp.brk && mp.brk.ok) {
+    brkChip = '<span class="kl-chip" style="color:#ff8a65" title="突破型高位（§327）：该日 20 日区间分位 ≥0.80，且 ≤3 个交易日前还在 <0.50（分位 3 日内陡升 = 刚突破上来），当日收阳且成交量 ≥ 前 5 日均量 ×1.2。&#10;' +
+      '该' + __u + '读数：pos20 ' + mp.brk.fromPos.toFixed(2) + ' → ' + mp.brk.toPos.toFixed(2) +
+      '（3 日内陡升）· 量能倍数 ×' + mp.brk.volx.toFixed(2) + '。&#10;' +
+      '与钉钉推送「动量状态 ·突破型」后缀同一口径（dingBrkAt）；10 日动量在该日通常仍 <+10%（g10 滞后 10 日，突破首日必然还小）——这正是「低位蓄势→高位爆发」票的买点窗口；仅描述，不构成买卖依据。">▲ 突破型高位</span>';
   }
   if (mp && mp.g10 != null) {
     mom10Chip = '<span class="kl-chip ' + (mp.g10 >= 0 ? 'up' : 'down') +
@@ -11382,6 +11432,31 @@ function klDaysetHtml(ent, gidx, kj, raw, kjChipHtml, per) {
       }
     }
   } catch (eZlChip) { zlztChip = ''; }
+  /* ★ 2026-11-15 §329：形态参考层 chip —— 按 gidx 逐根显示该根命中的量能序列形态（ths patterns.js 架构台内版）。
+     · 纯函数 patternHitsAt(kl, gidx) 只读 kl[0..gidx]（无未来函数），点击历史根自然跟随（§328 同入口）；
+     · 仅日线（per 守卫，与 §247 主力状态同款）；hits 为空 / 异常 → chip 整枚消失（诚实留白）；
+     · 强度沿用文字档 强 / 中 / 弱；颜色按**当日实际涨跌幅 pctV322** 取（假阳红 K 实跌 → 绿），不按阴阳取色；
+     · 仅形态描述：不计分、不进 s4kTierOf / 钉钉、不发买卖信号（参考层纪律与 pickZtCount 逐字一致）。 */
+  var patChip = '';
+  try {
+    if ((per == null || per === 'day') && typeof patternHitsAt === 'function' && kl && kl.length) {
+      var __patHits = patternHitsAt(kl, gidx);
+      if (__patHits && __patHits.length) {
+        var __patCol = (typeof pctV322 === 'number' && isFinite(pctV322))
+          ? (pctV322 >= 0 ? '#ff5252' : '#26c281') : '#9fb4ff';
+        var __patTxt = '', __patWhy = '', __ph;
+        for (var __pi = 0; __pi < __patHits.length; __pi++) {
+          __ph = __patHits[__pi];
+          __patTxt += (__pi ? ' · ' : '') + __ph.label + '·' + __ph.strength;
+          __patWhy += (__pi ? '&#10;' : '') + '[' + __ph.label + '·' + __ph.strength + '] ' + __ph.why;
+        }
+        patChip = '<span class="kl-chip" style="color:' + __patCol + '" title="形态参考层（§329）：仅形态描述，不计分、不进四指标 / 钉钉、不发买卖信号。&#10;' +
+          '当日实际涨跌幅 ' + (typeof pctV322 === 'number' && isFinite(pctV322) ? ((pctV322 >= 0 ? '+' : '') + pctV322.toFixed(2) + '%') : '—') +
+          '（按实际涨跌取色：假阳为红 K 但实跌 → 绿）。&#10;' + __patWhy + '&#10;' +
+          '只用该日及之前数据（kl[0..gidx]），无未来函数；强度文字档与开盘八法同构。">◇ ' + __patTxt + '</span>';
+      }
+    }
+  } catch (ePatChip) { patChip = ''; }
   return '<span class="kl-chip" style="border-color:#5b8cff">📅 <b>' + escapeHtml(klDateTxt(kD.tt || kD.date)) + '</b>' + (isLast ? '（最新）' : '') + '</span>' +
     /* ★ 2026-10-16（用户要求「工作台，k线图均线改为5日，20日，60日」）：本组 MA chip 与图上叠加线
        **一一对应 · 同色同序**（背离就会「看图要猜」）→ MA5 黄 / MA20 紫 / MA60 蓝。
@@ -11415,7 +11490,7 @@ function klDaysetHtml(ent, gidx, kj, raw, kjChipHtml, per) {
        ★ 2026-10-17 §152：§151 的「挖土机位置」chip 已移除（改为图顶部区域带，见 renderChart __digBands）
        ★ 2026-11-01 §247：10日动量之后 → 主力状态（红/黄/紫/套牢 + 事件，仅日线）
        ★ 2026-11-07 §240：5日动量 紧贴 MA5斜率 之前（用户口令「MA5斜率(至该日) 前增加显示 5日动量(至该日)」） */
-    s4chip + adxChip + devChip + upChip + posChip + mom10Chip + zlztChip;
+    s4chip + adxChip + devChip + upChip + posChip + brkChip + mom10Chip + zlztChip + patChip;
 }
 
 function indItem(label, value, desc, status) {
@@ -15827,17 +15902,108 @@ function renderBoardGrid() {
         '<span class="dim">已判 ' + so.n + '/' + so.total + ' 只</span></div>';
     else stageLine = '<div class="bc-stage">' + boardStageChips(so) +
         '<span class="dim">已判 ' + so.n + '/' + so.total + ' 只</span></div>';
+    /* ★ §326：卡片中部两行（涨跌家数 / 涨停跌停 + 主力净流入）抽成共享模板 ——
+       备用通道广度补齐（boardBreadthBackfill）patch 单卡时用**同一份** HTML（同一份数只写一处，
+       防两处模板漂移），不再用闭包内联。 */
     return '<div class="bcard" data-bk="' + b.code + '" data-bn="' + escapeHtml(b.name) + '" data-bc="' + (b.chg === null ? '' : b.chg) + '" style="border-left-color:' + col + '">' +
       '<div class="bc-top"><span class="bc-name">' + escapeHtml(b.name) + '</span>' +
       '<span class="bc-chg ' + c + '">' + fmtPct(b.chg || 0) + '</span></div>' +
-      (function () { var z = boardZTOf(b.code); return '<div class="bc-mid"><span>涨 ' + (b.upCount == null ? '—' : b.upCount) + ' / 跌 ' + (b.downCount == null ? '—' : b.downCount) + '</span>' +
-        '<span>涨停 <b class="' + ((z.zt || 0) > 0 ? 'up' : '') + '">' + (z.zt == null ? '—' : z.zt) + '</b> / 跌停 <b class="' + ((z.dt || 0) > 0 ? 'down' : '') + '">' + (z.dt == null ? '—' : z.dt) + '</b></span></div>' +
-        '<div class="bc-mid"><span class="' + ((b.flow || 0) >= 0 ? 'up' : 'down') + '">主力净流入 ' + fmtYi(b.flow) + '</span></div>'; })() +
+      boardBreadthMidHtml(b) +
       '<div class="bc-bot">领涨 ' + lead + '</div>' +
       stageLine +
       '</div>';
   }).join('');
   el('boardGridWrap').innerHTML = '<div class="board-grid">' + cards + '</div>';
+}
+
+/* ================= §326 备用通道板块广度批量补齐（2026-11-15 用户报障「行业板块很多数据缺失」） =================
+   根因：东财 push2 家族被本机网络整体拦截 → 板块列表走新浪备用通道（boardsFromSina）；
+   该接口只有 涨跌幅/成交额/领涨股，无「上涨/下跌家数分解」，也无「主力净流入」→
+   卡片「涨 / 跌 —」「涨停 / 跌停 —」「主力净流入 —」成片缺失（涨停/跌停只有点开过的板块才有缓存）。
+   修复：备用通道渲染完成后**异步串行批量补齐** —— 逐板块调 bstocksFromSinaNode(code)（同源 node 成分
+   通道，码对码，已在板块详情六级兜底链第③级验证可用，成分带实时涨跌幅），一次性算出
+   涨/跌/涨停/跌停 四个数，写回 b.upCount/b.downCount + ST.boardZT[code]（bwork_ztstat 持久化，
+   与「点开板块」写的是同一份缓存、同一套 isZT/isDT 判定），**patch 单卡**渐进点亮，不整格重渲。
+   · 串行 + 350ms 间隔（新浪同域并行会被 reset，§316 教训；禁 Promise.all）；
+   · 连续 3 个板块失败 → 中止（通道不稳，不空转烧请求）；
+   · 只补 upCount == null 的板块（东财通道不需要；本轮已补过的跳过）；
+   · 成分拉不到 / 全 null 的板块诚实留白「—」，**不补 0**（永不印 0 纪律）；
+   · seq 机制防重入：新一轮 loadBoardList（手动刷新/3 分钟自动刷新/切板块类型）会 seq++，
+     旧循环在下个 await 间隙自行退出；写的是真实缓存数据，交错无害；
+   · 主力净流入新浪无字段维持「—」（提示条已披露，属数据源边界不是漏画）；
+   · 非交易日：成分接口返回最近交易日读数，与「点开板块」行为完全一致，不另发明口径。 */
+function boardBreadthMidHtml(b) {
+  var z = boardZTOf(b.code);
+  return '<div class="bc-mid"><span>涨 ' + (b.upCount == null ? '—' : b.upCount) + ' / 跌 ' + (b.downCount == null ? '—' : b.downCount) + '</span>' +
+    '<span>涨停 <b class="' + ((z.zt || 0) > 0 ? 'up' : '') + '">' + (z.zt == null ? '—' : z.zt) + '</b> / 跌停 <b class="' + ((z.dt || 0) > 0 ? 'down' : '') + '">' + (z.dt == null ? '—' : z.dt) + '</b></span></div>' +
+    '<div class="bc-mid"><span class="' + ((b.flow || 0) >= 0 ? 'up' : 'down') + '">主力净流入 ' + fmtYi(b.flow) + '</span></div>';
+}
+/* 广度统计纯函数（单测入口）：成分 chg → 涨/跌家数 + isZT/isDT 涨停/跌停家数；
+   chg 为 null/非数值的成分不计入任何桶（诚实缺省，不算下跌）。 */
+function boardBreadthCalc(stocks) {
+  var up = 0, dn = 0, zt = 0, dt = 0;
+  (stocks || []).forEach(function (s) {
+    if (!s || s.chg == null || !isFinite(s.chg)) return;
+    if (s.chg > 0) up++;
+    else if (s.chg < 0) dn++;
+    if (isZT(s)) zt++;
+    if (isDT(s)) dt++;
+  });
+  return { up: up, dn: dn, zt: zt, dt: dt };
+}
+function boardBreadthTip(txt) {
+  var wrap = el('mktStrip');
+  var tip = wrap ? wrap.querySelector('.tip-box') : null;
+  if (!tip) return;
+  var sp = tip.querySelector('#bbTip326');
+  if (!sp) { sp = document.createElement('div'); sp.id = 'bbTip326'; sp.style.marginTop = '4px'; tip.appendChild(sp); }
+  sp.textContent = txt;
+}
+/* patch 单卡：只改这张卡的 .bc-mid（第一组），不替换 boardGridWrap 整块 innerHTML ——
+   渐进点亮时不打断用户滚动/悬停；卡片不在 DOM（翻页/重渲）→ 返回 false 由调用方决定整格重渲。 */
+function boardBreadthPatchCard(b) {
+  var card = document.querySelector('.bcard[data-bk="' + b.code + '"]');
+  if (!card) return false;
+  var mid = card.querySelector('.bc-mid');
+  if (!mid) return false;
+  var tmp = document.createElement('div');
+  tmp.innerHTML = boardBreadthMidHtml(b);
+  var fresh = tmp.querySelector('.bc-mid');
+  if (mid.parentNode && fresh) mid.parentNode.replaceChild(fresh, mid);
+  return true;
+}
+var BOARD_BREADTH = { seq: 0 };
+async function boardBreadthBackfill() {
+  if (window.__BOARD_SRC !== 'sina' || !ST.boards || !ST.boards.length) return;
+  var mySeq = ++BOARD_BREADTH.seq;
+  var targets = ST.boards.filter(function (b) { return b.upCount == null; });
+  if (!targets.length) return;
+  boardBreadthTip('⏳ 板块广度补齐中 0/' + targets.length + '（涨/跌、涨停/跌停家数，串行拉新浪成分…）');
+  var done = 0, okN = 0, fails = 0;
+  for (var i = 0; i < targets.length; i++) {
+    if (mySeq !== BOARD_BREADTH.seq) return;            // 新一轮已启动 → 本轮让位
+    var b = targets[i];
+    var stocks = null;
+    try { stocks = await bstocksFromSinaNode(b.code); } catch (eB) { stocks = null; }
+    if (mySeq !== BOARD_BREADTH.seq) return;            // await 间隙再查一次
+    done++;
+    if (stocks && stocks.length) {
+      var r = boardBreadthCalc(stocks);
+      b.upCount = r.up; b.downCount = r.dn;
+      ST.boardZT[b.code] = { zt: r.zt, dt: r.dt, ts: Date.now() };
+      okN++; fails = 0;
+      try { localStorage.setItem('bwork_ztstat', JSON.stringify(ST.boardZT)); } catch (eL) {}
+      if (!boardBreadthPatchCard(b)) renderBoardGrid();  // 卡片在就 patch 单卡，不在才整格重渲
+    } else {
+      fails++;                                           // 拉不到 → 留白不补 0，连续失败就中止
+    }
+    boardBreadthTip('⏳ 板块广度补齐中 ' + done + '/' + targets.length +
+      '（已亮 ' + okN + ' · 涨停/跌停同步入缓存）');
+    if (fails >= 3) { boardBreadthTip('⚠️ 板块广度补齐中止：连续 ' + fails + ' 个板块成分拉取失败（通道不稳），其余保持 —，可点「刷新实时」重试'); return; }
+    if (i < targets.length - 1) await new Promise(function (rS) { setTimeout(rS, 350); });
+  }
+  boardBreadthTip('✅ 板块广度补齐完成 ' + okN + '/' + targets.length +
+    (okN < targets.length ? '（' + (targets.length - okN) + ' 个拉不到成分，如实留白）' : ''));
 }
 
 async function loadBoardList(force) {
@@ -15858,7 +16024,10 @@ async function loadBoardList(force) {
         new Date(stale).toLocaleString('zh-CN') + '）。点击「刷新实时」重试。</div>' + el('mktStrip').innerHTML;
     } else if (window.__BOARD_SRC === 'sina') {
       el('mktStrip').innerHTML = '<div class="tip-box" style="width:100%">ℹ️ 东财实时接口被本机网络拦截，板块列表来自<b>新浪财经备用通道</b>' +
-        '（含涨跌幅/成交额/领涨股；无「主力净流入」字段，显示为 —）。点开板块后成分股自动按板块名解析东财 BK 码走 F10 降级链。</div>' + el('mktStrip').innerHTML;
+        '（含涨跌幅/成交额/领涨股；无「主力净流入」字段，显示为 —）。点开板块后成分股自动按板块名解析东财 BK 码走 F10 降级链。' +
+        '<div id="bbTip326" style="margin-top:4px"></div></div>' + el('mktStrip').innerHTML;
+      /* ★ §326：备用通道下异步串行批量补齐 涨/跌、涨停/跌停 家数（渐进 patch 单卡，不阻塞列表首绘） */
+      boardBreadthBackfill();
     }
   } catch (e) {
     var diag = window.__EM_DIAG ? '<br><br><span style="opacity:.8">主机探测：' + escapeHtml(window.__EM_DIAG) + '</span>' : '';
@@ -27664,23 +27833,18 @@ function dingMomPosAt(kl, i) {
   if (!kl || !kl.length || i < 0 || i >= kl.length) return out;
   var C = kl[i] && kl[i].close;
   if (typeof C !== 'number' || !isFinite(C)) return out;
-  var from = Math.max(0, i - 19), hi = -Infinity, lo = Infinity, c, kk, h, l;
-  for (c = from; c <= i; c++) {
-    kk = kl[c]; if (!kk) continue;
-    h = kk.high; l = kk.low;
-    if (typeof h === 'number' && isFinite(h)) hi = Math.max(hi, h);
-    if (typeof l === 'number' && isFinite(l)) lo = Math.min(lo, l);
-  }
-  if (isFinite(hi) && isFinite(lo) && hi > lo) out.pos20 = (C - lo) / (hi - lo);
+  out.pos20 = dingPos20At(kl, i);   /* ★ §327：分位计算抽出共用（dingPos20At 逐字等价，H1/H2 守行为不变） */
   if (i >= 10) {
     var b = kl[i - 10] && kl[i - 10].close;
     if (typeof b === 'number' && isFinite(b) && b > 0) out.g10 = (C / b - 1) * 100;
   }
-  if (out.g10 === null || out.pos20 === null) return out;
+  /* ★ §327：g10 缺失不挡突破判别（分位已可算即判 brk）；pos20 也缺 → 无从判，整段留白 */
+  if (out.g10 === null || out.pos20 === null) { if (out.pos20 !== null) out.brk = dingBrkAt(kl, i); return out; }
   out.posKey = dingBandIdx(out.pos20, DING_MOMPOS_POS_BANDS, DING_MOMPOS_POS_AXIS);
   out.momKey = dingBandIdx(out.g10, DING_MOMPOS_MOM_BANDS, DING_MOMPOS_MOM_AXIS);
   out.tag = DING_MOMPOS_TAG[out.momKey][out.posKey];
   out.posTxt = DING_MOMPOS_POS_WORD[DING_MOMPOS_POS_AXIS.indexOf(out.posKey)];
+  out.brk = dingBrkAt(kl, i);   /* ★ §327：单点突破型高位判别（四条全过才 ok） */
   return out;
 }
 /* 今 / 昨 双口径（★ §113 文案「动量状态 昨 <标签><标记> 今 <标签>」；★ §115 加方向标记）。
@@ -27688,12 +27852,13 @@ function dingMomPosAt(kl, i) {
    今日都算不出 → txt = ''（整段省略）；仅昨日算不出（K 线恰 11 根）→ 「昨 — 今 X」（不出标记）。 */
 function dingMomPosOf(kl) {
   var out = { g10: null, pos20: null, posKey: '', posTxt: '', momKey: '', tag: '', txt: '', deltaMark: '',
-    prevG10: null, prevPos20: null, prevKey: '', prevTag: '', prevOk: false };
+    prevG10: null, prevPos20: null, prevKey: '', prevTag: '', prevOk: false, brk: null };
   if (!kl || !kl.length) return out;
   var i = kl.length - 1;
   var cur = dingMomPosAt(kl, i);
   out.g10 = cur.g10; out.pos20 = cur.pos20; out.posKey = cur.posKey;
   out.posTxt = cur.posTxt; out.momKey = cur.momKey; out.tag = cur.tag;
+  out.brk = cur.brk || null;   /* ★ §327：突破型高位判别透传（今 bar） */
   if (!out.tag) return out;
   var prev = dingMomPosAt(kl, i - 1);
   out.prevG10 = prev.g10; out.prevPos20 = prev.pos20; out.prevKey = prev.posKey;
@@ -27701,11 +27866,521 @@ function dingMomPosOf(kl) {
   /* ★ 2026-10-13 §115：方向标记按**档位序**（动量 强>平>弱 为主序、同位次再比位置 高>中>低）；
      昨日算不出（prevOk=false）→ 无昨值可比，标记留空、退回「昨 —」诚实留白（不编方向）。 */
   out.deltaMark = out.prevOk ? dingDeltaMark(dingMomPosRank(cur), dingMomPosRank(prev), 0) : '';
-  out.txt = '动量状态 昨 ' + (out.prevOk ? out.prevTag : '—') + out.deltaMark + ' 今 ' + out.tag;
+  /* ★ §327：brk.ok → 今标签追加「·突破型」（钉推送同步带标注）；不 ok → 逐字维持原稿 */
+  out.txt = '动量状态 昨 ' + (out.prevOk ? out.prevTag : '—') + out.deltaMark + ' 今 ' +
+    out.tag + (out.brk && out.brk.ok ? '·突破型' : '');
   return out;
 }
 /* 便利包装（渲染侧只关心文案；算不出 → '' 整段省略） */
 function dingMomPosTxt(kl) { try { return dingMomPosOf(kl).txt; } catch (e) { return ''; } }
+
+/* ★ 2026-11-15 §327（用户两轮口径 + AskUserQuestion 确认「实现突破型高位 chip」）：
+   「低位蓄势 → 高位爆发」票的买点窗口判别 —— 突破型高位 vs 磨顶型高位。
+
+   背景（_diag_breakoutmom.js 三样本 21 个突破日实测，样本 603186/002916/300964）：
+   g10 = 今收 ÷ 10 个交易日前收 − 1，天生滞后 —— 突破首日 g10 常 <+10
+   （603186 2025-12-24 +4.3%、002916 2026-09-10 +7.5%、300964 2026-06-16 +1.3%；
+   7 个低 g10 突破日中 5 个 +5 日续涨）；等 g10 过 +10 已是 8~10 根 K 线后（追高区，MOM20_RULE 已封顶；
+   300964 2026-10-13 追在加速档 +10 日 −33.2% 是反例）。
+   → 「pos20 高位 + g10<10」是两义格：磨顶滞涨 OR 刚突破的买点窗口；区分器 = 分位陡升速度 + 量能，
+   正是 §116 注释预留未实现的「突破型 P5 vs 高位型 P5 二次校验（分位陡升速度 + 20D 动量绝对值）」。
+
+   口径（dingBrkAt，四条全过才 ok，勿擅改）：
+     ① 该日 pos20 ≥ 0.80（P5 高位）；
+     ② ≤3 个交易日前（i−1..i−3）最小 pos20 < 0.50 —— 分位 3 日内自中低陡升（磨顶型长期贴顶不命中）；
+     ③ 当日收阳（close > 前收）；
+     ④ 放量：volume ≥ 前 5 根均量（i−5..i−1，**不含当日**，防大阳自抬均量）× 1.2；
+        量缺失 / 前 5 根均量不足 → 不判（诚实留白不硬贴）。
+   数据不足（K 线不足 6 根 / pos20 算不出）→ ok=false。
+
+   展示两处（同一把尺子 dingBrkAt）：
+     · K 线卡：posChip 之后「▲ 突破型高位」chip（title 带该日读数 pos20 from→to + 量能倍数）；
+     · 钉推送：dingMomPosOf.txt 的今标签追加「·突破型」后缀（如「今 ↗️ 高位启动·突破型」）；
+       brk 不 ok → txt 与 §113/§115 定稿逐字一致（零回归；_test_dingcmd H1/H2 夹具无 volume，
+       天然不触发后缀，断言不动）。
+   ★ 无未来函数：只读 kl[i−19..i] 价与 kl[i−5..i−1] 量；分位与 dingMomPosAt 共用 dingPos20At。 */
+
+/* 单点 20 日区间分位（§327 自 dingMomPosAt 内联循环**逐字提取**，行为零变化 —— _test_dingcmd H1/H2 守）；
+   §327 的 dingBrkAt 与 dingMomPosAt 共用同一实现，防两处漂移。窗口无效（收盘缺失/高低相等）→ null。 */
+function dingPos20At(kl, i) {
+  if (!kl || !kl.length || i < 0 || i >= kl.length) return null;
+  var C = kl[i] && kl[i].close;
+  if (typeof C !== 'number' || !isFinite(C)) return null;
+  var from = Math.max(0, i - 19), hi = -Infinity, lo = Infinity, c, kk, h, l;
+  for (c = from; c <= i; c++) {
+    kk = kl[c]; if (!kk) continue;
+    h = kk.high; l = kk.low;
+    if (typeof h === 'number' && isFinite(h)) hi = Math.max(hi, h);
+    if (typeof l === 'number' && isFinite(l)) lo = Math.min(lo, l);
+  }
+  if (isFinite(hi) && isFinite(lo) && hi > lo) return (C - lo) / (hi - lo);
+  return null;
+}
+
+/* 单点「突破型高位」判别（§327）：四条全过才 ok（①高位 ②陡升 ③收阳 ④放量，口径见上注释）；
+   ok 时带 fromPos/toPos（分位陡升两端）与 volx（量能倍数）供 chip title 展示。 */
+function dingBrkAt(kl, i) {
+  var out = { ok: false, fromPos: null, toPos: null, volx: null };
+  if (!kl || !kl.length || i < 5 || i >= kl.length) return out;
+  var cur = kl[i]; if (!cur) return out;
+  var C = cur.close, Pc = kl[i - 1] && kl[i - 1].close;
+  if (typeof C !== 'number' || !isFinite(C)) return out;
+  if (!(typeof Pc === 'number' && isFinite(Pc)) || C <= Pc) return out;      /* ③ 收阳 */
+  var vol = cur.volume;
+  if (typeof vol !== 'number' || !isFinite(vol) || vol <= 0) return out;     /* ④ 量缺失不硬判 */
+  var vs = 0, vn = 0, kk, v, k;
+  for (k = i - 5; k < i; k++) {
+    kk = kl[k]; v = kk && kk.volume;
+    if (typeof v === 'number' && isFinite(v) && v > 0) { vs += v; vn++; }
+  }
+  if (vn < 5) return out;                                                    /* ④ 前 5 根均量不足 */
+  var volx = vol / (vs / vn);
+  out.volx = volx;
+  if (volx < 1.2) return out;                                                /* ④ 放量不足 */
+  var curP = dingPos20At(kl, i);
+  if (curP == null || curP < 0.80) return out;                               /* ① 现处高位 */
+  var minP = Infinity, p;
+  for (k = 1; k <= 3; k++) {
+    kk = kl[i - k]; if (!kk) continue;
+    p = dingPos20At(kl, i - k);
+    if (p != null && p < minP) minP = p;
+  }
+  if (!isFinite(minP) || minP >= 0.50) return out;                           /* ② 3 日内自中低陡升 */
+  out.fromPos = minP; out.toPos = curP; out.ok = true;
+  return out;
+}
+
+/* ★ 2026-11-15 §329（用户确认「借 ths patterns.js 架构 + 公众号九篇量能序列判据」）：
+   形态库纯函数层 —— 只借架构（纯函数 / 只用 kl[0..i] / hits 等长数组 / 强度分级），不复制源码（ths-cli 无 License）。
+   纪律：① 仅形态描述，不进 s4kTierOf、不进钉钉、不发买卖信号（与 pickZtCount / waveCandleSig 同款隔离）
+        ② r5 唯一真源 osrAvg5VolOf + KL_DL_R5_MAX / KL_VR15_HOT（§212 / §213 同一把尺），本段不内联重算
+        ③ 只读 kl[0..i]，无未来函数；缺量 / 前 5 根不足 / 脏值 → 该 hit 不产生（诚实留白，不印 0）
+        ④ 强度沿用工作台既有文字档 强 / 中 / 弱（OPEN8_PAT 同构），不引入数字 1~3 第二套口径
+        ⑤ 作者版潜伏 vs 右侧派确认 = 两个独立 key，口径冲突显式标注，绝不合并
+        ⑥ 经典蜡烛形态不收编（waveCandleSig 已有吞没 / 乌云盖顶 / 刺透，避免双份）
+   side 语义 = 形态性质（consensus 一致端 / divergence 分歧端 / neutral 中性），不是买卖方向。 */
+
+/* 量比 r5 = 该根量 ÷ 前 5 根均量（不含当根）。唯一真源 osrAvg5VolOf；算不出 → null */
+function patR5At(kl, i) {
+  if (!Array.isArray(kl) || i == null || i < 0 || i >= kl.length) return null;
+  var v = kl[i] && kl[i].volume;
+  if (typeof v !== 'number' || !isFinite(v) || v <= 0) return null;
+  if (typeof osrAvg5VolOf !== 'function') return null;
+  var a = osrAvg5VolOf(kl, i);
+  if (a == null || !isFinite(a) || a <= 0) return null;
+  return v / a;
+}
+
+/* 地量：r5 ≤ KL_DL_R5_MAX（§213 同一阈值）。算不出 → false，不硬判 */
+function patDiAt(kl, i) {
+  var r = patR5At(kl, i);
+  var th = (typeof KL_DL_R5_MAX === 'number') ? KL_DL_R5_MAX : 0.5;
+  return (r != null && isFinite(r) && r <= th);
+}
+
+/* 窗口最小量（8-22 篇作者唯一定义：地量 = 量能跟前面比最小，无倍数门槛）。
+   窗口 = i-n+1..i，n 根量全部有效才判；脏值 / 不足 → null（不臆造「是」）。 */
+function patWinMinVolAt(kl, i, n) {
+  if (!Array.isArray(kl) || i == null || i < 0 || i >= kl.length) return null;
+  var N = (n == null) ? 10 : n;
+  var from = Math.max(0, i - N + 1), j, v, mn = Infinity, cnt = 0;
+  for (j = from; j <= i; j++) {
+    v = kl[j] && kl[j].volume;
+    if (typeof v !== 'number' || !isFinite(v) || v <= 0) return null;
+    if (v < mn) mn = v;
+    cnt++;
+  }
+  if (cnt < 2) return null;
+  return (kl[i].volume <= mn);
+}
+
+/* 回流天数独立计数器（10-24 篇「有两天以上回流，一天的不算」；8-31 篇「两阳缩量 = 一致」）。
+   从 i 往回最多 10 根：缩量小阳计 1 根，缩量小阴容忍不计数（两阳夹一阴），
+   放量（r5 ≥ KL_VR15_HOT）或数据缺失即中断。只用 kl[0..i]；返回累计阳根数（0 起），算不出 → null。 */
+function reflowDaysOf(kl, i) {
+  if (!Array.isArray(kl) || i == null || i < 0 || i >= kl.length) return null;
+  var vrTh = (typeof KL_VR15_HOT === 'number' && isFinite(KL_VR15_HOT) && KL_VR15_HOT > 0) ? KL_VR15_HOT : 1.5;
+  var n = 0, j, b, r, o, c, p, pc, body, rng, small;
+  for (j = i; j >= 0 && j > i - 10; j--) {
+    b = kl[j]; if (!b) break;
+    r = patR5At(kl, j);
+    if (r == null) break;
+    if (r >= vrTh) break;                        /* 放量 = 分歧端，回流段结束 */
+    o = b.open; c = b.close;
+    if (!(typeof o === 'number' && isFinite(o) && typeof c === 'number' && isFinite(c))) break;
+    p = kl[j - 1];
+    pc = (p && typeof p.close === 'number' && isFinite(p.close) && p.close > 0) ? p.close : null;
+    body = Math.abs(c - o);
+    rng = (typeof b.high === 'number' && typeof b.low === 'number' && isFinite(b.high) && isFinite(b.low)) ? (b.high - b.low) : 0;
+    small = (rng > 0) ? (body / rng <= 0.6) : true;
+    if (c > o && small && (pc == null || (c - pc) / pc * 100 <= 5)) n++;
+    else if (c < o && !small) break;            /* 放量大阴不属被动整理 */
+  }
+  return n;
+}
+
+/* 单点形态识别（ths detectPatterns 架构的台内版）：返回该根命中的 hits 数组，每项
+   { key, label, side, strength, why, pct, r5 }。pct = 当日实际涨跌幅（相对昨收），
+   假阳（收大于开但收小于昨收）按 pct 取色，绝不按 K 线阴阳取色。 */
+function patternHitsAt(kl, i) {
+  var out = [];
+  if (!Array.isArray(kl) || i == null || i < 0 || i >= kl.length) return out;
+  var b = kl[i]; if (!b) return out;
+  var o = b.open, c = b.close, l = b.low;
+  if (!(typeof o === 'number' && isFinite(o) && typeof c === 'number' && isFinite(c))) return out;
+  var prev = (i >= 1) ? kl[i - 1] : null;
+  var pc = (prev && typeof prev.close === 'number' && isFinite(prev.close) && prev.close > 0) ? prev.close : null;
+  var pct = (pc != null) ? (c - pc) / pc * 100 : null;
+  var r5 = patR5At(kl, i);
+  var di = patDiAt(kl, i);
+  var yang = c > o, yin = c < o;
+  function H(key, label, side, strength, why) {
+    out.push({ key: key, label: label, side: side, strength: strength, why: why, pct: pct, r5: r5 });
+  }
+  function volOf(j) { var x = kl[j] && kl[j].volume; return (typeof x === 'number' && isFinite(x) && x > 0) ? x : null; }
+  function isY(j) { var x = kl[j]; return !!(x && typeof x.open === 'number' && typeof x.close === 'number' && x.close < x.open); }
+  function isA(j) { var x = kl[j]; return !!(x && typeof x.open === 'number' && typeof x.close === 'number' && x.close > x.open); }
+  function r5Of(j) { return patR5At(kl, j); }
+
+  /* A 地量阴（11-14 篇「近期最小量阴线 = 诱空」+ 8-22 篇「地量 = 跟前面比最小」）。
+     工作台口径 = §213 r5 ≤ KL_DL_R5_MAX；作者口径 = 窗口相对最小量 —— 两者不等价，why 里并列披露。 */
+  if (yin && di) {
+    var wm = patWinMinVolAt(kl, i, 10);
+    H('diYin', '地量阴', 'consensus', (wm === true ? '中' : '弱'),
+      '当日缩量阴线（r5 ' + (r5 != null ? r5.toFixed(2) : '—') + ' ≤ ' + ((typeof KL_DL_R5_MAX === 'number') ? KL_DL_R5_MAX : 0.5) +
+      '，§213 单一真源）= 分歧小、非主动抛压；' +
+      '作者 8-22 篇口径为「量能跟前面比最小」，近 10 根窗口最小 = ' + (wm == null ? '—' : (wm ? '是' : '否')) +
+      '（两口径不等价，显式并列）；地量后仍可能有更多地量，仅排除出货、不产生买点');
+  }
+
+  /* B 连续缩量双阴（11-14 篇「两个阴线小幅调整，持续缩量或地量 = 被动整理」）。
+     阶梯式衰减 vol[i-2] 大于 vol[i-1] 大于 vol[i]；创新低按外部补漏降级并标注（阴跌缩量 ≠ 止跌缩量）。 */
+  if (yin && i >= 2 && isY(i - 1) && r5 != null) {
+    var v0 = volOf(i - 2), v1 = volOf(i - 1), v2 = volOf(i);
+    var r1 = r5Of(i - 1), r0 = r5Of(i - 2);
+    if (v0 != null && v1 != null && v2 != null && v0 > v1 && v1 > v2 && r0 != null && r1 != null && r0 < 1 && r1 < 1 && r5 < 1) {
+      var nl = (typeof l === 'number' && isFinite(l) && typeof kl[i - 1].low === 'number' && isFinite(kl[i - 1].low)) ? (l < kl[i - 1].low) : null;
+      H('shrinkTwoYin', '连续缩量双阴', 'consensus', (nl === true ? '弱' : '中'),
+        '两根阴线量能阶梯式衰减（末根为首根的 ' + (v0 > 0 ? (v2 / v0).toFixed(2) : '—') + ' 倍）且三根 r5 均小于 1 = 被动整理、不是主动抛压；' +
+        (nl === true ? '⚠️ 当日创新低：外部补漏「阴跌缩量 ≠ 止跌缩量」，强度降级，须叠加不创新低才算止跌' : '当日未创新低'));
+    }
+  }
+
+  /* D 假阳地量（11-08 篇）：收大于开（红 K）但收小于昨收（实际下跌）= 低开高走承接；作者要求缩量 / 最标准地量。 */
+  if (yang && pc != null && c < pc && di) {
+    H('fakeYangDi', '假阳地量', 'consensus', '中',
+      '假阳 = 收大于开 且 收小于昨收（红 K 但当日实跌 ' + (pct != null ? pct.toFixed(2) + '%' : '—') + '）；' +
+      '当日 r5 ' + (r5 != null ? r5.toFixed(2) : '—') + ' 达地量 = 作者体系「假阳反而更好 · 承接」；' +
+      '⚠️ 涨红跌绿配色下按实际涨跌幅取色，勿把红 K 当上涨；放量是唯一证伪开关');
+  }
+
+  /* E1 两阳夹一阴 · 作者版（8-22 / 8-31 篇）：整组三根均缩量 = 一致端，作者在此潜伏、放量即走。 */
+  if (i >= 2 && isA(i - 2) && isY(i - 1) && yang && r5 != null) {
+    var e0 = r5Of(i - 2), e1 = r5Of(i - 1);
+    if (e0 != null && e1 != null && e0 < 1 && e1 < 1 && r5 < 1) {
+      H('twoYYAuthor', '两阳夹一阴·作者版', 'consensus', '中',
+        '阳 / 阴 / 阳 三根 r5 均小于 1（' + e0.toFixed(2) + ' / ' + e1.toFixed(2) + ' / ' + r5.toFixed(2) + '）= 整组缩量、分歧小 = 作者「再次一致」；' +
+        '作者赚地量到反弹这一段，放量即走；与主流多方炮（第三阳放量突破）动作相反，二选一不混用');
+    }
+    /* E2 两阳夹一阴 · 右侧派（外部主流多方炮）：第三阳放量 ≥ KL_VR15_HOT 且收过首阳最高 = 启动确认。 */
+    var hvTh = (typeof KL_VR15_HOT === 'number' && isFinite(KL_VR15_HOT) && KL_VR15_HOT > 0) ? KL_VR15_HOT : 1.5;
+    var h2 = kl[i - 2] && kl[i - 2].high;
+    if (r5 >= hvTh && typeof h2 === 'number' && isFinite(h2) && c > h2) {
+      H('twoYYConfirm', '两阳夹一阴·右侧派', 'divergence', '强',
+        '第三阳放量 r5 ' + r5.toFixed(2) + ' ≥ ' + hvTh + ' 且收盘越过首阳最高 = 主流多方炮「放量阳—缩量阴—放量阳」启动确认；' +
+        '⚠️ 同一形态名下作者版（全缩量潜伏、放量即走）与右侧派（放量进场）动作完全相反，本台拆成两个独立 key，不合并');
+    }
+  }
+
+  /* R 两天以上回流（10-24 篇结构性前提）：独立计数器，1 天不算；无回流不打底 = 下跌阴线按出逃理解。 */
+  var rf = reflowDaysOf(kl, i);
+  if (rf != null && rf >= 2) {
+    H('reflow', '回流 ' + rf + ' 天', 'consensus', (rf >= 3 ? '强' : '中'),
+      '缩量小阳累计 ' + rf + ' 根（缩量小阴容忍，放量即中断）= 作者「有两天以上回流，一天的不算」；' +
+      '这是洗盘成功的结构性前提，不是买点；收盘有效跌破前面涨停低点则整段作废');
+  }
+  return out;
+}
+
+/* ths detectPatterns 同款批量入口：返回与 kl 等长的 hits 数组（供未来选股器 / 回测消费，K 线卡只用单点）。 */
+function patternHitsSeries(kl) {
+  var n = Array.isArray(kl) ? kl.length : 0, out = new Array(n), j;
+  for (j = 0; j < n; j++) out[j] = patternHitsAt(kl, j);
+  return out;
+}
+/* ★ 2026-11-15 §330（用户要求「把上文 Al Brooks 价格行为策，直接用到 K 线读取策略，
+   点击每一根 K 线在最左侧显示对应的形态特征，取消最左侧『● 观察』提示语」）：
+   ① 纯函数层：只用 kl[0..i]（无未来函数），与 §329 patternHitsAt 同架构，独立计数器 bkCountAt；
+   ② 判据取课程中可由日 K OHLCV 判定的子集：Trend bar / TR bar 二分、H1~H4 / L1~L4 数 K 与回调根数、
+      Micro Gap / Body Gap 保持-回补、买卖压布尔清单、信号 K ≠ 入场 K；
+   ③ 量能倍数复用 §329 单一真源 patR5At（不内联重算前 5 根均量）；
+   ④ A 股适配边界：原课程为 Emini / EURUSD 5min、T+0、可做空、1 tick 挂单；
+      A 股 T+1 / 涨跌停 / 不可做空 → 1 tick 挂单与做空规则不适用，课程概率数字不当作 A 股回测值；
+   ⑤ 信号分层：本层仅形态描述，不计分、不进四指标 / 钉钉、不发买卖信号；
+      买卖仍只认 s4kTierOf(...) === 'buy'（≥42）。
+   ⑥ 算不出 → 诚实留白「—」，绝不回落成「观察」、绝不印 0。                                   */
+
+/* 有效数值：显式判空（isFinite(null) === true 的坑），脏值一律 null。 */
+function bkNum(v) {
+  return (v != null && typeof v === 'number' && isFinite(v)) ? v : null;
+}
+
+/* 取第 j 根的干净 OHLCV；任一字段缺失 / 脏 / 高低倒挂 → null（不硬凑）。 */
+function bkBarAt(kl, j) {
+  if (!Array.isArray(kl) || j == null || j < 0 || j >= kl.length) return null;
+  var b = kl[j];
+  if (!b) return null;
+  var o = bkNum(b.open), h = bkNum(b.high), l = bkNum(b.low), c = bkNum(b.close);
+  if (o == null || h == null || l == null || c == null || h < l) return null;
+  return { o: o, h: h, l: l, c: c, v: bkNum(b.volume), date: b.date || '' };
+}
+
+/* ① 每根 K 二分：实体占全幅 ≥50% = 趋势 K（Trend bar），否则震荡 K（TR bar）。
+   一字板（高=低）单列「一字」，不硬套 50% 阈值；小 K 仍归 TR bar。 */
+function bkBarTypeAt(kl, i) {
+  var b = bkBarAt(kl, i);
+  if (!b) return null;
+  var rng = b.h - b.l, body = Math.abs(b.c - b.o);
+  var flat = (rng <= 0);
+  var ratio = flat ? null : body / rng;
+  var key = flat ? 'flat' : (ratio >= 0.5 ? 'trend' : 'tr');
+  var label = flat ? '一字' : (key === 'trend' ? '趋势K' : '震荡K');
+  return {
+    key: key, label: label, ratio: ratio, flat: flat,
+    yang: b.c > b.o, yin: b.c < b.o,
+    closePos: flat ? null : (b.c - b.l) / rng,
+    upShadow: flat ? null : (b.h - Math.max(b.o, b.c)) / rng,
+    dnShadow: flat ? null : (Math.min(b.o, b.c) - b.l) / rng,
+    b: b
+  };
+}
+
+/* ② 独立计数器：H1~H4 / L1~L4 与回调根数（Al Brooks 数 K 法的台内可编码口径）。
+   · H 计数 = 从所点根往回，连续满足 high[j] > high[j-1] 的根数（封顶 4 → H1~H4）；
+   · L 计数 = 从所点根往回，连续满足 low[j] < low[j-1] 的根数（封顶 4 → L1~L4）；
+   · 突破近 20 根新高 / 新低 = 重新计数（reset）；
+   · pullback = 未创更高高点时，往回连续「高点不抬高」的根数（回调根数，封顶 10）。
+   只用 kl[0..i]；窗口内任一根脏 / 不足 → null，不臆造计数。                                */
+function bkCountAt(kl, i) {
+  if (!Array.isArray(kl) || i == null || i < 1 || i >= kl.length) return null;
+  var B = [], j, x;
+  for (j = Math.max(0, i - 21); j <= i; j++) {
+    x = bkBarAt(kl, j);
+    if (!x) return null;
+    B.push(x);
+  }
+  var last = B.length - 1, hk = 0, lk = 0;
+  for (j = last; j >= 1 && j > last - 12; j--) {
+    if (B[j].h > B[j - 1].h) hk++; else break;
+  }
+  for (j = last; j >= 1 && j > last - 12; j--) {
+    if (B[j].l < B[j - 1].l) lk++; else break;
+  }
+  var hiMax = -Infinity, loMin = Infinity;
+  for (j = 0; j < last; j++) {
+    if (B[j].h > hiMax) hiMax = B[j].h;
+    if (B[j].l < loMin) loMin = B[j].l;
+  }
+  var hasWin = (last >= 1 && isFinite(hiMax) && isFinite(loMin));
+  var reset = hasWin && (B[last].h > hiMax || B[last].l < loMin);
+  var pullback = 0;
+  if (hk === 0) {
+    for (j = last; j >= 1 && j > last - 10; j--) {
+      if (B[j].h <= B[j - 1].h) pullback++; else break;
+    }
+  }
+  var tag = hk > 0 ? ('H' + Math.min(hk, 4)) : (lk > 0 ? ('L' + Math.min(lk, 4)) : '—');
+  return { hk: hk, lk: lk, tag: tag, pullback: pullback, reset: reset };
+}
+
+/* ③ Micro Gap / Body Gap 保持-回补状态（只用 kl[0..i]）。
+   · 真跳空 full = low[i] > high[i-1] / high[i] < low[i-1]（影线不重叠）；
+   · 实体空隙 = 当根实体下沿 > 前根实体上沿（或反向）：按空隙宽度占两根较大振幅的比例分档，
+     ≥30% → Body Gap（大实体缺口），<30% → Micro Gap（微空隙）。
+     ⚠ 旧口径「当根实体整体在前收一侧」在连续涨跌段几乎每根命中（实测 259/260 带缺口标签），
+       已下线；课程原义的 Body Gap 是实体不重叠，不是「收在前收之上」。
+   · 三态：当根新形成 → 待确认（需后续 K 验证，Brooks 原义）；后续 K 触回缺口沿 → 已回补；
+     经过至少一根后续 K 仍未回补 → 保持（唯一有效，进主行）。
+   · 近 10 根内无可判缺口 → kind='none'（诚实留白，不编造缺口）。                              */
+function bkGapAt(kl, i) {
+  var none = { kind: 'none', dir: null, state: null, at: null, label: '', active: false, why: '近 10 根未形成可判缺口' };
+  if (!Array.isArray(kl) || i == null || i < 1 || i >= kl.length) return none;
+  var j, g = null;
+  for (j = i; j >= 1 && j > i - 10; j--) {
+    var a = bkBarAt(kl, j), p = bkBarAt(kl, j - 1);
+    if (!a || !p) break;
+    var bLo = Math.min(a.o, a.c), bHi = Math.max(a.o, a.c);
+    var pLo = Math.min(p.o, p.c), pHi = Math.max(p.o, p.c);
+    var kind = null, dir = null, edge = null;
+    if (a.l > p.h) { kind = 'full'; dir = 'up'; edge = p.h; }
+    else if (a.h < p.l) { kind = 'full'; dir = 'down'; edge = p.l; }
+    else if (bLo > pHi) {
+      var ampU = Math.max(a.h - a.l, p.h - p.l);
+      kind = (ampU > 0 && (bLo - pHi) / ampU >= 0.3) ? 'body' : 'micro';
+      dir = 'up'; edge = pHi;
+    }
+    else if (bHi < pLo) {
+      var ampD = Math.max(a.h - a.l, p.h - p.l);
+      kind = (ampD > 0 && (pLo - bHi) / ampD >= 0.3) ? 'body' : 'micro';
+      dir = 'down'; edge = pLo;
+    }
+    if (kind) { g = { kind: kind, dir: dir, edge: edge, at: j }; break; }
+  }
+  if (!g) return none;
+  var filled = false, k, q;
+  for (k = g.at + 1; k <= i; k++) {
+    q = bkBarAt(kl, k);
+    if (!q) break;
+    if (g.dir === 'up' && q.l <= g.edge) { filled = true; break; }
+    if (g.dir === 'down' && q.h >= g.edge) { filled = true; break; }
+  }
+  var fresh = (g.at === i);
+  var state = fresh ? '待确认' : (filled ? '已回补' : '保持');
+  var name = g.kind === 'full' ? '真跳空' : (g.kind === 'micro' ? 'Micro Gap' : 'Body Gap');
+  return {
+    kind: g.kind, dir: g.dir, state: state, at: g.at, active: (state === '保持'),
+    label: name + (g.dir === 'up' ? '↑' : '↓') + '·' + state,
+    why: name + '产生于窗口第 ' + (g.at + 1) + ' 根 → ' +
+      (fresh ? '当根新形成，需后续 K 验证（待确认）' :
+        (filled ? '其后已有 K 线触回缺口沿 → 缺口已回补' : '经过后续 K 仍未触回缺口沿 → 缺口保持'))
+  };
+}
+
+/* ④ 买卖压布尔清单：课程买压 12 条 / 卖压 14 条中，可由 OHLCV 判定的子集逐条列名
+   （盘口 / 逐笔 / 做空 / 1 tick 等不可判条目不纳入、不伪造）。量能倍数复用 patR5At 单一真源。
+   lead 用文字档（买压占优 / 卖压占优 / 买卖均衡），不输出「0 分」这类伪分数。                */
+function bkPressureAt(kl, i) {
+  var out = { buy: [], sell: [], lead: '—', why: '该根 OHLC 数据不足，买卖压留白' };
+  var a = bkBarAt(kl, i), p = bkBarAt(kl, i - 1);
+  if (!a || !p) return out;
+  var t = bkBarTypeAt(kl, i), buy = [], sell = [], j;
+  if (a.c > a.o) buy.push('收阳'); else if (a.c < a.o) sell.push('收阴');
+  if (t && t.key === 'trend') (a.c >= a.o ? buy : sell).push('趋势K（实体≥50%）');
+  if (t && t.closePos != null) {
+    if (t.closePos >= 0.7) buy.push('收在上1/3');
+    else if (t.closePos <= 0.3) sell.push('收在下1/3');
+  }
+  if (a.h > p.h) buy.push('高点抬高'); else if (a.h < p.h) sell.push('高点降低');
+  if (a.l > p.l) buy.push('低点抬高'); else if (a.l < p.l) sell.push('低点降低');
+  if (a.c > p.h) buy.push('收过前高'); else if (a.c < p.l) sell.push('收破前低');
+  if (t && t.dnShadow != null && t.dnShadow >= 0.4) buy.push('长下影承接');
+  if (t && t.upShadow != null && t.upShadow >= 0.4) sell.push('长上影抛压');
+  var r5 = (typeof patR5At === 'function') ? patR5At(kl, i) : null;
+  if (r5 != null && r5 >= 1.2) (a.c >= a.o ? buy : sell).push('放量 r5 ' + r5.toFixed(2));
+  else if (r5 != null && r5 <= 0.7) (a.c >= a.o ? buy : sell).push('缩量 r5 ' + r5.toFixed(2));
+  var s = 0, cnt = 0, q;
+  for (j = Math.max(0, i - 4); j <= i; j++) {
+    q = bkBarAt(kl, j);
+    if (!q) break;
+    s += q.c; cnt++;
+  }
+  if (cnt > 0 && cnt === Math.min(5, i + 1)) {
+    var ma5 = s / cnt;
+    if (a.c > ma5) buy.push('收在MA5上');
+    else if (a.c < ma5) sell.push('收在MA5下');
+  }
+  if (a.c > a.o && p.c > p.o) buy.push('连续两阳');
+  if (a.c < a.o && p.c < p.o) sell.push('连续两阴');
+  var gp = bkGapAt(kl, i);
+  if (gp && (gp.active || gp.state === '待确认')) (gp.dir === 'up' ? buy : sell).push(gp.label + (gp.active ? '' : '·待确认'));
+  var bn = buy.length, sn = sell.length;
+  var lead = bn >= sn + 2 ? '买压占优' : (sn >= bn + 2 ? '卖压占优' : '买卖均衡');
+  return {
+    buy: buy, sell: sell, lead: lead,
+    why: '买压命中（' + (bn ? buy.join('、') : '无') + '）；卖压命中（' + (sn ? sell.join('、') : '无') + '）'
+  };
+}
+
+/* ⑤ 信号 K ≠ 入场 K：趋势 K + 收在极值端 + 越过前一根高 / 低，三条同时满足才标「信号K」。
+   课程用 1 tick 突破挂单入场；A 股 T+1 且无 1 tick 机制 → 只标形态，不生成入场指令、不做空。 */
+function bkSignalAt(kl, i) {
+  var t = bkBarTypeAt(kl, i), a = bkBarAt(kl, i), p = bkBarAt(kl, i - 1);
+  if (!t || !a || !p) return { ok: false, dir: null, why: '该根数据不足，信号K留白' };
+  var up = t.key === 'trend' && a.c > a.o && t.closePos != null && t.closePos >= 0.75 && a.c > p.h;
+  var dn = t.key === 'trend' && a.c < a.o && t.closePos != null && t.closePos <= 0.25 && a.c < p.l;
+  if (!up && !dn) {
+    return { ok: false, dir: null, why: '未构成信号K（趋势K + 收在极值端 + 越过前高或前低，三条未同时满足）' };
+  }
+  return {
+    ok: true, dir: up ? 'up' : 'down',
+    why: '信号K（' + (up ? '多头' : '空头') + '）：趋势K + 收在极值端 + 越过前一根' + (up ? '高' : '低') +
+      '。⚠ 信号K ≠ 入场K；原课程用 1 tick 突破挂单，A 股 T+1 且无 1 tick 机制 → 本台只标形态，不生成入场指令、不做空。'
+  };
+}
+
+/* 汇总：单点 + 等长批量入口（与 §329 patternHitsSeries 同款，供未来选股器 / 回测消费）。 */
+function brooksFeaturesAt(kl, i) {
+  var out = { ok: false, barType: null, count: null, gap: null, pressure: null, signal: null, pct: null };
+  var a = bkBarAt(kl, i);
+  if (!a) return out;
+  var p = bkBarAt(kl, i - 1);
+  out.ok = true;
+  out.barType = bkBarTypeAt(kl, i);
+  out.count = bkCountAt(kl, i);
+  out.gap = bkGapAt(kl, i);
+  out.pressure = bkPressureAt(kl, i);
+  out.signal = bkSignalAt(kl, i);
+  out.pct = (p && p.c > 0) ? (a.c - p.c) / p.c * 100 : null;
+  return out;
+}
+function brooksFeaturesSeries(kl) {
+  var n = Array.isArray(kl) ? kl.length : 0, out = new Array(n), j;
+  for (j = 0; j < n; j++) out[j] = brooksFeaturesAt(kl, j);
+  return out;
+}
+
+/* 结论栏最左侧形态特征块 HTML —— 替换原 .badge「● 观察」徽标（含其 title 三行提示语）。
+   按实际涨跌幅取色（涨红跌绿），不按 K 线阴阳取色（假阳红 K 实跌仍绿）。
+   title 完整披露口径 / 逐条布尔命中 / A 股适配边界 / 信号分层；数据不足 → 「—」留白。 */
+function brooksConclHtml(kl, i, per) {
+  var esc = (typeof escapeHtml === 'function') ? escapeHtml : function (s) { return String(s == null ? '' : s); };
+  var lab = '价格行为 · 该根形态', f;
+  try { f = brooksFeaturesAt(kl, i); } catch (eBkF) { f = { ok: false }; }
+  if (!f || !f.ok || !f.barType) {
+    return '<div class="vv-cap vv-brooks" title="该根 OHLC 数据不足 → 形态特征诚实留白（不印 0、不回落为旧徽标）。">' +
+      '<div class="lab">' + lab + '</div><div class="nm" style="color:#8892b0">—</div>' +
+      '<div class="act">数据不足，形态特征留白</div></div>';
+  }
+  var t = f.barType, c = f.count, g = f.gap, pr = f.pressure, sg = f.signal;
+  var col = (f.pct == null) ? '#8892b0' : (f.pct >= 0 ? '#ff5252' : '#26c281');
+  var nm = t.label;
+  if (c && c.tag !== '—') nm += ' · ' + c.tag;
+  if (sg && sg.ok) nm += ' · 信号K' + (sg.dir === 'up' ? '↑' : '↓');
+  var ap = [];
+  /* ★ 主行只显示「保持（未回补）」的有效缺口：真实数据 260 根里曾形成缺口的有 128 根，
+     但未回补仅 16 根。若把陈年已回补缺口也逐根挂出来，259/260 根都会带一个无信息量的标签
+     （_diag_bk330_gap.js 实测）→ 已回补的留在 title 里说明，主行保持干净。 */
+  if (g && g.active) ap.push(g.label);
+  if (pr && pr.lead !== '—') ap.push(pr.lead);
+  if (c && c.reset) ap.push('突破重计');
+  else if (c && c.pullback > 0) ap.push('回调 ' + c.pullback + ' 根');
+  if (sg && !sg.ok) ap.push('非信号K');
+  var act = ap.length ? ap.join(' · ') : '无有效缺口 / 无主导买卖压';
+  var perTxt = (per === 'week') ? '周K' : (per === 'month') ? '月K' :
+    (per === 'm5' || per === 'm30') ? '分钟K' : '日K';
+  var tip = [
+    'Al Brooks 价格行为 · 所点这一根的形态特征（只用 kl[0..i]，无未来函数）',
+    '周期：' + perTxt + '（H / L 计数与回调根数按当前周期 K 线根数解释，非交易日数）',
+    '',
+    '① K 线二分：' + t.label + (t.ratio != null ? '（实体占全幅 ' + (t.ratio * 100).toFixed(0) + '%）' : '（一字，无振幅）') +
+      '；实体 ≥50% = 趋势K（Trend bar），否则震荡K（TR bar）',
+    '② 数 K：' + (c ? (c.tag + ' · 连续更高高点 ' + c.hk + ' 根 / 连续更低低点 ' + c.lk + ' 根 · 回调 ' +
+      c.pullback + ' 根' + (c.reset ? ' · 突破近 20 根新高或新低 → 重新计数' : '')) : '窗口数据不足 → 留白'),
+    '③ 缺口：' + (g ? (g.why + (g.active ? '（有效，进主行）' : '（待确认或已回补 → 只在此说明，不进主行）')) : '—'),
+    '④ 买卖压：' + (pr ? (pr.lead + '。' + pr.why) : '—'),
+    '⑤ 信号 K：' + (sg ? sg.why : '—'),
+    '',
+    '口径边界（A 股适配）：原课程为 Emini / EURUSD 5min、T+0、可做空、1 tick 挂单；' +
+      'A 股 T+1 / 涨跌停 / 不可做空 → 1 tick 挂单与做空规则不适用，课程概率数字不可当作 A 股回测值。' +
+      '买卖压清单只取 OHLCV 可判子集，盘口 / 逐笔类条目不纳入、不伪造。',
+    '信号分层：仅形态描述，不计分、不进四指标 / 钉钉、不发买卖信号；' +
+      '买卖仍以 s4kTierOf(...) === buy（≥42）为唯一依据。'
+  ].join('\n');
+  return '<div class="vv-cap vv-brooks" title="' + esc(tip) + '">' +
+    '<div class="lab">' + lab + '</div>' +
+    '<div class="nm" style="color:' + col + '">' + esc(nm) + '</div>' +
+    '<div class="act">' + esc(act) + '</div></div>';
+}
 
 /* ★ 2026-10-31 §236（用户要求「自动推送钉钉或者@机器人推送的股票信息中，增加推送5日动量，10日动量，20日动量」）：
    推送行内补「动量数值」段 —— 5 / 10 / 20 日动量的**裸数值**（与 §111 动量状态标签段互补：
@@ -38779,6 +39454,23 @@ function init() {
        面板结论仍按所点根算（只用该日及之前数据，无未来函数）；下方徽标条联动照旧在「未重绘」分支统一补写。 */
     var gidx = ent ? (ent.start + i) : null;
     panel.innerHTML = vpPanelHtml(x, sigs, adv, kf, kj, dbl, vpat, wscan, cj, srpSeg);
+    /* ★ 2026-11-15 §330（用户要求「把上文 Al Brooks 价格行为策，直接用到 K 线读取策略，
+       点击每一根 K 线在最左侧显示对应的形态特征，取消最左侧『● 观察』提示语」）：
+       结论栏由 vpPanelHtml 在每次点击时整块重绘 → 最左侧 .badge 就是原「● 观察」三态徽标
+       （badge::before 画圆点，title 里挂 head / action / src 三行提示语）。
+       这里把该徽标**整体替换**为按所点根计算的形态特征块：
+       brooksConclHtml(ent.kl, gidx, ent.per) 只用 kl[0..gidx]（无未来函数），
+       每点一根自然重算 → 点击跟随（与 §328 角标 / §329 chip 同入口）。
+       ★ 不扩 vpPanelHtml 10 参签名、不动 vpVerdict 三态判据函数、不改既有 CSS 断言；
+       数据不足 → 「—」留白（绝不回落成「观察」、绝不印 0）；
+       仅形态描述，不计分、不进四指标 / 钉钉、不发买卖信号；try/catch 失败不拖累面板。 */
+    try {
+      var vvB = panel.querySelector('.vp-verdict');
+      var bkBadge = vvB ? vvB.querySelector('.badge') : null;
+      if (bkBadge && ent && ent.kl && ent.kl.length && gidx != null) {
+        bkBadge.outerHTML = brooksConclHtml(ent.kl, gidx, ent.per);
+      }
+    } catch (eBrooks330) { /* 形态特征替换失败不拖累面板 */ }
     /* ★ 2026-11-04 §263 → §263b → §263d（用户三轮迭代：①GW上方加全天预判+量比量 ②每一根K线逐日回算
        ③「四维确认」块**替代**全天预判块）：开盘八法四维确认面板块。
        数据 = ST.results[code].m5（已缓存）→ open8DayOf 逐日回算（判型/量比量与 computeOpen8 逐字同源）
@@ -39076,6 +39768,81 @@ function init() {
         }
       }
     } catch (eCor324) { /* 角标联动失败不拖累面板 */ }
+    /* ★ 2026-11-15 §328（用户要求「kdj、周kdj、量能、主力状态的具体数值都按照adx模式，
+       点击每一根k线，显示对应的数值」）：四面板右侧角标跟随所点根 —— 与 §324 完全同一套姿势：
+       点击不整图重绘、角标原地改写 textContent、按全量下标 gidx = ent.start + i 取值（无未来函数）、
+       非末根 → 「(至该日)」后缀（与徽标 chip 口径一致）；序列未就绪 → 原地不动，不硬算不伪造。
+       数据源：日 KDJ = ind.__kdjCtx（首绘缓存 kdjSeries 全量序列）；周 KDJ = ind.__wkjCtx
+       （kdjWeekAligned 全量序列，仅日线消费 → per 守卫）；量能 = ent.kl[gidx] 现取 + 量比 r5 现算
+       （§212 同一公式 ÷ 前 5 根均量不含当根；显式判 null）；主力状态 = ind.__zlztSer.ser（§247 已缓存全量，仅日线）。 */
+    try {
+      var cor2Svg = wrap ? wrap.querySelector('svg.chart') : null;
+      if (cor2Svg && ent && gidx != null) {
+        var cor2Sfx = (gidx >= ((ent.ind && ent.ind.klines && ent.ind.klines.length) ? ent.ind.klines.length - 1 : gidx)) ? '' : '(至该日)';
+        /* 日 KDJ 三值（K 白 / D 黄 / J 紫，线色即数值色；Math.round 与首绘角标同格式） */
+        var cor2Kdj = (ent.ind && ent.ind.__kdjCtx && ent.ind.__kdjCtx.ok) ? ent.ind.__kdjCtx : null;
+        if (cor2Kdj) {
+          var cor2KdjMap = [['k', 'K', cor2Kdj.K], ['d', 'D', cor2Kdj.D], ['j', 'J', cor2Kdj.J]];
+          for (var cor2Ki = 0; cor2Ki < cor2KdjMap.length; cor2Ki++) {
+            var cor2Kel = cor2Svg.querySelector('text.kl-kdjcor[data-k="' + cor2KdjMap[cor2Ki][0] + '"]');
+            if (!cor2Kel) continue;
+            var cor2Kv = cor2KdjMap[cor2Ki][2] ? cor2KdjMap[cor2Ki][2][gidx] : null;
+            cor2Kel.textContent = cor2KdjMap[cor2Ki][1] + cor2Sfx + ' ' +
+              ((cor2Kv != null && isFinite(cor2Kv)) ? Math.round(cor2Kv) : '—');
+          }
+        }
+        if ((ent.per || 'day') === 'day') {
+          /* 周 KDJ 三值（仅日线有这块面板；周/月线 querySelector 落空自然跳过） */
+          var cor2Wkj = (ent.ind && ent.ind.__wkjCtx && ent.ind.__wkjCtx.ok) ? ent.ind.__wkjCtx : null;
+          if (cor2Wkj) {
+            var cor2WkjMap = [['wk', 'K', cor2Wkj.K], ['wd', 'D', cor2Wkj.D], ['wj', 'J', cor2Wkj.J]];
+            for (var cor2Wi = 0; cor2Wi < cor2WkjMap.length; cor2Wi++) {
+              var cor2Wel = cor2Svg.querySelector('text.kl-wkjcor[data-k="' + cor2WkjMap[cor2Wi][0] + '"]');
+              if (!cor2Wel) continue;
+              var cor2Wv = cor2WkjMap[cor2Wi][2] ? cor2WkjMap[cor2Wi][2][gidx] : null;
+              cor2Wel.textContent = cor2WkjMap[cor2Wi][1] + cor2Sfx + ' ' +
+                ((cor2Wv != null && isFinite(cor2Wv)) ? Math.round(cor2Wv) : '—');
+            }
+          }
+          /* 主力状态四读数（红/黄/紫 1 位小数 · 套牢整数，与首绘角标同格式） */
+          var cor2Zl = (ent.ind && ent.ind.__zlztSer && ent.ind.__zlztSer.ser && ent.ind.__zlztSer.ser.ok) ? ent.ind.__zlztSer.ser : null;
+          if (cor2Zl) {
+            var cor2ZlMap = [['zr', '红', cor2Zl.red], ['zy', '黄', cor2Zl.yellow], ['zp', '紫', cor2Zl.purple], ['zt', '套', cor2Zl.zshtl]];
+            for (var cor2Zi = 0; cor2Zi < cor2ZlMap.length; cor2Zi++) {
+              var cor2Zel = cor2Svg.querySelector('text.kl-zlcor[data-k="' + cor2ZlMap[cor2Zi][0] + '"]');
+              if (!cor2Zel) continue;
+              var cor2Zv = cor2ZlMap[cor2Zi][2] ? cor2ZlMap[cor2Zi][2][gidx] : null;
+              var cor2Zt = (cor2Zi < 3)
+                ? ((cor2Zv != null && isFinite(cor2Zv)) ? cor2Zv.toFixed(1) : '—')
+                : ((cor2Zv != null && isFinite(cor2Zv)) ? String(Math.round(cor2Zv)) : '—');
+              cor2Zel.textContent = cor2ZlMap[cor2Zi][1] + cor2Sfx + ' ' + cor2Zt;
+            }
+          }
+        }
+        /* 量能两值：量 = 该根成交量；比 = 量比 r5（÷ 前 5 根均量不含当根，§212 同一公式；显式判 null） */
+        var cor2Kb = (ent.kl && ent.kl[gidx]) ? ent.kl[gidx] : null;
+        var cor2VolEl = cor2Svg.querySelector('text.kl-volcor[data-k="vol"]');
+        if (cor2VolEl) {
+          var cor2Vv = cor2Kb ? cor2Kb.volume : null;
+          cor2VolEl.textContent = '量' + cor2Sfx + ' ' +
+            ((cor2Vv != null && isFinite(cor2Vv) && cor2Vv > 0) ? fmtWan(cor2Vv) : '—');
+        }
+        var cor2VrEl = cor2Svg.querySelector('text.kl-volcor[data-k="vr5"]');
+        if (cor2VrEl) {
+          var cor2S5 = 0, cor2Ok5 = false, cor2A, cor2R = null;
+          if (cor2Kb && cor2Kb.volume != null && isFinite(cor2Kb.volume) && cor2Kb.volume > 0 && gidx >= 5) {
+            cor2Ok5 = true;
+            for (cor2A = gidx - 5; cor2A < gidx; cor2A++) {
+              var cor2V5 = ent.kl[cor2A] && ent.kl[cor2A].volume;
+              if (cor2V5 == null || !isFinite(cor2V5)) { cor2Ok5 = false; break; }
+              cor2S5 += cor2V5;
+            }
+          }
+          if (cor2Ok5 && cor2S5 > 0) cor2R = cor2Kb.volume / (cor2S5 / 5);
+          cor2VrEl.textContent = '比' + cor2Sfx + ' ' + ((cor2R != null && isFinite(cor2R)) ? cor2R.toFixed(2) : '—');
+        }
+      }
+    } catch (eCor328) { /* 角标联动失败不拖累面板 */ }
     /* 选中标记：把当前 DOM 里的蜡烛高亮切到所点根（不再有重绘，节点引用始终有效） */
     try {
       var svgEl = wrap ? wrap.querySelector('svg.chart') : null;
