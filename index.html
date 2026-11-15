@@ -14154,15 +14154,20 @@ function faTopHtml(code, quote, ind) {
   return faTopPlaceholder(code, c.snap, c.base, null);
 }
 function faAutoPaint(code, err) {
-  var nd = null;
-  try { nd = document.querySelector('.fa-top[data-fa-code="' + code + '"]'); } catch (eQ) { return; }
-  if (!nd || !nd.parentNode) return;
+  /* ★ §332：同 code 卡片可能同时存在于多个工作区（隐藏 view 仍在 DOM）——
+     旧写法只刷全局第一个，会把当前可见工作区的卡片永远留在占位态。改为逐张刷新。 */
+  var nds = [];
+  try { nds = [].slice.call(document.querySelectorAll('.fa-top[data-fa-code="' + code + '"]')); } catch (eQ) { return; }
+  if (!nds.length) return;
   var c = FA_SNAP[String(code)] || { snap: '行情快照 —', base: null };
   var pack = faAutoCached(code);
   var html = pack ? faTopRender(code, pack, c.snap, c.base) : faTopPlaceholder(code, c.snap, c.base, err);
-  var tmp = document.createElement('div'); tmp.innerHTML = html;
-  var nw = tmp.firstChild;
-  if (nw) nd.parentNode.replaceChild(nw, nd);
+  nds.forEach(function (nd) {
+    if (!nd || !nd.parentNode) return;
+    var tmp = document.createElement('div'); tmp.innerHTML = html;
+    var nw = tmp.firstChild;
+    if (nw) nd.parentNode.replaceChild(nw, nd);
+  });
   /* ★ §277-FIX：占位态点开的详情面板显示「尚未取到数据」，取数完成后要原地补全为 23 行只读详情，
      不重渲染整页、不改变面板展开状态（避免用户以为「点了没反应」）。 */
   /* ★ §277-FIX2：与点击委托同口径 —— 只刷新「可见」的已展开面板，隐藏 / 孤儿残留一律清掉，
@@ -14258,6 +14263,99 @@ function faPanelHtml(code) {
   return h;
 }
 /* ==== §277-END ==== */
+
+/* ==================== §332 基本面「ⓘ 详情」跨工作区修复（2026-11-15 · 用户报障） ====================
+   现象：基本面行是 buildResultHTML 头部结论条（faTopHtml），同时出现在个股诊断 #resultArea、
+   板块详情展开行、自选表、批量表等多个工作区；但「ⓘ 详情 / ↻ 重取 / 关闭」的点击委托
+   只绑在 #resultArea 上 → 其它工作区点击毫无反应。
+   第二处：旧逻辑用 document.querySelector('.fa-top[data-fa-code=…]') 取全局第一个卡片，
+   而 switchView 只是切 .on class（.view{display:none} 但节点仍在 DOM），隐藏工作区里的
+   同 code 卡片排在前面 → 即便有委托，详情面板也会被插进隐藏工作区（用户看到「打不开」）。
+   修法：① 把 toggle 逻辑抽成单一顶层函数 faTopToggle(faBtn, faCard)，#resultArea 原委托
+           保留（分支体只换成调用）；
+        ② document 捕获阶段新增统一委托覆盖其它工作区 —— 捕获先于任何容器委托，
+           不受各容器 stopPropagation 影响；命中即认领，顺带避免「点详情把批量行收起」；
+        ③ 一律以「被点的那张卡」为锚（faCard / faBtn.closest('.fa-top')），
+           全局 querySelector 只作可见性兜底；插入后面板取 nextElementSibling，
+           不再全局取第一个；faAutoPaint 改为逐张刷新同 code 卡片。
+   纪律：只修显示链路，不碰 §277 判据 / 自动取数口径 / 四指标打分 / 钉钉 / 买卖信号；
+   详情面板仍是只读展示，无人工录入；算不出的数据继续留白，绝不补 0。 */
+function faTopToggle(faBtn, faCard) {
+  var faCode = faCard ? faCard.getAttribute('data-fa-code')
+    : (faBtn.getAttribute('data-fa-detail') || faBtn.getAttribute('data-fa-refresh') ||
+      faBtn.getAttribute('data-fa-close'));
+  /* §332：锚 = 被点的那张卡，绝不取全局第一个。关闭按钮在 .fa-panel 内而非 .fa-top 内，
+     兜底按「可见优先」找同 code 卡片（隐藏工作区里的那张不能当锚）。 */
+  var faTopFor = faCard || (faBtn && faBtn.closest ? faBtn.closest('.fa-top[data-fa-code]') : null);
+  if (!faTopFor || !faTopFor.parentNode) {
+    var faCands = [];
+    try { faCands = [].slice.call(document.querySelectorAll('.fa-top[data-fa-code="' + faCode + '"]')); } catch (eFq0) {}
+    var fci, fcVis;
+    for (fci = 0; fci < faCands.length; fci++) {
+      fcVis = false;
+      try { fcVis = !!(faCands[fci].getClientRects && faCands[fci].getClientRects().length); } catch (eV0) {}
+      if (fcVis) { faTopFor = faCands[fci]; break; }
+    }
+    if (!faTopFor) faTopFor = faCands[0] || null;
+  }
+  /* §277-FIX2 原口径：只认「可见 + 与当前 .fa-top 同父」的面板为已展开；隐藏 / 孤儿残留先清理。
+     §332 补充：其它工作区里「可见但不同父」的面板保留（各自独立展开），
+     只有隐藏残留与同父重复才清理 —— 既不吃掉第一次点击，也不互相抹掉。 */
+  var faAll = [];
+  try { faAll = [].slice.call(document.querySelectorAll('.fa-panel[data-fa-panel="' + faCode + '"]')); } catch (eFq) {}
+  var faPanel = null, faOrphan = [], fpi;
+  for (fpi = 0; fpi < faAll.length; fpi++) {
+    var pCand = faAll[fpi], pVis = false;
+    try {
+      pVis = !!(pCand.getClientRects && pCand.getClientRects().length) &&
+        getComputedStyle(pCand).display !== 'none' && getComputedStyle(pCand).visibility !== 'hidden';
+    } catch (eVis) {}
+    var pNear = faTopFor ? (pCand.parentElement === faTopFor.parentElement) : true;
+    if (pVis && pNear && !faPanel) faPanel = pCand;
+    else if (!pVis || pNear) faOrphan.push(pCand);
+  }
+  for (fpi = 0; fpi < faOrphan.length; fpi++) {
+    if (faOrphan[fpi].parentNode) faOrphan[fpi].parentNode.removeChild(faOrphan[fpi]);
+  }
+  if (faBtn && faBtn.hasAttribute('data-fa-close')) {
+    if (faPanel && faPanel.parentNode) faPanel.parentNode.removeChild(faPanel);
+    return true;
+  }
+  if (faBtn && faBtn.hasAttribute('data-fa-refresh')) {
+    if (faPanel && faPanel.parentNode) faPanel.parentNode.removeChild(faPanel);
+    /* 先立刻回落「自动取数中…」，再清当日缓存强制重取；失败如实「未取到」 */
+    var faTopNow = faTopFor;
+    if (faTopNow && faTopNow.parentNode) {
+      var faCtx = FA_SNAP[String(faCode)] || { snap: '行情快照 —', base: null };
+      var faTmp = document.createElement('div');
+      faTmp.innerHTML = faTopPlaceholder(faCode, faCtx.snap, faCtx.base, null);
+      if (faTmp.firstChild) faTopNow.parentNode.replaceChild(faTmp.firstChild, faTopNow);
+    }
+    FA_AUTO_MEM[faCode] = null;
+    delete FA_AUTO_PEND[faCode];
+    faAutoKick(faCode, true);
+    return true;
+  }
+  /* 详情：按钮或整卡共用同一 toggle 分支（占位态也常驻「ⓘ 详情」，见 faTopPlaceholder） */
+  if (faPanel && faPanel.parentNode) { faPanel.parentNode.removeChild(faPanel); return true; }
+  if (faTopFor) {
+    var faHtml = '';
+    try { faHtml = faPanelHtml(faCode); }
+    catch (ePh) {
+      /* 渲染异常也要给可见反馈，绝不静默吞掉（否则又是一次「点了没反应」） */
+      faHtml = '<div class="fa-panel" data-fa-panel="' + escapeHtml(faCode) + '">' +
+        '<div class="fa-note">详情渲染失败：' + escapeHtml(String((ePh && ePh.message) || ePh)) +
+        '（如实报错，不静默吞掉）</div></div>';
+    }
+    faTopFor.insertAdjacentHTML('afterend', faHtml);
+    /* 面板紧贴卡片下方；§332：只滚「本次插入」的那个兄弟节点，不再全局取第一个 */
+    try {
+      var faNew = faTopFor.nextElementSibling;
+      if (faNew && faNew.getAttribute && faNew.getAttribute('data-fa-panel') === String(faCode) && faNew.scrollIntoView) faNew.scrollIntoView({ block: 'nearest' });
+    } catch (eSv) {}
+  }
+  return true;
+}
 
 
 function buildResultHTML(quote, ind, sr, compact, source, actv, cap, rec, open8, m5) {
@@ -39381,62 +39479,7 @@ function init() {
          构造隐藏残留面板后点击，faPanelHtml 调用 0 次、可见面板 0 个。
          新逻辑：只认「可见 + 与当前 .fa-top 同父」的面板为已展开；其余一律先清理，
          保证每次点击要么关掉真正可见的面板，要么一定插入一个新的可见面板。 */
-      var faTopFor = null;
-      try { faTopFor = document.querySelector('.fa-top[data-fa-code="' + faCode + '"]'); } catch (eFq0) {}
-      var faAll = [];
-      try { faAll = [].slice.call(document.querySelectorAll('.fa-panel[data-fa-panel="' + faCode + '"]')); } catch (eFq) {}
-      var faPanel = null, faOrphan = [], fpi;
-      for (fpi = 0; fpi < faAll.length; fpi++) {
-        var pCand = faAll[fpi], pVis = false;
-        try {
-          pVis = !!(pCand.getClientRects && pCand.getClientRects().length) &&
-            getComputedStyle(pCand).display !== 'none' && getComputedStyle(pCand).visibility !== 'hidden';
-        } catch (eVis) {}
-        var pNear = faTopFor ? (pCand.parentElement === faTopFor.parentElement) : true;
-        if (pVis && pNear && !faPanel) faPanel = pCand;
-        else faOrphan.push(pCand);
-      }
-      for (fpi = 0; fpi < faOrphan.length; fpi++) {
-        if (faOrphan[fpi].parentNode) faOrphan[fpi].parentNode.removeChild(faOrphan[fpi]);
-      }
-      if (faBtn && faBtn.hasAttribute('data-fa-close')) {
-        if (faPanel && faPanel.parentNode) faPanel.parentNode.removeChild(faPanel);
-        return;
-      }
-      if (faBtn && faBtn.hasAttribute('data-fa-refresh')) {
-        if (faPanel && faPanel.parentNode) faPanel.parentNode.removeChild(faPanel);
-        /* 先立刻回落「自动取数中…」，再清当日缓存强制重取；失败如实「未取到」 */
-        var faTopNow = null;
-        try { faTopNow = document.querySelector('.fa-top[data-fa-code="' + faCode + '"]'); } catch (eFq2) {}
-        if (faTopNow && faTopNow.parentNode) {
-          var faCtx = FA_SNAP[String(faCode)] || { snap: '行情快照 —', base: null };
-          var faTmp = document.createElement('div');
-          faTmp.innerHTML = faTopPlaceholder(faCode, faCtx.snap, faCtx.base, null);
-          if (faTmp.firstChild) faTopNow.parentNode.replaceChild(faTmp.firstChild, faTopNow);
-        }
-        FA_AUTO_MEM[faCode] = null;
-        delete FA_AUTO_PEND[faCode];
-        faAutoKick(faCode, true);
-        return;
-      }
-      /* 详情：按钮或整卡共用同一 toggle 分支（占位态也常驻「ⓘ 详情」，见 faTopPlaceholder） */
-      if (faPanel && faPanel.parentNode) { faPanel.parentNode.removeChild(faPanel); return; }
-      if (faTopFor) {
-        var faHtml = '';
-        try { faHtml = faPanelHtml(faCode); }
-        catch (ePh) {
-          /* 渲染异常也要给可见反馈，绝不静默吞掉（否则又是一次「点了没反应」） */
-          faHtml = '<div class="fa-panel" data-fa-panel="' + escapeHtml(faCode) + '">' +
-            '<div class="fa-note">详情渲染失败：' + escapeHtml(String((ePh && ePh.message) || ePh)) +
-            '（如实报错，不静默吞掉）</div></div>';
-        }
-        faTopFor.insertAdjacentHTML('afterend', faHtml);
-        /* 面板紧贴卡片下方；窄窗口时做最小滚动把它带进视口，避免「展开了但没看见」 */
-        try {
-          var faNew = document.querySelector('.fa-panel[data-fa-panel="' + faCode + '"]');
-          if (faNew && faNew.scrollIntoView) faNew.scrollIntoView({ block: 'nearest' });
-        } catch (eSv) {}
-      }
+      faTopToggle(faBtn, faCard);
       return;
     }
     var tr = e.target.closest('tr.batch-row');
@@ -39448,6 +39491,22 @@ function init() {
     if (isOpen) SINGLE.open[token] = true;
     renderSingle();
   });
+
+  /* ★ 2026-11-15 §332（用户报障「基本面详情只在个股诊断工作区可以点开」）：
+     buildResultHTML 的头部结论条（含 faTopHtml）在板块详情展开行 / 自选表 / 批量表等
+     工作区同样渲染，但它们各自的 click 委托都不认领 [data-fa-detail]。
+     这里用 document **捕获阶段**统一兜底：捕获先于任何容器委托，不受各容器
+     stopPropagation 影响；命中即 stopPropagation，顺带避免「点详情把批量行收起」。
+     #resultArea 内的点击让路给原委托（它调用同一个 faTopToggle），避免一次点击处理两遍。 */
+  document.addEventListener('click', function (e) {
+    var tg = e.target;
+    if (tg && tg.closest && tg.closest('#resultArea')) return;
+    var fb = (tg && tg.closest) ? tg.closest('[data-fa-detail],[data-fa-refresh],[data-fa-close]') : null;
+    var fc = (!fb && tg && tg.closest) ? tg.closest('.fa-top[data-fa-code]') : null;
+    if (!fb && !fc) return;
+    e.stopPropagation();
+    faTopToggle(fb, fc);
+  }, true);
 
   /* ★ 2026-10-19 §175（用户要求「日线 / 5 分钟 / 30 分钟切换，分析策略同日线」）：K 线周期切换委托。
      四条设计取舍：
