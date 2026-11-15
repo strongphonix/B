@@ -9473,6 +9473,25 @@ function renderChart(ind, focus, opt) {
   }
   var __cbN = Object.keys(__cbMarks).length;
 
+  /* ===== §331 KDJ 观察层图上标记（2026-11-15 用户要求「低位金叉 KDJ<30 + 放量阳线、
+     kdj 底背离 + 早晨之星，在对应的 K 线做出特殊标记」）================================
+     与 §262 超反 / §329 形态 chip 同纪律：
+       · 逐根扫描走 kj331HitsSeries(kl) 全量等长序列（内部只调一次 kdjSeries，无未来函数）；
+       · 按全量下标 start + idx 取值（窗口内下标 → 全量下标，与 §329 / §330 同一姿势）；
+       · 同一根两类同时命中 → 图上纵向堆叠两行，不合并 key；
+       · 判定失败 / 数据不足 → 静默跳过，整张 K 线图不许挂。 */
+  var __kj331Hits = {};
+  try {
+    var __kj331Ser = (typeof kj331HitsSeries === 'function') ? kj331HitsSeries(kl) : null;
+    if (__kj331Ser) {
+      for (var _k3i = 0; _k3i < ks.length; _k3i++) {
+        var _k3t = start + _k3i;
+        if (_k3t >= 0 && _k3t < __kj331Ser.length && __kj331Ser[_k3t] && __kj331Ser[_k3t].length)
+          __kj331Hits[_k3i] = __kj331Ser[_k3t];
+      }
+    }
+  } catch (eKj331Scan) { __kj331Hits = {}; }
+
   /* ===== ★ 2026-10-18 §166（用户要求「突破震荡结构的那根 k 线请用特殊颜色标记」）=====
      逐根跑 gwRangeState（与点击面板**同一份**判定，不另写第二套口径），st==='break' 的那根 = 突破蜡烛。
      纪律：
@@ -9956,6 +9975,21 @@ function renderChart(ind, focus, opt) {
           '" fill="' + CBR_COLOR + '" font-size="6.2" font-weight="700" text-anchor="middle"' +
           ' stroke="#0b1020" stroke-width="2.2" stroke-opacity="0.85" paint-order="stroke"' +
           ' style="pointer-events:none"><title>' + cbTip + '</title>超反</text>';
+      })() +
+      /* ★ 2026-11-15 §331：两类 KDJ 形态在**对应那根** K 线上的特殊标记。
+         形状签名 = 带符号前缀的短文字标签（◆低金 橙 / ✦背星 紫），与 §262「超反」、
+         §171「多反」、§184「双弱」、§168「IOI」、§329「◇ 形态」全不撞形；
+         落位复用最低价下方那条已验证的纵向堆叠链，按同根已占用档数让位；
+         <title> 给完整判据 + 数值 + 口径差异 + 信号分层声明（悬停即查）。 */
+      (function () {
+        var h3 = __kj331Hits[idx];
+        if (!h3 || !h3.length || typeof kj331MarkSvg !== 'function') return '';
+        var occ3 = 0;
+        if (__wsMarks[idx] && __wsMarks[idx].dbl) occ3++;
+        if (__cbMarks[idx]) occ3++;
+        if (__gwRev[idx]) occ3++;
+        try { return kj331MarkSvg(cx, Y(k.high), Y(k.low), h3, occ3, priceT, volT); }
+        catch (eKj331Draw) { return ''; }
       })() +
       '</g>';
   });
@@ -11437,6 +11471,16 @@ function klDaysetHtml(ent, gidx, kj, raw, kjChipHtml, per) {
      · 仅日线（per 守卫，与 §247 主力状态同款）；hits 为空 / 异常 → chip 整枚消失（诚实留白）；
      · 强度沿用文字档 强 / 中 / 弱；颜色按**当日实际涨跌幅 pctV322** 取（假阳红 K 实跌 → 绿），不按阴阳取色；
      · 仅形态描述：不计分、不进 s4kTierOf / 钉钉、不发买卖信号（参考层纪律与 pickZtCount 逐字一致）。 */
+  /* ★ 2026-11-15 §331：KDJ 观察层特殊标记 chip —— 按 gidx 逐根显示该根命中的两类 KDJ 形态。
+     · 纯函数 kj331ChipHtml(kl, gidx, per) 只读 kl[0..gidx]（无未来函数），点击历史根自然跟随（§328 同入口）；
+     · 挂在日期 chip 之后最醒目，且**不动**尾部拼接串（避免打断 §329 那批字面锁）；
+     · 无命中 / 异常 / 数据不足 → chip 整枚消失（诚实留白，不印 0）；
+     · 两类 hit 各自着色，title 显式标出口径差异（观察层 <30 与四指标打分 20 不混用）；
+     · 仅观察层：不计分、不进 s4kTierOf / 钉钉、不发买卖信号。 */
+  var kj331Chip = '';
+  try {
+    if (typeof kj331ChipHtml === 'function' && kl && kl.length) kj331Chip = kj331ChipHtml(kl, gidx, per);
+  } catch (eKj331Chip) { kj331Chip = ''; }
   var patChip = '';
   try {
     if ((per == null || per === 'day') && typeof patternHitsAt === 'function' && kl && kl.length) {
@@ -11458,6 +11502,7 @@ function klDaysetHtml(ent, gidx, kj, raw, kjChipHtml, per) {
     }
   } catch (ePatChip) { patChip = ''; }
   return '<span class="kl-chip" style="border-color:#5b8cff">📅 <b>' + escapeHtml(klDateTxt(kD.tt || kD.date)) + '</b>' + (isLast ? '（最新）' : '') + '</span>' +
+    kj331Chip +
     /* ★ 2026-10-16（用户要求「工作台，k线图均线改为5日，20日，60日」）：本组 MA chip 与图上叠加线
        **一一对应 · 同色同序**（背离就会「看图要猜」）→ MA5 黄 / MA20 紫 / MA60 蓝。
        取值 = 基准根 gidx 那一根（默认末根；点击历史根即「至该日」口径），空值 mChip 自渲染「—」。
@@ -28380,6 +28425,210 @@ function brooksConclHtml(kl, i, per) {
     '<div class="lab">' + lab + '</div>' +
     '<div class="nm" style="color:' + col + '">' + esc(nm) + '</div>' +
     '<div class="act">' + esc(act) + '</div></div>';
+}
+
+/* ★ 2026-11-15 §331（用户要求「低位金叉 KDJ<30 + 放量阳线、kdj 底背离 + 早晨之星，
+   这两种情况请在生命周期平台对应的 K 线做出特殊标记」）：
+   ① 纯函数层：只用 kl[0..i]（无未来函数），与 §329 / §330 同架构，独立计数器 kj331CountAt；
+   ② 两类 hit 各自独立 key，绝不合并：
+        lowGoldVol = 低位金叉（K、D 均 <30 且 K 上穿 D）+ 放量阳线（实体阳 + 收盘高于前收 + r5 ≥ VOL_OK）
+        divMorning = KDJ 底背离（复用 kdjqDivergence 摆动点口径）+ 早晨之星（台内 vpFusionOf 三根判据同款）
+   ③ 单一真源：KDJ 序列走 kdjSeries(kl)、量比走 patR5At(kl,i)、放量阈值走 VPF.VOL_OK、
+      底背离走 kdjqDivergence —— 不重算 KDJ、不内联前 5 根均量、不写第二套背离判据。
+   ④ 口径隔离（重要）：用户指定「KDJ<30」是本观察层的自定义放宽阈值，
+      与四指标打分的 S4K_RULE.lowK = 20 不是同一把尺（§186 曾修过一页三套口径的阈值分裂）。
+      本层绝不改 KDJ_RULE / S4K_RULE、绝不写回 zone / 推送文案 / s4kTierOf；
+      图上 title 与卡片 title 都显式标出这个口径差异。
+   ⑤ 信号分层：仅观察层特殊标记，不计分、不进 s4kTierOf / 钉钉、不发买卖信号；
+      买卖仍只认 s4kTierOf(...) === buy（≥42）。
+   ⑥ A 股适配：T+1 / 涨跌停 / 不可做空；一字板 HHV=LLV 时 KDJ 的 RSV 沿用既有 50 兜底；
+      算不出 → 诚实留白「—」，绝不印 0、绝不拿 0 冒充命中。
+   ⑦ 早晨之星独立自写：§329 形态库明确不收编经典蜡烛形态，本层是独立观察模块，
+      不改动 patternHitsAt / waveCandleSig 的任何 hits。                                          */
+
+/* 本层常量。lowMax = 用户字面指定的观察层阈值 30；volOk 只在切片测试里兜底（运行时读 VPF）。 */
+var KJ331_RULE = {
+  lowMax: 30,
+  volOk: 1.2,
+  minBars: 12
+};
+/* 两类标记的显示元数据。形状与 §329 的 ◇ 前缀、§262 的超反、§171 的多反全不撞形。 */
+var KJ331_META = {
+  lowGoldVol: { label: '低位金叉·放量阳', short: '低金', col: '#ff9f1c', gem: '◆' },
+  divMorning: { label: '底背离·早晨之星', short: '背星', col: '#c07bff', gem: '✦' }
+};
+
+/* 有效数值：显式判空（isFinite(null) === true 的坑），脏值一律 null。 */
+function kj331Num(v) {
+  return (v != null && typeof v === 'number' && isFinite(v)) ? v : null;
+}
+
+/* 取第 j 根的干净 OHLCV；任一字段缺失 / 脏 / 非正价 / 高低倒挂 → null（不硬凑）。 */
+function kj331BarAt(kl, j) {
+  if (!Array.isArray(kl) || j == null || j < 0 || j >= kl.length) return null;
+  var b = kl[j];
+  if (!b) return null;
+  var o = kj331Num(b.open), h = kj331Num(b.high), l = kj331Num(b.low), c = kj331Num(b.close);
+  if (o == null || h == null || l == null || c == null || o <= 0 || c <= 0 || h < l) return null;
+  return { o: o, h: h, l: l, c: c, v: kj331Num(b.volume), date: b.date || '' };
+}
+
+/* KDJ 序列唯一真源 = kdjSeries(kl)。typeof 守卫 + 等长对账；拿不到 → null（不重算、不伪造）。 */
+function kj331Series(kl) {
+  if (!Array.isArray(kl) || !kl.length || typeof kdjSeries !== 'function') return null;
+  var S = null;
+  try { S = kdjSeries(kl); } catch (eKj331S) { return null; }
+  if (!S || !Array.isArray(S.K) || !Array.isArray(S.D) || S.K.length !== kl.length || S.D.length !== kl.length) return null;
+  return S;
+}
+
+/* 量比唯一真源 = patR5At(kl,i)；阈值唯一真源 = VPF.VOL_OK（运行时），KJ331_RULE.volOk 仅切片测试兜底。 */
+function kj331VolAt(kl, i) {
+  var r = (typeof patR5At === 'function') ? patR5At(kl, i) : null;
+  r = kj331Num(r);
+  if (r == null) return null;
+  var th = (typeof VPF !== 'undefined' && VPF && kj331Num(VPF.VOL_OK) != null) ? VPF.VOL_OK : KJ331_RULE.volOk;
+  return { r5: r, th: th, ok: (r >= th) };
+}
+
+/* ① 低位金叉 + 放量阳线。命中返回明细对象，未命中 / 数据不足一律 null（诚实留白）。 */
+function kj331LowGoldAt(kl, i, S) {
+  if (!S || !Array.isArray(kl) || i == null || i < KJ331_RULE.minBars || i >= kl.length) return null;
+  var b = kj331BarAt(kl, i), p = kj331BarAt(kl, i - 1);
+  if (!b || !p) return null;
+  var k1 = kj331Num(S.K[i]), d1 = kj331Num(S.D[i]), k0 = kj331Num(S.K[i - 1]), d0 = kj331Num(S.D[i - 1]);
+  if (k1 == null || d1 == null || k0 == null || d0 == null) return null;
+  if (!(k0 <= d0 && k1 > d1)) return null;                          /* K 上穿 D（与 kdjCrosses 同式） */
+  if (!(k1 < KJ331_RULE.lowMax && d1 < KJ331_RULE.lowMax)) return null;   /* 低位：K、D 均 <30 */
+  if (!(b.c > b.o && b.c > p.c)) return null;                       /* 实体阳 + 真涨（假阳不计） */
+  var vol = kj331VolAt(kl, i);
+  if (!vol || !vol.ok) return null;                                 /* 放量：r5 ≥ VPF.VOL_OK */
+  var pct = (b.c - p.c) / p.c * 100;
+  return {
+    k: k1, d: d1, prevK: k0, prevD: d0, r5: vol.r5, th: vol.th, pct: pct,
+    why: 'K 上穿 D（' + k0.toFixed(1) + '/' + d0.toFixed(1) + ' → ' + k1.toFixed(1) + '/' + d1.toFixed(1) +
+      '）且 K、D 均 <' + KJ331_RULE.lowMax + '（观察层放宽阈值，打分口径是 20）；' +
+      '实体阳线且收盘高于前收 ' + pct.toFixed(2) + '%（假阳不计）；' +
+      '量比 r5=' + vol.r5.toFixed(2) + ' ≥ ' + vol.th + '（前 5 根均量·不含当根）。'
+  };
+}
+
+/* ② 早晨之星：大阴 → 星 → 阳收复前阴实体一半。逐字对齐台内 vpFusionOf（6978 行起）三根判据，
+   自写为独立纯函数（§329 不收编经典形态，本层不改动它的 hits）。 */
+function kj331MorningStarAt(kl, i) {
+  if (!Array.isArray(kl) || i == null || i < 2 || i >= kl.length) return null;
+  var b2 = kj331BarAt(kl, i - 2), b1 = kj331BarAt(kl, i - 1), b0 = kj331BarAt(kl, i);
+  if (!b2 || !b1 || !b0) return null;
+  var body2 = b2.c - b2.o;
+  if (!(body2 < 0)) return null;
+  var pct2 = Math.abs(body2) / b2.o * 100;
+  if (pct2 < 2) return null;
+  var starMax = Math.max(1, pct2 * 0.5);
+  var pct1 = Math.abs(b1.c - b1.o) / b1.o * 100;
+  if (pct1 > starMax) return null;
+  var body0 = b0.c - b0.o;
+  if (!(body0 > 0)) return null;
+  var half = b2.o + body2 * 0.5;
+  if (!(b0.c > half && b0.c < b2.o)) return null;
+  var vol = kj331VolAt(kl, i);
+  return { strong: !!(vol && vol.ok), r5: vol ? vol.r5 : null, th: vol ? vol.th : null,
+    pct2: pct2, pct1: pct1, half: half };
+}
+
+/* ② 底背离唯一真源 = kdjqDivergence（近 divWin 根两个已确认摆动低点：价创新低、K 低点抬高）。
+   na / 摆动点不足 2 个 → 不命中（诚实留白）。该函数只访问 klines[0..i]，无未来函数。 */
+function kj331DivAt(kl, i, S) {
+  if (!S || !Array.isArray(kl) || i == null || i < KJ331_RULE.minBars || i >= kl.length) return null;
+  if (typeof kdjqDivergence !== 'function') return null;
+  var r = null;
+  try { r = kdjqDivergence(kl, S, i); } catch (eKj331D) { return null; }
+  if (!r || !r.bottom) return null;
+  return { txt: r.txt || '价格创新低、KDJ 低点抬高' };
+}
+
+/* 汇总：两类 hit 独立返回，互不合并。hits 为空 → []（chip 整枚消失，不印 0）。 */
+function kj331HitsAt(kl, i, S) {
+  if (!Array.isArray(kl) || i == null || i < 0 || i >= kl.length) return [];
+  if (!S) S = kj331Series(kl);
+  if (!S) return [];
+  var out = [], g = null, ms = null, dv = null, vol;
+  try { g = kj331LowGoldAt(kl, i, S); } catch (eKj331G) { g = null; }
+  if (g) out.push({ key: 'lowGoldVol', label: KJ331_META.lowGoldVol.label, short: KJ331_META.lowGoldVol.short,
+    side: 'bull', col: KJ331_META.lowGoldVol.col, gem: KJ331_META.lowGoldVol.gem, why: g.why, detail: g });
+  try {
+    ms = kj331MorningStarAt(kl, i);
+    dv = ms ? kj331DivAt(kl, i, S) : null;
+  } catch (eKj331M) { ms = null; dv = null; }
+  if (ms && dv) {
+    vol = kj331VolAt(kl, i);
+    out.push({ key: 'divMorning', label: KJ331_META.divMorning.label, short: KJ331_META.divMorning.short,
+      side: 'bull', col: KJ331_META.divMorning.col, gem: KJ331_META.divMorning.gem,
+      why: 'KDJ 底背离（' + dv.txt + '，近 30 根两个已确认摆动低点）；' +
+        '本根为早晨之星第三根：大阴 −' + ms.pct2.toFixed(2) + '% → 星线实体 ' + ms.pct1.toFixed(2) +
+        '% → 阳线收复前阴实体一半以上（' + ms.half.toFixed(2) + '）且未过其开盘价；' +
+        (ms.strong ? '第三根放量 r5=' + (vol ? vol.r5.toFixed(2) : '—') + ' ≥ ' + (vol ? vol.th : '—') + '（放量确认）。'
+          : '第三根未放量（' + (vol && vol.r5 != null ? 'r5=' + vol.r5.toFixed(2) : 'r5 不可得') + '）→ 弱修复，只作观察。'),
+      detail: ms });
+  }
+  return out;
+}
+
+/* 独立计数器（观察层专用，不计入任何打分 / 排序 / 推送）。 */
+function kj331CountAt(kl, i, S) {
+  var h = kj331HitsAt(kl, i, S), c = { lowGoldVol: 0, divMorning: 0, total: h.length }, q;
+  for (q = 0; q < h.length; q++) if (c[h[q].key] != null) c[h[q].key]++;
+  return c;
+}
+
+/* 等长批量入口（与 §329 patternHitsSeries / §330 brooksFeaturesSeries 同款，供未来选股器 / 回测消费）。 */
+function kj331HitsSeries(kl) {
+  var n = Array.isArray(kl) ? kl.length : 0, out = new Array(n), S = kj331Series(kl), j;
+  for (j = 0; j < n; j++) out[j] = S ? kj331HitsAt(kl, j, S) : [];
+  return out;
+}
+
+/* K 线卡 chip：按 gidx 逐根算，点击历史根自然跟随（§328 同入口）。无命中 → '' 整枚消失。
+   两个 hit 各自按自己的颜色着色，口径差异直接看得见。 */
+function kj331ChipHtml(kl, i, per) {
+  var hits = kj331HitsAt(kl, i);
+  if (!hits.length) return '';
+  var parts = '', why = '', q, h;
+  for (q = 0; q < hits.length; q++) {
+    h = hits[q];
+    parts += (q ? ' · ' : '') + '<b style="color:' + h.col + '">' + h.gem + ' ' + h.short + '</b>';
+    why += (q ? '&#10;' : '') + '[' + h.label + '] ' + h.why;
+  }
+  var unit = (per === 'week') ? '周' : ((per === 'month') ? '月' : ((per === 'm5' || per === 'm30') ? '根' : '日'));
+  return '<span class="kl-chip kj331-chip" title="KDJ 观察层特殊标记（§331）：仅形态描述，不计分、不进四指标 / 钉钉、不发买卖信号。&#10;' +
+    '口径差异：用户指定「KDJ&lt;' + KJ331_RULE.lowMax + '」是本观察层放宽阈值；四指标打分用 S4K_RULE.lowK=20，两把尺不混用。&#10;' +
+    'KDJ 序列 kdjSeries(9,3,3) · 量比 patR5At（前 5 根均量不含当根）· 底背离 kdjqDivergence（近 30 根摆动低点）；按当前' + unit + '线周期逐根计算。&#10;' +
+    '只用该根及之前数据（kl[0..i]），无未来函数；算不出留白，绝不印 0。&#10;' + why + '&#10;' +
+    'A 股 T+1 / 涨跌停 / 不可做空；买卖仍只认 s4kTierOf(...) === buy（≥42）。">KDJ ' + parts + '</span>';
+}
+
+/* 图上标记 SVG 生成（纯函数，供 renderChart 逐根调用 + vm 单测直测）。
+   cx = 该根中心 x；yHi / yLo = 最高 / 最低价 y；occ = 下方堆叠链已占用档数；
+   priceT / volT = 价格面板顶 / 量能面板顶；hits = kj331HitsAt 结果。
+   落位与 §262「超反」同一条纵向堆叠链：最低价下方 7.5px 起，每被占一档下移 7.2px；
+   贴到量能面板顶 → 翻到最高价上方，顶部实放不下再回下方。 */
+function kj331MarkSvg(cx, yHi, yLo, hits, occ, priceT, volT) {
+  if (!hits || !hits.length || cx == null || !isFinite(cx) || !isFinite(yHi) || !isFinite(yLo)) return '';
+  var s = '', q, h, y, o = (occ > 0 ? occ : 0);
+  var base = yLo + 7.5 + o * 7.2;
+  var flip = (base + 8 + (hits.length - 1) * 7.2 > volT - 2);
+  for (q = 0; q < hits.length; q++) {
+    h = hits[q];
+    y = flip ? (yHi - 4.6 - q * 7.2) : (base + q * 7.2);
+    if (flip && (y - 6 < priceT + 1)) y = base + q * 7.2;
+    s += '<g class="kj331-mark" data-key="' + h.key + '"><title>' +
+      escapeHtml('KDJ 观察层（§331）· ' + h.label + '｜' + h.why +
+        '｜口径差异：KDJ<' + KJ331_RULE.lowMax + ' 是观察层放宽阈值，打分口径 20；仅标记，不计分、不进四指标 / 钉钉、不发买卖信号。') +
+      '</title><text class="kj331-tag" x="' + cx.toFixed(1) + '" y="' + y.toFixed(1) +
+      '" fill="' + h.col + '" font-size="6.4" font-weight="700" text-anchor="middle"' +
+      ' stroke="#0b1020" stroke-width="2.2" stroke-opacity="0.85" paint-order="stroke"' +
+      ' style="pointer-events:none">' + h.gem + h.short + '</text></g>';
+  }
+  return s;
 }
 
 /* ★ 2026-10-31 §236（用户要求「自动推送钉钉或者@机器人推送的股票信息中，增加推送5日动量，10日动量，20日动量」）：
