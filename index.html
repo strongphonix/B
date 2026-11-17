@@ -8702,6 +8702,30 @@ function renderChart(ind, focus, opt) {
     }
   } catch (eSt) { __stOk = false; __stWin = null; __stDirWin = null; }
 
+  /* ★ 2026-11-17 §338：SuperTrend 趋势区域带 —— 分段计算提前于此，与 §318 叠加线共用同一份 __stSegs。
+     · 多头段(d===1，红线在价下作支撑)→ 从线往上填到价格面板顶(priceT)淡红；
+       空头段(d!==1，绿线在价上作阻力)→ 从线往下填到价格面板底(priceB)淡绿。
+     · 画带在蜡烛之前（背景层不遮 K 线）、画线在均线之后（叠加层），两者同源同色，
+       绝不各算一份（否则填色与线会在翻转处错位一格）。
+     · 无未来函数：只用可见窗内 __stWin / __stDirWin，与叠加线完全同一份数据。 */
+  var __stSegs = [];
+  if (__stOk) {
+    var __stCur = null;
+    for (var __stI = 0; __stI < __stWin.length; __stI++) {
+      var __stV = __stWin[__stI], __stD = __stDirWin[__stI];
+      if (__stV == null || !isFinite(__stV) || __stD == null) {
+        if (__stCur) { __stSegs.push(__stCur); __stCur = null; }
+        continue;
+      }
+      if (!__stCur || __stCur.d !== __stD) {
+        if (__stCur) __stSegs.push(__stCur);
+        __stCur = { d: __stD, pts: [] };
+      }
+      __stCur.pts.push([__stI, __stV]);
+    }
+    if (__stCur) __stSegs.push(__stCur);
+  }
+
   /* ---- 价格刻度（含均线极值，避免线跑出画布）---- */
   var lo = Infinity, hi = -Infinity;
   ks.forEach(function (k) { lo = Math.min(lo, k.low); hi = Math.max(hi, k.high); });
@@ -9615,6 +9639,33 @@ function renderChart(ind, focus, opt) {
     });
   })();
 
+  /* ★ 2026-11-17 §338：SuperTrend 趋势区域填色（按用户截图模式：曲线与 K 线之间整片淡色带）。
+     · 与 §318 叠加线共用 __stSegs（同色同源）：多头红 → 支撑线以上填淡红到面板顶；
+       空头绿 → 阻力线以下填淡绿到面板底。段边界取相邻根中点，翻转处垂直切断、不跨色斜连；
+     · 画在蜡烛之前 = 背景层，淡色不遮 K 线 / 形态标记；pointer-events 让位给蜡烛热区；
+     · 段长 < 2 根不填（单点画不出面）；ST 序列缺失 → 整层不出（诚实留白）；
+     · 参考层：不计分、不进四指标、不发买卖信号、不进钉钉。 */
+  if (__stOk && __stSegs.length) {
+    __stSegs.forEach(function (sg) {
+      if (!sg.pts || sg.pts.length < 2) return;
+      var __stIsUp = (sg.d === 1);
+      var __stCol = __stIsUp ? '#ff5252' : '#26c281';
+      var __stEdgeY = __stIsUp ? priceT : priceB;
+      var __stP0 = sg.pts[0], __stPL = sg.pts[sg.pts.length - 1];
+      var __stX0 = Math.max(plotL, X(__stP0[0]) - step / 2);
+      var __stX1 = Math.min(plotR, X(__stPL[0]) + step / 2);
+      var __stD = 'M' + __stX0.toFixed(1) + ' ' + Y(__stP0[1]).toFixed(1);
+      sg.pts.forEach(function (pt) { __stD += ' L' + X(pt[0]).toFixed(1) + ' ' + Y(pt[1]).toFixed(1); });
+      __stD += ' L' + __stX1.toFixed(1) + ' ' + Y(__stPL[1]).toFixed(1) +
+        ' L' + __stX1.toFixed(1) + ' ' + __stEdgeY.toFixed(1) +
+        ' L' + __stX0.toFixed(1) + ' ' + __stEdgeY.toFixed(1) + ' Z';
+      svg += '<path class="st-zone" data-dir="' + (__stIsUp ? 'up' : 'down') + '" d="' + __stD +
+        '" fill="' + __stCol + '" fill-opacity="0.10" pointer-events="none"><title>' +
+        (__stIsUp ? 'SuperTrend 多头区（红线在价下作支撑，线以上淡红）' : 'SuperTrend 空头区（绿线在价上作阻力，线以下淡绿）') +
+        ' · 参考层，不计分</title></path>';
+    });
+  }
+
   /* 蜡烛（热区 + 影线 + 实体；实体最细 1px，十字星不消失；末根白描边 + 触点）
      每根蜡烛一个 <g class="cd">：① 内含整列热区 rect.hit（画在最底下，悬停时整列淡高亮）
      ② <title> 带当日 OHLC 明细；③ 蜡烛与热区同组 → CSS `g.cd:hover .kb` 才能联动描白边。 */
@@ -10136,17 +10187,7 @@ function renderChart(ind, focus, opt) {
      · 单点段不画线只留三角（一段只有一根时连线无从谈起 —— 诚实缺省）；
      · 参考层：不计分、不进四指标、不发买卖信号（四指标打分是唯一买卖依据，纪律不变）。 */
   if (__stOk) {
-    var __stSegs = [];
-    (function () {
-      var cur = null;
-      for (var sv = 0; sv < __stWin.length; sv++) {
-        var v2 = __stWin[sv], d2 = __stDirWin[sv];
-        if (v2 == null || !isFinite(v2) || d2 == null) { if (cur) { __stSegs.push(cur); cur = null; } continue; }
-        if (!cur || cur.d !== d2) { if (cur) __stSegs.push(cur); cur = { d: d2, pts: [] }; }
-        cur.pts.push([sv, v2]);
-      }
-      if (cur) __stSegs.push(cur);
-    })();
+    /* ★ §338：__stSegs 已提前到 ST 序列计算处生成（填色带与叠加线共用同一份），此处只画线不再重算 */
     __stSegs.forEach(function (sg) {
       if (sg.pts.length < 2) return;
       var dS = '';
