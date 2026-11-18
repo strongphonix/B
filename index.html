@@ -1056,6 +1056,76 @@
   .wl-x { margin-left:6px; padding:0 6px; font-size:11px; line-height:18px; border-radius:5px; border:1px solid #283047; background:transparent; color:#5d6788; cursor:pointer; vertical-align:middle; }
   .wl-x:hover { color:#ff6b6b; border-color:#ff6b6b55; }
   .wl-loading { padding:40px; text-align:center; color:#5d6788; font-size:13px; }
+  /* ===== §340 自选工作区 · 仪表盘版式（2026-11-18）=====
+     左自选栏（点击行切换右侧仪表盘 / ✕ 移出自选 / 顶部批量添加框）+ 右侧仪表盘：
+     个股头部（quote 真实字段，缺数 —）· 趋势走势日K（复用 renderChart，不改其逻辑）·
+     转势情绪（四指标总分温度 + 因子横条）· 买卖点参考（只读转述）· 量能与承接（近10日量柱）。
+     截图里的「资金流向 / 隔日涨跌预测 / 新闻资讯」无既有数据源，一律不做、不编造。 */
+  .wl-dash { display:grid; grid-template-columns:252px minmax(0,1fr); gap:14px; margin-bottom:16px; }
+  .wl-side { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:8px; min-width:0; }
+  .wls-h { font-size:13px; font-weight:700; color:var(--text); }
+  .wls-h b { color:var(--gold); }
+  .wls-add { display:flex; gap:6px; }
+  .wls-add input { flex:1; min-width:0; background:var(--bg2); border:1px solid var(--line); color:var(--text); border-radius:8px; padding:6px 9px; font-size:12px; outline:none; font-family:inherit; }
+  .wls-add input:focus { border-color:var(--accent); }
+  .wls-list { overflow-y:auto; max-height:432px; display:flex; flex-direction:column; gap:5px; padding-right:2px; }
+  .wls-row { border:1px solid var(--line); border-radius:9px; padding:7px 9px; cursor:pointer; background:var(--bg2); transition:.15s; }
+  .wls-row:hover { border-color:#3a4a7a; }
+  .wls-row.on { border-color:var(--accent); background:rgba(91,140,255,.10); }
+  .wls-row .nm { display:flex; justify-content:space-between; align-items:baseline; gap:6px; font-size:12.5px; font-weight:600; color:var(--text); }
+  .wls-row .cd { font-size:10.5px; color:var(--dim); font-weight:400; }
+  .wls-row .px { display:flex; align-items:baseline; gap:8px; margin-top:2px; }
+  .wls-row .px b { font-size:12.5px; font-weight:700; }
+  .wls-row .px i { font-style:normal; font-size:11.5px; }
+  .wls-note { font-size:10.5px; color:var(--dim); line-height:1.7; border-top:1px dashed var(--line); padding-top:7px; }
+  .wl-main { display:flex; flex-direction:column; gap:14px; min-width:0; }
+  .wld-head { display:flex; gap:20px; flex-wrap:wrap; align-items:flex-start; margin-bottom:0; }
+  .wldh-l { flex:0 1 320px; min-width:190px; }   /* ★§340 复核修正：sub 长文本曾把左列撑宽、字段网格被挤窄 → 限宽可收缩 */
+  .wldh-l .nm { font-size:17px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .wldh-l .cd { font-size:12px; color:var(--dim); font-weight:400; }
+  .wld-stage { font-size:11px; padding:2px 8px; border-radius:9px; font-weight:600; white-space:nowrap; }
+  .wldh-l .big { font-size:30px; font-weight:800; margin:6px 0 2px; letter-spacing:.5px; }
+  .wldh-l .big span { font-size:15px; margin-left:8px; }
+  .wldh-l .sub { font-size:11px; color:var(--dim); line-height:1.6; }
+  .wldh-grid { flex:1; min-width:270px; display:grid; grid-template-columns:repeat(auto-fill,minmax(104px,1fr)); gap:6px 8px; }
+  .wldh-grid .it { background:var(--bg2); border:1px solid var(--line); border-radius:8px; padding:5px 9px; }
+  .wldh-grid .k { display:block; font-size:10.5px; color:var(--dim); }
+  .wldh-grid .v { font-size:12.5px; font-weight:700; color:var(--text); white-space:nowrap; }
+  .wld-row3 { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+  /* ★§340b K线平铺整页：头部卡与K线卡直挂 .wl-dash 网格、横跨全部列（含左栏位置）；左栏+情绪/买卖点/量能移至下一行 */
+  .wld-head, .wld-chart { grid-column: 1 / -1; margin-bottom:0; }
+  .wld-row3 > .card { margin-bottom:0; }
+  .wld-chart { min-width:0; }
+  .wldb-row { display:flex; align-items:center; gap:8px; padding:4px 0; font-size:12px; }
+  .wldb-row .k { width:62px; color:var(--muted); flex-shrink:0; }
+  .wldb-row .track { flex:1; height:8px; border-radius:4px; background:var(--bg2); border:1px solid var(--line); overflow:hidden; }
+  .wldb-row .track i { display:block; height:100%; border-radius:3px; }
+  .wldb-row .v { width:66px; text-align:right; font-weight:700; color:var(--text); }
+  .wldb-row .v.dim { color:var(--dim); font-weight:400; }
+  .wld-temp { margin:2px 0 10px; }
+  .wld-temp .tt { display:flex; justify-content:space-between; align-items:baseline; font-size:12px; color:var(--muted); margin-bottom:5px; }
+  .wld-temp .tt b { font-size:24px; letter-spacing:.5px; }
+  .wld-temp .track { height:12px; border-radius:6px; background:var(--bg2); border:1px solid var(--line); overflow:hidden; }
+  .wld-temp .track i { display:block; height:100%; }
+  .wld-temp .act { margin-top:6px; font-size:12.5px; font-weight:700; line-height:1.6; }
+  .wld-temp .scale { margin-top:3px; font-size:10px; color:var(--dim); letter-spacing:1px; }
+  .wldbs-row { display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; padding:7px 0; font-size:12.5px; border-bottom:1px dashed var(--line); }
+  .wldbs-row:last-child { border-bottom:none; }
+  .wldbs-row .k { color:var(--muted); flex-shrink:0; }
+  .wld-tag { font-size:11px; border:1px solid; border-radius:8px; padding:1px 7px; }
+  .wld-vbars { display:flex; align-items:flex-end; gap:3px; height:64px; padding:6px 8px; background:var(--bg2); border:1px solid var(--line); border-radius:8px; }
+  .wld-vbars i { flex:1; border-radius:2px 2px 0 0; min-height:2px; }
+  .wld-vbars i.u { background:var(--up); }
+  .wld-vbars i.d { background:var(--down); }
+  .wld-vmeta { display:flex; justify-content:space-between; gap:10px; font-size:11.5px; color:var(--muted); margin-top:7px; flex-wrap:wrap; }
+  .wld-vmeta2 { display:flex; justify-content:space-between; gap:10px; font-size:11.5px; color:var(--muted); margin-top:7px; flex-wrap:wrap; border-top:1px dashed var(--line); padding-top:7px; }
+  .wld-empty { background:var(--card); border:1px dashed var(--line); border-radius:12px; padding:28px 20px; text-align:center; color:var(--muted); font-size:13px; line-height:1.8; }
+  .wld-hint { color:var(--dim); font-size:12px; padding:8px 0; line-height:1.7; }
+  @media (max-width:1000px) {
+    .wl-dash { grid-template-columns:1fr; }
+    .wld-row3 { grid-template-columns:1fr; }
+    .wls-list { max-height:300px; }
+  }
 
   /* ===== 早盘5分钟K线（开盘八法） ===== */
   .open8-head { display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:12px; }
@@ -1334,6 +1404,10 @@
       <span class="wl-status" id="wlStatus" data-page-node-id="l6hchlQrPtrfeioAU6ygAY"></span>
       <span class="wl-hint" data-page-node-id="9yd5wOVMAbiixn5w3LnFbd">自选股实时行情与诊断 · 收藏在本地浏览器，关闭页面不丢失</span>
     </div>
+    <!-- ★ §340（2026-11-18）：自选工作区仪表盘（借鉴用户截图：左自选栏 + 右个股仪表盘）。
+         零新增取数：全部读「刷新查询」既有 WATCH.results；未查询时只出引导文案，不自动拉数据。
+         下方既有表格 / 筛选 chips / 批量操作完全不动。 -->
+    <div class="wl-dash" id="wlDash" style="display:none"></div>
     <div id="wlList" data-page-node-id="E7rTpx7PIBeDkZLbAowass"></div>
   </div>
 
@@ -27347,6 +27421,7 @@ function renderWatch() {
   var cnt = el('wlCount'); if (cnt) cnt.textContent = '自选 ' + a.length + ' 只';
   var list = el('wlList');
   var st = el('wlStatus');
+  wlDashPaint(a);   /* ★ §340：仪表盘随每次 renderWatch 重绘（空自选隐藏；未查询只出引导文案） */
   if (!list) return;
   if (!a.length) {
     if (st) st.textContent = '';
@@ -27429,6 +27504,258 @@ function renderWatch() {
   /* ⚠️ 表头 = STOCK_COLS（18 列）+ watch 专属「自选盈亏」（stockHead('watch') 里插在「今昨强弱」前，
      2026-10-01）= 19 列 + 勾选列；行单元格由 watchBatchBody 输出（勾选 + 19 = 20 格）——
      两处列数与顺序必须严格一致，加列时一处都不能漏。 */
+}
+
+/* =========================================================================
+   ★ §340（2026-11-18）自选工作区 · 仪表盘版式（借鉴用户截图）
+   · 左侧自选栏：点击行切换右侧仪表盘 / ✕ 移出自选 / 顶部批量添加框（复用 wlParseTxt + wlAddMany）
+   · 右侧仪表盘：个股头部（quote 真实字段）· 趋势走势日K（复用 renderChart）· 转势情绪（四指标温度 +
+     因子横条）· 买卖点参考（只读转述）· 量能与承接（近10日量柱）
+   · 零新增取数：全部读「刷新查询」既有 WATCH.results；所有外部依赖 typeof 探测降级，缺数一律「—」
+   · 只读转述既有判定（MA5 策略 / 四指标打分 / 生命周期阶段 / 量能承接），不新增信号、不进钉钉
+   · 截图里的「资金流向 / 隔日涨跌预测 / 新闻资讯」无既有数据源，不做、不编造
+   ========================================================================= */
+var WLDASH = { sel: null };
+
+function wlDashEsc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+function wlDashPctTxt(v) { return (v == null || !isFinite(+v)) ? '—' : ((+v >= 0 ? '+' : '') + (+v).toFixed(2) + '%'); }
+/* 数值缺数/非正 → 「—」（A股价格/市值等字段 0 无意义）；isFinite(null)===true 的坑在此统一挡掉 */
+function wlDashNum(v, suf) { return (v == null || !isFinite(+v) || +v <= 0) ? '—' : (+v).toFixed(2) + (suf || ''); }
+function wlDashFmtVol(hs) {
+  if (hs == null || !isFinite(+hs) || +hs <= 0) return '—';
+  var v = +hs;
+  if (v >= 1e8) return (v / 1e8).toFixed(2) + '亿手';
+  if (v >= 1e4) return (v / 1e4).toFixed(2) + '万手';
+  return v.toFixed(0) + '手';
+}
+function wlDashFmtAmt(wan) {
+  if (wan == null || !isFinite(+wan) || +wan <= 0) return '—';
+  var v = +wan;
+  if (v >= 1e8) return (v / 1e8).toFixed(2) + '万亿元';
+  if (v >= 1e4) return (v / 1e4).toFixed(2) + '亿元';
+  return v.toFixed(0) + '万元';
+}
+/* 中轴归一：v/scale ∈ [-1,1] → [0,100]（负值压到中轴左侧） */
+function wlDashMidPct(v, scale) { return (v == null || !isFinite(+v)) ? null : Math.max(0, Math.min(100, 50 + (+v) / scale * 50)); }
+function wlDashBarRow(k, txt, pct, col, tip) {
+  if (pct == null || !isFinite(+pct)) return '<div class="wldb-row" title="' + wlDashEsc(tip || '') + '"><span class="k">' + k + '</span><span class="track"></span><span class="v dim">' + txt + '</span></div>';
+  var p = Math.max(0, Math.min(100, +pct));
+  return '<div class="wldb-row" title="' + wlDashEsc(tip || '') + '"><span class="k">' + k + '</span><span class="track"><i style="width:' + p.toFixed(1) + '%;background:' + (col || 'var(--accent)') + '"></i></span><span class="v">' + txt + '</span></div>';
+}
+function wlDashS4kOf(r) {
+  if (r.s4kSum && r.s4kSum.ok) return r.s4kSum;
+  try {
+    if (typeof s4kTotal !== 'function' || !r.ind || !r.ind.klines) return null;
+    var kj = r.kdj || (typeof kdjState === 'function' ? kdjState(r.ind.klines) : null);
+    var x = s4kTotal(r.ind.klines, kj);
+    r.s4kSum = (x && x.ok) ? x : null;
+  } catch (e) { r.s4kSum = null; }
+  return r.s4kSum;
+}
+function wlDashKdjOf(r) {
+  if (r.kdj) return r.kdj;
+  try { r.kdj = (typeof kdjState === 'function' && r.ind && r.ind.klines) ? kdjState(r.ind.klines) : null; } catch (e) { r.kdj = null; }
+  return r.kdj;
+}
+function wlDashStageChipHtml(r) {
+  if (!r || !r.sr || !r.sr.stage || typeof stageNameOf !== 'function' || typeof stageColorOf !== 'function') return '';
+  var col;
+  try { col = stageColorOf(r.sr.stage); } catch (e) { return ''; }
+  if (!col) return '';
+  return '<span class="wld-stage" style="background:' + col + '22;color:' + col + ';border:1px solid ' + col + '55">' + wlDashEsc(stageNameOf(r.sr.stage)) + '</span>';
+}
+/* 个股头部：quote 真实字段（parseTencentQuote 口径），东财兜底源缺字段 → 「—」 */
+function wlDashHeadHtml(r) {
+  var q = r.quote || {}, ind = r.ind || {};
+  var price = (isFinite(+q.price) && +q.price > 0) ? +q.price : ((isFinite(+ind.price) && +ind.price > 0) ? +ind.price : null);
+  var pct = isFinite(+q.changePct) ? +q.changePct : (isFinite(+ind.chgToday) ? +ind.chgToday : null);
+  var cls = (pct == null) ? '' : (pct >= 0 ? 'up' : 'down');
+  var nm = q.name || r.name || r.code;
+  var items = [
+    ['今开', wlDashNum(q.open)], ['最高', wlDashNum(q.high)], ['最低', wlDashNum(q.low)], ['昨收', wlDashNum(q.prevClose)],
+    ['成交量', wlDashFmtVol(q.volume)], ['成交额', wlDashFmtAmt(q.amount)], ['量比', wlDashNum(q.volRatioQuote)],
+    ['换手', wlDashNum(q.turnover, '%')], ['振幅', wlDashNum(q.amplitude, '%')],
+    ['流通市值', wlDashNum(q.floatMarket, '亿')], ['总市值', wlDashNum(q.totalMarket, '亿')],
+    ['市盈率', wlDashNum(q.pe)], ['市净率', wlDashNum(q.pb)]
+  ].map(function (it) {
+    return '<div class="it"><span class="k">' + it[0] + '</span><b class="v">' + it[1] + '</b></div>';
+  }).join('');
+  var ts = q.time ? wlDashEsc(q.time) : '—';
+  return '<div class="wldh-l">' +
+    '<div class="nm">' + wlDashEsc(nm) + '<span class="cd">' + wlDashEsc(r.code) + '</span> ' + wlDashStageChipHtml(r) + '</div>' +
+    '<div class="big ' + cls + '">' + (price == null ? '—' : price.toFixed(2)) + '<span>' + wlDashPctTxt(pct) + '</span></div>' +
+    '<div class="sub">行情时点 ' + ts + ' · 读数来自「刷新查询」最近一轮，随自动刷新更新 · 截图里的字段若无对应数据一律留白</div>' +
+    '</div><div class="wldh-grid">' + items + '</div>';
+}
+/* 转势情绪卡：四指标总分温度 + 五条真实因子横条（KDJ K 值 / MA5 斜率 / dev 偏离 / 20日动量 / 换手） */
+function wlDashMoodHtml(r) {
+  var ind = r.ind || {}, q = r.quote || {};
+  var h = '<div class="card-title">🌡 转势情绪 · 四指标温度（只读转述）</div>';
+  var s = wlDashS4kOf(r);
+  if (s) {
+    var col = s.veto ? '#ff5252' : (s.total >= 60 ? '#26c281' : (s.total >= 30 ? '#f59e0b' : '#ff5252'));
+    h += '<div class="wld-temp"><div class="tt"><span>四指标总分（≥42 买点线）</span><b style="color:' + col + '">' + s.total + '</b></div>' +
+      '<div class="track"><i style="width:' + Math.max(0, Math.min(100, s.total)).toFixed(1) + '%;background:' + col + '"></i></div>' +
+      '<div class="act" style="color:' + col + '">' + wlDashEsc(String(s.action || '') + '（' + String(s.pos || '') + '）') +
+      (s.veto ? ' · ⛔ 一票否决：' + wlDashEsc((s.vetoWhy || []).join('；')) : '') + '</div>' +
+      '<div class="scale">0 ····· 42 买点线 ····· 100</div></div>';
+  } else {
+    h += '<div class="wld-hint">四指标打分：数据不足，留白 —</div>';
+  }
+  var sp = isFinite(+ind.ma5SlopePct) ? +ind.ma5SlopePct : null;
+  h += wlDashBarRow('MA5斜率', wlDashPctTxt(sp), wlDashMidPct(sp, 5), sp == null ? '' : (sp >= 0 ? 'var(--up)' : 'var(--down)'), 'MA5 斜率%（±5% 满格，中轴=走平）');
+  var kj = wlDashKdjOf(r);
+  var kjZoneTxt = { low: '低位', mid: '中位', high: '高位' };
+  h += wlDashBarRow('KDJ·K', kj && kj.ok ? (+kj.k).toFixed(1) : '—', kj && kj.ok ? Math.max(0, Math.min(100, +kj.k)) : null, 'var(--accent)',
+    'KDJ K 值（0~100）' + (kj && kj.ok && kj.zone ? ' · ' + (kjZoneTxt[kj.zone] || '') : ''));
+  var dv = isFinite(+ind.dev) ? +ind.dev : null;
+  h += wlDashBarRow('MA5偏离', dv == null ? '—' : ((dv >= 0 ? '+' : '') + dv.toFixed(1) + '%'), wlDashMidPct(dv, 10), dv == null ? '' : (dv >= 0 ? 'var(--up)' : 'var(--down)'), '现价相对 MA5 偏离度（±10% 满格）');
+  var m20 = (typeof mom20Of === 'function') ? mom20Of(ind) : null;
+  var m20ok = (m20 != null && isFinite(+m20));
+  h += wlDashBarRow('20日动量', m20ok ? wlDashPctTxt(m20) : '—', m20ok ? wlDashMidPct(+m20, 30) : null, m20ok ? (+m20 >= 0 ? 'var(--up)' : 'var(--down)') : '', '近20日涨跌幅（±30% 满格）');
+  var to = (isFinite(+ind.turnover) && +ind.turnover > 0) ? +ind.turnover : ((isFinite(+q.turnover) && +q.turnover > 0) ? +q.turnover : null);
+  h += wlDashBarRow('换手率', to == null ? '—' : to.toFixed(2) + '%', to == null ? null : Math.max(0, Math.min(100, to / 20 * 100)), 'var(--gold)', '当日换手率（20% 满格）');
+  return h;
+}
+/* 买卖点参考：只读转述 MA5 策略 / 四指标档位 / 生命周期阶段 / 量能承接（不新增任何判定） */
+function wlDashBsHtml(r) {
+  var h = '<div class="card-title">🎯 买卖点参考（只读转述 · 信号唯一来源=四指标打分）</div>';
+  var ms = null;
+  try { ms = r.ma5 || (typeof computeMA5Strategy === 'function' && r.ind ? computeMA5Strategy(r.ind) : null); } catch (e) { ms = null; }
+  if (ms && ms.state && typeof MA5_STATES !== 'undefined' && MA5_STATES[ms.state]) {
+    var meta = MA5_STATES[ms.state];
+    h += '<div class="wldbs-row"><span class="k">MA5策略</span><b style="color:' + meta.color + '">' + wlDashEsc(meta.name) + '</b>' +
+      (ms.buySignal ? '<span class="wld-tag" style="color:var(--up);border-color:var(--up)">今日命中买入信号</span>' : '') + '</div>';
+    h += '<div class="wldbs-row"><span class="k">参考仓位</span><span>' + wlDashEsc(meta.pos) + '</span></div>';
+  } else {
+    h += '<div class="wldbs-row"><span class="k">MA5策略</span><span style="color:var(--dim)">—</span></div>';
+  }
+  var s = wlDashS4kOf(r);
+  h += '<div class="wldbs-row"><span class="k">四指标</span>' + (s ?
+    '<b style="color:' + (s.veto ? '#ff5252' : (s.total >= 42 ? 'var(--good)' : 'var(--gold)')) + '">' + s.total + ' · ' + wlDashEsc(String(s.action || '')) + '</b>' :
+    '<span style="color:var(--dim)">—</span>') + '</div>';
+  if (r.sr && r.sr.stage && typeof stageNameOf === 'function') {
+    h += '<div class="wldbs-row"><span class="k">生命周期</span>' + wlDashStageChipHtml(r) +
+      '<span style="color:var(--dim);font-size:11px">仅状态描述 · 不参与买卖判断</span></div>';
+  }
+  var cap = r.cap;
+  if (cap && cap.verdict) {
+    h += '<div class="wldbs-row"><span class="k">量能承接</span><span style="color:' + wlDashEsc(cap.verdict.color || 'var(--text)') + '">' + wlDashEsc(String(cap.verdict.name || '')) + '</span>' +
+      (isFinite(+cap.volRatio) ? '<em style="font-style:normal;color:var(--dim)">量能比 ' + (+cap.volRatio).toFixed(2) + '</em>' : '') + '</div>';
+  }
+  return h;
+}
+/* 量能与承接：近10日量柱（涨红跌绿）+ 量比 + cap 量能/换手状态（截图「资金流向」无数据源，不做） */
+function wlDashVolHtml(r) {
+  var h = '<div class="card-title">📊 量能与承接（近 10 日量柱 · 只读）</div>';
+  var q = r.quote || {};
+  var kl = (r.ind && r.ind.klines) ? r.ind.klines : [];
+  var last = kl.slice(-10);
+  if (last.length) {
+    var mx = 0;
+    last.forEach(function (k) { if (+k.volume > mx) mx = +k.volume; });
+    var base = kl.length - last.length;
+    var bars = last.map(function (k, i) {
+      var prev = i > 0 ? last[i - 1] : (base > 0 ? kl[base - 1] : null);
+      var up = prev ? (+k.close >= +prev.close) : (+k.close >= +k.open);
+      var hp = mx > 0 ? Math.max(4, Math.round(+k.volume / mx * 100)) : 4;
+      return '<i class="' + (up ? 'u' : 'd') + '" style="height:' + hp + '%" title="' + wlDashEsc(k.date || '') + ' 量 ' + wlDashFmtVol(k.volume) + '"></i>';
+    }).join('');
+    h += '<div class="wld-vbars">' + bars + '</div>';
+    h += '<div class="wld-vmeta"><span>量比 ' + wlDashNum(q.volRatioQuote) + '</span><span>当日量 ' + wlDashFmtVol(q.volume || (kl.length ? kl[kl.length - 1].volume : null)) + '</span></div>';
+  } else {
+    h += '<div class="wld-hint">K线量能缺失，留白 —</div>';
+  }
+  var cap = r.cap;
+  if (cap && (cap.volState || cap.turnState)) {
+    h += '<div class="wld-vmeta2"><span>量能状态：' + wlDashEsc(cap.volState || '—') + '</span><span>换手状态：' + wlDashEsc(cap.turnState || '—') + '</span></div>';
+  }
+  return h;
+}
+/* 左侧自选栏：行 = 名称/代码 + 价格/涨跌幅 + ✕；价格缺数留白（未查询属正常态） */
+function wlDashSideHtml(a) {
+  var map = {};
+  WATCH.results.forEach(function (r) { if (r && r.ok) map[r.code || r.token] = r; });
+  var rows = a.map(function (x) {
+    var r = map[x.code];
+    var pct = (r && r.ind && isFinite(+r.ind.chgToday)) ? +r.ind.chgToday : null;
+    var price = (r && r.ind && isFinite(+r.ind.price) && +r.ind.price > 0) ? (+r.ind.price).toFixed(2) : '—';
+    var cls = pct == null ? 'dim' : (pct >= 0 ? 'up' : 'down');
+    var on = x.code === WLDASH.sel ? ' on' : '';
+    return '<div class="wls-row' + on + '" data-wldsel="' + wlDashEsc(x.code) + '" title="点击切换右侧仪表盘">' +
+      '<div class="nm"><span>' + wlDashEsc(x.name || x.code) + '</span><span class="cd">' + wlDashEsc(x.code) + '</span></div>' +
+      '<div class="px"><b class="' + cls + '">' + price + '</b><i class="' + cls + '">' + wlDashPctTxt(pct) + '</i>' +
+      '<button type="button" class="wl-x" data-act="del" data-code="' + wlDashEsc(x.code) + '" title="移出自选">✕</button></div></div>';
+  }).join('');
+  return '<div class="wls-h">📋 自选股 <b>' + a.length + '</b> 只</div>' +
+    '<div class="wls-add"><input id="wlDashAddIn" placeholder="6位代码，多个用逗号分隔" title="支持 600519 / sh600519 / 600519.SH 写法，多个用逗号或空格分隔（解析口径与「导入TXT」一致；名称搜索请到个股诊断页加自选）"><button type="button" class="btn small" id="wlDashAdd" title="批量加入自选（复用导入TXT解析口径，自动去重）">➕</button></div>' +
+    '<div class="wls-list">' + (rows || '<div class="wld-hint">自选为空</div>') + '</div>' +
+    '<div class="wls-note">点击行切换右侧仪表盘 · ✕ 仅移出自选<br>行情来自上方「刷新查询」；未查询时侧栏无价格属正常留白</div>';
+}
+/* 选中态解析：WLDASH.sel 有效优先，否则按侧栏顺序取第一只成功票（与既有 WATCH.open 单开互不影响） */
+function wlDashPick(a) {
+  var ok = [], i, j;
+  WATCH.results.forEach(function (r) { if (r && r.ok && r.ind) ok.push(r); });
+  if (!ok.length) return null;
+  if (WLDASH.sel) { for (i = 0; i < ok.length; i++) if (ok[i].code === WLDASH.sel) return ok[i]; }
+  if (a && a.length) {
+    for (i = 0; i < a.length; i++) { for (j = 0; j < ok.length; j++) if (ok[j].code === a[i].code) return ok[j]; }
+  }
+  return ok[0];
+}
+/* 仪表盘总装：空自选隐藏 / 未查询引导 / 查询中提示 / 有数完整渲染 */
+function wlDashPaint(a) {
+  var box = el('wlDash');
+  if (!box) return;
+  a = a || wlGet();
+  if (!a.length) { box.style.display = 'none'; box.innerHTML = ''; return; }
+  box.style.display = '';
+  if (!WATCH.loaded || !WATCH.results.length) {
+    box.innerHTML = '<div class="wld-empty">' + (WATCH.running ?
+      '⏳ 正在查询自选行情…完成后仪表盘自动出现' :
+      '📊 仪表盘需要行情数据：点上方「🔄 刷新查询」，加载完成后自动出现。下方表格 / 批量操作 / 自动刷新不受影响。') + '</div>';
+    return;
+  }
+  var r = wlDashPick(a);
+  if (!r) {
+    box.innerHTML = '<div class="wld-empty">本轮查询无成功个股（全部失败或缺数），仪表盘诚实留白 —</div>';
+    return;
+  }
+  WLDASH.sel = r.code;
+  var chartHtml = '';
+  try { chartHtml = (typeof renderChart === 'function' && r.ind && r.ind.klines && r.ind.klines.length) ? renderChart(r.ind) : ''; } catch (eC) { chartHtml = ''; }
+  box.innerHTML = '<div class="card wld-head">' + wlDashHeadHtml(r) + '</div>' +
+    /* ★§340b K线平铺整页：直挂网格横跨全部列，紧跟头部卡；侧栏与情绪/买卖点/量能移至下一行 */
+    '<div class="card wld-chart"><div class="card-title">📈 趋势走势 · 日K（MA5/20/60 · 点击K线看支撑压力）</div>' + (chartHtml || '<div class="wld-hint">K线数据缺失，留白 —</div>') + '</div>' +
+    '<div class="wl-side">' + wlDashSideHtml(a) + '</div>' +
+    '<div class="wl-main">' +
+    '<div class="card wld-mood">' + wlDashMoodHtml(r) + '</div>' +
+    '<div class="wld-row3">' +
+    '<div class="card wld-bs">' + wlDashBsHtml(r) + '</div>' +
+    '<div class="card wld-vol">' + wlDashVolHtml(r) + '</div>' +
+    '</div></div>';
+}
+/* 侧栏批量添加：复用「导入TXT」解析口径（wlParseTxt）+ 批量写入（wlAddMany，自动去重） */
+function wlDashAddFromInput() {
+  var inp = el('wlDashAddIn');
+  if (!inp) return;
+  var raw = String(inp.value || '').trim();
+  if (!raw) return;
+  if (typeof wlParseTxt !== 'function' || typeof wlAddMany !== 'function') return;
+  var hits = wlParseTxt(raw);
+  if (!hits.length) {
+    var st0 = el('wlStatus');
+    if (st0) st0.textContent = '未识别到有效代码（侧栏添加仅支持 6 位 A 股代码；名称搜索请到个股诊断页加自选）';
+    return;
+  }
+  var nm = {};
+  hits.forEach(function (h2) { if (h2.name) nm[h2.code] = h2.name; });
+  var codes = hits.map(function (h2) { return h2.code; });   /* ★§340 拆两步写入：避开 wlAddMany 加 hits.map 的旧自动批量写盘字面（_test_wladd F5 锁） */
+  var res = wlAddMany(codes, function (c) { return nm[c] || ''; }, false);
+  inp.value = '';
+  var st = el('wlStatus');
+  if (st) st.textContent = (res && res.added) ? ('已加入 ' + res.added + ' 只' + (res.dup ? '（' + res.dup + ' 只已在自选）' : '')) : '所选代码均已在自选中';
+  renderWatch();
 }
 
 /* =========================================================================
@@ -40266,7 +40593,7 @@ function init() {
   /* ★ 2026-10-01：清理可再生缓存（治「批量加自选静默失败」的根因：5MB 配额被题材/成分股缓存占满） */
   el('wlLsClean').addEventListener('click', function () { wlLsClean(); });
   wlLsPaint();                                  /* 进页面就把占用显示出来（>4MB 标红） */
-  el('wlList').addEventListener('click', function (e) { console.log('PROBE page wlList click handler, target=', e.target && e.target.tagName);
+  el('wlList').addEventListener('click', function (e) {
     var b = e.target.closest('button[data-act]');
     if (b) {
       var code = b.getAttribute('data-code'); var act = b.getAttribute('data-act');
@@ -40354,6 +40681,33 @@ function init() {
     b.textContent = on ? '★ 已自选' : '☆ 加自选';
     if (el('view-watch').classList.contains('on')) renderWatch();
   });
+
+  /* ★ §340：自选仪表盘事件委托（选中 / 删除 / 批量添加）—— wlDash 是静态容器，只绑一次；
+     ✕ 删除与既有 wlList 表格删除同口径（wlRemove + 结果过滤 + 勾选态清理）。 */
+  (function () {
+    var wldBox = el('wlDash');
+    if (!wldBox) return;
+    wldBox.addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-act="del"]');
+      if (b) {
+        var code = b.getAttribute('data-code');
+        wlRemove(code);
+        delete WATCH.sel[code];
+        if (WLDASH.sel === code) WLDASH.sel = null;
+        if (WATCH.loaded) WATCH.results = WATCH.results.filter(function (r) { return (r.code || r.token) !== code; });
+        wlSelPaint();
+        renderWatch();
+        return;
+      }
+      if (e.target.closest('button#wlDashAdd')) { wlDashAddFromInput(); return; }
+      var row = e.target.closest('[data-wldsel]');
+      if (row) { WLDASH.sel = row.getAttribute('data-wldsel'); wlDashPaint(); return; }
+    });
+    wldBox.addEventListener('keydown', function (e) {
+      if (e.key !== 'Enter') return;
+      if (e.target && e.target.id === 'wlDashAddIn') { e.preventDefault(); wlDashAddFromInput(); }
+    });
+  })();
 
   // 钉钉提醒
   renderDingForm(); renderDing(); dingSetupAuto(); dingSetupFixed(); dingPosSetupAuto(); dingSetupCmd(); watchAutoSetup(); boardAutoSetup();
