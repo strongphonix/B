@@ -1119,11 +1119,61 @@
   .wld-vbars i.d { background:var(--down); }
   .wld-vmeta { display:flex; justify-content:space-between; gap:10px; font-size:11.5px; color:var(--muted); margin-top:7px; flex-wrap:wrap; }
   .wld-vmeta2 { display:flex; justify-content:space-between; gap:10px; font-size:11.5px; color:var(--muted); margin-top:7px; flex-wrap:wrap; border-top:1px dashed var(--line); padding-top:7px; }
+  /* ★§340e 量价情绪实时监测：截图形式（半环仪表 + 五因子横条 + 演化曲线 + 实时结论），独立全宽卡 */
+  .wld-calc { grid-column: 1 / -1; margin-bottom:0; }
+  .wldc-top { display:grid; grid-template-columns:190px minmax(0,1fr); gap:20px; align-items:center; }
+  .wldc-gauge { text-align:center; }
+  .wldc-gsvg { width:170px; height:96px; }
+  .wldc-score { display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; }
+  .wldc-big { font-size:44px; font-weight:700; line-height:1; }
+  .wldc-tag { font-size:15px; font-weight:700; }
+  .wldc-sub { font-size:11px; color:var(--dim); margin-top:6px; line-height:1.7; }
+  .wldc-bars { margin-top:10px; }
+  .wldc-bar { display:grid; grid-template-columns:76px minmax(0,1fr) 44px; gap:12px; align-items:center; padding:4px 0; }
+  .wldc-bar .lb { font-size:12.5px; color:var(--muted); }
+  .wldc-bar .trk { height:9px; border-radius:5px; background:rgba(255,255,255,.07); overflow:hidden; }
+  .wldc-bar .trk i { display:block; height:100%; border-radius:5px; }
+  .wldc-bar .sc { font-size:13px; font-weight:700; text-align:right; }
+  .wldc-spark { margin-top:12px; border-top:1px dashed var(--line); padding-top:9px; }
+  .wldc-spark-h { font-size:11px; color:var(--dim); margin-bottom:5px; }
+  .wldc-spark-svg { width:100%; height:64px; display:block; }
+  .wldc-spark-x { display:flex; justify-content:space-between; font-size:10px; color:var(--dim); }
+  .wldc-concl { margin-top:11px; border-left:3px solid var(--up); background:rgba(255,255,255,.04); border-radius:0 8px 8px 0; padding:8px 12px; font-size:12.5px; line-height:1.8; color:var(--muted); }
+  .wldc-concl b { color:var(--gold); }
+  .wld-calc-src { font-size:10.5px; color:var(--dim); line-height:1.7; border-top:1px dashed var(--line); padding-top:7px; margin-top:4px; }
+  /* ★§341 明日涨跌预测：因子模型 + walk-forward 回测（本地只读参考，不构成买卖信号） */
+  .wld-pred { grid-column: 1 / -1; margin-bottom:0; }
+  .wldp-top { display:grid; grid-template-columns:210px minmax(0,1fr); gap:18px; align-items:start; }
+  .wldp-gauge { text-align:center; }
+  .wldp-gauge .pct { font-size:26px; font-weight:800; }
+  .wldp-kv { display:flex; justify-content:space-between; gap:8px; font-size:12px; padding:5px 0; border-bottom:1px dashed var(--line); }
+  .wldp-kv:last-of-type { border-bottom:none; }
+  .wldp-kv .k { color:var(--muted); }
+  .wldp-kv .v { font-weight:700; color:var(--text); }
+  .wldp-ftable { width:100%; border-collapse:collapse; font-size:12px; }
+  .wldp-ftable th { text-align:left; color:var(--muted); font-weight:600; font-size:11px; padding:4px 8px; border-bottom:1px solid var(--line); white-space:nowrap; }
+  .wldp-ftable td { padding:5px 8px; border-bottom:1px dashed var(--line); white-space:nowrap; color:var(--text); }
+  .wldp-ftable tr:last-child td { border-bottom:none; }
+  .wldp-ftable input[type=range] { width:92px; accent-color:var(--gold); vertical-align:middle; }
+  .wldp-stats { display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
+  .wldp-stats .st { flex:1; min-width:120px; background:var(--bg2); border:1px solid var(--line); border-radius:9px; padding:8px 12px; text-align:center; }
+  .wldp-stats .st b { display:block; font-size:17px; font-weight:800; color:var(--text); }
+  .wldp-stats .st span { font-size:10.5px; color:var(--dim); }
+  .wldp-note { font-size:10.5px; color:var(--dim); line-height:1.7; border-top:1px dashed var(--line); padding-top:7px; margin-top:10px; }
+  .wldp-win { display:flex; gap:6px; align-items:center; margin-left:auto; }
+  .wldp-win button { background:var(--bg2); border:1px solid var(--line); color:var(--muted); border-radius:8px; padding:3px 10px; font-size:11px; cursor:pointer; font-family:inherit; }
+  .wldp-win button.on { border-color:var(--accent); color:var(--text); background:rgba(91,140,255,.12); }
+  .wldp-hint { color:var(--dim); font-size:12px; padding:8px 0; line-height:1.7; }
+  .upc { color:var(--up); }
+  .dnc { color:var(--down); }
+  .gdc { color:var(--gold); }
+  @media (max-width:1000px) { .wldp-top { grid-template-columns:1fr; } }
   .wld-empty { background:var(--card); border:1px dashed var(--line); border-radius:12px; padding:28px 20px; text-align:center; color:var(--muted); font-size:13px; line-height:1.8; }
   .wld-hint { color:var(--dim); font-size:12px; padding:8px 0; line-height:1.7; }
   @media (max-width:1000px) {
     .wl-dash { grid-template-columns:1fr; }
     .wld-row3 { grid-template-columns:1fr; }
+    .wldc-top { grid-template-columns:1fr; }   /* ★§340e 手机窄屏仪表与分数上下堆叠 */
     .wls-list { max-height:300px; }
   }
 
@@ -27617,6 +27667,436 @@ function wlDashMoodHtml(r) {
   h += wlDashBarRow('换手率', to == null ? '—' : to.toFixed(2) + '%', to == null ? null : Math.max(0, Math.min(100, to / 20 * 100)), 'var(--gold)', '当日换手率（20% 满格）');
   return h;
 }
+/* §340c/d 量价情绪五因子 · 盘中实时计算结论（通用量化口径本地实现）
+   零取数：只读当前选中股既有数据（quote 行情 + ind.klines 日K），随「刷新查询/自动刷新」每轮重算。
+   不参与四指标打分 · 不发买卖信号 · 不进钉钉。缺数一律留白「—」；资金强度用免费替代口径
+   MFI14 + CMF20（全网检索通行结论，OpenWisdom/semwind 等），仅用 OHLCV 本地计算，不编造 L2。 */
+function wlCalcPctRank(hist, x) {
+  if (!hist || hist.length < 5 || x == null || !isFinite(+x)) return null;
+  var n = 0, cnt = 0, i;
+  for (i = 0; i < hist.length; i++) if (hist[i] != null && isFinite(+hist[i])) { n++; if (+hist[i] <= +x) cnt++; }
+  return n >= 5 ? 100 * cnt / n : null;
+}
+function wlCalcCorr(a, b) {
+  if (!a || !b || a.length !== b.length || a.length < 8) return null;
+  var sa = 0, sb = 0, i, n = a.length;
+  for (i = 0; i < n; i++) { if (!isFinite(+a[i]) || !isFinite(+b[i])) return null; sa += +a[i]; sb += +b[i]; }
+  var ma = sa / n, mb = sb / n, cov = 0, va = 0, vb = 0;
+  for (i = 0; i < n; i++) { var da = +a[i] - ma, db = +b[i] - mb; cov += da * db; va += da * da; vb += db * db; }
+  return (va <= 0 || vb <= 0) ? null : cov / Math.sqrt(va * vb);
+}
+function wlCalcMfi14(kl, t) {
+  if (!kl || t < 14) return null;
+  var pos = 0, neg = 0, i;
+  for (i = t - 13; i <= t; i++) {
+    if (!kl[i] || !kl[i - 1] || !isFinite(+kl[i].close) || !isFinite(+kl[i].high) || !isFinite(+kl[i].low)) return null;
+    var tp = (+kl[i].high + +kl[i].low + +kl[i].close) / 3;
+    var pp = (+kl[i - 1].high + +kl[i - 1].low + +kl[i - 1].close) / 3;
+    var mf = tp * ((isFinite(+kl[i].volume) && +kl[i].volume > 0) ? +kl[i].volume : 0);
+    if (tp > pp) pos += mf; else if (tp < pp) neg += mf;
+  }
+  if (pos + neg <= 0) return null;
+  if (neg <= 0) return 100;
+  return 100 - 100 / (1 + pos / neg);
+}
+function wlCalcCmf20(kl, t) {
+  if (!kl || t < 19) return null;
+  var smfv = 0, svol = 0, i;
+  for (i = t - 19; i <= t; i++) {
+    if (!kl[i] || !isFinite(+kl[i].close) || !isFinite(+kl[i].high) || !isFinite(+kl[i].low)) return null;
+    var h = +kl[i].high, l = +kl[i].low, c = +kl[i].close, v = (isFinite(+kl[i].volume) && +kl[i].volume > 0) ? +kl[i].volume : 0;
+    var rng = h - l;
+    var clv = rng > 0 ? ((c - l) - (h - c)) / rng : 0;
+    smfv += clv * v; svol += v;
+  }
+  return svol > 0 ? 100 * smfv / svol : null;
+}
+function wlCalcLiveOf(r) {
+  var q = (r && r.quote) || {}, ind = (r && r.ind) || {};
+  var kl = ind.klines, t = (kl && kl.length ? kl.length - 1 : -1);
+  var price = (isFinite(+q.price) && +q.price > 0) ? +q.price : ((t >= 0 && kl[t] && kl[t].close > 0) ? kl[t].close : null);
+  var out = {}, roc = null, rocs = null, i;
+  /* ② 价格动能：ROC5 + 60日窗口内分位 */
+  if (t >= 5 && kl[t].close > 0 && kl[t - 5].close > 0) {
+    roc = kl[t].close / kl[t - 5].close - 1;
+    rocs = [];
+    for (i = 5; i <= t; i++) if (kl[i].close > 0 && kl[i - 5].close > 0) rocs.push(kl[i].close / kl[i - 5].close - 1);
+  }
+  if (roc != null) {
+    var rp = wlCalcPctRank(rocs, roc), rt = (roc * 100).toFixed(2) + '%';
+    out.dyn = Math.abs(roc) < 0.002 ? { txt: 'ROC5 ' + rt + ' · 动能走平', cls: 'mid', score: rp }
+      : roc > 0 ? { txt: 'ROC5 +' + rt + ' · 动能向上', cls: 'up', score: rp }
+      : { txt: 'ROC5 ' + rt + ' · 动能向下', cls: 'down', score: rp };
+  } else out.dyn = { txt: '—', cls: 'na' };
+  /* ③ 量能活跃：量比 + 当日量在近60日分位 */
+  var vr = (isFinite(+q.volRatioQuote) && +q.volRatioQuote > 0) ? +q.volRatioQuote : null;
+  var vols = null;
+  if (t >= 0) { vols = []; for (i = Math.max(0, t - 59); i <= t; i++) if (isFinite(+kl[i].volume) && +kl[i].volume > 0) vols.push(+kl[i].volume); }
+  var vScore = (t >= 0 && isFinite(+kl[t].volume) && +kl[t].volume > 0) ? wlCalcPctRank(vols, +kl[t].volume) : null;
+  if (vr != null || vScore != null) {
+    var vt = [];
+    if (vr != null) vt.push('量比 ' + vr.toFixed(2));
+    if (vScore != null) vt.push('量能分位 ' + vScore.toFixed(0));
+    var act = vr != null ? (vr >= 2.5 ? '显著放量' : (vr <= 0.5 ? '明显缩量' : '活跃度正常')) : (vScore >= 80 ? '量能放大' : (vScore <= 20 ? '量能低迷' : '活跃度正常'));
+    out.act = { txt: vt.join(' · ') + ' · ' + act, cls: (vr != null && vr >= 2.5) ? 'up' : ((vr != null && vr <= 0.5) ? 'down' : 'mid'), score: vScore };
+  } else out.act = { txt: '—', cls: 'na' };
+  /* ④ 均价支撑：VWAP = 成交额(万元)÷成交量(手)×100 → 元/股 */
+  var vwap = (isFinite(+q.amount) && +q.amount > 0 && isFinite(+q.volume) && +q.volume > 0) ? +q.amount / +q.volume * 100 : null;
+  if (vwap != null && price != null) {
+    var dvw = price / vwap - 1;
+    out.vwap = Math.abs(dvw) < 0.003 ? { txt: '价 ' + price.toFixed(2) + ' ≈ 均价线 ' + vwap.toFixed(2) + ' · 贴线拉锯', cls: 'mid', score: 50 }
+      : dvw > 0 ? { txt: '价 ' + price.toFixed(2) + ' 站上均价线 ' + vwap.toFixed(2) + ' · 买方控盘', cls: 'up', score: 70 }
+      : { txt: '价 ' + price.toFixed(2) + ' 跌破均价线 ' + vwap.toFixed(2) + ' · 盘中转弱', cls: 'down', score: 30 };
+  } else out.vwap = { txt: '—', cls: 'na' };
+  /* ⑤ 资金强度：L2 主力资金的免费替代口径 —— MFI14（带量 RSI）+ CMF20（蔡金资金流），仅用 OHLCV 零新增取数 */
+  var mfi = (t >= 14) ? wlCalcMfi14(kl, t) : null;
+  var cmf = (t >= 19) ? wlCalcCmf20(kl, t) : null;
+  if (mfi != null || cmf != null) {
+    var ft = [];
+    if (mfi != null) ft.push('MFI14 ' + mfi.toFixed(0));
+    if (cmf != null) ft.push('CMF20 ' + (cmf >= 0 ? '+' : '') + cmf.toFixed(1) + '%');
+    var ftg = mfi != null ? (mfi >= 80 ? '吸筹过热(超买)' : (mfi >= 55 ? '流入偏多' : (mfi > 45 ? '流入流出均衡' : (mfi > 20 ? '流出偏多' : '派发过热(超卖)')))) : (cmf > 0 ? '流入偏多' : '流出偏多');
+    if (cmf != null) ftg += cmf > 0 ? ' · 量价资金流入确认' : ' · 量价资金流出确认';
+    out.flow = { txt: ft.join(' · ') + ' · ' + ftg, cls: mfi != null ? (mfi >= 55 ? 'up' : (mfi <= 45 ? 'down' : 'mid')) : (cmf > 0 ? 'up' : 'down'), score: mfi };
+  } else out.flow = { txt: '—', cls: 'na', score: null };
+  /* ⑥ 量价配合：近10日 corr(收价,量) + 今日背离分数 */
+  var corr = null, dvg = null;
+  if (t >= 9) {
+    var ca = [], cb = [];
+    for (i = t - 9; i <= t; i++) { ca.push(kl[i].close); cb.push(+kl[i].volume); }
+    corr = wlCalcCorr(ca, cb);
+  }
+  if (t >= 1 && isFinite(+kl[t].volume) && isFinite(+kl[t - 1].volume) && +kl[t - 1].volume > 0) {
+    var sp = Math.sign(kl[t].close - kl[t - 1].close), sv = Math.sign(+kl[t].volume - +kl[t - 1].volume);
+    if (sp !== 0 && sv !== 0) dvg = sp * sv;
+  }
+  if (corr != null) {
+    out.vpc = { txt: 'corr10 ' + corr.toFixed(2) + (corr > 0 ? ' · 量价同向' : ' · 量价背离') + (dvg != null ? (dvg > 0 ? ' · 今日同向' : ' · 今日背离') : ''),
+      cls: corr > 0 ? 'up' : 'down', score: (corr + 1) / 2 * 100 };
+  } else out.vpc = { txt: '—', cls: 'na' };
+  /* ① 情绪指数：可得因子分位等权合成（≥2 项才出数，绝不印 0） */
+  var parts = [];
+  if (out.dyn.score != null) parts.push(out.dyn.score);
+  if (out.act.score != null) parts.push(out.act.score);
+  if (out.vwap.score != null) parts.push(out.vwap.score);
+  if (out.vpc.score != null) parts.push(out.vpc.score);
+  if (out.flow.score != null) parts.push(out.flow.score);
+  if (parts.length >= 2) {
+    var idx = 0; for (i = 0; i < parts.length; i++) idx += parts[i]; idx /= parts.length;
+    var tag = idx < 30 ? '过冷' : idx < 45 ? '偏冷' : idx <= 55 ? '中性' : idx <= 60 ? '偏热' : '过热';
+    out.idx = { txt: idx.toFixed(0) + ' / 100 · ' + tag, cls: idx < 30 ? 'down' : (idx > 60 ? 'up' : 'mid'), v: idx, tag: tag };
+  } else out.idx = { txt: '—', cls: 'na' };
+  return out;
+}
+/* §340e 情绪指数近20日演化：日K逐日重算（仅用≤当日数据防未来函数；历史日无当日VWAP输入故不含均价支撑项） */
+function wlCalcSeriesOf(r) {
+  var kl = (r && r.ind && r.ind.klines) || null;
+  if (!kl || kl.length < 24) return null;
+  var t = kl.length - 1, ser = [], i, d;
+  for (d = Math.max(0, t - 19); d <= t; d++) {
+    var parts = [];
+    var roc = (d >= 5 && kl[d].close > 0 && kl[d - 5].close > 0) ? kl[d].close / kl[d - 5].close - 1 : null;
+    if (roc != null) {
+      var rs = [];
+      for (i = 5; i <= d; i++) if (kl[i].close > 0 && kl[i - 5].close > 0) rs.push(kl[i].close / kl[i - 5].close - 1);
+      var p1 = wlCalcPctRank(rs, roc);
+      if (p1 != null) parts.push(p1);
+    }
+    var vols = [];
+    for (i = Math.max(0, d - 59); i <= d; i++) if (isFinite(+kl[i].volume) && +kl[i].volume > 0) vols.push(+kl[i].volume);
+    var p2 = (isFinite(+kl[d].volume) && +kl[d].volume > 0) ? wlCalcPctRank(vols, +kl[d].volume) : null;
+    if (p2 != null) parts.push(p2);
+    var mfi = wlCalcMfi14(kl, d);
+    if (mfi != null) parts.push(mfi);
+    var corr = null;
+    if (d >= 9) { var ca = [], cb = []; for (i = d - 9; i <= d; i++) { ca.push(kl[i].close); cb.push(+kl[i].volume); } corr = wlCalcCorr(ca, cb); }
+    if (corr != null) parts.push((corr + 1) / 2 * 100);
+    if (parts.length >= 2) { var s = 0; for (i = 0; i < parts.length; i++) s += parts[i]; ser.push({ s: s / parts.length, d: String(kl[d].date || '') }); }
+  }
+  return ser.length >= 6 ? ser : null;
+}
+/* §340e 量价情绪实时监测 · 截图形式（半环仪表 + 五因子横条 + 近20日演化曲线 + 实时结论）
+   零取数：只读既有 quote + ind.klines，随刷新查询/自动刷新每轮重算；不参与四指标打分 · 不发信号 · 不进钉钉。 */
+function wlMoodCalcHtml(r) {
+  var L = wlCalcLiveOf(r);
+  var q = (r && r.quote) || {};
+  var h = '<div class="card-title">🧮 量价情绪实时监测（五因子 · 通用口径）</div>';
+  /* ① 半环仪表盘 + 大字分（截图形式） */
+  var iv = (L.idx && L.idx.v != null) ? L.idx.v : null;
+  var gcol = iv == null ? 'var(--dim)' : (iv > 60 ? 'var(--up)' : (iv < 30 ? 'var(--down)' : 'var(--gold)'));
+  var arcLen = Math.PI * 56;
+  var gsvg = '<svg class="wldc-gsvg" viewBox="0 0 140 80">' +
+    '<path d="M14 70 A56 56 0 0 1 126 70" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="12" stroke-linecap="round"/>' +
+    (iv != null ? '<path d="M14 70 A56 56 0 0 1 126 70" fill="none" stroke="' + gcol + '" stroke-width="12" stroke-linecap="round" stroke-dasharray="' + (arcLen * iv / 100).toFixed(1) + ' ' + arcLen.toFixed(1) + '"/>' : '') +
+    '<text x="70" y="64" text-anchor="middle" font-size="26" font-weight="700" fill="' + gcol + '">' + (iv == null ? '—' : iv.toFixed(0)) + '</text>' +
+    '<text x="70" y="78" text-anchor="middle" font-size="9" fill="var(--dim)">/ 100</text></svg>';
+  h += '<div class="wldc-top"><div class="wldc-gauge">' + gsvg + '</div>' +
+    '<div><div class="wldc-score"><span class="wldc-big" style="color:' + gcol + '">' + (iv == null ? '—' : iv.toFixed(0)) + '</span>' +
+    '<span class="wldc-tag" style="color:' + gcol + '">' + (L.idx && L.idx.tag ? L.idx.tag : '—') + '</span></div>' +
+    '<div class="wldc-sub">0~100 分，50 为中性；由日K行情与量价因子本地实时合成（各因子滚动分位等权），非第三方情绪指数、非分钟口径。</div></div></div>';
+  /* ② 五因子横向进度条（截图形式） */
+  var bars = [
+    ['价格动能', 'dyn', 'ROC = (现价 − 5日前收) ÷ 5日前收 × 100%，正为多头；分数=ROC5 在近60日窗口的分位。'],
+    ['量能活跃', 'act', '量比 = 现成交 ÷ 5日均量，≥2.5 放量、≤0.5 冷清；分数=当日量在近60日的分位。'],
+    ['均价支撑', 'vwap', 'VWAP = 累计成交额 ÷ 累计成交量；价站上均价线=买方控盘（70），跌破=转弱（30），贴线（50）。'],
+    ['资金强度', 'flow', '免费替代 L2 主力资金口径：MFI14 = 100−100÷(1+Σ正流量÷Σ负流量)，流量=典型价×成交量，>80 超买、<20 超卖；辅 CMF20。'],
+    ['量价配合', 'vpc', 'corr(价,量,10日) > 0 同向；分数=(corr+1)÷2×100。']
+  ];
+  h += '<div class="wldc-bars">';
+  for (var i2 = 0; i2 < bars.length; i2++) {
+    var lv = L[bars[i2][1]] || { cls: 'na', score: null };
+    var col = lv.cls === 'up' ? 'var(--up)' : lv.cls === 'down' ? 'var(--down)' : lv.cls === 'mid' ? 'var(--gold)' : 'var(--dim)';
+    var w = (lv.score != null && isFinite(+lv.score)) ? Math.max(1, Math.min(100, +lv.score)) : 0;
+    h += '<div class="wldc-bar" title="' + wlDashEsc(bars[i2][2]) + '"><span class="lb">' + bars[i2][0] + '</span>' +
+      '<span class="trk"><i style="width:' + w.toFixed(1) + '%;background:' + col + '"></i></span>' +
+      '<span class="sc" style="color:' + (lv.score != null ? col : 'var(--dim)') + '">' + (lv.score != null ? (+lv.score).toFixed(0) : '—') + '</span></div>';
+  }
+  h += '</div>';
+  /* ③ 情绪指数演化曲线（近20日 · 日K逐日重算） */
+  var ser = wlCalcSeriesOf(r);
+  if (ser) {
+    var lastS = ser[ser.length - 1].s;
+    var scol = lastS > 60 ? 'var(--up)' : (lastS < 30 ? 'var(--down)' : 'var(--gold)');
+    var pts = [], i3;
+    for (i3 = 0; i3 < ser.length; i3++) pts.push((i3 / (ser.length - 1) * 200).toFixed(1) + ',' + (40 - ser[i3].s / 100 * 36).toFixed(1));
+    h += '<div class="wldc-spark"><div class="wldc-spark-h">情绪指数 · 近20日演化（日K逐日重算，仅用当日及之前数据；不含均价支撑项）</div>' +
+      '<svg class="wldc-spark-svg" viewBox="0 0 200 44" preserveAspectRatio="none">' +
+      '<line x1="0" y1="22" x2="200" y2="22" stroke="rgba(255,255,255,.18)" stroke-dasharray="3 3" stroke-width="0.6"/>' +
+      '<polyline points="' + pts.join(' ') + '" fill="none" stroke="' + scol + '" stroke-width="1.4" vector-effect="non-scaling-stroke"/></svg>' +
+      '<div class="wldc-spark-x"><span>' + wlDashEsc(ser[0].d) + '</span><span>' + wlDashEsc(ser[ser.length - 1].d) + '</span></div></div>';
+  } else {
+    h += '<div class="wldc-spark"><div class="wldc-spark-h">情绪指数 · 近20日演化</div><div class="wld-hint">样本不足（需 ≥24 根日K），留白 —</div></div>';
+  }
+  /* ④ 实时结论框（截图形式） */
+  var cn = [];
+  cn.push(iv != null ? '情绪指数 <b>' + iv.toFixed(0) + '</b>（' + (L.idx.tag || '—') + '）' : '情绪指数样本不足');
+  if (L.dyn && L.dyn.cls !== 'na') cn.push('近5日动能' + (L.dyn.cls === 'up' ? '向上' : (L.dyn.cls === 'down' ? '向下' : '走平')));
+  if (L.act && L.act.txt !== '—') cn.push(L.act.txt);
+  if (L.vwap && L.vwap.cls !== 'na') cn.push(L.vwap.cls === 'up' ? '现价站上均价线' : (L.vwap.cls === 'down' ? '现价跌破均价线' : '现价贴均价线'));
+  if (L.flow && L.flow.txt !== '—') cn.push(L.flow.txt);
+  if (L.vpc && L.vpc.cls !== 'na') cn.push('近10日量价' + (L.vpc.cls === 'up' ? '同向' : '背离'));
+  h += '<div class="wldc-concl">实时结论：' + cn.join('，') + '。</div>';
+  /* ⑤ 口径页脚 */
+  h += '<div class="wld-calc-src">计算口径：由本台日K行情与量价因子本地实时合成（随刷新查询/自动刷新每轮更新；非分钟口径、非第三方情绪指数）· 零取数 · 不参与打分 · 不发信号 · 不进钉钉 · 与四指标打分互不混用 · 缺数留白「—」 · 行情时点 ' + wlDashEsc(q.time || '—') + '。</div>';
+  return h;
+}
+/* =========================================================================
+   §341 明日涨跌预测 · 因子模型 + 准确率回测（本地 walk-forward · 只读参考）
+   方法学交叉核对（全网检索口径一致）：① 因子只用 T 日及之前数据（防未来函数）；
+   ② Z-score 只在滚动窗口内算均值/方差（防标准化泄露）；③ 回测=滚动样本外：预测 T+1 用 T 时刻
+   因子，测试段恒在训练段之后；④ A股日频短期以反转效应为主（3/5日收益、隔日跳空为负向，
+   20日动量为正向，长江金工/新浪金工口径）；⑤ |IC|>0.03 算弱有效，方向准确率 52%+ 且稳定
+   才有参考意义（OOS 50% 附近是常态，诚实呈现）。零取数（只用 WATCH.results 的 kl）；
+   权重仅存内存不落盘；不参与四指标打分、不发买卖信号、不进钉钉；
+   资金强度/新闻情感无本台数据源，不引入、不编造。
+   ========================================================================= */
+var WLPD = { zw: 60, K: 1.2 };
+var WL_PRED_DEFS = [
+  { k: 'mom20', n: '20日动量', d: '20日涨跌幅（动量延续，正向）', sign: 1, w: 10, need: 21 },
+  { k: 'rev5', n: '5日反转', d: '5日涨跌幅（短期反转，负向权重）', sign: -1, w: 12, need: 6 },
+  { k: 'worst', n: '最差波动', d: '近10日最差单日收益（超跌反弹，正向）', sign: 1, w: 12, need: 11 },
+  { k: 'gap', n: '隔日跳空回归', d: '今日开盘/昨收−1（高开回落，负向权重）', sign: -1, w: 8, need: 2 },
+  { k: 'rsi', n: 'RSI14超卖', d: 'RSI14（超卖反弹，正向）', sign: 1, w: 14, need: 15 },
+  { k: 'volc', n: '波动率收缩', d: '近5日均幅/近20日均幅−1（收缩酝酿，正向）', sign: 1, w: 10, need: 21 },
+  { k: 'mom3', n: '三日反转', d: '3日涨跌幅（短期反转，负向权重）', sign: -1, w: 4, need: 4 },
+  { k: 'vpc', n: '量价配合', d: '20日 corr(价,量)（上涨有量支撑，正向）', sign: 1, w: 8, need: 21 }
+];
+if (WLDASH.predWin == null) WLDASH.predWin = 60;
+if (WLDASH.predW == null) WLDASH.predW = null;
+function wlPredFactorVal(k, kl, t) {
+  if (k === 'mom20') return wlPredRet(kl, t, 20);
+  if (k === 'rev5') return wlPredRet(kl, t, 5);
+  if (k === 'mom3') return wlPredRet(kl, t, 3);
+  if (k === 'worst') return wlPredWorst(kl, t);
+  if (k === 'gap') return (t >= 1 && kl[t].open > 0 && kl[t - 1].close > 0) ? kl[t].open / kl[t - 1].close - 1 : null;
+  if (k === 'rsi') return wlPredRsi14(kl, t);
+  if (k === 'volc') return wlPredVolc(kl, t);
+  if (k === 'vpc') return wlPredVpc(kl, t);
+  return null;
+}
+function wlPredRet(kl, t, n) { return (t >= n && kl[t].close > 0 && kl[t - n].close > 0) ? kl[t].close / kl[t - n].close - 1 : null; }
+function wlPredRsi14(kl, t) {
+  if (t < 14) return null;
+  var g = 0, l = 0, i;
+  for (i = t - 13; i <= t; i++) { var r = kl[i].close - kl[i - 1].close; if (r > 0) g += r; else l -= r; }
+  if (l <= 0) return g > 0 ? 100 : null;
+  return 100 * g / (g + l);
+}
+function wlPredWorst(kl, t) {
+  var m = null, i;
+  for (i = t - 9; i <= t; i++) { if (i < 1) return null; var r = kl[i].close / kl[i - 1].close - 1; if (m === null || r < m) m = r; }
+  return m;
+}
+function wlPredVolc(kl, t) {
+  if (t < 20) return null;
+  var s5 = 0, s20 = 0, i;
+  for (i = t - 4; i <= t; i++) s5 += (kl[i].high - kl[i].low) / Math.max(1e-9, kl[i].close);
+  for (i = t - 19; i <= t; i++) s20 += (kl[i].high - kl[i].low) / Math.max(1e-9, kl[i].close);
+  if (s20 <= 0) return null;
+  return (s5 / 5) / (s20 / 20) - 1;
+}
+function wlPredVpc(kl, t) {
+  if (t < 20) return null;
+  var sx = 0, sy = 0, sxy = 0, sx2 = 0, sy2 = 0, i;
+  for (i = t - 19; i <= t; i++) {
+    var x = Math.log(Math.max(1e-9, kl[i].close)), y = Math.log(Math.max(1, kl[i].volume));
+    sx += x; sy += y; sxy += x * y; sx2 += x * x; sy2 += y * y;
+  }
+  var den = (20 * sx2 - sx * sx) * (20 * sy2 - sy * sy);
+  if (den <= 0) return 0;
+  return (20 * sxy - sx * sy) / Math.sqrt(den);
+}
+function wlPredAtrPct(kl, t) {
+  if (t < 15) return null;
+  var s = 0, i;
+  for (i = t - 13; i <= t; i++) {
+    var pc = i > 0 ? kl[i - 1].close : kl[i].open;
+    var tr = Math.max(kl[i].high - kl[i].low, Math.abs(kl[i].high - pc), Math.abs(kl[i].low - pc));
+    s += tr;
+  }
+  return s / 14 / Math.max(1e-9, kl[t].close);
+}
+/* 滚动 Z-score：窗口只含 [t−zw+1, t]（只用过去），z 截断 ±3 */
+function wlPredZSeries(vals, zw) {
+  var n = vals.length, out = new Array(n), i, j;
+  for (i = 0; i < n; i++) out[i] = null;
+  for (i = 0; i < n; i++) {
+    if (vals[i] == null) continue;
+    var s = 0, c = 0;
+    for (j = Math.max(0, i - zw + 1); j <= i; j++) { if (vals[j] != null) { s += vals[j]; c++; } }
+    if (c < Math.min(zw, 15)) continue;
+    var m = s / c, v = 0;
+    for (j = Math.max(0, i - zw + 1); j <= i; j++) { if (vals[j] != null) v += (vals[j] - m) * (vals[j] - m); }
+    var sd = Math.sqrt(v / c);
+    out[i] = sd > 1e-12 ? Math.max(-3, Math.min(3, (vals[i] - m) / sd)) : 0;
+  }
+  return out;
+}
+function wlPredProb(score) { return 1 / (1 + Math.exp(-WLPD.K * score)); }
+/* 模型主算：因子序列 → 滚动 z → 加权 score（仅 ≤t 数据）→ 概率 + walk-forward 回测统计 */
+function wlPredModel(kl, W, winDays) {
+  var n = kl.length, defs = WL_PRED_DEFS, d, t, i;
+  if (!W || W.length !== defs.length) W = defs.map(function (x) { return x.w; });
+  var raws = [], zs = [];
+  for (d = 0; d < defs.length; d++) {
+    var vals = new Array(n);
+    for (t = 0; t < n; t++) vals[t] = (t >= defs[d].need - 1) ? wlPredFactorVal(defs[d].k, kl, t) : null;
+    raws.push(vals);
+  }
+  for (d = 0; d < defs.length; d++) zs.push(wlPredZSeries(raws[d], WLPD.zw));
+  var score = new Array(n);
+  for (t = 0; t < n; t++) score[t] = null;
+  for (t = 0; t < n; t++) {
+    var s = 0, ws = 0;
+    for (d = 0; d < defs.length; d++) {
+      if (!(W[d] > 0) || zs[d][t] == null) continue;
+      s += W[d] * defs[d].sign * zs[d][t]; ws += W[d];
+    }
+    if (ws > 0) score[t] = s / ws;
+  }
+  if (score[n - 1] == null) return { ok: false, why: '当前样本 Z-score 不足（滚动窗口未攒齐），留白 —' };
+  var days = [];
+  for (t = 0; t < n - 1; t++) if (score[t] != null && kl[t].close > 0 && kl[t + 1].close > 0) days.push(t);
+  if (days.length < 10) return { ok: false, why: '可回测样本不足 10 个交易日，留白 —' };
+  var use = days.slice(-Math.max(10, winDays));
+  var m = use.length, correct = 0, sigCnt = 0, upCnt = 0, sX = 0, sY = 0, sXY = 0, sX2 = 0, sY2 = 0;
+  for (i = 0; i < m; i++) {
+    t = use[i];
+    var ret1 = kl[t + 1].close / kl[t].close - 1;
+    var p = wlPredProb(score[t]);
+    var predUp = p >= 0.5, actUp = ret1 > 0;
+    if (predUp === actUp) correct++;
+    if (predUp) { upCnt++; var ap = wlPredAtrPct(kl, t); if (ap != null && ret1 >= 0.5 * ap) sigCnt++; }
+    sX += score[t]; sY += ret1; sXY += score[t] * ret1; sX2 += score[t] * score[t]; sY2 += ret1 * ret1;
+  }
+  var acc = correct / m;
+  var sigUp = upCnt > 0 ? sigCnt / upCnt : null;
+  var vden = (m * sX2 - sX * sX) * (m * sY2 - sY * sY);
+  var ic = vden > 0 ? (m * sXY - sX * sY) / Math.sqrt(vden) : null;
+  var accs = [];
+  for (var c = 0; c < 3; c++) {
+    var lo = Math.floor(m * c / 3), hi = Math.floor(m * (c + 1) / 3), cc = 0, nn = 0;
+    for (i = lo; i < hi; i++) { t = use[i]; var r1 = kl[t + 1].close / kl[t].close - 1; if ((wlPredProb(score[t]) >= 0.5) === (r1 > 0)) cc++; nn++; }
+    if (nn > 0) accs.push(cc / nn);
+  }
+  var stab = accs.length >= 2 ? Math.max(0, 1 - (Math.max.apply(null, accs) - Math.min.apply(null, accs))) : null;
+  var tl = n - 1, pNow = wlPredProb(score[tl]), agree = null, contrib = [];
+  var lastWs = 0;
+  for (d = 0; d < defs.length; d++) if (W[d] > 0 && zs[d][tl] != null) lastWs += W[d];
+  var same = 0, tot = 0;
+  for (d = 0; d < defs.length; d++) {
+    var cb = (zs[d][tl] != null && W[d] > 0 && lastWs > 0) ? W[d] * defs[d].sign * zs[d][tl] / lastWs : null;
+    contrib.push(cb);
+    if (cb != null) { tot++; if ((cb > 0) === (score[tl] > 0)) same++; }
+  }
+  agree = tot > 0 ? same / tot : null;
+  return { ok: true, p: pNow, score: score[tl], raws: raws, zs: zs, contrib: contrib, acc: acc, sigUp: sigUp, ic: ic, stab: stab, agree: agree, n: m, win: winDays, atrPct: wlPredAtrPct(kl, tl) };
+}
+
+function wlPredPctTxt(v) { return v == null ? '—' : (v >= 0 ? '+' : '') + (v * 100).toFixed(2) + '%'; }
+function wlPredCol(v) { return v > 0 ? ' class="upc"' : (v < 0 ? ' class="dnc"' : ''); }
+function wlPredGauge(p) {
+  var R = 62, C = Math.PI * R, frac = Math.max(0, Math.min(1, p));
+  var col = p >= 0.55 ? 'var(--up)' : (p <= 0.45 ? 'var(--down)' : 'var(--gold)');
+  var tag = p >= 0.55 ? '看多' : (p <= 0.45 ? '看空' : '中性');
+  return '<svg width="176" height="104" viewBox="0 0 176 104" role="img" aria-label="上涨概率 ' + (p * 100).toFixed(1) + '%">' +
+    '<path d="M 26 94 A 62 62 0 0 1 150 94" fill="none" stroke="var(--bg2)" stroke-width="12" stroke-linecap="round"/>' +
+    '<path d="M 26 94 A 62 62 0 0 1 150 94" fill="none" stroke="' + col + '" stroke-width="12" stroke-linecap="round" stroke-dasharray="' + (frac * C).toFixed(1) + ' ' + C.toFixed(1) + '"/>' +
+    '<text x="88" y="74" text-anchor="middle" font-size="26" font-weight="800" fill="' + col + '">' + (p * 100).toFixed(1) + '%</text>' +
+    '<text x="88" y="92" text-anchor="middle" font-size="11" fill="var(--dim)">' + tag + ' · 下一交易日上涨概率（综合）</text>' +
+    '</svg>';
+}
+/* 预测卡渲染：左概率仪表+关键读数；右因子表（当前值/滚动z/权重滑块/贡献）；底部回测统计 */
+function wlPredHtml(r) {
+  var wins = [30, 60, 120], wv;
+  var wbtn = '';
+  for (wv = 0; wv < wins.length; wv++) {
+    wbtn += '<button data-act="predwin" data-win="' + wins[wv] + '"' + ((WLDASH.predWin || 60) === wins[wv] ? ' class="on"' : '') + '>近' + wins[wv] + '日</button>';
+  }
+  var h = '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">' +
+    '<div class="card-title" style="margin:0">🔮 明日涨跌预测 · 因子模型 + 准确率回测（本地 walk-forward · 只读参考）</div>' +
+    '<div class="wldp-win"><span style="font-size:10.5px;color:var(--dim)">滚动样本外</span>' + wbtn + '</div></div>';
+  var kl = (r && r.ind && r.ind.klines) ? r.ind.klines : null;
+  if (!kl || kl.length < 40) return h + '<div class="wld-hint">K线历史不足 40 根（实际 ' + (kl ? kl.length : 0) + ' 根），无法滚动回测，留白 —</div>';
+  if (!WLDASH.predW || WLDASH.predW.length !== WL_PRED_DEFS.length) WLDASH.predW = WL_PRED_DEFS.map(function (x) { return x.w; });
+  var mo = wlPredModel(kl, WLDASH.predW, WLDASH.predWin || 60);
+  if (!mo.ok) return h + '<div class="wld-hint">' + mo.why + '</div>';
+  var defs = WL_PRED_DEFS, d;
+  var tag = mo.p >= 0.55 ? '看多' : (mo.p <= 0.45 ? '看空' : '中性');
+  var tagCol = mo.p >= 0.55 ? 'upc' : (mo.p <= 0.45 ? 'dnc' : 'gdc');
+  h += '<div class="wldp-top">';
+  h += '<div class="wldp-gauge">' + wlPredGauge(mo.p) +
+    '<div class="wldp-kv"><span class="k">核心上涨概率</span><span class="v">' + (mo.p * 100).toFixed(1) + '%</span></div>' +
+    '<div class="wldp-kv"><span class="k">预测波动区间（ATR14）</span><span class="v">' + (mo.atrPct != null ? '±' + (mo.atrPct * 100).toFixed(2) + '%' : '—') + '</span></div>' +
+    '<div class="wldp-kv"><span class="k">模型稳定度（分段准确率差）</span><span class="v">' + (mo.stab != null ? (mo.stab * 100).toFixed(0) + '%' : '—') + '</span></div>' +
+    '<div class="wldp-kv"><span class="k">因子同向率</span><span class="v">' + (mo.agree != null ? (mo.agree * 100).toFixed(0) + '%' : '—') + '</span></div>' +
+    '<div class="wldp-kv"><span class="k">情绪标签</span><span class="v ' + tagCol + '">' + tag + '</span></div>' +
+    '</div>';
+  h += '<div><div style="font-size:11px;color:var(--muted);margin-bottom:6px">核心因子（仅用 T 日及之前数据计算；Z-score 60 日滚动窗口标准化；拖动权重松手即时重算回测）</div>';
+  h += '<table class="wldp-ftable"><tr><th>因子</th><th>当前值</th><th>标准化得分</th><th>权重</th><th>贡献</th></tr>';
+  for (d = 0; d < defs.length; d++) {
+    var raw = mo.raws[d][mo.raws[d].length - 1];
+    var z = mo.zs[d][mo.zs[d].length - 1];
+    var cb = mo.contrib[d];
+    var rawTxt = (defs[d].k === 'rsi') ? (raw == null ? '—' : raw.toFixed(1)) : ((defs[d].k === 'vpc') ? (raw == null ? '—' : raw.toFixed(2)) : wlPredPctTxt(raw));
+    var tip = defs[d].d.replace(/"/g, '');
+    h += '<tr><td title="' + tip + '">' + defs[d].n + '</td>' +
+      '<td' + wlPredCol(raw) + '>' + rawTxt + '</td>' +
+      '<td' + wlPredCol(z) + '>' + (z == null ? '—' : z.toFixed(2)) + '</td>' +
+      '<td><input type="range" min="0" max="20" step="1" value="' + WLDASH.predW[d] + '" data-wpw="' + d + '" title="' + tip + ' · 权重 0~20"></td>' +
+      '<td' + wlPredCol(cb) + '>' + (cb == null ? '—' : (cb >= 0 ? '+' : '') + cb.toFixed(3)) + '</td></tr>';
+  }
+  h += '</table>';
+  h += '<div class="wldp-stats">' +
+    '<div class="st"><b>' + mo.n + '</b><span>回测样本（个交易日，滚动样本外）</span></div>' +
+    '<div class="st"><b>' + (mo.acc * 100).toFixed(1) + '%</b><span>方向准确率</span></div>' +
+    '<div class="st"><b>' + (mo.sigUp != null ? (mo.sigUp * 100).toFixed(1) + '%' : '—') + '</b><span>显著上涨率（预测涨且涨≥0.5×ATR14）</span></div>' +
+    '<div class="st"><b' + (mo.ic != null && Math.abs(mo.ic) >= 0.03 ? ' class="gdc"' : '') + '>' + (mo.ic != null ? mo.ic.toFixed(3) : '—') + '</b><span>因子IC（|IC|≥0.03 算弱有效）</span></div>' +
+    '</div></div>';
+  h += '</div>';
+  h += '<div class="wldp-note">口径：因子仅用 T 日及之前数据（防未来函数）；Z-score 在 60 日滚动窗口内计算均值/方差（防标准化泄露）；回测为滚动样本外——预测 T+1 只用 ≤T 信息，与 T+1 实际涨跌对比。日频短期以反转效应为主（3/5日收益、隔日跳空为负向权重，20日动量为正向）。|IC|≥0.03 算弱有效；方向准确率 52%+ 且稳定才有参考意义，50% 附近=无效诚实呈现。资金强度/新闻情感无本台数据源，不引入、不编造。本卡只读参考、不构成买卖信号；唯一买卖信号仍是四指标打分。零取数 · 不进钉钉。</div>';
+  return h;
+}
 /* 买卖点参考：只读转述 MA5 策略 / 四指标档位 / 生命周期阶段 / 量能承接（不新增任何判定） */
 function wlDashBsHtml(r) {
   var h = '<div class="card-title">🎯 买卖点参考（只读转述 · 信号唯一来源=四指标打分）</div>';
@@ -27724,16 +28204,22 @@ function wlDashPaint(a) {
   WLDASH.sel = r.code;
   var chartHtml = '';
   try { chartHtml = (typeof renderChart === 'function' && r.ind && r.ind.klines && r.ind.klines.length) ? renderChart(r.ind) : ''; } catch (eC) { chartHtml = ''; }
+  var predHtml = '';
+  try { predHtml = (typeof wlPredHtml === 'function') ? wlPredHtml(r) : ''; } catch (eP) { predHtml = '<div class="wld-hint">预测模块计算异常，留白 —</div>'; }
   box.innerHTML = '<div class="card wld-head">' + wlDashHeadHtml(r) + '</div>' +
     /* ★§340b K线平铺整页：直挂网格横跨全部列，紧跟头部卡；侧栏与情绪/买卖点/量能移至下一行 */
     '<div class="card wld-chart"><div class="card-title">📈 趋势走势 · 日K（MA5/20/60 · 点击K线看支撑压力）</div>' + (chartHtml || '<div class="wld-hint">K线数据缺失，留白 —</div>') + '</div>' +
+    /* ★§341 明日涨跌预测卡：直挂网格横跨整页，K线之后 */
+    '<div class="card wld-pred">' + predHtml + '</div>' +
     '<div class="wl-side">' + wlDashSideHtml(a) + '</div>' +
     '<div class="wl-main">' +
     '<div class="card wld-mood">' + wlDashMoodHtml(r) + '</div>' +
     '<div class="wld-row3">' +
     '<div class="card wld-bs">' + wlDashBsHtml(r) + '</div>' +
     '<div class="card wld-vol">' + wlDashVolHtml(r) + '</div>' +
-    '</div></div>';
+    '</div></div>' +
+    /* ★§340e 量价情绪实时监测：截图形式（仪表+五因子横条+演化曲线+实时结论），直挂网格横跨整页 */
+    '<div class="card wld-calc">' + wlMoodCalcHtml(r) + '</div>';
 }
 /* 侧栏批量添加：复用「导入TXT」解析口径（wlParseTxt）+ 批量写入（wlAddMany，自动去重） */
 function wlDashAddFromInput() {
@@ -40700,8 +41186,20 @@ function init() {
         return;
       }
       if (e.target.closest('button#wlDashAdd')) { wlDashAddFromInput(); return; }
+      var pwb = e.target.closest('button[data-act="predwin"]');
+      if (pwb) { WLDASH.predWin = +pwb.getAttribute('data-win') || 60; wlDashPaint(); return; }
       var row = e.target.closest('[data-wldsel]');
       if (row) { WLDASH.sel = row.getAttribute('data-wldsel'); wlDashPaint(); return; }
+    });
+    /* ★§341 权重滑块：change（松手）触发即时重算回测；权重仅存内存不落盘 */
+    wldBox.addEventListener('change', function (e) {
+      var sl = e.target.closest ? e.target.closest('input[data-wpw]') : null;
+      if (!sl) return;
+      var idx = +sl.getAttribute('data-wpw');
+      if (!(idx >= 0 && idx < WL_PRED_DEFS.length)) return;
+      if (!WLDASH.predW || WLDASH.predW.length !== WL_PRED_DEFS.length) WLDASH.predW = WL_PRED_DEFS.map(function (x) { return x.w; });
+      WLDASH.predW[idx] = Math.max(0, Math.min(20, +sl.value || 0));
+      wlDashPaint();
     });
     wldBox.addEventListener('keydown', function (e) {
       if (e.key !== 'Enter') return;
