@@ -19,6 +19,11 @@
     -webkit-font-smoothing: antialiased;
   }
   .app { max-width: 1180px; margin: 0 auto; }
+  /* ★§342 自选仪表盘铺满整页：watch 视图激活时 .app 解除 1180px 封顶（其余视图不动，零回归）；
+     margin 用 0 14px 而非 100vw（100vw 含滚动条会横向溢出）。 */
+  .app.app-wide { max-width: none; margin: 0 14px; }
+  /* ★§342 仪表盘 K 线 SVG 随卡片宽度流式缩放（viewBox 等比，铺满整页宽） */
+  #view-watch .wld-chart svg.chart { width: 100%; height: auto; }
   header.app-head { text-align: center; margin-bottom: 18px; }
   header.app-head h1 { font-size: 24px; letter-spacing: .5px; }
   header.app-head h1 span { color: var(--accent); }
@@ -1091,34 +1096,9 @@
   .wldh-grid .it { background:var(--bg2); border:1px solid var(--line); border-radius:8px; padding:5px 9px; }
   .wldh-grid .k { display:block; font-size:10.5px; color:var(--dim); }
   .wldh-grid .v { font-size:12.5px; font-weight:700; color:var(--text); white-space:nowrap; }
-  .wld-row3 { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
   /* ★§340b K线平铺整页：头部卡与K线卡直挂 .wl-dash 网格、横跨全部列（含左栏位置）；左栏+情绪/买卖点/量能移至下一行 */
   .wld-head, .wld-chart { grid-column: 1 / -1; margin-bottom:0; }
-  .wld-row3 > .card { margin-bottom:0; }
   .wld-chart { min-width:0; }
-  .wldb-row { display:flex; align-items:center; gap:8px; padding:4px 0; font-size:12px; }
-  .wldb-row .k { width:62px; color:var(--muted); flex-shrink:0; }
-  .wldb-row .track { flex:1; height:8px; border-radius:4px; background:var(--bg2); border:1px solid var(--line); overflow:hidden; }
-  .wldb-row .track i { display:block; height:100%; border-radius:3px; }
-  .wldb-row .v { width:66px; text-align:right; font-weight:700; color:var(--text); }
-  .wldb-row .v.dim { color:var(--dim); font-weight:400; }
-  .wld-temp { margin:2px 0 10px; }
-  .wld-temp .tt { display:flex; justify-content:space-between; align-items:baseline; font-size:12px; color:var(--muted); margin-bottom:5px; }
-  .wld-temp .tt b { font-size:24px; letter-spacing:.5px; }
-  .wld-temp .track { height:12px; border-radius:6px; background:var(--bg2); border:1px solid var(--line); overflow:hidden; }
-  .wld-temp .track i { display:block; height:100%; }
-  .wld-temp .act { margin-top:6px; font-size:12.5px; font-weight:700; line-height:1.6; }
-  .wld-temp .scale { margin-top:3px; font-size:10px; color:var(--dim); letter-spacing:1px; }
-  .wldbs-row { display:flex; align-items:baseline; gap:8px; flex-wrap:wrap; padding:7px 0; font-size:12.5px; border-bottom:1px dashed var(--line); }
-  .wldbs-row:last-child { border-bottom:none; }
-  .wldbs-row .k { color:var(--muted); flex-shrink:0; }
-  .wld-tag { font-size:11px; border:1px solid; border-radius:8px; padding:1px 7px; }
-  .wld-vbars { display:flex; align-items:flex-end; gap:3px; height:64px; padding:6px 8px; background:var(--bg2); border:1px solid var(--line); border-radius:8px; }
-  .wld-vbars i { flex:1; border-radius:2px 2px 0 0; min-height:2px; }
-  .wld-vbars i.u { background:var(--up); }
-  .wld-vbars i.d { background:var(--down); }
-  .wld-vmeta { display:flex; justify-content:space-between; gap:10px; font-size:11.5px; color:var(--muted); margin-top:7px; flex-wrap:wrap; }
-  .wld-vmeta2 { display:flex; justify-content:space-between; gap:10px; font-size:11.5px; color:var(--muted); margin-top:7px; flex-wrap:wrap; border-top:1px dashed var(--line); padding-top:7px; }
   /* ★§340e 量价情绪实时监测：截图形式（半环仪表 + 五因子横条 + 演化曲线 + 实时结论），独立全宽卡 */
   .wld-calc { grid-column: 1 / -1; margin-bottom:0; }
   .wldc-top { display:grid; grid-template-columns:190px minmax(0,1fr); gap:20px; align-items:center; }
@@ -1141,6 +1121,39 @@
   .wldc-concl { margin-top:11px; border-left:3px solid var(--up); background:rgba(255,255,255,.04); border-radius:0 8px 8px 0; padding:8px 12px; font-size:12.5px; line-height:1.8; color:var(--muted); }
   .wldc-concl b { color:var(--gold); }
   .wld-calc-src { font-size:10.5px; color:var(--dim); line-height:1.7; border-top:1px dashed var(--line); padding-top:7px; margin-top:4px; }
+  /* ★§343 扩展因子条：OBV斜率 / 布林带宽收口 / 20日价格分位 / vs上证RS（只读参考，不参与五因子打分） */
+  .wldc-ext { margin-top:11px; border-top:1px dashed var(--line); padding-top:9px; }
+  .wldc-ext-h { font-size:11px; color:var(--dim); margin-bottom:7px; }
+  .wldc-ext-grid { display:grid; grid-template-columns:1fr 1fr; gap:7px 22px; }
+  .wldc-ext-row { display:flex; align-items:baseline; gap:8px; font-size:12px; min-width:0; }
+  .wldc-ext-row .lb { color:var(--muted); flex:0 0 auto; }
+  .wldc-ext-row .v { font-weight:700; font-size:13px; }
+  .wldc-ext-row .d { color:var(--dim); font-size:10.5px; margin-left:auto; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  @media (max-width:720px) { .wldc-ext-grid { grid-template-columns:1fr; } }
+  /* ★§344 P1-2 演化折线 Y 轴刻度列 */
+  .wldc-spark-body { display:flex; gap:6px; align-items:stretch; }
+  .wldc-spark-y { display:flex; flex-direction:column; justify-content:space-between; font-size:9px; color:var(--dim); text-align:right; line-height:1; flex:0 0 auto; padding:1px 0; }
+  .wldc-spark-body .wldc-spark-svg { flex:1; min-width:0; }
+  .wldcat-srcs { display:flex; gap:6px; flex-wrap:wrap; margin:2px 0 8px; align-items:center; }
+  .wldcat-srcs .src-chip { font-size:11px; border:1px solid var(--line); background:var(--bg2); color:var(--muted); border-radius:10px; padding:2px 9px; cursor:pointer; }
+  .wldcat-srcs .src-chip.on { color:var(--text); border-color:var(--gold); }
+  .wldcat-srcs .src-stat { color:var(--dim); font-size:10px; margin-left:2px; }
+  .wldcat-list { max-height:320px; overflow:auto; border:1px solid var(--line); border-radius:8px; background:var(--bg2); padding:0 8px; }
+  .wldcat-it { padding:6px 0; border-bottom:1px dashed var(--line); font-size:12px; line-height:1.55; }
+  .wldcat-it:last-child { border-bottom:none; }
+  .wldcat-it .tm { color:var(--accent); font-size:10.5px; font-family:Consolas,monospace; margin-right:6px; }
+  .wldcat-it .srctag { display:inline-block; font-size:9.5px; border:1px solid var(--line); border-radius:6px; padding:0 4px; color:var(--dim); margin-right:6px; vertical-align:1px; white-space:nowrap; }
+  .wldcat-it .tx { color:var(--text); word-break:break-all; }
+  .wldcat-it .hit { color:var(--up); font-weight:700; }
+  .wldcat-it .hitmark { display:block; font-size:10px; color:var(--up); margin-top:1px; }
+  .wldcat-foot { font-size:10.5px; color:var(--dim); line-height:1.7; border-top:1px dashed var(--line); padding-top:7px; margin-top:8px; }
+  /* ★§344 P2-1 头部 13 字段分组分隔线（价格/量额/估值） */
+  .wldh-sep { width:1px; background:var(--line); margin:2px 6px; }
+  /* ★§344 P2-2 侧栏排序切换 */
+  .wls-h { display:flex; align-items:baseline; gap:8px; }
+  .wls-sort { margin-left:auto; display:flex; gap:4px; }
+  .wls-sort button { background:none; border:1px solid var(--line); color:var(--dim); border-radius:7px; padding:1px 7px; font-size:10px; cursor:pointer; font-family:inherit; }
+  .wls-sort button.on { color:var(--gold); border-color:var(--gold); }
   /* ★§341 明日涨跌预测：因子模型 + walk-forward 回测（本地只读参考，不构成买卖信号） */
   .wld-pred { grid-column: 1 / -1; margin-bottom:0; }
   .wldp-top { display:grid; grid-template-columns:210px minmax(0,1fr); gap:18px; align-items:start; }
@@ -1172,7 +1185,6 @@
   .wld-hint { color:var(--dim); font-size:12px; padding:8px 0; line-height:1.7; }
   @media (max-width:1000px) {
     .wl-dash { grid-template-columns:1fr; }
-    .wld-row3 { grid-template-columns:1fr; }
     .wldc-top { grid-template-columns:1fr; }   /* ★§340e 手机窄屏仪表与分数上下堆叠 */
     .wls-list { max-height:300px; }
   }
@@ -3100,6 +3112,175 @@ async function fetchTencentKline(sym, bars, retried) {
   __tencentFail++;
   slowDown();                                  // 疑似被限流 → 自动放慢后续请求
   throw (lastErr || new Error('腾讯K线接口均不可用'));
+}
+
+/* =========================================================================
+   ★§343 扩展因子条 · vs上证RS 取数块（2026-11-19 · 唯一新增取数）
+   上证指数 sh000001 日K —— 复用既有腾讯 fqkline 三源通道 fetchTencentKline（三源轮换 + JSONP 兜底）。
+   设计纪律：
+     ① 本块位于腾讯取数区（WLDASH vm 切片之前）—— 切片内 UI 函数（wlMoodExtHtml）只通过
+        typeof 探测调用（wlExtRsCachedOf / wlExtRsPatch），保持「切片零取数」静态纪律不破；
+     ② 30 分钟内存缓存 + 单飞防并发（pend）；连续 3 败进入 10 分钟静默期（绝不高频重试打爆通道）；
+     ③ 失败一律留白「—」，绝不用旧快照冒充新数据、绝不印 0；静默期外的重试与个股日K共享既有熔断；
+     ④ patch 单值：wlExtRsPatch 只更新 .wldc-ext-rsv[data-code] 一个节点的文本与配色，卡已重渲/换股则放弃。
+   ========================================================================= */
+var WL_EXT_SH = { kl: null, at: 0, pend: null, fail: 0, failAt: 0 };
+function wlExtShKlOf() {
+  var now = Date.now();
+  if (WL_EXT_SH.kl && now - WL_EXT_SH.at < 30 * 60 * 1000) return Promise.resolve(WL_EXT_SH.kl);
+  if (WL_EXT_SH.fail >= 3 && now - WL_EXT_SH.failAt < 10 * 60 * 1000) return Promise.reject(new Error('sh000001 连续失败静默期'));
+  if (WL_EXT_SH.pend) return WL_EXT_SH.pend;
+  WL_EXT_SH.pend = fetchTencentKline('sh000001', 120).then(function (got) {
+    WL_EXT_SH.pend = null;
+    if (got && got.klines && got.klines.length >= 21) { WL_EXT_SH.kl = got.klines; WL_EXT_SH.at = Date.now(); WL_EXT_SH.fail = 0; return WL_EXT_SH.kl; }
+    throw new Error('sh000001 日K样本不足');
+  }).catch(function (e) {
+    WL_EXT_SH.pend = null;
+    WL_EXT_SH.fail++; WL_EXT_SH.failAt = Date.now();
+    throw e;
+  });
+  return WL_EXT_SH.pend;
+}
+function wlExtRsCachedOf(r) {
+  if (!WL_EXT_SH.kl) return null;
+  return wlCalcExtRs20((r && r.ind && r.ind.klines) || null, WL_EXT_SH.kl);
+}
+function wlExtRsPatch(r) {
+  var code = String((r && (r.code || (r.quote && r.quote.code))) || '');
+  var kl = (r && r.ind && r.ind.klines) || null;
+  if (!code || !kl || kl.length < 21) return;
+  wlExtShKlOf().then(function (shKl) {
+    var el = document.querySelector('.wldc-ext-row .wldc-ext-rsv[data-code="' + code + '"]');
+    if (!el) return;                                   /* 卡已重渲/换股 → 放弃本次 patch */
+    var v = wlCalcExtRs20(kl, shKl);
+    if (v == null) return;
+    el.textContent = (v > 0 ? '+' : '') + v.toFixed(1) + '%';
+    el.style.color = v > 0.5 ? 'var(--up)' : (v < -0.5 ? 'var(--down)' : 'var(--gold)');
+    var row = el.parentNode;
+    var dEl = row && row.querySelector ? row.querySelector('.d') : null;
+    if (dEl) dEl.textContent = v > 0.5 ? '跑赢大盘' : (v < -0.5 ? '跑输大盘' : '同步大盘');
+  }).catch(function () { /* 失败维持留白「—」；静默期由 WL_EXT_SH.fail 记账 */ });
+}
+
+/* =========================================================================
+   ★§346 消息催化 · 多源快讯取数块（2026-11-19 · 参考涨停台催化工作区 7.14）
+   四源：新浪财经7×24（zhibo JSONP · 涨停台同款）/ 同花顺快讯（tapp JSONP）/
+         东方财富快讯（np-weblist JSONP · 本机 567 拦截则静默）/ 财联社电报（nodeapi 需签名，浏览器直连受限则静默）。
+   纪律：① 本块位于 WLDASH vm 切片之外 —— 切片内 wlCatHtml 只 typeof 探测 wlCatDataOf，保「切片零取数」；
+         ② 单源 60s 缓存 + 单飞 pend + 连续 3 败 10 分钟静默（绝不高频重试打爆通道）；
+         ③ 失败源诚实标「—」，绝不拿旧数据冒充新数据；④ 不发信号 · 不进钉钉。
+   ========================================================================= */
+var WL_CAT = { sel: 'all', srcs: {}, items: null, last: 0, pend: null };
+function wlCatTsMs(v) {                      /* 各源时间统一解析 → 毫秒（新浪/东财 'YYYY-MM-DD HH:MM:SS' · 同花顺 unix 秒） */
+  if (v == null) return 0;
+  var sv = String(v);
+  if (/^\d{10}$/.test(sv)) return +sv * 1000;
+  var ms = new Date(sv.replace(/-/g, '/')).getTime();
+  return isFinite(ms) ? ms : 0;
+}
+function wlCatDataOf() { return { items: WL_CAT.items, srcs: WL_CAT.srcs, sel: WL_CAT.sel, now: Date.now() }; }
+function wlCatSetSel(k) { WL_CAT.sel = String(k || 'all'); wlCatPatch(); wlCatTick(); }
+function wlCatFetchSina() {
+  return jsonp('https://zhibo.sina.com.cn/api/zhibo/feed?page=1&page_size=30&zhibo_id=152&tag_id=0&dire=f&dpc=1', 'callback', 12000).then(function (r) {
+    var list = (r && r.result && r.result.data && r.result.data.feed && r.result.data.feed.list) || [];
+    return list.map(function (x) {
+      return { tsMs: wlCatTsMs(x.create_time), t: String(x.create_time || '').slice(11, 16), s: 'sina', sName: '新浪',
+        txt: String(x.rich_text || '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim() };
+    }).filter(function (x) { return x.txt && x.t; });
+  });
+}
+function wlCatFetchThs() {
+  return jsonp('https://news.10jqka.com.cn/tapp/news/push/stock/?page=1&pagesize=30&tag=&track=website', 'callback', 12000).then(function (j) {
+    var list = (j && j.data && j.data.list) || [];
+    return list.map(function (x) {
+      var ms = wlCatTsMs(x.time);
+      var d = new Date(ms);
+      return { tsMs: ms, t: isNaN(d.getTime()) ? '—' : ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2), s: 'ths', sName: '同花顺',
+        txt: String((x.title || '') + (x.summary ? ' ' + x.summary : '')).replace(/\s+/g, ' ').trim() };
+    }).filter(function (x) { return x.txt; });
+  });
+}
+function wlCatFetchEm() {                    /* np-weblist 本机 567 拦截 → 3 败静默；换环境自动接通。
+                                                 ★ 用 fetch 不用 jsonp：567 时端点回 HTML 被 script 当 JS 执行会报 emcb 未定义（pageerror 噪音）；
+                                                   fetch 的 CORS 失败只进网络日志，页面零报错。 */
+  return wlCatFetchJson('https://np-weblist.eastmoney.com/comm/web/getFastNewsList?client=web&biz=web_724&fastColumn=102&sortType=1&pageSize=30&req_trace=' + Date.now()).then(function (j) {
+    var list = (j && j.data && j.data.fastNewsList) || [];
+    return list.map(function (x) {
+      return { tsMs: wlCatTsMs(x.showTime), t: String(x.showTime || '').slice(11, 16), s: 'em', sName: '东财',
+        txt: String(x.title || x.summary || '').replace(/\s+/g, ' ').trim() };
+    }).filter(function (x) { return x.txt && x.t; });
+  });
+}
+function wlCatFetchJson(url) {               /* ★§346 fetch + AbortController 12s 超时（东财/财联社共用，失败静默不产生 pageerror） */
+  return new Promise(function (resolve, reject) {
+    var ctrl = typeof AbortController === 'function' ? new AbortController() : null;
+    var to = setTimeout(function () { if (ctrl) ctrl.abort(); reject(new Error('请求超时')); }, 12000);
+    fetch(url, { signal: ctrl ? ctrl.signal : undefined }).then(function (r) { return r.json(); }).then(function (j) {
+      clearTimeout(to); resolve(j);
+    }).catch(function (e) { clearTimeout(to); reject(new Error(String((e && e.message) || '失败').slice(0, 14))); });
+  });
+}
+function wlCatFetchCls() {                   /* 财联社 nodeapi 需签名（无签名单 errno 50101）→ 失败静默，UI 诚实标受限 */
+  return wlCatFetchJson('https://www.cls.cn/nodeapi/updateTelegraphList?app=CailianpressWeb&category=&os=web&rn=30&refreshType=1&sv=7.7.5&sign=' + Date.now()).then(function (j) {
+    var list = (j && j.data && j.data.roll_data) || [];
+    return list.map(function (x) {
+      var ms = wlCatTsMs(x.ctime);
+      var d = new Date(ms);
+      return { tsMs: ms, t: isNaN(d.getTime()) ? '—' : ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2), s: 'cls', sName: '财联社',
+        txt: String(x.title || x.content || '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim() };
+    }).filter(function (x) { return x.txt; });
+  });
+}
+WL_CAT.DEFS = [
+  { k: 'sina', name: '新浪7×24', fn: wlCatFetchSina },
+  { k: 'ths', name: '同花顺', fn: wlCatFetchThs },
+  { k: 'em', name: '东财', fn: wlCatFetchEm },
+  { k: 'cls', name: '财联社', fn: wlCatFetchCls }
+];
+function wlCatSrcFetch(d) {
+  var st = WL_CAT.srcs[d.k] || (WL_CAT.srcs[d.k] = { items: null, n: 0, at: 0, fail: 0, failAt: 0, pend: null, why: '' });
+  var now = Date.now();
+  if (st.items && now - st.at < 60000) return Promise.resolve();     /* 单源 60s 缓存 */
+  if (st.pend) return st.pend;                                       /* 单飞防并发 */
+  if (st.fail >= 3 && now - st.failAt < 10 * 60 * 1000) { st.why = st.why || '受限'; return Promise.resolve(); }  /* 静默期 */
+  st.pend = d.fn().then(function (items) {
+    st.pend = null;
+    if (items && items.length) { st.items = items; st.n = items.length; st.at = Date.now(); st.fail = 0; st.why = ''; }
+    else { st.fail++; st.failAt = Date.now(); st.why = '空'; }
+  }).catch(function (e) {
+    st.pend = null; st.fail++; st.failAt = Date.now();
+    st.why = String((e && e.message) || '失败').slice(0, 16);
+  });
+  return st.pend;
+}
+function wlCatMerge() {                      /* 合并去重按时间倒序（条目无稳定 id，同源同文本 + 同时间去重） */
+  var all = [], seen = {};
+  WL_CAT.DEFS.forEach(function (d) {
+    var st = WL_CAT.srcs[d.k];
+    if (st && st.items) st.items.forEach(function (it) {
+      var key = it.s + '|' + it.txt.slice(0, 60);
+      if (!seen[key]) { seen[key] = 1; all.push(it); }
+    });
+  });
+  all.sort(function (x, y) { return (y.tsMs || 0) - (x.tsMs || 0); });
+  WL_CAT.items = all.slice(0, 80);
+}
+function wlCatTick() {
+  var now = Date.now();
+  if (WL_CAT.pend || (WL_CAT.last && now - WL_CAT.last < 60000)) return;
+  WL_CAT.last = now;
+  WL_CAT.pend = Promise.all(WL_CAT.DEFS.map(wlCatSrcFetch)).then(function () {
+    WL_CAT.pend = null;
+    wlCatMerge();
+    wlCatPatch();
+  }).catch(function () { WL_CAT.pend = null; });
+}
+function wlCatPatch() {                      /* 单卡 patch：只重渲 .wld-cat，不动整页 */
+  var el = document.querySelector('.wld-cat');
+  if (el && typeof wlCatHtml === 'function') {
+    var a = (typeof WATCH !== 'undefined' && WATCH.list) ? WATCH.list : [];
+    el.innerHTML = wlCatHtml(a);
+  }
 }
 
 /* ★ 2026-10-19 §176（用户要求「加上周线级别的 K 线分析」）：周线取数 —— 复用日K那条 fqkline 通道，
@@ -8049,6 +8230,104 @@ function klDipOf(kl, i, n) {
    ④ 历史不足 60 根、或窗口内有脏数据 → 返回 null，不画（留白，不拿现有根数凑）。
    ⑤ 「根」= 有成交的 K 线根，不是自然日；周线 / 5·30 分钟线同样按根算（与 §205 一致）。
    ⑥ 参考层：只标注，不计分、不进四指标 / VPS、不进钉钉推送、不发买卖信号。 */
+/* =========================================================================
+   ★§345 CYS13 / 超跌区域带 纯函数（2026-11-19 · 超跌反弹系列笔记落地）
+   口径（全部本地纯函数、仅用 kl[0..i] 防未来函数、与既有指标零耦合）：
+     ① klCys13Series / klCys13At：CYS13 = 收盘价 ÷ 13日均收盘 − 1（×100，%）。
+       「13日成本均线」的**近似口径**：数据源（腾讯 fqkline）无量额字段 → 成本均线以
+       13 日**均收盘**近似（诚实标注在 chip title / 副图页脚，绝不冒充筹码成本）。
+       阈值语义（系列笔记原文）：≤−15 深度超跌区 = 触发反弹观察信号；
+       负 5 下方回升 = 反弹确认参考；回升至 0 或 5 附近 = 减仓参考。
+     ② klDrop20Bands：20 个交易日收盘跌幅 >30% 的窗口合并为连续区间（全局下标闭区间）。
+       判定式：close[i] ÷ close[i−20] − 1 ≤ −30%；相邻/重叠窗口合并成一条带（画背景区域）。
+   定位纪律：只读参考层 —— 不计分、不进四指标、不发买卖信号、不进钉钉；缺数留白不硬算。
+   ========================================================================= */
+function klCys13Series(klines) {
+  var out = { ok: false, why: '', cys: [] };
+  if (!klines || klines.length < 13) { out.why = 'K线不足13根'; return out; }
+  for (var i = 0; i < klines.length; i++) {
+    if (i < 12) { out.cys.push(null); continue; }
+    var s = 0, bad = false;
+    for (var j = i - 12; j <= i; j++) {
+      var c = klines[j] && klines[j].close;
+      if (c == null || !isFinite(c) || c <= 0) { bad = true; break; }
+      s += c;
+    }
+    out.cys.push(bad ? null : (klines[i].close / (s / 13) - 1) * 100);
+  }
+  out.ok = true;
+  return out;
+}
+function klCys13At(klines, i) {
+  if (!klines || i == null || i < 12 || i >= klines.length) return null;
+  var s = 0;
+  for (var j = i - 12; j <= i; j++) {
+    var c = klines[j] && klines[j].close;
+    if (c == null || !isFinite(c) || c <= 0) return null;
+    s += c;
+  }
+  return (klines[i].close / (s / 13) - 1) * 100;
+}
+function klDrop20Bands(klines, th) {
+  /* 返回全局下标闭区间 [[s,e],...]：20 个交易日收盘跌幅 ≤ −th%（th 默认 30）的窗口，重叠/相邻合并 */
+  var T = 20, t = ((th == null ? 30 : th) / 100), bands = [], cur = null;
+  if (!klines || klines.length <= T) return bands;
+  for (var i = T; i < klines.length; i++) {
+    var c0 = klines[i - T] && klines[i - T].close, c1 = klines[i] && klines[i].close;
+    if (c0 == null || !isFinite(c0) || c0 <= 0 || c1 == null || !isFinite(c1)) {
+      if (cur) { bands.push(cur); cur = null; }
+      continue;
+    }
+    if (c1 / c0 - 1 <= -t) {
+      var s2 = i - T + 1;
+      if (cur && s2 <= cur[1] + 1) cur[1] = i;
+      else { if (cur) bands.push(cur); cur = [s2, i]; }
+    }
+  }
+  if (cur) bands.push(cur);
+  return bands;
+}
+function klCysReboundAt(klines, i) {
+  /* ★§345b 超跌反弹·买点确认（系列笔记「等确认，不抢左侧」落地）：
+     ① 深度超跌前置 = 近 13 日（i−13..i−1）CYS13 最低 ≤ −15 —— 超跌只是观察前提，绝不单独当买点；
+     ② 买点确认 = CYS13 连续两日回升（c2<c0<c1，单日锯齿不算）且仍在负 5 下方初期（c0、c1 均 ≤ −5，
+        确定性远高于最低点盲目抄底）+ 价格止跌（当日收 ≥ 昨收，不接飞刀）—— 且只标**确认首日**
+        （昨日尚未处于确认态，回升窗口内不逐日重复标）；
+     ③ 量能验证 = 当日成交量 ≥ 前 8 根均量 ×2（均量不含当根，§212 同纪律）→ volx ≥ 2 为强确认，
+        未达 → 「量能观察」（仍是买点标记，仅披露量能未验证）。
+     前置门槛 i ≥ 25：CYS13 三日值（klCys13At 需下标 ≥12）+ 近 13 日 CYS 窗口完整；
+     只用 kl[0..i]（无未来函数）；缺数 → null 诚实留白。仅描述，不构成买卖依据。 */
+  if (!klines || i == null || i < 25 || i >= klines.length) return null;
+  var c2 = klCys13At(klines, i - 2), c0 = klCys13At(klines, i - 1), c1 = klCys13At(klines, i);
+  if (c2 == null || c0 == null || c1 == null || !isFinite(c2) || !isFinite(c0) || !isFinite(c1)) return null;
+  var mn = c0, j, v;
+  for (j = i - 13; j <= i - 1; j++) {
+    v = klCys13At(klines, j);
+    if (v != null && isFinite(v) && v < mn) mn = v;
+  }
+  if (!(mn <= -15)) return null;
+  /* ★ 价止跌守卫：当日收盘 ≥ 昨收（价已止跌企稳）。CYS 在加速下跌段会因 MA13 滞后出现
+     锯齿翘头（乖离收敛假回升）—— 价格还在下跌时的翘头 = 左侧接飞刀，不作买点（等确认）。 */
+  var pk0 = klines[i - 1] && klines[i - 1].close, pk1 = klines[i] && klines[i].close;
+  if (!(pk0 != null && isFinite(pk0) && pk0 > 0 && pk1 != null && isFinite(pk1) && pk1 >= pk0)) return null;
+  /* ★ 回升确认：CYS13 连续两日回升（c2 < c0 < c1，单日锯齿不算）且仍在负 5 下方初期（c0、c1 均 ≤ −5）。 */
+  if (!(c2 < c0 && c0 < c1 && c0 <= -5 && c1 <= -5)) return null;
+  /* ★ 确认首日：昨日尚未处于「连续两日回升 ∧ 价止跌」确认态 —— 回升窗口内只标首根，不逐日重复标。 */
+  var c3 = klCys13At(klines, i - 3);
+  var q0 = klines[i - 1] && klines[i - 1].close, q1 = klines[i - 2] && klines[i - 2].close;
+  var __rbsY = (c3 != null && isFinite(c3) && c3 < c2 && c2 < c0 && c0 <= -5 &&
+    q0 != null && isFinite(q0) && q1 != null && isFinite(q1) && q0 >= q1);
+  if (__rbsY) return null;
+  var s8 = 0, ok8 = true, vv;
+  for (j = i - 8; j < i; j++) {
+    vv = klines[j] && klines[j].volume;
+    if (vv == null || !isFinite(vv) || vv <= 0) { ok8 = false; break; }
+    s8 += vv;
+  }
+  var volx = (ok8 && s8 > 0 && klines[i] && klines[i].volume != null && isFinite(klines[i].volume) && klines[i].volume > 0)
+    ? klines[i].volume / (s8 / 8) : null;
+  return { buy: true, cys2: c2, cys0: c0, cys1: c1, min: mn, volx: volx };
+}
 var KL_PRESS_N = 60;
 /* ★ 配色（玫红 #ff5c8a）：色相约 344°，夹在涨红 #ff5252（0°）与买点轨 ma5 #e84393（328°）之间，
    两侧各差 16° —— 但那是**9px 蜡烛实体**与**买点轨上的小方块**，本条是**横贯全宽的 1px 虚线**，
@@ -9040,6 +9319,16 @@ function renderChart(ind, focus, opt) {
         (isFinite(_grvSw) && _grvSw > 0 ? '· 收盘越过前 ' + _grvSw + ' 根最高价' + (_grvSw >= 2 ? '（强反转）' : '') : '') +
         '｜失效 ' + (+_grv.inv).toFixed(2) + '（跌破本根最低价）｜参考层，不计分】';
     }
+    /* ★§345b：超跌反弹 · 买点确认 —— 该根命中则悬停明细点名（判据唯一来源 klCysReboundAt，只读 kl[0..i]）。 */
+    var __rbsTip = null;
+    try { __rbsTip = (typeof klCysReboundAt === 'function') ? klCysReboundAt(kl, start + idx) : null; } catch (eRbsTip) { __rbsTip = null; }
+    var __rbsTxt = __rbsTip
+      ? ('　【超跌反弹 · 买点确认】CYS13 连续两日回升 ' + __rbsTip.cys2.toFixed(1) + ' → ' + __rbsTip.cys0.toFixed(1) + ' → ' + __rbsTip.cys1.toFixed(1) +
+         '（负 5 下方回升确认首日）· 近 13 日最低 ' + __rbsTip.min.toFixed(1) + ' ≤ −15' +
+         ((__rbsTip.volx != null && isFinite(__rbsTip.volx) && __rbsTip.volx >= 2)
+           ? ' · 量能 ×' + __rbsTip.volx.toFixed(1) + '（≥8日均量 2 倍，强确认）'
+           : ' · 量能未达 8日均量 2 倍（观察）'))
+      : '';
     return klDateTxt(k.tt || k.date) + '　开 ' + k.open.toFixed(2) + '　高 ' + k.high.toFixed(2) + '　低 ' + k.low.toFixed(2) +
       /* ★ §176：周线把「收 / +x%」改写成「周收 / 本周 +x%」—— chgOf 算的是「相对上一根收盘」，
          在周K上天然就是周涨跌幅，但沿用日线的「收 +2.1%」会被读成「今日涨 2.1%」，属口径歧义。 */
@@ -9047,6 +9336,7 @@ function renderChart(ind, focus, opt) {
       '（' + (__isMonth ? '本月 ' : (__isWeek ? '本周 ' : '')) + (c >= 0 ? '+' : '') + c.toFixed(2) + '%）　量 ' + fmtWan(k.volume) +
       (_tk === 'zt' ? '　【涨停封板】' : (_tk === 'dt' ? '　【跌停封底】' : (_tk === 'zb' ? '　【涨停炸板】' : ''))) +
       __gbtxt +
+      __rbsTxt +
       ((__kjRowOk && idx < __kjRowK.length)
         ? ('　K ' + __kjRowK[idx].toFixed(1) + ' / D ' + __kjRowD[idx].toFixed(1) + ' / J ' + __kjRowJ[idx].toFixed(1))
         : '') +
@@ -9143,6 +9433,23 @@ function renderChart(ind, focus, opt) {
       __zlOk = !!(__zlSer && __zlSer.ok);
       if (!__zlOk) __zlWhy = (__zlSer && __zlSer.why) || '';
     } catch (eZlRow) { __zlOk = false; __zlWhy = '主力状态计算异常'; }
+  }
+  /* ★§345 CYS13 序列准备（副图替代主力状态后的数据源）—— 与 __wKjOk 同一准备姿势：整段 try/catch、
+     失败 ok=false 留白不硬算。klCys13Series 只用 ≤ 当日数据（无未来函数）；
+     缓存到 ind.__cys13Ctx（键 = kl 长度 + 末根日期，与 __kdjCtx/__zlztSer 同纪律）——
+     点击 K 线重渲染不重算，§328 角标跟随按全量下标 gidx 取值。 */
+  var __cysOk = false, __cysFull = null, __cysWhy = '';
+  if (__wKjShow) {
+    try {
+      if (typeof klCys13Series === 'function') {
+        __cysFull = klCys13Series(kl);
+        __cysOk = !!(__cysFull && __cysFull.ok);
+        if (!__cysOk) __cysWhy = (__cysFull && __cysFull.why) || '';
+        if (ind && __cysOk) {
+          ind.__cys13Ctx = { key: kl.length + '|' + String((kl[kl.length - 1] && kl[kl.length - 1].date) || ''), cys: __cysFull.cys, ok: true };
+        }
+      } else { __cysWhy = 'klCys13Series 未加载'; }
+    } catch (eCysRow) { __cysOk = false; __cysWhy = 'CYS13 计算异常'; }
   }
   /* 主力状态 y 映射：零轴动态放在面板高 12%（无向下蓝柱时）或 30%（有蓝柱时）处，
      向上按窗口内 max(红,黄,紫) 归一化 —— 与 KDJ 的固定 0~100 刻度不同，这是柱状量能面板，走相对刻度。 */
@@ -9789,6 +10096,52 @@ function renderChart(ind, focus, opt) {
         ' · 参考层，不计分</title></path>';
     });
   }
+
+  /* ★§345：20 交易日收盘跌幅 >30% 的超跌区域带（仅日线；超跌反弹系列落地）。
+     · klDrop20Bands 出全局下标闭区间 → 裁剪到可见窗 → 半透明红带铺满价格面板（背景层，
+       画在蜡烛之前不遮 K 线，pointer-events 让位给蜡烛热区）+ 顶部小标签「▼ 20日跌>30%」；
+     · 语义 = 超跌反弹观察区（博情绪修复与资金回流的短窗口，不是趋势反转）；
+     · 参考层纪律：不计分、不进四指标、不发买卖信号、不进钉钉；无命中整层不出（诚实留白）。 */
+  if (__wKjShow && typeof klDrop20Bands === 'function') (function () {
+    var __dBands = klDrop20Bands(kl, 30);
+    __dBands.forEach(function (b) {
+      var __ds0 = Math.max(b[0], start), __ds1 = Math.min(b[1], start + ks.length - 1);
+      if (__ds1 < __ds0) return;
+      var __dx0 = Math.max(plotL, X(__ds0 - start) - step / 2), __dx1 = Math.min(plotR, X(__ds1 - start) + step / 2);
+      if (__dx1 <= __dx0) return;
+      svg += '<rect class="kl-dropzone" x="' + __dx0.toFixed(1) + '" y="' + priceT + '" width="' + (__dx1 - __dx0).toFixed(1) +
+        '" height="' + (priceB - priceT) + '" fill="#ff2d2d" fill-opacity="0.16" pointer-events="none"><title>' +
+        escapeHtml('超跌区域：该窗口内收盘价较 20 个交易日前跌逾 30%（超跌反弹观察区 —— 博情绪修复与资金回流的短窗口，不是趋势反转；跌得急且深动能才足，缓缓阴跌不算；仅描述，不构成买卖依据）') + '</title></rect>';
+      var __dlx = Math.max(plotL + 30, Math.min(plotR - 30, (__dx0 + __dx1) / 2));
+      svg += '<text x="' + __dlx.toFixed(1) + '" y="' + (priceT + 9) + '" fill="#ff8a80" font-size="9.5" font-weight="700" text-anchor="middle" pointer-events="none">▼ 20日跌&gt;30%</text>';
+    });
+  })();
+
+  /* ★§345b：超跌反弹 · 买点确认标记（金色 ▲ 钉在该根 K 线上方；仅日线）。
+     · 判定唯一来源 = klCysReboundAt（超跌反弹系列「等确认，不抢左侧」口径，见纯函数注释）；
+     · 金色 ▲ = 买点确认（负 5 下方 CYS13 回升首日 + 近 13 日最低 ≤−15）；右上角小字 = 量能状态
+       （×N.N ≥2 强确认 / 「量能观察」= 未达 8 日均量 2 倍）；<title> 悬停明细带完整口径与读数；
+     · pointer-events="none" 不抢蜡烛热区（悬停明细在 tipOf 侧另有【超跌反弹 · 买点确认】点名）；
+     · 参考层纪律：不计分、不进四指标、不发买卖信号、不进钉钉；无命中整层不出（诚实留白）。 */
+  if (__wKjShow && typeof klCysReboundAt === 'function') (function () {
+    for (var __ri = 0; __ri < ks.length; __ri++) {
+      var __rh = klCysReboundAt(kl, start + __ri);
+      if (!__rh) continue;
+      var __rx = X(__ri), __rTop = Y(ks[__ri].high), __ry = __rTop - 8;
+      if (__ry < priceT + 2) __ry = priceT + 2;
+      var __rVolTxt = (__rh.volx != null && isFinite(__rh.volx))
+        ? ((__rh.volx >= 2 ? '×' + __rh.volx.toFixed(1) + ' 强确认' : '量能观察×' + __rh.volx.toFixed(1)))
+        : '量能观察';
+      svg += '<g class="kl-rbs" pointer-events="none">' +
+        '<polygon points="' + __rx.toFixed(1) + ',' + (__ry - 6).toFixed(1) + ' ' + (__rx - 4.5).toFixed(1) + ',' + __ry.toFixed(1) +
+        ' ' + (__rx + 4.5).toFixed(1) + ',' + __ry.toFixed(1) + '" fill="#ffb300" stroke="#0b1020" stroke-width="0.8"><title>' +
+        escapeHtml('超跌反弹 · 买点确认（等确认，不抢左侧）：CYS13 连续两日回升 ' + __rh.cys2.toFixed(1) + ' → ' + __rh.cys0.toFixed(1) + ' → ' + __rh.cys1.toFixed(1) +
+          '（负 5 下方回升确认首日）· 近 13 日 CYS13 最低 ' + __rh.min.toFixed(1) + ' ≤ −15（深度超跌前提）；' +
+          '量能 ' + __rVolTxt + '（反弹启动首日 ≥ 8日均量×2 为强确认）。博的是情绪修复与资金回流的短窗口，不是趋势反转；仅描述，不构成买卖依据。') +
+        '</title></polygon>' +
+        '<text x="' + (__rx + 6).toFixed(1) + '" y="' + (__ry - 3).toFixed(1) + '" fill="#ffb300" font-size="8.5" font-weight="700">' + __rVolTxt + '</text></g>';
+    }
+  })();
 
   /* 蜡烛（热区 + 影线 + 实体；实体最细 1px，十字星不消失；末根白描边 + 触点）
      每根蜡烛一个 <g class="cd">：① 内含整列热区 rect.hit（画在最底下，悬停时整列淡高亮）
@@ -10604,78 +10957,81 @@ function renderChart(ind, focus, opt) {
       'font-family="' + M + '" text-anchor="end" paint-order="stroke" stroke="#101830" stroke-width="2.6" stroke-linejoin="round">J ' + Math.round(__wKjJ[wli]) + '</text>';
   })();
 
-  /* ===== ★ 2026-11-01 §247：主力状态副图（只在日线，参考层） =====
-     · 复刻「经传主力状态」三色柱语义：红柱=中线强势（机构资金）/ 黄柱=中线控盘（=红/5，叠红柱下半段）/
-       紫柱=短线强势（资金流入强度×1.5，需当日收阳）/ 青块=筑底散兵坑（散户套牢系数 ≥90 覆盖红柱）。
-     · STICKLINE 叠柱顺序按公式原文：全部从零轴起画、后画者覆盖先画者 → 绘制顺序 红 → 黄 → 青(坑) → 紫。
-     · 紫柱首日 = 短线资金进场参考 → 零轴下画一枚紫点（与公式原文的 COLORBLUE 短线超跌恒 0 一致，
-       本面板无向下柱，零轴贴近底部）。
-     · 参考层纪律：不计分、不进四指标、不进钉钉、不发买卖信号；口径为近似复刻（WINNER 自建筹码模型），
-       诚实披露写在面板 title 与点击面板。 */
+  /* ===== ★§345：CYS13 副图（2026-11-19 · 用户指令「K线图下方增加实时CYS13指标，替代主力状态指标」）=====
+     · 几何不变（仅日线 zlT 572 ~ zlB 640，参考层）；主力状态副图停画，但 __zlSer 序列仍保留
+       （蜡烛悬停明细的主力状态四读数 / 头部 chip / 点击面板继续消费，不删）。
+     · 口径：CYS13 = 收盘价 ÷ 13日均收盘 − 1（klCys13Series；成本均线以均收盘近似 —— 数据源无量额，
+       诚实标注，绝不冒充筹码成本）。阈值语义（超跌反弹系列笔记）：
+         ≤−15 深度超跌区（金虚线 = 触发反弹观察信号） / 负 5 下方回升（紫虚线 = 反弹确认参考） /
+         回升至 0 或 5 附近 = 减仓参考。
+     · 纵向映射：窗口内 min/max 动态 + 6% padding，且强制包含 [−16, +2]（保证 −15/−5/0 三条参考线永远可见）；
+     · 折线 #5b8cff（null 断开不硬连）；≤−15 的根画金点（深度超跌标记）；
+     · 右侧角标 kl-cyscor data-k="cys"（§328 点击跟随同模式）；逐列热区 <title> 悬停明细；
+     · 参考层纪律：不计分、不进四指标、不发买卖信号、不进钉钉；缺数留白不硬算。 */
   if (__wKjShow) (function () {
     svg += '<text x="' + (padL - 8) + '" y="' + (zlT + 11) + '" fill="#6b779b" font-size="10.5" font-weight="600" ' +
-      'text-anchor="end">主力状态</text>';
-    if (!__zlOk) {
+      'text-anchor="end">CYS13</text>';
+    if (!__cysOk) {
       svg += '<text x="' + ((plotL + plotR) / 2).toFixed(1) + '" y="' + ((zlT + zlB) / 2 + 3.5).toFixed(1) +
-        '" fill="#5d6788" font-size="10.5" text-anchor="middle">主力状态 数据不足（' +
-        escapeHtml(__zlWhy || '流通股本/筹码样本不足') + '）</text>';
+        '" fill="#5d6788" font-size="10.5" text-anchor="middle">CYS13 数据不足（' +
+        escapeHtml(__cysWhy || 'K线样本不足') + '）</text>';
       return;
     }
-    /* 零轴（实线，很淡）+ 面板名 */
-    svg += '<line x1="' + plotL + '" y1="' + __zlZeroY.toFixed(1) + '" x2="' + plotR + '" y2="' + __zlZeroY.toFixed(1) +
-      '" stroke="#22304f" stroke-width="1"/>';
-    /* 逐列柱：红打底 → 黄叠下半段 → 青(散兵坑覆盖红柱区) → 紫；紫柱首日画紫点标记 */
-    for (var zi = 0; zi < ks.length; zi++) {
-      var zg = start + zi;                                   /* 全量下标 */
-      var zx = X(zi), zh;
-      var zr = __zlSer.red[zg] || 0, zy = __zlSer.yellow[zg] || 0;
-      var zp = __zlSer.purple[zg] || 0, zpit = __zlSer.zshtl[zg] >= __zlPitTh;
-      var zbar = '';
-      if (zr > 0) {
-        zh = __zlZeroY - YZL(zr);
-        zbar += '<rect x="' + (zx - bw / 2).toFixed(1) + '" y="' + YZL(zr).toFixed(1) + '" width="' + bw.toFixed(1) +
-          '" height="' + zh.toFixed(1) + '" fill="' + __zlRed + '" fill-opacity="0.88"/>';
-      }
-      if (zy > 0) {
-        zh = __zlZeroY - YZL(zy);
-        zbar += '<rect x="' + (zx - bw / 2).toFixed(1) + '" y="' + YZL(zy).toFixed(1) + '" width="' + bw.toFixed(1) +
-          '" height="' + zh.toFixed(1) + '" fill="' + __zlYel + '" fill-opacity="0.92"/>';
-      }
-      if (zpit && zr > 0) {
-        zh = __zlZeroY - YZL(zr);
-        zbar += '<rect x="' + (zx - bw / 2).toFixed(1) + '" y="' + YZL(zr).toFixed(1) + '" width="' + bw.toFixed(1) +
-          '" height="' + zh.toFixed(1) + '" fill="' + __zlPit + '" fill-opacity="0.75"/>';
-      }
-      if (zp > 0) {
-        zh = __zlZeroY - YZL(zp);
-        zbar += '<rect x="' + (zx - bw / 2).toFixed(1) + '" y="' + YZL(zp).toFixed(1) + '" width="' + bw.toFixed(1) +
-          '" height="' + zh.toFixed(1) + '" fill="' + __zlPur + '" fill-opacity="0.92"/>';
-      }
-      if (__zlSer.pFirst[zg]) {
-        zbar += '<circle cx="' + zx.toFixed(1) + '" cy="' + (zlB - 4) + '" r="2.4" fill="' + __zlPur +
-          '" stroke="#0b1020" stroke-width="0.8"/>';
-      }
-      /* 每列一块透明热区 + <title> 悬停明细（该日四读数 + 事件），与蜡烛热区互不干扰 */
-      var ztip = (ks[zi].date || '') + ' 主力状态：红 ' + zr.toFixed(1) + ' · 黄 ' + zy.toFixed(1) +
-        ' · 紫 ' + zp.toFixed(1) + ' · 散户套牢 ' + Math.round(__zlSer.zshtl[zg]) +
-        (__zlSer.pFirst[zg] ? ' · 紫柱首日（短线资金进场参考）' : '') +
-        (__zlSer.pEnd[zg] ? ' · 紫柱消失（离场风险参考）' : '') +
-        (zpit ? ' · 筑底散兵坑（套牢系数≥90）' : '');
-      zbar += '<rect x="' + (zx - step / 2).toFixed(1) + '" y="' + zlT + '" width="' + step.toFixed(1) +
-        '" height="' + (zlB - zlT) + '" fill="transparent"><title>' + escapeHtml(ztip) + '</title></rect>';
-      svg += '<g>' + zbar + '</g>';
+    var __cysWin = __cysFull.cys.slice(start);
+    var __cysHi = 2, __cysLo = -16;
+    for (var __ci = 0; __ci < __cysWin.length; __ci++) {
+      var __cv0 = __cysWin[__ci];
+      if (__cv0 == null || !isFinite(__cv0)) continue;
+      if (__cv0 > __cysHi) __cysHi = __cv0;
+      if (__cv0 < __cysLo) __cysLo = __cv0;
     }
-    /* 右侧角标：末根（= 截至最新交易日）四读数 */
-    var zli2 = ks.length - 1, zlg2 = start + zli2;
-    /* ★ §328：角标加 class/data-k 寻址（kl-zlcor · zr/zy/zp/zt），点击跟随与日/周 KDJ 同一套 */
-    svg += '<text class="kl-zlcor" data-k="zr" x="' + (plotR - 8) + '" y="' + (zlT + 11) + '" fill="' + __zlRed + '" font-size="10" ' +
-      'font-family="' + M + '" text-anchor="end" paint-order="stroke" stroke="#101830" stroke-width="2.6" stroke-linejoin="round">红 ' + (__zlSer.red[zlg2] || 0).toFixed(1) + '</text>';
-    svg += '<text class="kl-zlcor" data-k="zy" x="' + (plotR - 8) + '" y="' + (zlT + 23) + '" fill="' + __zlYel + '" font-size="10" ' +
-      'font-family="' + M + '" text-anchor="end" paint-order="stroke" stroke="#101830" stroke-width="2.6" stroke-linejoin="round">黄 ' + (__zlSer.yellow[zlg2] || 0).toFixed(1) + '</text>';
-    svg += '<text class="kl-zlcor" data-k="zp" x="' + (plotR - 8) + '" y="' + (zlT + 35) + '" fill="' + __zlPur + '" font-size="10" ' +
-      'font-family="' + M + '" text-anchor="end" paint-order="stroke" stroke="#101830" stroke-width="2.6" stroke-linejoin="round">紫 ' + (__zlSer.purple[zlg2] || 0).toFixed(1) + '</text>';
-    svg += '<text class="kl-zlcor" data-k="zt" x="' + (plotR - 8) + '" y="' + (zlT + 47) + '" fill="' + __zlPit + '" font-size="10" ' +
-      'font-family="' + M + '" text-anchor="end" paint-order="stroke" stroke="#101830" stroke-width="2.6" stroke-linejoin="round">套 ' + Math.round(__zlSer.zshtl[zlg2]) + '</text>';
+    var __cysPad = (__cysHi - __cysLo) * 0.06;
+    __cysHi += __cysPad; __cysLo -= __cysPad;
+    function YC(v) { return zlB - (v - __cysLo) / (__cysHi - __cysLo) * (zlB - zlT); }
+    /* 三条参考线：0 轴实线 / −5 回升确认（紫点线）/ −15 深度超跌（金虚线） */
+    svg += '<line x1="' + plotL + '" y1="' + YC(0).toFixed(1) + '" x2="' + plotR + '" y2="' + YC(0).toFixed(1) +
+      '" stroke="#22304f" stroke-width="1"/>';
+    svg += '<line x1="' + plotL + '" y1="' + YC(-5).toFixed(1) + '" x2="' + plotR + '" y2="' + YC(-5).toFixed(1) +
+      '" stroke="#7c6bd9" stroke-width="0.8" stroke-dasharray="2 3" stroke-opacity="0.6"/>';
+    svg += '<line x1="' + plotL + '" y1="' + YC(-15).toFixed(1) + '" x2="' + plotR + '" y2="' + YC(-15).toFixed(1) +
+      '" stroke="#ffb300" stroke-width="1" stroke-dasharray="5 3" stroke-opacity="0.85"/>';
+    svg += '<text x="' + (plotR - 8) + '" y="' + (YC(-15) - 3).toFixed(1) + '" fill="#ffb300" font-size="9" text-anchor="end">−15 深度超跌</text>';
+    svg += '<text x="' + (plotR - 8) + '" y="' + (YC(-5) - 3).toFixed(1) + '" fill="#9c8ce0" font-size="9" text-anchor="end">−5 回升确认</text>';
+    /* 折线（null 断开）+ 深度超跌金点 */
+    var __cysD = '', __cysPen = false, __cysLast = __cysWin[__cysWin.length - 1];
+    for (__ci = 0; __ci < __cysWin.length; __ci++) {
+      var __cv = __cysWin[__ci];
+      if (__cv == null || !isFinite(__cv)) { __cysPen = false; continue; }
+      __cysD += (__cysPen ? ' L' : 'M') + X(__ci).toFixed(1) + ' ' + YC(__cv).toFixed(1);
+      __cysPen = true;
+      if (__cv <= -15) {
+        svg += '<circle cx="' + X(__ci).toFixed(1) + '" cy="' + YC(__cv).toFixed(1) + '" r="2.2" fill="#ffb300" stroke="#0b1020" stroke-width="0.7"/>';
+      }
+    }
+    if (__cysD) {
+      svg += '<path d="' + __cysD + '" fill="none" stroke="#64b5f6" stroke-width="1.4" pointer-events="none"/>';
+    }
+    /* 逐列热区 + 悬停明细（该日 CYS13 读数 + 档位文案） */
+    for (__ci = 0; __ci < __cysWin.length; __ci++) {
+      var __cv2 = __cysWin[__ci];
+      var __cysTag = (__cv2 == null || !isFinite(__cv2)) ? '' :
+        (__cv2 <= -15 ? ' · 深度超跌区（触发反弹观察信号）' :
+         (__cv2 <= -5 ? ' · 超跌区' :
+          (__cv2 < 0 ? ' · 负5下方（回升确认参考带）' :
+           (__cv2 >= 5 ? ' · 高乖离（减仓参考区）' : ' · 正乖离（回升至0~5=减仓参考）'))));
+      var __ctip = (ks[__ci].date || '') + ' CYS13：' +
+        ((__cv2 == null || !isFinite(__cv2)) ? '—' : ((__cv2 >= 0 ? '+' : '') + __cv2.toFixed(2) + '%')) + __cysTag +
+        '（口径：收盘÷13日均收盘−1，成本均线以均收盘近似——数据源无量额；仅描述，不构成买卖依据）';
+      svg += '<rect x="' + (X(__ci) - step / 2).toFixed(1) + '" y="' + zlT + '" width="' + step.toFixed(1) +
+        '" height="' + (zlB - zlT) + '" fill="transparent"><title>' + escapeHtml(__ctip) + '</title></rect>';
+    }
+    /* 右侧角标：末根读数（§328 点击跟随同款 class/data-k 寻址） */
+    var __cysG2 = start + ks.length - 1, __cysLv = __cysFull.cys[__cysG2];
+    var __cysCol = (__cysLv == null || !isFinite(__cysLv)) ? '#5d6788' :
+      (__cysLv <= -15 ? '#ffb300' : (__cysLv < 0 ? '#26c281' : '#ff5252'));
+    svg += '<text class="kl-cyscor" data-k="cys" x="' + (plotR - 8) + '" y="' + (zlT + 11) + '" fill="' + __cysCol + '" font-size="10" ' +
+      'font-family="' + M + '" text-anchor="end" paint-order="stroke" stroke="#101830" stroke-width="2.6" stroke-linejoin="round">CYS ' +
+      ((__cysLv == null || !isFinite(__cysLv)) ? '—' : ((__cysLv >= 0 ? '+' : '') + __cysLv.toFixed(2) + '%')) + '</text>';
   })();
 
   /* ---- ★ 2026-11-14 §318：ADX / DI 序列（画 ADX 副图前算好；缓存口径与 __stCache 相同）----
@@ -10840,7 +11196,7 @@ function renderChart(ind, focus, opt) {
         ? ' 周 · 前复权 · MA5/20/60 = 5/20/60 周均线，KDJ(9,3,3) = 9 周 · 末根为本周进行中（量能偏小） · 底=ADX/DI 副图(红底带=多头强势区 · 紫底带=超买区 ADX>50) · 点击柱子看量价关系'
         : (__isMonth
           ? ' 月 · 前复权 · MA5/20/60 = 5/20/60 月均线，KDJ(9,3,3) = 9 月 · 末根为本月进行中（量能偏小） · 底=ADX/DI 副图(红底带=多头强势区 · 紫底带=超买区 ADX>50) · 点击柱子看量价关系'
-          : ' 日 · 前复权 · 副图：上=日KDJ / 中=周KDJ(9,3,3) / 下=主力状态(红=中线强势 黄=主力控盘 紫=短线资金 · 近似复刻) / 底=ADX/DI(黄=ADX 趋势强度 · 红=+DI · 绿=-DI · 虚线 20/25/50 阈值 · 红底带=多头强势区 ADX≥25 且 +DI>-DI · 紫底带=超买区 ADX>50) · 主图红/绿粗线=SuperTrend(多头红支撑/空头绿阻力,▲▼=翻转) · 悬停看开高低收 · 点击柱子看当日量价关系'))) + '</text>';
+          : ' 日 · 前复权 · 副图：上=日KDJ / 中=周KDJ(9,3,3) / 下=CYS13(收盘÷13日均收盘−1 · 金虚线=−15深度超跌=反弹观察信号 · 紫虚线=−5回升确认 · 金点=深度超跌根 · 成本均线以均收盘近似——数据源无量额) / 底=ADX/DI(黄=ADX 趋势强度 · 红=+DI · 绿=-DI · 虚线 20/25/50 阈值 · 红底带=多头强势区 ADX≥25 且 +DI>-DI · 紫底带=超买区 ADX>50) · 主图红/绿粗线=SuperTrend(多头红支撑/空头绿阻力,▲▼=翻转) · 悬停看开高低收 · 点击柱子看当日量价关系'))) + '</text>';
   svg += '</svg>';
 
   /* 顶部图例 chip：颜色与图上线条一一对应（★ 2026-10-04 起由 klDaysetHtml 统一生成，见 renderChart 之后） */
@@ -11631,6 +11987,31 @@ function klDaysetHtml(ent, gidx, kj, raw, kjChipHtml, per) {
       }
     }
   } catch (eZlChip) { zlztChip = ''; }
+  /* ★§345：CYS13 chip —— 用户指令「主力状态数值后增加显示CYS13数值」。跟在 zlztChip 之后拼接。
+     口径 = klCys13At（收盘÷13日均收盘−1；成本均线以均收盘近似——数据源无量额，诚实标注）；
+     档位（超跌反弹系列）：≤−15 深度超跌（触发反弹观察信号）/ −15~−5 超跌区 / −5~0 回升确认带 /
+     0~5 正乖离 / ≥5 高乖离（减仓参考区）。纯函数只读 kl[0..gidx]（无未来函数）；
+     缺数 → chip 整枚消失（诚实留白，不印 0）。仅日线。 */
+  var cys13Chip = '';
+  try {
+    if ((per == null || per === 'day') && typeof klCys13At === 'function' && kl && kl.length >= 13) {
+      var __cys13v = klCys13At(kl, gidx);
+      if (__cys13v != null && isFinite(__cys13v)) {
+        var __cys13col = __cys13v <= -15 ? '#ffb300' : (__cys13v < 0 ? '#26c281' : '#ff5252');
+        var __cys13tag = __cys13v <= -15 ? ' · 深度超跌' : (__cys13v <= -5 ? ' · 超跌区' : (__cys13v < 0 ? ' · 回升确认带' : (__cys13v >= 5 ? ' · 高乖离' : '')));
+        /* ★§345b：该根命中「超跌反弹·买点确认」→ chip 升级金标并点名（判据唯一来源 klCysReboundAt；
+           放量 ≥8日均量×2 = 强确认，未达 = 量能观察）。 */
+        var __rbsC = null;
+        try { __rbsC = (typeof klCysReboundAt === 'function') ? klCysReboundAt(kl, gidx) : null; } catch (eRbsC) { __rbsC = null; }
+        if (__rbsC) {
+          __cys13col = '#ffb300';
+          __cys13tag += ' · 🚀 超跌反弹买点' + ((__rbsC.volx != null && isFinite(__rbsC.volx) && __rbsC.volx >= 2) ? '（放量×' + __rbsC.volx.toFixed(1) + ' 强确认）' : '（量能观察）');
+        }
+        cys13Chip = '<span class="kl-chip" style="color:' + __cys13col + '" title="CYS13 = 收盘价 ÷ 13日均收盘 − 1（超跌反弹系列口径：≤−15 进入深度超跌区 = 触发反弹观察信号；负5下方回升 = 反弹确认参考；回升至 0 或 5 附近 = 减仓参考。&#10;成本均线以 13 日均收盘近似（数据源无量额，非筹码成本）；只用该日及之前数据，无未来函数；仅描述，不构成买卖依据。">CYS13 <b>' +
+          (__cys13v >= 0 ? '+' : '') + __cys13v.toFixed(2) + '%</b>' + __cys13tag + '</span>';
+      }
+    }
+  } catch (eCysChip) { cys13Chip = ''; }
   /* ★ 2026-11-15 §329：形态参考层 chip —— 按 gidx 逐根显示该根命中的量能序列形态（ths patterns.js 架构台内版）。
      · 纯函数 patternHitsAt(kl, gidx) 只读 kl[0..gidx]（无未来函数），点击历史根自然跟随（§328 同入口）；
      · 仅日线（per 守卫，与 §247 主力状态同款）；hits 为空 / 异常 → chip 整枚消失（诚实留白）；
@@ -11699,8 +12080,9 @@ function klDaysetHtml(ent, gidx, kj, raw, kjChipHtml, per) {
        ★ 2026-10-13 §112（用户指定位置）：换手率之后 → 分位 → 10日动量（§111 同源口径）
        ★ 2026-10-17 §152：§151 的「挖土机位置」chip 已移除（改为图顶部区域带，见 renderChart __digBands）
        ★ 2026-11-01 §247：10日动量之后 → 主力状态（红/黄/紫/套牢 + 事件，仅日线）
-       ★ 2026-11-07 §240：5日动量 紧贴 MA5斜率 之前（用户口令「MA5斜率(至该日) 前增加显示 5日动量(至该日)」） */
-    s4chip + adxChip + devChip + upChip + posChip + brkChip + mom10Chip + zlztChip + patChip;
+       ★ 2026-11-07 §240：5日动量 紧贴 MA5斜率 之前（用户口令「MA5斜率(至该日) 前增加显示 5日动量(至该日)」）
+       ★ 2026-11-19 §345：主力状态 chip 之后追加 CYS13 chip（用户指令「主力状态数值后增加显示CYS13数值」） */
+    s4chip + adxChip + devChip + upChip + posChip + brkChip + mom10Chip + zlztChip + cys13Chip + patChip;
 }
 
 function indItem(label, value, desc, status) {
@@ -26909,6 +27291,8 @@ async function geneCtxForSingle(r) {
 /* 统一的主视图切换（tab 点击、报告里点板块标签 等程序化跳转共用）
    原先 openBoardDetail 调用了并不存在的 switchView → 点报告里的板块标签会直接抛错、打不开板块。 */
 function switchView(v) {
+  /* ★§342 自选仪表盘铺满整页：watch 视图解除 .app 1180px 封顶，切走即还原（其余视图零变化） */
+  try { var __appEl = document.querySelector('.app'); if (__appEl) __appEl.classList.toggle('app-wide', v === 'watch'); } catch (eAppWide) { }
   document.querySelectorAll('.tabs .tab').forEach(function (x) {
     x.classList.toggle('on', x.getAttribute('data-view') === v);
   });
@@ -27565,7 +27949,7 @@ function renderWatch() {
    · 只读转述既有判定（MA5 策略 / 四指标打分 / 生命周期阶段 / 量能承接），不新增信号、不进钉钉
    · 截图里的「资金流向 / 隔日涨跌预测 / 新闻资讯」无既有数据源，不做、不编造
    ========================================================================= */
-var WLDASH = { sel: null };
+var WLDASH = { sel: null, sideSort: 'def' };
 
 function wlDashEsc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 function wlDashPctTxt(v) { return (v == null || !isFinite(+v)) ? '—' : ((+v >= 0 ? '+' : '') + (+v).toFixed(2) + '%'); }
@@ -27587,11 +27971,6 @@ function wlDashFmtAmt(wan) {
 }
 /* 中轴归一：v/scale ∈ [-1,1] → [0,100]（负值压到中轴左侧） */
 function wlDashMidPct(v, scale) { return (v == null || !isFinite(+v)) ? null : Math.max(0, Math.min(100, 50 + (+v) / scale * 50)); }
-function wlDashBarRow(k, txt, pct, col, tip) {
-  if (pct == null || !isFinite(+pct)) return '<div class="wldb-row" title="' + wlDashEsc(tip || '') + '"><span class="k">' + k + '</span><span class="track"></span><span class="v dim">' + txt + '</span></div>';
-  var p = Math.max(0, Math.min(100, +pct));
-  return '<div class="wldb-row" title="' + wlDashEsc(tip || '') + '"><span class="k">' + k + '</span><span class="track"><i style="width:' + p.toFixed(1) + '%;background:' + (col || 'var(--accent)') + '"></i></span><span class="v">' + txt + '</span></div>';
-}
 function wlDashS4kOf(r) {
   if (r.s4kSum && r.s4kSum.ok) return r.s4kSum;
   try {
@@ -27621,14 +28000,16 @@ function wlDashHeadHtml(r) {
   var pct = isFinite(+q.changePct) ? +q.changePct : (isFinite(+ind.chgToday) ? +ind.chgToday : null);
   var cls = (pct == null) ? '' : (pct >= 0 ? 'up' : 'down');
   var nm = q.name || r.name || r.code;
-  var items = [
-    ['今开', wlDashNum(q.open)], ['最高', wlDashNum(q.high)], ['最低', wlDashNum(q.low)], ['昨收', wlDashNum(q.prevClose)],
-    ['成交量', wlDashFmtVol(q.volume)], ['成交额', wlDashFmtAmt(q.amount)], ['量比', wlDashNum(q.volRatioQuote)],
-    ['换手', wlDashNum(q.turnover, '%')], ['振幅', wlDashNum(q.amplitude, '%')],
-    ['流通市值', wlDashNum(q.floatMarket, '亿')], ['总市值', wlDashNum(q.totalMarket, '亿')],
-    ['市盈率', wlDashNum(q.pe)], ['市净率', wlDashNum(q.pb)]
-  ].map(function (it) {
-    return '<div class="it"><span class="k">' + it[0] + '</span><b class="v">' + it[1] + '</b></div>';
+  /* ★§344 P2-1：13 字段分三组（价格 / 量额 / 估值），组间细竖线分隔（hover 提示组名） */
+  var itemGroups = [
+    { lb: '价格类', its: [['今开', wlDashNum(q.open)], ['最高', wlDashNum(q.high)], ['最低', wlDashNum(q.low)], ['昨收', wlDashNum(q.prevClose)]] },
+    { lb: '量额类', its: [['成交量', wlDashFmtVol(q.volume)], ['成交额', wlDashFmtAmt(q.amount)], ['量比', wlDashNum(q.volRatioQuote)], ['换手', wlDashNum(q.turnover, '%')], ['振幅', wlDashNum(q.amplitude, '%')]] },
+    { lb: '估值类', its: [['流通市值', wlDashNum(q.floatMarket, '亿')], ['总市值', wlDashNum(q.totalMarket, '亿')], ['市盈率', wlDashNum(q.pe)], ['市净率', wlDashNum(q.pb)]] }
+  ];
+  var items = itemGroups.map(function (g) {
+    return '<div class="wldh-sep" title="' + g.lb + '字段"></div>' + g.its.map(function (it) {
+      return '<div class="it"><span class="k">' + it[0] + '</span><b class="v">' + it[1] + '</b></div>';
+    }).join('');
   }).join('');
   var ts = q.time ? wlDashEsc(q.time) : '—';
   return '<div class="wldh-l">' +
@@ -27636,36 +28017,6 @@ function wlDashHeadHtml(r) {
     '<div class="big ' + cls + '">' + (price == null ? '—' : price.toFixed(2)) + '<span>' + wlDashPctTxt(pct) + '</span></div>' +
     '<div class="sub">行情时点 ' + ts + ' · 读数来自「刷新查询」最近一轮，随自动刷新更新 · 截图里的字段若无对应数据一律留白</div>' +
     '</div><div class="wldh-grid">' + items + '</div>';
-}
-/* 转势情绪卡：四指标总分温度 + 五条真实因子横条（KDJ K 值 / MA5 斜率 / dev 偏离 / 20日动量 / 换手） */
-function wlDashMoodHtml(r) {
-  var ind = r.ind || {}, q = r.quote || {};
-  var h = '<div class="card-title">🌡 转势情绪 · 四指标温度（只读转述）</div>';
-  var s = wlDashS4kOf(r);
-  if (s) {
-    var col = s.veto ? '#ff5252' : (s.total >= 60 ? '#26c281' : (s.total >= 30 ? '#f59e0b' : '#ff5252'));
-    h += '<div class="wld-temp"><div class="tt"><span>四指标总分（≥42 买点线）</span><b style="color:' + col + '">' + s.total + '</b></div>' +
-      '<div class="track"><i style="width:' + Math.max(0, Math.min(100, s.total)).toFixed(1) + '%;background:' + col + '"></i></div>' +
-      '<div class="act" style="color:' + col + '">' + wlDashEsc(String(s.action || '') + '（' + String(s.pos || '') + '）') +
-      (s.veto ? ' · ⛔ 一票否决：' + wlDashEsc((s.vetoWhy || []).join('；')) : '') + '</div>' +
-      '<div class="scale">0 ····· 42 买点线 ····· 100</div></div>';
-  } else {
-    h += '<div class="wld-hint">四指标打分：数据不足，留白 —</div>';
-  }
-  var sp = isFinite(+ind.ma5SlopePct) ? +ind.ma5SlopePct : null;
-  h += wlDashBarRow('MA5斜率', wlDashPctTxt(sp), wlDashMidPct(sp, 5), sp == null ? '' : (sp >= 0 ? 'var(--up)' : 'var(--down)'), 'MA5 斜率%（±5% 满格，中轴=走平）');
-  var kj = wlDashKdjOf(r);
-  var kjZoneTxt = { low: '低位', mid: '中位', high: '高位' };
-  h += wlDashBarRow('KDJ·K', kj && kj.ok ? (+kj.k).toFixed(1) : '—', kj && kj.ok ? Math.max(0, Math.min(100, +kj.k)) : null, 'var(--accent)',
-    'KDJ K 值（0~100）' + (kj && kj.ok && kj.zone ? ' · ' + (kjZoneTxt[kj.zone] || '') : ''));
-  var dv = isFinite(+ind.dev) ? +ind.dev : null;
-  h += wlDashBarRow('MA5偏离', dv == null ? '—' : ((dv >= 0 ? '+' : '') + dv.toFixed(1) + '%'), wlDashMidPct(dv, 10), dv == null ? '' : (dv >= 0 ? 'var(--up)' : 'var(--down)'), '现价相对 MA5 偏离度（±10% 满格）');
-  var m20 = (typeof mom20Of === 'function') ? mom20Of(ind) : null;
-  var m20ok = (m20 != null && isFinite(+m20));
-  h += wlDashBarRow('20日动量', m20ok ? wlDashPctTxt(m20) : '—', m20ok ? wlDashMidPct(+m20, 30) : null, m20ok ? (+m20 >= 0 ? 'var(--up)' : 'var(--down)') : '', '近20日涨跌幅（±30% 满格）');
-  var to = (isFinite(+ind.turnover) && +ind.turnover > 0) ? +ind.turnover : ((isFinite(+q.turnover) && +q.turnover > 0) ? +q.turnover : null);
-  h += wlDashBarRow('换手率', to == null ? '—' : to.toFixed(2) + '%', to == null ? null : Math.max(0, Math.min(100, to / 20 * 100)), 'var(--gold)', '当日换手率（20% 满格）');
-  return h;
 }
 /* §340c/d 量价情绪五因子 · 盘中实时计算结论（通用量化口径本地实现）
    零取数：只读当前选中股既有数据（quote 行情 + ind.klines 日K），随「刷新查询/自动刷新」每轮重算。
@@ -27860,9 +28211,11 @@ function wlMoodCalcHtml(r) {
     var pts = [], i3;
     for (i3 = 0; i3 < ser.length; i3++) pts.push((i3 / (ser.length - 1) * 200).toFixed(1) + ',' + (40 - ser[i3].s / 100 * 36).toFixed(1));
     h += '<div class="wldc-spark"><div class="wldc-spark-h">情绪指数 · 近20日演化（日K逐日重算，仅用当日及之前数据；不含均价支撑项）</div>' +
+      /* ★§344 P1-2：左侧 Y 轴刻度列（0–100 满量程）——补齐「只有 X 轴日期看不出历史区间」的缺口 */
+      '<div class="wldc-spark-body"><div class="wldc-spark-y"><span>100</span><span>50</span><span>0</span></div>' +
       '<svg class="wldc-spark-svg" viewBox="0 0 200 44" preserveAspectRatio="none">' +
       '<line x1="0" y1="22" x2="200" y2="22" stroke="rgba(255,255,255,.18)" stroke-dasharray="3 3" stroke-width="0.6"/>' +
-      '<polyline points="' + pts.join(' ') + '" fill="none" stroke="' + scol + '" stroke-width="1.4" vector-effect="non-scaling-stroke"/></svg>' +
+      '<polyline points="' + pts.join(' ') + '" fill="none" stroke="' + scol + '" stroke-width="1.4" vector-effect="non-scaling-stroke"/></svg></div>' +
       '<div class="wldc-spark-x"><span>' + wlDashEsc(ser[0].d) + '</span><span>' + wlDashEsc(ser[ser.length - 1].d) + '</span></div></div>';
   } else {
     h += '<div class="wldc-spark"><div class="wldc-spark-h">情绪指数 · 近20日演化</div><div class="wld-hint">样本不足（需 ≥24 根日K），留白 —</div></div>';
@@ -27876,8 +28229,143 @@ function wlMoodCalcHtml(r) {
   if (L.flow && L.flow.txt !== '—') cn.push(L.flow.txt);
   if (L.vpc && L.vpc.cls !== 'na') cn.push('近10日量价' + (L.vpc.cls === 'up' ? '同向' : '背离'));
   h += '<div class="wldc-concl">实时结论：' + cn.join('，') + '。</div>';
-  /* ⑤ 口径页脚 */
+  /* ⑤★§343 扩展因子条（OBV斜率 / 布林带宽收口 / 20日价格分位 / vs上证RS；只读参考，不参与五因子打分、不发信号） */
+  h += wlMoodExtHtml(r);
+  /* ⑥ 口径页脚 */
   h += '<div class="wld-calc-src">计算口径：由本台日K行情与量价因子本地实时合成（随刷新查询/自动刷新每轮更新；非分钟口径、非第三方情绪指数）· 零取数 · 不参与打分 · 不发信号 · 不进钉钉 · 与四指标打分互不混用 · 缺数留白「—」 · 行情时点 ' + wlDashEsc(q.time || '—') + '。</div>';
+  return h;
+}
+/* =========================================================================
+   ★§343 扩展因子条（2026-11-19）· 五项只读参考，加在五因子卡实时结论之下
+   口径（全部本地纯函数、仅用 kl[0..t] 防未来函数、独立计数器函数，与 K 线图特殊标记引擎零耦合）：
+     ① OBV斜率20：近20日 OBV 净变动 ÷ 近20日总成交量 ×100（能量潮归一化，跨股可比；>1 流入 / <−1 流出）
+     ② 布林带宽收口：带宽=(上轨−下轨)/中轨×100（mid±2×std20），收口度=带宽在近60日的分位（≤20 临近变盘）
+     ③ 20日价格分位：(今收 − 20日最低收) ÷ (20日最高收 − 20日最低收) ×100（本地独立计算，与 dingPos20At 不混用）
+     ④ vs上证RS：个股20日涨幅 − 上证20日涨幅（唯一新增取数：sh000001 日K走切片外缓存通道，失败留白「—」）
+     ⑤ 超买卖：KDJ(9,3,3) J 值极值 + 威廉 %R14；J>100/W%R≥−20 超买、J<0/W%R≤−80 超卖（短线拐点提示，低权重）
+   定位纪律：不参与五因子打分与情绪指数合成 · 不发买卖信号 · 不进钉钉 · 缺数留白「—」永不印 0。
+   ========================================================================= */
+function wlCalcExtObvSlope(kl, t) {
+  if (!kl || t < 21) return null;
+  var net = 0, sv = 0, i;
+  for (i = t - 19; i <= t; i++) {
+    if (!kl[i] || !kl[i - 1] || !isFinite(+kl[i].close) || +kl[i].close <= 0 || !isFinite(+kl[i - 1].close) || +kl[i - 1].close <= 0) return null;
+    var v = (isFinite(+kl[i].volume) && +kl[i].volume > 0) ? +kl[i].volume : 0;
+    if (+kl[i].close > +kl[i - 1].close) net += v; else if (+kl[i].close < +kl[i - 1].close) net -= v;
+    sv += v;
+  }
+  return sv > 0 ? net / sv * 100 : null;
+}
+function wlCalcExtBbSqueeze(kl, t) {
+  if (!kl || t < 23) return null;
+  function bw(j) {   /* j 处 20 日布林带宽 %：(上轨−下轨)/中轨×100 = 4×std20/mid×100 */
+    if (j < 19) return null;
+    var s = 0, n = 0, i2;
+    for (i2 = j - 19; i2 <= j; i2++) { if (!kl[i2] || !isFinite(+kl[i2].close) || +kl[i2].close <= 0) return null; s += +kl[i2].close; n++; }
+    var m = s / n; if (m <= 0) return null;
+    var va = 0;
+    for (i2 = j - 19; i2 <= j; i2++) { var d2 = +kl[i2].close - m; va += d2 * d2; }
+    return 4 * Math.sqrt(va / n) / m * 100;
+  }
+  var cur = bw(t); if (cur == null) return null;
+  var hist = [], i;
+  for (i = Math.max(19, t - 59); i <= t; i++) { var b = bw(i); if (b != null) hist.push(b); }
+  return { bw: cur, p: wlCalcPctRank(hist, cur) };
+}
+function wlCalcExtPos20(kl, t) {
+  if (!kl || t < 19) return null;
+  var hi = null, lo = null, i;
+  for (i = t - 19; i <= t; i++) {
+    if (!kl[i] || !isFinite(+kl[i].close) || +kl[i].close <= 0) return null;
+    var c = +kl[i].close;
+    if (hi == null || c > hi) hi = c;
+    if (lo == null || c < lo) lo = c;
+  }
+  if (hi == null || lo == null || !(hi > lo)) return null;
+  return (+kl[t].close - lo) / (hi - lo) * 100;
+}
+function wlCalcExtJWmR(kl, t) {
+  if (!kl || t < 20) return null;
+  /* KDJ(9,3,3) 递推（仅用 ≤t 数据防未来）+ 标准威廉 %R14（HH/LL 取 high/low） */
+  var K = 50, D = 50, i, j;
+  for (i = 1; i <= t; i++) {
+    var hh = null, ll = null;
+    for (j = Math.max(0, i - 8); j <= i; j++) {
+      if (!kl[j] || !isFinite(+kl[j].high) || !isFinite(+kl[j].low) || !isFinite(+kl[j].close) || +kl[j].close <= 0) return null;
+      if (hh == null || +kl[j].high > hh) hh = +kl[j].high;
+      if (ll == null || +kl[j].low < ll) ll = +kl[j].low;
+    }
+    if (hh == null || ll == null || !(hh > ll)) return null;
+    var rsv = (+kl[i].close - ll) / (hh - ll) * 100;
+    K = 2 / 3 * K + 1 / 3 * rsv;
+    D = 2 / 3 * D + 1 / 3 * K;
+  }
+  var hh14 = null, ll14 = null;
+  for (i = Math.max(0, t - 13); i <= t; i++) {
+    if (!kl[i] || !isFinite(+kl[i].high) || !isFinite(+kl[i].low)) return null;
+    if (hh14 == null || +kl[i].high > hh14) hh14 = +kl[i].high;
+    if (ll14 == null || +kl[i].low < ll14) ll14 = +kl[i].low;
+  }
+  if (hh14 == null || ll14 == null || !(hh14 > ll14)) return null;
+  return { j: 3 * K - 2 * D, wr: -100 * (hh14 - +kl[t].close) / (hh14 - ll14) };
+}
+function wlCalcExtRs20(kl, shKl) {
+  if (!kl || !shKl || kl.length < 21 || shKl.length < 21) return null;
+  var t = kl.length - 1, ts = shKl.length - 1;
+  var dt = String(kl[t].date || '');
+  while (ts > 20 && String(shKl[ts].date || '') > dt) ts--;   /* 上证末日 > 个股末日（停牌）→ 回退对齐到 ≤ 个股日期 */
+  if (!isFinite(+kl[t].close) || +kl[t].close <= 0 || +kl[t - 20].close <= 0 || +shKl[ts].close <= 0 || +shKl[ts - 20].close <= 0) return null;
+  return (kl[t].close / kl[t - 20].close - shKl[ts].close / shKl[ts - 20].close) * 100;
+}
+function wlMoodExtHtml(r) {
+  var ind = (r && r.ind) || {}, q = (r && r.quote) || {};
+  var kl = ind.klines || null;
+  var t = (kl && kl.length ? kl.length - 1 : -1);
+  function sgn(v, suf) { return v == null ? null : ((v > 0 ? '+' : '') + (+v).toFixed(1) + (suf || '')); }
+  function row(lb, v, col, d, tip) {
+    return '<div class="wldc-ext-row" title="' + wlDashEsc(tip) + '"><span class="lb">' + lb + '</span>' +
+      '<b class="v" style="color:' + (v == null ? 'var(--dim)' : col) + '">' + (v == null ? '—' : v) + '</b>' +
+      '<span class="d">' + (d == null ? '缺数留白' : d) + '</span></div>';
+  }
+  var rows = '';
+  /* ① OBV斜率20 */
+  var obv = wlCalcExtObvSlope(kl, t);
+  rows += row('OBV斜率20', sgn(obv), obv == null ? '' : (obv > 1 ? 'var(--up)' : (obv < -1 ? 'var(--down)' : 'var(--gold)')),
+    obv == null ? null : (obv > 1 ? '量能净流入' : (obv < -1 ? '量能净流出' : '进出均衡')),
+    'OBV 近20日净变动 ÷ 近20日总成交量 ×100（能量潮归一化，跨股可比）；>1 量能净流入、<−1 净流出、之间为进出均衡。');
+  /* ② 布林带宽收口 */
+  var bb = wlCalcExtBbSqueeze(kl, t);
+  var bbTxt = (bb == null) ? null : ('带宽 ' + bb.bw.toFixed(1) + '%' + (bb.p == null ? '' : ' · 分位 ' + bb.p.toFixed(0)));
+  rows += row('布林收口', bbTxt, bb == null ? '' : (bb.p != null && bb.p <= 20 ? 'var(--gold)' : 'var(--accent)'),
+    bb == null ? null : (bb.p != null && bb.p <= 20 ? '收口·临近变盘' : (bb.p != null && bb.p >= 80 ? '带宽扩张' : '带宽常态')),
+    '布林带宽 =（上轨−下轨）÷ 中轨 ×100（mid±2×std20）；收口度 = 当前带宽在近60日的分位，≤20 为极度收口（波动压缩、临近变盘），≥80 为扩张。');
+  /* ③ 20日价格分位 */
+  var p20 = wlCalcExtPos20(kl, t);
+  rows += row('20日分位', p20 == null ? null : (p20.toFixed(0) + ' / 100'), p20 == null ? '' : (p20 >= 80 ? 'var(--up)' : (p20 < 20 ? 'var(--down)' : 'var(--gold)')),
+    p20 == null ? null : (p20 >= 80 ? '近20日高位' : (p20 < 20 ? '近20日低位' : '中位区')),
+    '（今收 − 20日最低收）÷（20日最高收 − 20日最低收）×100；100=收在20日最高、0=最低；本地独立计算，与打分引擎的 20 日位置口径互不混用。');
+  /* ④ vs上证RS（唯一新增取数：上证日K走切片外缓存通道，缓存未就绪 → 「—」+ 异步补算；取数函数 typeof 探测降级） */
+  var rs = (typeof wlExtRsCachedOf === 'function') ? wlExtRsCachedOf(r) : null;
+  var code = String(r && (r.code || (q && q.code)) || '');
+  var rsCol = rs == null ? 'var(--dim)' : (rs > 0.5 ? 'var(--up)' : (rs < -0.5 ? 'var(--down)' : 'var(--gold)'));
+  var rsD = rs == null ? ((typeof wlExtRsCachedOf === 'function') ? '上证日K获取中' : '—')
+    : (rs > 0.5 ? '跑赢大盘' : (rs < -0.5 ? '跑输大盘' : '同步大盘'));
+  rows += '<div class="wldc-ext-row" title="' + wlDashEsc('个股近20日涨幅 − 上证指数近20日涨幅（相对强弱）；>0.5 跑赢、<−0.5 跑输。上证日K带缓存，取不到诚实留白「—」绝不印 0。') + '"><span class="lb">vs上证RS</span>' +
+    '<b class="v wldc-ext-rsv" data-code="' + wlDashEsc(code) + '" style="color:' + rsCol + '">' + (rs == null ? '—' : sgn(rs, '%')) + '</b>' +
+    '<span class="d">' + rsD + '</span></div>';
+  /* ⑤ 超买卖：KDJ J 值极值 + 威廉 %R（短线拐点提示，低权重 —— 只读参考，不参与打分不发信号）
+     威廉 %R 口径：%R = (HH14 − C) ÷ (HH14 − LL14) × (−100)，收在最高 = 0、最低 = −100；
+     超买 = J>100 或 W%R ≥ −20（价格处高位区）；超卖 = J<0 或 W%R ≤ −80（价格处低位区）。 */
+  var jw = wlCalcExtJWmR(kl, t);
+  var jwOver = jw == null ? null : ((jw.j > 100 || jw.wr >= -20) ? '超买' : ((jw.j < 0 || jw.wr <= -80) ? '超卖' : null));
+  rows += row('超买卖', jw == null ? null : ('J ' + Math.round(jw.j) + ' · W%R ' + Math.round(jw.wr)),
+    jw == null ? '' : (jwOver ? 'var(--gold)' : 'var(--muted)'),
+    jw == null ? null : (jwOver ? jwOver + '·短线拐点提示' : '常态区'),
+    'KDJ(9,3,3) J 值 + 威廉 %R14（%R=(HH14−C)÷(HH14−LL14)×(−100)，收最高=0、收最低=−100）；J>100 或 W%R≥−20 判超买、J<0 或 W%R≤−80 判超卖 —— 短线拐点提示，低权重，只读参考。');
+  var h = '<div class="wldc-ext"><div class="wldc-ext-h">扩展因子条 · 只读参考（OBV斜率 / 布林带宽收口 / 20日价格分位 / vs上证RS / 超买卖）· 不参与五因子打分 · 不发信号 · 缺数留白「—」</div>' +
+    '<div class="wldc-ext-grid">' + rows + '</div></div>';
+  /* RS 缓存未就绪且通道可用 → 异步补算（patch 单值，取数块在 WLDASH 切片之外） */
+  if (rs == null && typeof wlExtRsPatch === 'function' && kl && t >= 21) wlExtRsPatch(r);
   return h;
 }
 /* =========================================================================
@@ -28066,7 +28554,8 @@ function wlPredHtml(r) {
   var tagCol = mo.p >= 0.55 ? 'upc' : (mo.p <= 0.45 ? 'dnc' : 'gdc');
   h += '<div class="wldp-top">';
   h += '<div class="wldp-gauge">' + wlPredGauge(mo.p) +
-    '<div class="wldp-kv"><span class="k">核心上涨概率</span><span class="v">' + (mo.p * 100).toFixed(1) + '%</span></div>' +
+    /* ★§344 P1-1：删与仪表大字重复的概率行 → 换「样本外方向准确率」辅助读数填充；右侧 stats 同步去重 */
+    '<div class="wldp-kv"><span class="k">样本外方向准确率（近' + (WLDASH.predWin || 60) + '日滚动回测）</span><span class="v">' + (mo.acc * 100).toFixed(1) + '%</span></div>' +
     '<div class="wldp-kv"><span class="k">预测波动区间（ATR14）</span><span class="v">' + (mo.atrPct != null ? '±' + (mo.atrPct * 100).toFixed(2) + '%' : '—') + '</span></div>' +
     '<div class="wldp-kv"><span class="k">模型稳定度（分段准确率差）</span><span class="v">' + (mo.stab != null ? (mo.stab * 100).toFixed(0) + '%' : '—') + '</span></div>' +
     '<div class="wldp-kv"><span class="k">因子同向率</span><span class="v">' + (mo.agree != null ? (mo.agree * 100).toFixed(0) + '%' : '—') + '</span></div>' +
@@ -28089,7 +28578,6 @@ function wlPredHtml(r) {
   h += '</table>';
   h += '<div class="wldp-stats">' +
     '<div class="st"><b>' + mo.n + '</b><span>回测样本（个交易日，滚动样本外）</span></div>' +
-    '<div class="st"><b>' + (mo.acc * 100).toFixed(1) + '%</b><span>方向准确率</span></div>' +
     '<div class="st"><b>' + (mo.sigUp != null ? (mo.sigUp * 100).toFixed(1) + '%' : '—') + '</b><span>显著上涨率（预测涨且涨≥0.5×ATR14）</span></div>' +
     '<div class="st"><b' + (mo.ic != null && Math.abs(mo.ic) >= 0.03 ? ' class="gdc"' : '') + '>' + (mo.ic != null ? mo.ic.toFixed(3) : '—') + '</b><span>因子IC（|IC|≥0.03 算弱有效）</span></div>' +
     '</div></div>';
@@ -28097,66 +28585,25 @@ function wlPredHtml(r) {
   h += '<div class="wldp-note">口径：因子仅用 T 日及之前数据（防未来函数）；Z-score 在 60 日滚动窗口内计算均值/方差（防标准化泄露）；回测为滚动样本外——预测 T+1 只用 ≤T 信息，与 T+1 实际涨跌对比。日频短期以反转效应为主（3/5日收益、隔日跳空为负向权重，20日动量为正向）。|IC|≥0.03 算弱有效；方向准确率 52%+ 且稳定才有参考意义，50% 附近=无效诚实呈现。资金强度/新闻情感无本台数据源，不引入、不编造。本卡只读参考、不构成买卖信号；唯一买卖信号仍是四指标打分。零取数 · 不进钉钉。</div>';
   return h;
 }
-/* 买卖点参考：只读转述 MA5 策略 / 四指标档位 / 生命周期阶段 / 量能承接（不新增任何判定） */
-function wlDashBsHtml(r) {
-  var h = '<div class="card-title">🎯 买卖点参考（只读转述 · 信号唯一来源=四指标打分）</div>';
-  var ms = null;
-  try { ms = r.ma5 || (typeof computeMA5Strategy === 'function' && r.ind ? computeMA5Strategy(r.ind) : null); } catch (e) { ms = null; }
-  if (ms && ms.state && typeof MA5_STATES !== 'undefined' && MA5_STATES[ms.state]) {
-    var meta = MA5_STATES[ms.state];
-    h += '<div class="wldbs-row"><span class="k">MA5策略</span><b style="color:' + meta.color + '">' + wlDashEsc(meta.name) + '</b>' +
-      (ms.buySignal ? '<span class="wld-tag" style="color:var(--up);border-color:var(--up)">今日命中买入信号</span>' : '') + '</div>';
-    h += '<div class="wldbs-row"><span class="k">参考仓位</span><span>' + wlDashEsc(meta.pos) + '</span></div>';
-  } else {
-    h += '<div class="wldbs-row"><span class="k">MA5策略</span><span style="color:var(--dim)">—</span></div>';
-  }
-  var s = wlDashS4kOf(r);
-  h += '<div class="wldbs-row"><span class="k">四指标</span>' + (s ?
-    '<b style="color:' + (s.veto ? '#ff5252' : (s.total >= 42 ? 'var(--good)' : 'var(--gold)')) + '">' + s.total + ' · ' + wlDashEsc(String(s.action || '')) + '</b>' :
-    '<span style="color:var(--dim)">—</span>') + '</div>';
-  if (r.sr && r.sr.stage && typeof stageNameOf === 'function') {
-    h += '<div class="wldbs-row"><span class="k">生命周期</span>' + wlDashStageChipHtml(r) +
-      '<span style="color:var(--dim);font-size:11px">仅状态描述 · 不参与买卖判断</span></div>';
-  }
-  var cap = r.cap;
-  if (cap && cap.verdict) {
-    h += '<div class="wldbs-row"><span class="k">量能承接</span><span style="color:' + wlDashEsc(cap.verdict.color || 'var(--text)') + '">' + wlDashEsc(String(cap.verdict.name || '')) + '</span>' +
-      (isFinite(+cap.volRatio) ? '<em style="font-style:normal;color:var(--dim)">量能比 ' + (+cap.volRatio).toFixed(2) + '</em>' : '') + '</div>';
-  }
-  return h;
-}
-/* 量能与承接：近10日量柱（涨红跌绿）+ 量比 + cap 量能/换手状态（截图「资金流向」无数据源，不做） */
-function wlDashVolHtml(r) {
-  var h = '<div class="card-title">📊 量能与承接（近 10 日量柱 · 只读）</div>';
-  var q = r.quote || {};
-  var kl = (r.ind && r.ind.klines) ? r.ind.klines : [];
-  var last = kl.slice(-10);
-  if (last.length) {
-    var mx = 0;
-    last.forEach(function (k) { if (+k.volume > mx) mx = +k.volume; });
-    var base = kl.length - last.length;
-    var bars = last.map(function (k, i) {
-      var prev = i > 0 ? last[i - 1] : (base > 0 ? kl[base - 1] : null);
-      var up = prev ? (+k.close >= +prev.close) : (+k.close >= +k.open);
-      var hp = mx > 0 ? Math.max(4, Math.round(+k.volume / mx * 100)) : 4;
-      return '<i class="' + (up ? 'u' : 'd') + '" style="height:' + hp + '%" title="' + wlDashEsc(k.date || '') + ' 量 ' + wlDashFmtVol(k.volume) + '"></i>';
-    }).join('');
-    h += '<div class="wld-vbars">' + bars + '</div>';
-    h += '<div class="wld-vmeta"><span>量比 ' + wlDashNum(q.volRatioQuote) + '</span><span>当日量 ' + wlDashFmtVol(q.volume || (kl.length ? kl[kl.length - 1].volume : null)) + '</span></div>';
-  } else {
-    h += '<div class="wld-hint">K线量能缺失，留白 —</div>';
-  }
-  var cap = r.cap;
-  if (cap && (cap.volState || cap.turnState)) {
-    h += '<div class="wld-vmeta2"><span>量能状态：' + wlDashEsc(cap.volState || '—') + '</span><span>换手状态：' + wlDashEsc(cap.turnState || '—') + '</span></div>';
-  }
-  return h;
-}
-/* 左侧自选栏：行 = 名称/代码 + 价格/涨跌幅 + ✕；价格缺数留白（未查询属正常态） */
+/* 左侧自选栏：行 = 名称/代码 + 价格/涨跌幅 + ✕；价格缺数留白（未查询属正常态）
+   ★§344 P2-2：表头排序切换（默认 / 涨幅 / 四指标）——缺数行永远排组尾不参与比较 */
 function wlDashSideHtml(a) {
   var map = {};
   WATCH.results.forEach(function (r) { if (r && r.ok) map[r.code || r.token] = r; });
-  var rows = a.map(function (x) {
+  var arr = a.slice();
+  if (WLDASH.sideSort === 'pct' || WLDASH.sideSort === 's4k') {
+    var keyOf = WLDASH.sideSort === 'pct'
+      ? function (x) { var r = map[x.code]; return (r && r.ind && isFinite(+r.ind.chgToday)) ? +r.ind.chgToday : null; }
+      : function (x) { var r = map[x.code], s = r ? wlDashS4kOf(r) : null; return (s && s.total != null && isFinite(+s.total)) ? +s.total : null; };
+    arr.sort(function (x1, x2) {
+      var v1 = keyOf(x1), v2 = keyOf(x2);
+      if (v1 == null && v2 == null) return 0;
+      if (v1 == null) return 1;              /* 缺数排尾 */
+      if (v2 == null) return -1;
+      return v2 - v1;                         /* 降序：涨幅高 / 四指标分高在前 */
+    });
+  }
+  var rows = arr.map(function (x) {
     var r = map[x.code];
     var pct = (r && r.ind && isFinite(+r.ind.chgToday)) ? +r.ind.chgToday : null;
     var price = (r && r.ind && isFinite(+r.ind.price) && +r.ind.price > 0) ? (+r.ind.price).toFixed(2) : '—';
@@ -28167,10 +28614,81 @@ function wlDashSideHtml(a) {
       '<div class="px"><b class="' + cls + '">' + price + '</b><i class="' + cls + '">' + wlDashPctTxt(pct) + '</i>' +
       '<button type="button" class="wl-x" data-act="del" data-code="' + wlDashEsc(x.code) + '" title="移出自选">✕</button></div></div>';
   }).join('');
-  return '<div class="wls-h">📋 自选股 <b>' + a.length + '</b> 只</div>' +
+  return '<div class="wls-h">📋 自选股 <b>' + a.length + '</b> 只<span class="wls-sort">' +
+    '<button type="button" data-wlsort="def"' + (WLDASH.sideSort === 'def' ? ' class="on"' : '') + ' title="按加入顺序">默认</button>' +
+    '<button type="button" data-wlsort="pct"' + (WLDASH.sideSort === 'pct' ? ' class="on"' : '') + ' title="按当日涨跌幅降序（缺数排尾）">涨幅</button>' +
+    '<button type="button" data-wlsort="s4k"' + (WLDASH.sideSort === 's4k' ? ' class="on"' : '') + ' title="按四指标总分降序（缺数排尾）">四指标</button>' +
+    '</span></div>' +
     '<div class="wls-add"><input id="wlDashAddIn" placeholder="6位代码，多个用逗号分隔" title="支持 600519 / sh600519 / 600519.SH 写法，多个用逗号或空格分隔（解析口径与「导入TXT」一致；名称搜索请到个股诊断页加自选）"><button type="button" class="btn small" id="wlDashAdd" title="批量加入自选（复用导入TXT解析口径，自动去重）">➕</button></div>' +
     '<div class="wls-list">' + (rows || '<div class="wld-hint">自选为空</div>') + '</div>' +
     '<div class="wls-note">点击行切换右侧仪表盘 · ✕ 仅移出自选<br>行情来自上方「刷新查询」；未查询时侧栏无价格属正常留白</div>';
+}
+/* ★§346 消息催化卡（2026-11-19）：多源快讯聚合（参考涨停台催化工作区），只读参考。
+   取数在切片外 wlCatTick（新浪7×24 JSONP / 同花顺快讯 JSONP / 东财快讯 / 财联社电报），
+   本卡只渲染：来源状态徽标 + 筛选 chips + 条目列表（命中自选股名红标高亮）· 缺数留白「—」。
+   定位纪律：不发买卖信号 · 不进钉钉 · 不参与打分 · 与四指标/五因子互不混用 · 失败源诚实标「—」绝不拿旧数据冒充。 */
+function wlCatHitOf(txt, names) {
+  var hits = [];
+  (names || []).forEach(function (n) {
+    var ns = String(n || '').trim();
+    if (ns.length >= 2 && String(txt).indexOf(ns) >= 0 && hits.indexOf(ns) < 0) hits.push(ns);
+  });
+  return hits;
+}
+function wlCatHtml(a) {
+  var names = (a || []).map(function (x) { return String((x && x.name) || '').trim(); })
+    .filter(function (n) { return n && n.length >= 2; });
+  var st = (typeof wlCatDataOf === 'function') ? wlCatDataOf() : null;   /* 切片外取数块 · typeof 探测 */
+  var items = (st && st.items) || null;
+  var srcs = (st && st.srcs) || null;
+  var sel = (st && st.sel) || 'all';
+  var now = (st && st.now) || 0;
+  var curName = '';
+  var selCode = (typeof WLDASH !== 'undefined' && WLDASH.sel) ? String(WLDASH.sel) : '';
+  (a || []).forEach(function (x) { if (x && String(x.code || '') === selCode && x.name) curName = String(x.name).trim(); });
+  var curNames = curName ? [curName] : [];                        /* ★§346b「🎯 本股」= 命中当前选中自选股名 */
+  var SRC_META = [['stock', '🎯 本股'], ['sina', '新浪7×24'], ['ths', '同花顺'], ['em', '东财'], ['cls', '财联社'], ['all', '全部']];
+  var h = '<div class="card-title">🔔 消息催化（多源快讯 · 自动抓取 · 只读参考）</div>';
+  h += '<div class="wldcat-srcs">' + SRC_META.map(function (m) {
+    var k = m[0], stat;
+    if (k === 'all') stat = (items ? items.length + '条' : '—');
+    else if (k === 'stock') stat = (curName && items) ? (items.filter(function (it) { return wlCatHitOf(it.txt, curNames).length; }).length + '条') : '—';
+    else {
+      var ss = srcs && srcs[k];
+      if (!ss) stat = '待抓取';
+      else if (ss.n > 0) stat = ss.n + '条';
+      else if (ss.fail >= 3) stat = '受限 —';
+      else stat = '抓取中';
+    }
+    return '<button type="button" class="src-chip' + (sel === k ? ' on' : '') + '" data-wlcat="' + k + '" title="只看该源快讯">' +
+      m[1] + '<span class="src-stat">' + stat + '</span></button>';
+  }).join('') + '</div>';
+  if (!items) {
+    h += '<div class="wld-hint">快讯抓取中…（进入自选工作区自动抓取，60 秒自动更新；各源失败诚实标「—」）</div>';
+  } else {
+    var list = items.filter(function (it) {
+      if (sel === 'stock') return curNames.length > 0 && wlCatHitOf(it.txt, curNames).length > 0;
+      return sel === 'all' || it.s === sel;
+    }).slice(0, 40);
+    if (!list.length) {
+      h += '<div class="wld-hint">' + (sel === 'stock'
+        ? '本股暂无相关快讯（抓取窗口内未命中「' + wlDashEsc(curName || '当前股') + '」相关消息，留白 — 绝不拿旧数据冒充）'
+        : '该源暂无可用快讯（跨域/签名受限或失败静默期，留白 — 绝不拿旧数据冒充新数据）') + '</div>';
+    } else {
+      h += '<div class="wldcat-list">' + list.map(function (it) {
+        var hits = wlCatHitOf(it.txt, names);
+        var full = String(it.txt || '');
+        var txt = wlDashEsc(full.slice(0, 160)) + (full.length > 160 ? '…' : '');
+        hits.forEach(function (nm) { txt = txt.split(wlDashEsc(nm)).join('<b class="hit">' + wlDashEsc(nm) + '</b>'); });
+        return '<div class="wldcat-it" title="' + wlDashEsc(full) + '"><span class="tm">' + wlDashEsc(it.t || '—') + '</span>' +
+          '<span class="srctag">' + wlDashEsc(it.sName || it.s) + '</span><span class="tx">' + txt + '</span>' +
+          (hits.length ? '<span class="hitmark">🎯 命中自选：' + hits.map(function (nm) { return wlDashEsc(nm); }).join('、') + '</span>' : '') +
+          '</div>';
+      }).join('') + '</div>';
+    }
+  }
+  h += '<div class="wldcat-foot">口径：来源=新浪财经7×24 / 同花顺快讯 / 东方财富快讯 / 财联社电报（参考涨停台催化工作区；60 秒缓存 + 失败静默，东财·财联社受跨域/签名限制时诚实标「—」，环境恢复自动接通）。「🎯 本股」= 只看命中当前选中股名的快讯；命中自选股名红标 = 提醒线索，不构成买卖信号 · 不进钉钉 · 不参与打分 · 与四指标/五因子互不混用。</div>';
+  return h;
 }
 /* 选中态解析：WLDASH.sel 有效优先，否则按侧栏顺序取第一只成功票（与既有 WATCH.open 单开互不影响） */
 function wlDashPick(a) {
@@ -28185,6 +28703,7 @@ function wlDashPick(a) {
 }
 /* 仪表盘总装：空自选隐藏 / 未查询引导 / 查询中提示 / 有数完整渲染 */
 function wlDashPaint(a) {
+  if (typeof wlCatTick === 'function') { try { wlCatTick(); } catch (eCatTick) {} }   /* ★§346 每轮渲染触发快讯抓取（内部 60s 节流） */
   var box = el('wlDash');
   if (!box) return;
   a = a || wlGet();
@@ -28208,18 +28727,19 @@ function wlDashPaint(a) {
   try { predHtml = (typeof wlPredHtml === 'function') ? wlPredHtml(r) : ''; } catch (eP) { predHtml = '<div class="wld-hint">预测模块计算异常，留白 —</div>'; }
   box.innerHTML = '<div class="card wld-head">' + wlDashHeadHtml(r) + '</div>' +
     /* ★§340b K线平铺整页：直挂网格横跨全部列，紧跟头部卡；侧栏与情绪/买卖点/量能移至下一行 */
-    '<div class="card wld-chart"><div class="card-title">📈 趋势走势 · 日K（MA5/20/60 · 点击K线看支撑压力）</div>' + (chartHtml || '<div class="wld-hint">K线数据缺失，留白 —</div>') + '</div>' +
-    /* ★§341 明日涨跌预测卡：直挂网格横跨整页，K线之后 */
+    '<div class="card wld-chart"><div class="card-title">📈 趋势走势 · 日K（MA5/20/60 · 点击K线看支撑压力）</div>' + (chartHtml || '<div class="wld-hint">K线数据缺失，留白 —</div>') +
+    /* ★§342 点击 K 线动态显示对应指标读数：补 .vp-panel 容器即接通全页既有蜡烛点击委托
+       （日期徽标条 .kl-dayset 联动 + 量价关系/四指标/KDJ/倍量形态/承接力/今昨强弱完整读数面板 +
+       ADX/KDJ/量能角标 + 蜡烛高亮）——引擎零改动，读数只用该日及之前数据（无未来函数）。 */
+    '<div class="vp-panel wld-vp"><div class="vp-empty">🖱 点击图上任意 K 线 → 此处动态显示该日的量价关系 · 四指标 · KDJ · 倍量形态 · 承接力 · 今昨强弱等完整读数（与个股诊断页同一套引擎；只用该日及之前数据，无未来函数）。</div></div></div>' +
+    /* ★§344 P1-3：五因子卡（wld-calc）上移到预测卡之前 —— 盘中最常看 K 线 + 五因子，紧邻 K 线 */
+    '<div class="card wld-calc">' + wlMoodCalcHtml(r) + '</div>' +
+    /* ★§341 明日涨跌预测卡：直挂网格横跨整页 */
     '<div class="card wld-pred">' + predHtml + '</div>' +
     '<div class="wl-side">' + wlDashSideHtml(a) + '</div>' +
+    /* ★§346 消息催化卡（多源快讯聚合，wlDashPaint 每轮触发抓取）替代原 四指标温度/买卖点/量能 三卡（用户：重复内容删除） */
     '<div class="wl-main">' +
-    '<div class="card wld-mood">' + wlDashMoodHtml(r) + '</div>' +
-    '<div class="wld-row3">' +
-    '<div class="card wld-bs">' + wlDashBsHtml(r) + '</div>' +
-    '<div class="card wld-vol">' + wlDashVolHtml(r) + '</div>' +
-    '</div></div>' +
-    /* ★§340e 量价情绪实时监测：截图形式（仪表+五因子横条+演化曲线+实时结论），直挂网格横跨整页 */
-    '<div class="card wld-calc">' + wlMoodCalcHtml(r) + '</div>';
+    '<div class="card wld-cat">' + wlCatHtml(a) + '</div></div>';
 }
 /* 侧栏批量添加：复用「导入TXT」解析口径（wlParseTxt）+ 批量写入（wlAddMany，自动去重） */
 function wlDashAddFromInput() {
@@ -40936,7 +41456,8 @@ function init() {
        非末根 → 「(至该日)」后缀（与徽标 chip 口径一致）；序列未就绪 → 原地不动，不硬算不伪造。
        数据源：日 KDJ = ind.__kdjCtx（首绘缓存 kdjSeries 全量序列）；周 KDJ = ind.__wkjCtx
        （kdjWeekAligned 全量序列，仅日线消费 → per 守卫）；量能 = ent.kl[gidx] 现取 + 量比 r5 现算
-       （§212 同一公式 ÷ 前 5 根均量不含当根；显式判 null）；主力状态 = ind.__zlztSer.ser（§247 已缓存全量，仅日线）。 */
+       （§212 同一公式 ÷ 前 5 根均量不含当根；显式判 null）；★§345 起角标改 CYS13 = ind.__cys13Ctx
+       （首绘准备段缓存全量序列，仅日线；主力状态副图已由 CYS13 替代，主力状态四读数仍在悬停明细 / chip / 点击面板）。 */
     try {
       var cor2Svg = wrap ? wrap.querySelector('svg.chart') : null;
       if (cor2Svg && ent && gidx != null) {
@@ -40966,18 +41487,16 @@ function init() {
                 ((cor2Wv != null && isFinite(cor2Wv)) ? Math.round(cor2Wv) : '—');
             }
           }
-          /* 主力状态四读数（红/黄/紫 1 位小数 · 套牢整数，与首绘角标同格式） */
-          var cor2Zl = (ent.ind && ent.ind.__zlztSer && ent.ind.__zlztSer.ser && ent.ind.__zlztSer.ser.ok) ? ent.ind.__zlztSer.ser : null;
-          if (cor2Zl) {
-            var cor2ZlMap = [['zr', '红', cor2Zl.red], ['zy', '黄', cor2Zl.yellow], ['zp', '紫', cor2Zl.purple], ['zt', '套', cor2Zl.zshtl]];
-            for (var cor2Zi = 0; cor2Zi < cor2ZlMap.length; cor2Zi++) {
-              var cor2Zel = cor2Svg.querySelector('text.kl-zlcor[data-k="' + cor2ZlMap[cor2Zi][0] + '"]');
-              if (!cor2Zel) continue;
-              var cor2Zv = cor2ZlMap[cor2Zi][2] ? cor2ZlMap[cor2Zi][2][gidx] : null;
-              var cor2Zt = (cor2Zi < 3)
-                ? ((cor2Zv != null && isFinite(cor2Zv)) ? cor2Zv.toFixed(1) : '—')
-                : ((cor2Zv != null && isFinite(cor2Zv)) ? String(Math.round(cor2Zv)) : '—');
-              cor2Zel.textContent = cor2ZlMap[cor2Zi][1] + cor2Sfx + ' ' + cor2Zt;
+          /* ★§345：CYS13 角标跟随（替代主力状态四读数 —— 副图已换 CYS13，kl-cyscor data-k="cys"）；
+             数据源 = ind.__cys13Ctx（首绘准备段写入 klCys13Series 全量序列，仅日线）；
+             值 = 全量下标 gidx 处读数，带号 + 2 位小数 + %，与首绘角标同格式；缺数 → 「—」留白。 */
+          var cor2Cys = (ent.ind && ent.ind.__cys13Ctx && ent.ind.__cys13Ctx.ok) ? ent.ind.__cys13Ctx : null;
+          if (cor2Cys) {
+            var cor2Cel = cor2Svg.querySelector('text.kl-cyscor[data-k="cys"]');
+            if (cor2Cel) {
+              var cor2Cv = cor2Cys.cys ? cor2Cys.cys[gidx] : null;
+              cor2Cel.textContent = 'CYS' + cor2Sfx + ' ' +
+                ((cor2Cv != null && isFinite(cor2Cv)) ? ((cor2Cv >= 0 ? '+' : '') + cor2Cv.toFixed(2) + '%') : '—');
             }
           }
         }
@@ -41186,6 +41705,10 @@ function init() {
         return;
       }
       if (e.target.closest('button#wlDashAdd')) { wlDashAddFromInput(); return; }
+      var ssb = e.target.closest('button[data-wlsort]');
+      if (ssb) { WLDASH.sideSort = ssb.getAttribute('data-wlsort') || 'def'; wlDashPaint(); return; }
+      var ccb = e.target.closest('button[data-wlcat]');
+      if (ccb) { if (typeof wlCatSetSel === 'function') wlCatSetSel(ccb.getAttribute('data-wlcat')); return; }
       var pwb = e.target.closest('button[data-act="predwin"]');
       if (pwb) { WLDASH.predWin = +pwb.getAttribute('data-win') || 60; wlDashPaint(); return; }
       var row = e.target.closest('[data-wldsel]');
