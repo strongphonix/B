@@ -20,8 +20,11 @@
   }
   /* ★§348（2026-11-19 用户要求「所有工作区都铺满整个页面」）：.app 全视图解除 1180px 封顶。
      原 §342 只对 watch 视图挂 .app-wide；现基础规则直接全宽（margin 用 0 14px 而非 100vw，
-     100vw 含滚动条会横向溢出）。switchView 的 app-wide toggle 与 .app.app-wide 规则保留（冗余但无害）。 */
+     100vw 含滚动条会横向溢出）。switchView 的 app-wide toggle 与 .app.app-wide 规则保留（冗余但无害）。
+     ★ 窄屏（≤700px）边距归零 —— 14px×2 会把 360px 视口的可用宽从 328 压到 300，
+       原本刚好放下的诊断页内容会溢出 5px（_test_layout.js [3] 360px 档实测抓出）。 */
   .app { max-width: none; margin: 0 14px; }
+  @media (max-width: 700px) { .app, .app.app-wide { margin: 0; } }
   /* ★§342 自选仪表盘铺满整页：watch 视图激活时 .app 解除封顶（§348 后基础规则已全宽，本条冗余保留兼容）。 */
   .app.app-wide { max-width: none; margin: 0 14px; }
   /* ★§342 仪表盘 K 线 SVG 随卡片宽度流式缩放（viewBox 等比，铺满整页宽） */
