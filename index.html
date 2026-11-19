@@ -8364,6 +8364,29 @@ function klDrop20Bands(klines, th) {
   if (cur) bands.push(cur);
   return bands;
 }
+function klGain20Bands(klines, th) {
+  /* ★§349（2026-11-19 · 用户「区间底顶涨幅超过30%的区域请用醒目颜色标记」）：
+     与 klDrop20Bands 完全镜像 —— 20 个交易日收盘涨幅 ≥ +th%（th 默认 30）的窗口合并为连续区间。
+     判定式：close[i] ÷ close[i−20] − 1 ≥ +30%；相邻/重叠窗口合并成一条带（画背景区域）。
+     语义 = 主升段/强势拉升区（与超跌反弹观察区互为镜像）；只用 kl[0..i] 无未来函数；
+     缺数/脏数据窗口中断合并（诚实留白）。参考层：不计分、不进四指标、不发信号、不进钉钉。 */
+  var T = 20, t = ((th == null ? 30 : th) / 100), bands = [], cur = null;
+  if (!klines || klines.length <= T) return bands;
+  for (var i = T; i < klines.length; i++) {
+    var c0 = klines[i - T] && klines[i - T].close, c1 = klines[i] && klines[i].close;
+    if (c0 == null || !isFinite(c0) || c0 <= 0 || c1 == null || !isFinite(c1)) {
+      if (cur) { bands.push(cur); cur = null; }
+      continue;
+    }
+    if (c1 / c0 - 1 >= t) {
+      var s2 = i - T + 1;
+      if (cur && s2 <= cur[1] + 1) cur[1] = i;
+      else { if (cur) bands.push(cur); cur = [s2, i]; }
+    }
+  }
+  if (cur) bands.push(cur);
+  return bands;
+}
 function klCysReboundAt(klines, i) {
   /* ★§345b 超跌反弹·买点确认（系列笔记「等确认，不抢左侧」落地）：
      ① 深度超跌前置 = 近 13 日（i−13..i−1）CYS13 最低 ≤ −15 —— 超跌只是观察前提，绝不单独当买点；
@@ -10175,8 +10198,12 @@ function renderChart(ind, focus, opt) {
   }
 
   /* ★§345：20 交易日收盘跌幅 >30% 的超跌区域带（仅日线；超跌反弹系列落地）。
-     · klDrop20Bands 出全局下标闭区间 → 裁剪到可见窗 → 半透明红带铺满价格面板（背景层，
-       画在蜡烛之前不遮 K 线，pointer-events 让位给蜡烛热区）+ 顶部小标签「▼ 20日跌>30%」；
+     ★§349b（2026-11-19 · 用户反馈「20日涨幅大于30%区域，20日跌幅大于30%，类似机头A，
+       只在顶部区域显示醒目颜色」）：带形态改版 —— 不再纵向铺满价格面板，改为**顶部窄色条**
+       （与 §152 挖土机区域带「机头A」同款形态：横向色条 + 内嵌标签，y=priceT 起 12px 高，
+       不遮蜡烛主体、不干扰价格读图）。
+     · klDrop20Bands 出全局下标闭区间 → 裁剪到可见窗 → 顶部红条（醒目实色 0.92）+ 条内标签
+       「▼ 20日跌&gt;30%」（白字）；
      · 语义 = 超跌反弹观察区（博情绪修复与资金回流的短窗口，不是趋势反转）；
      · 参考层纪律：不计分、不进四指标、不发买卖信号、不进钉钉；无命中整层不出（诚实留白）。 */
   if (__wKjShow && typeof klDrop20Bands === 'function') (function () {
@@ -10187,10 +10214,35 @@ function renderChart(ind, focus, opt) {
       var __dx0 = Math.max(plotL, X(__ds0 - start) - step / 2), __dx1 = Math.min(plotR, X(__ds1 - start) + step / 2);
       if (__dx1 <= __dx0) return;
       svg += '<rect class="kl-dropzone" x="' + __dx0.toFixed(1) + '" y="' + priceT + '" width="' + (__dx1 - __dx0).toFixed(1) +
-        '" height="' + (priceB - priceT) + '" fill="#ff2d2d" fill-opacity="0.16" pointer-events="none"><title>' +
+        '" height="12" fill="#ff2d2d" fill-opacity="0.92" pointer-events="none"><title>' +
         escapeHtml('超跌区域：该窗口内收盘价较 20 个交易日前跌逾 30%（超跌反弹观察区 —— 博情绪修复与资金回流的短窗口，不是趋势反转；跌得急且深动能才足，缓缓阴跌不算；仅描述，不构成买卖依据）') + '</title></rect>';
       var __dlx = Math.max(plotL + 30, Math.min(plotR - 30, (__dx0 + __dx1) / 2));
-      svg += '<text x="' + __dlx.toFixed(1) + '" y="' + (priceT + 9) + '" fill="#ff8a80" font-size="9.5" font-weight="700" text-anchor="middle" pointer-events="none">▼ 20日跌&gt;30%</text>';
+      svg += '<text x="' + __dlx.toFixed(1) + '" y="' + (priceT + 9.2) + '" fill="#ffffff" font-size="9.5" font-weight="700" text-anchor="middle" pointer-events="none">▼ 20日跌&gt;30%</text>';
+    });
+  })();
+
+  /* ★§349：20 交易日收盘涨幅 >30% 的主升段区域带（仅日线；§345 超跌带的镜像落地）。
+     ★§349b（用户反馈「类似机头A，只在顶部区域显示醒目颜色」）：与跌带同步改版 ——
+       不再纵向铺满价格面板，改为**顶部窄色条**（机头A 同款形态：横向金橙条 + 内嵌标签，
+       y=priceT 起 12px 高，不遮蜡烛主体）。
+     · klGain20Bands 出全局下标闭区间 → 裁剪到可见窗 → 顶部金橙条（醒目实色 0.92）+
+       条内标签「▲ 20日涨&gt;30%」（深字 #422a00，橙底高对比）；
+     · 醒目色 = 金橙 #ff9100（与超跌红条 #ff2d2d 成对：红=超跌观察区、金=主升段拉升区，
+       均避开 MA 色板与 CYS 折线色）；
+     · 语义 = 强势拉升/主升段参考区（不是追涨信号 —— 带内追高需自担回撤，参考层不作建议）；
+     · 参考层纪律：不计分、不进四指标、不发买卖信号、不进钉钉；无命中整层不出（诚实留白）。 */
+  if (__wKjShow && typeof klGain20Bands === 'function') (function () {
+    var __gBands = klGain20Bands(kl, 30);
+    __gBands.forEach(function (b) {
+      var __gs0 = Math.max(b[0], start), __gs1 = Math.min(b[1], start + ks.length - 1);
+      if (__gs1 < __gs0) return;
+      var __gx0 = Math.max(plotL, X(__gs0 - start) - step / 2), __gx1 = Math.min(plotR, X(__gs1 - start) + step / 2);
+      if (__gx1 <= __gx0) return;
+      svg += '<rect class="kl-gainzone" x="' + __gx0.toFixed(1) + '" y="' + priceT + '" width="' + (__gx1 - __gx0).toFixed(1) +
+        '" height="12" fill="#ff9100" fill-opacity="0.92" pointer-events="none"><title>' +
+        escapeHtml('主升段区域：该窗口内收盘价较 20 个交易日前涨逾 30%（强势拉升区 —— 与超跌反弹观察区互为镜像；仅描述区间事实，不构成追涨/买卖依据）') + '</title></rect>';
+      var __glx = Math.max(plotL + 30, Math.min(plotR - 30, (__gx0 + __gx1) / 2));
+      svg += '<text x="' + __glx.toFixed(1) + '" y="' + (priceT + 9.2) + '" fill="#422a00" font-size="9.5" font-weight="700" text-anchor="middle" pointer-events="none">▲ 20日涨&gt;30%</text>';
     });
   })();
 
