@@ -18,9 +18,11 @@
     color: var(--text); min-height: 100vh; padding: 24px 16px 60px;
     -webkit-font-smoothing: antialiased;
   }
-  .app { max-width: 1180px; margin: 0 auto; }
-  /* ★§342 自选仪表盘铺满整页：watch 视图激活时 .app 解除 1180px 封顶（其余视图不动，零回归）；
-     margin 用 0 14px 而非 100vw（100vw 含滚动条会横向溢出）。 */
+  /* ★§348（2026-11-19 用户要求「所有工作区都铺满整个页面」）：.app 全视图解除 1180px 封顶。
+     原 §342 只对 watch 视图挂 .app-wide；现基础规则直接全宽（margin 用 0 14px 而非 100vw，
+     100vw 含滚动条会横向溢出）。switchView 的 app-wide toggle 与 .app.app-wide 规则保留（冗余但无害）。 */
+  .app { max-width: none; margin: 0 14px; }
+  /* ★§342 自选仪表盘铺满整页：watch 视图激活时 .app 解除封顶（§348 后基础规则已全宽，本条冗余保留兼容）。 */
   .app.app-wide { max-width: none; margin: 0 14px; }
   /* ★§342 仪表盘 K 线 SVG 随卡片宽度流式缩放（viewBox 等比，铺满整页宽） */
   #view-watch .wld-chart svg.chart { width: 100%; height: auto; }
@@ -253,8 +255,8 @@
      overflow-wrap:break-word = **只有实在放不下时才断词**，正常换行排版零影响 → 可以放心全局开。 */
   html, body { overflow-wrap: break-word; }
   /* ★ 2026-09-25（用户反馈）：展开详情**贴左**（auto 居中在超宽表格里把卡推到可视区右外 → 左侧大片空白）；
-     max-width 用 min() 保证卡不超可视区；td overflow-x:auto 兜底横向内容在行内滚、不撑爆页面 */
-  .batch-detail .card { margin: 8px 0; max-width: min(1180px, calc(100vw - 48px)); }
+     ★§348（2026-11-19「所有工作区都铺满整个页面」）：.app 已全视图解封，1180 上限过时 → 全部 max-width:100% 铺满。 */
+  .batch-detail .card { margin: 8px 0; max-width: 100%; }
 
   tr.group-head > td { background:#0f1730; padding:10px !important; font-size:12.5px; font-weight:700;
     border-top:1px solid var(--line); border-bottom:1px solid var(--line); white-space:normal; }
@@ -407,9 +409,13 @@
   .atrc-sig .at-days.na { font-size:12px; font-weight:700; color:#7a8aa8; }
   .atrc-sig .at-src { font-size:11.5px; font-weight:700; color:#9fb4ff; }
   .atrc-sig .at-hint { font-size:11.5px; color:var(--muted); }
-  /* ★ 2026-09-25（用户反馈）：详情页限宽 —— min() 让卡永远不超可视区；展开详情**贴左**（原 auto 居中
-     在超宽表格里会把卡推到可视区右外，左侧大片空白）+ td 横向滚动兜底 */
-  #resultArea { max-width: min(1180px, calc(100vw - 48px)); margin: 0; }
+  /* ★ 2026-09-25（用户反馈）：详情页贴左 + td 横向滚动兜底；
+     ★§348（2026-11-19「所有工作区都铺满整个页面」）：min(1180px,…) 上限过时 → 解除，随 .app 全宽铺满。 */
+  #resultArea { max-width: none; margin: 0; }
+  /* ★§348b K 线 SVG 全宿主流式缩放（renderChart 固定 W=1130）：所有展开详情行（batch-detail）与
+     诊断页（resultArea）里的 svg.chart 铺满宿主宽（viewBox 等比；周期切换重绘同 class 持续生效；
+     点击蜡烛 hit-test 走 getBoundingClientRect 不受缩放影响，§342 已验证）。 */
+  .batch-detail svg.chart, #resultArea svg.chart { width: 100%; height: auto; }
   #resultArea .card { padding: 12px 14px; margin-bottom: 10px; }
   #resultArea .stock-head .name { font-size: 18px; }
   #resultArea .stock-head { gap: 8px; }
@@ -3165,12 +3171,14 @@ function wlExtRsPatch(r) {
 /* =========================================================================
    ★§346 消息催化 · 多源快讯取数块（2026-11-19 · 参考涨停台催化工作区 7.14）
    四源：新浪财经7×24（zhibo JSONP · 涨停台同款）/ 同花顺快讯（tapp JSONP）/
-         东方财富快讯（np-weblist JSONP · 本机 567 拦截则静默）/ 财联社电报（nodeapi 需签名，浏览器直连受限则静默）。
+         东方财富快讯（np-weblist fetch · 本机 567 拦截则静默）/ 财联社电报（nodeapi 需签名，浏览器直连受限则静默）。
+   ★§346c 历史回补泵（≥5000 条）：页1 由 60s tick 刷新，历史页由 wlCatPump 自驱动链式逐页回补
+         （新浪 page_size=100 / 同花顺 pagesize=50 实测分页可达 · 350ms/页防打爆 · 追加去重入库历史不丢）。
    纪律：① 本块位于 WLDASH vm 切片之外 —— 切片内 wlCatHtml 只 typeof 探测 wlCatDataOf，保「切片零取数」；
          ② 单源 60s 缓存 + 单飞 pend + 连续 3 败 10 分钟静默（绝不高频重试打爆通道）；
          ③ 失败源诚实标「—」，绝不拿旧数据冒充新数据；④ 不发信号 · 不进钉钉。
    ========================================================================= */
-var WL_CAT = { sel: 'all', srcs: {}, items: null, last: 0, pend: null };
+var WL_CAT = { sel: 'all', srcs: {}, items: null, last: 0, pend: null, TARGET: 5000, bf: { on: false } };
 function wlCatTsMs(v) {                      /* 各源时间统一解析 → 毫秒（新浪/东财 'YYYY-MM-DD HH:MM:SS' · 同花顺 unix 秒） */
   if (v == null) return 0;
   var sv = String(v);
@@ -3180,8 +3188,9 @@ function wlCatTsMs(v) {                      /* 各源时间统一解析 → 毫
 }
 function wlCatDataOf() { return { items: WL_CAT.items, srcs: WL_CAT.srcs, sel: WL_CAT.sel, now: Date.now() }; }
 function wlCatSetSel(k) { WL_CAT.sel = String(k || 'all'); wlCatPatch(); wlCatTick(); }
-function wlCatFetchSina() {
-  return jsonp('https://zhibo.sina.com.cn/api/zhibo/feed?page=1&page_size=30&zhibo_id=152&tag_id=0&dire=f&dpc=1', 'callback', 12000).then(function (r) {
+function wlCatFetchSina(pg, sz) {            /* ★§346c 分页：page/page_size（page_size=100 实测可达，单页≈100条） */
+  pg = pg || 1; sz = sz || 100;
+  return jsonp('https://zhibo.sina.com.cn/api/zhibo/feed?page=' + pg + '&page_size=' + sz + '&zhibo_id=152&tag_id=0&dire=f&dpc=1', 'callback', 12000).then(function (r) {
     var list = (r && r.result && r.result.data && r.result.data.feed && r.result.data.feed.list) || [];
     return list.map(function (x) {
       return { tsMs: wlCatTsMs(x.create_time), t: String(x.create_time || '').slice(11, 16), s: 'sina', sName: '新浪',
@@ -3189,8 +3198,9 @@ function wlCatFetchSina() {
     }).filter(function (x) { return x.txt && x.t; });
   });
 }
-function wlCatFetchThs() {
-  return jsonp('https://news.10jqka.com.cn/tapp/news/push/stock/?page=1&pagesize=30&tag=&track=website', 'callback', 12000).then(function (j) {
+function wlCatFetchThs(pg, sz) {             /* ★§346c 分页：page/pagesize（pagesize=50 带 Referer 实测可达） */
+  pg = pg || 1; sz = sz || 50;
+  return jsonp('https://news.10jqka.com.cn/tapp/news/push/stock/?page=' + pg + '&pagesize=' + sz + '&tag=&track=website', 'callback', 12000).then(function (j) {
     var list = (j && j.data && j.data.list) || [];
     return list.map(function (x) {
       var ms = wlCatTsMs(x.time);
@@ -3200,10 +3210,12 @@ function wlCatFetchThs() {
     }).filter(function (x) { return x.txt; });
   });
 }
-function wlCatFetchEm() {                    /* np-weblist 本机 567 拦截 → 3 败静默；换环境自动接通。
+function wlCatFetchEm(pg, sz) {              /* np-weblist 本机 567 拦截 → 3 败静默；换环境自动接通。
                                                  ★ 用 fetch 不用 jsonp：567 时端点回 HTML 被 script 当 JS 执行会报 emcb 未定义（pageerror 噪音）；
-                                                   fetch 的 CORS 失败只进网络日志，页面零报错。 */
-  return wlCatFetchJson('https://np-weblist.eastmoney.com/comm/web/getFastNewsList?client=web&biz=web_724&fastColumn=102&sortType=1&pageSize=30&req_trace=' + Date.now()).then(function (j) {
+                                                   fetch 的 CORS 失败只进网络日志，页面零报错。★§346c 分页：page/pageSize（若端点忽略分页参数，
+                                                   回补泵按「0 新增」自动到头停止，安全兜底）。 */
+  pg = pg || 1; sz = sz || 50;
+  return wlCatFetchJson('https://np-weblist.eastmoney.com/comm/web/getFastNewsList?client=web&biz=web_724&fastColumn=102&sortType=1&page=' + pg + '&pageSize=' + sz + '&req_trace=' + Date.now()).then(function (j) {
     var list = (j && j.data && j.data.fastNewsList) || [];
     return list.map(function (x) {
       return { tsMs: wlCatTsMs(x.showTime), t: String(x.showTime || '').slice(11, 16), s: 'em', sName: '东财',
@@ -3231,29 +3243,89 @@ function wlCatFetchCls() {                   /* 财联社 nodeapi 需签名（�
     }).filter(function (x) { return x.txt; });
   });
 }
-WL_CAT.DEFS = [
-  { k: 'sina', name: '新浪7×24', fn: wlCatFetchSina },
-  { k: 'ths', name: '同花顺', fn: wlCatFetchThs },
-  { k: 'em', name: '东财', fn: wlCatFetchEm },
-  { k: 'cls', name: '财联社', fn: wlCatFetchCls }
+WL_CAT.DEFS = [                              /* ★§346c sz=单页条数 · maxPg=回补页数硬上限（防无限翻页；cls 无分页签名只出1页） */
+  { k: 'sina', name: '新浪7×24', fn: wlCatFetchSina, sz: 100, maxPg: 120 },
+  { k: 'ths', name: '同花顺', fn: wlCatFetchThs, sz: 50, maxPg: 120 },
+  { k: 'em', name: '东财', fn: wlCatFetchEm, sz: 50, maxPg: 60 },
+  { k: 'cls', name: '财联社', fn: wlCatFetchCls, sz: 30, maxPg: 1 }
 ];
+function wlCatAbsorb(st, items) {            /* ★§346c 追加去重入库（页1刷新与历史回补泵共用；键=源|文本前60字，与 merge 口径一致） */
+  var added = 0;
+  if (!st._seen) st._seen = {};
+  (items || []).forEach(function (it) {
+    if (!it || !it.txt) return;
+    var key = it.s + '|' + it.txt.slice(0, 60);
+    if (st._seen[key]) return;
+    st._seen[key] = 1;
+    st.items = st.items || [];
+    st.items.push(it);
+    added++;
+  });
+  if (added) st.n = st.items.length;
+  return added;
+}
 function wlCatSrcFetch(d) {
-  var st = WL_CAT.srcs[d.k] || (WL_CAT.srcs[d.k] = { items: null, n: 0, at: 0, fail: 0, failAt: 0, pend: null, why: '' });
+  var st = WL_CAT.srcs[d.k] || (WL_CAT.srcs[d.k] = { items: null, n: 0, at: 0, fail: 0, failAt: 0, pend: null, why: '', pg: 1, done: false, bfFail: 0 });
   var now = Date.now();
   if (st.items && now - st.at < 60000) return Promise.resolve();     /* 单源 60s 缓存 */
   if (st.pend) return st.pend;                                       /* 单飞防并发 */
   if (st.fail >= 3 && now - st.failAt < 10 * 60 * 1000) { st.why = st.why || '受限'; return Promise.resolve(); }  /* 静默期 */
-  st.pend = d.fn().then(function (items) {
+  st.pend = d.fn(1, d.sz).then(function (items) {                    /* ★§346c 页1刷新 → 追加去重入库（历史缓存不丢，只补新条） */
     st.pend = null;
-    if (items && items.length) { st.items = items; st.n = items.length; st.at = Date.now(); st.fail = 0; st.why = ''; }
+    var added = wlCatAbsorb(st, items);
+    if (st.items && st.items.length) { st.n = st.items.length; st.at = Date.now(); st.fail = 0; st.why = ''; }
     else { st.fail++; st.failAt = Date.now(); st.why = '空'; }
+    st.pg = Math.max(st.pg || 1, 2);                                 /* ★§346c 页1已消费 → 泵从第2页续补（防泵重抓页1被误判「到头」） */
+    if (added) { wlCatMerge(); wlCatPatch(); }
   }).catch(function (e) {
     st.pend = null; st.fail++; st.failAt = Date.now();
     st.why = String((e && e.message) || '失败').slice(0, 16);
   });
   return st.pend;
 }
-function wlCatMerge() {                      /* 合并去重按时间倒序（条目无稳定 id，同源同文本 + 同时间去重） */
+function wlCatTotal() {                      /* ★§346c 已缓存总条数（各源追加去重后累计） */
+  var t = 0;
+  WL_CAT.DEFS.forEach(function (d) { var st = WL_CAT.srcs[d.k]; if (st && st.items) t += st.items.length; });
+  return t;
+}
+function wlCatPump() {                       /* ★§346c ≥5000 条历史回补泵：自驱动链式逐页抓取（350ms/页防打爆通道）。
+                                                页1仍由 wlCatTick 60s 刷新拿最新条；历史页只补一次不重复；补页失败允许重试1次后到头停止；
+                                                「0 新增」= 该源翻页到头自动停；条数最少的源优先补（均衡多源覆盖）；达标即停不空转。 */
+  if (WL_CAT.bf.on) return;
+  if (wlCatTotal() >= WL_CAT.TARGET) return;
+  WL_CAT.bf.on = true;
+  var step = function () {
+    if (wlCatTotal() >= WL_CAT.TARGET) { WL_CAT.bf.on = false; wlCatMerge(); wlCatPatch(); return; }
+    var pick = null;
+    WL_CAT.DEFS.forEach(function (d) {
+      var st = WL_CAT.srcs[d.k];
+      if (!st || st.done || st.pend) return;
+      if ((st.pg || 1) > d.maxPg) { st.done = true; return; }
+      var n = st.items ? st.items.length : 0;
+      if (!pick || n < pick.n) pick = { d: d, st: st, n: n };
+    });
+    if (!pick) { WL_CAT.bf.on = false; wlCatMerge(); wlCatPatch(); return; }
+    var st = pick.st;
+    st.pend = pick.d.fn(st.pg, pick.d.sz).then(function (items) {
+      st.pend = null;
+      var added = wlCatAbsorb(st, items);
+      if (added) { st.pg = (st.pg || 1) + 1; st.at = Date.now(); st.fail = 0; st.bfFail = 0; st.why = ''; }
+      else { st.done = true; st.why = st.why || (st.items && st.items.length ? '到头' : '空'); }
+      wlCatMerge(); wlCatPatch();
+      setTimeout(step, 350);
+    }).catch(function (e) {
+      st.pend = null;
+      st.bfFail = (st.bfFail || 0) + 1;
+      if (st.bfFail >= 2) st.done = true;                            /* 补页连败2次 → 该源历史停止回补（页1刷新不受影响） */
+      st.why = String((e && e.message) || '失败').slice(0, 16);
+      wlCatPatch();
+      setTimeout(step, 350);
+    });
+  };
+  step();
+}
+function wlCatMerge() {                      /* 合并去重按时间倒序（条目无稳定 id，同源同文本 + 同时间去重）；
+                                                ★§346c 全量缓存不再截 80 —— 卡片显示仍 slice(0,40)，本股筛选在全量缓存上过滤 */
   var all = [], seen = {};
   WL_CAT.DEFS.forEach(function (d) {
     var st = WL_CAT.srcs[d.k];
@@ -3263,9 +3335,10 @@ function wlCatMerge() {                      /* 合并去重按时间倒序（�
     });
   });
   all.sort(function (x, y) { return (y.tsMs || 0) - (x.tsMs || 0); });
-  WL_CAT.items = all.slice(0, 80);
+  WL_CAT.items = all.slice(0, 20000);
 }
 function wlCatTick() {
+  wlCatPump();                               /* ★§346c 历史回补泵 ≥5000 条（自驱动 · 内部单飞 + 达标即停，重复调用安全） */
   var now = Date.now();
   if (WL_CAT.pend || (WL_CAT.last && now - WL_CAT.last < 60000)) return;
   WL_CAT.last = now;
@@ -3273,6 +3346,7 @@ function wlCatTick() {
     WL_CAT.pend = null;
     wlCatMerge();
     wlCatPatch();
+    wlCatPump();                             /* ★§346c 页1落地后确保泵续跑（泵自带单飞+达标即停，重复调用安全） */
   }).catch(function () { WL_CAT.pend = null; });
 }
 function wlCatPatch() {                      /* 单卡 patch：只重渲 .wld-cat，不动整页 */
@@ -28660,11 +28734,11 @@ function wlCatHtml(a) {
       else if (ss.fail >= 3) stat = '受限 —';
       else stat = '抓取中';
     }
-    return '<button type="button" class="src-chip' + (sel === k ? ' on' : '') + '" data-wlcat="' + k + '" title="只看该源快讯">' +
+    return '<button type="button" class="src-chip' + (sel === k ? ' on' : '') + '" data-wlcat="' + k + '" title="只看该源快讯（含历史回补缓存）">' +
       m[1] + '<span class="src-stat">' + stat + '</span></button>';
   }).join('') + '</div>';
   if (!items) {
-    h += '<div class="wld-hint">快讯抓取中…（进入自选工作区自动抓取，60 秒自动更新；各源失败诚实标「—」）</div>';
+    h += '<div class="wld-hint">快讯抓取与历史回补中…（自动抓取至 ≥5000 条缓存，60 秒自动更新；各源失败诚实标「—」）</div>';
   } else {
     var list = items.filter(function (it) {
       if (sel === 'stock') return curNames.length > 0 && wlCatHitOf(it.txt, curNames).length > 0;
@@ -28687,7 +28761,15 @@ function wlCatHtml(a) {
       }).join('') + '</div>';
     }
   }
-  h += '<div class="wldcat-foot">口径：来源=新浪财经7×24 / 同花顺快讯 / 东方财富快讯 / 财联社电报（参考涨停台催化工作区；60 秒缓存 + 失败静默，东财·财联社受跨域/签名限制时诚实标「—」，环境恢复自动接通）。「🎯 本股」= 只看命中当前选中股名的快讯；命中自选股名红标 = 提醒线索，不构成买卖信号 · 不进钉钉 · 不参与打分 · 与四指标/五因子互不混用。</div>';
+  var tot = 0, bfing = false;                                     /* ★§346c 回补进度：各源缓存合计 + 是否仍在回补 */
+  if (srcs) Object.keys(srcs).forEach(function (k) {
+    var ss = srcs[k];
+    if (!ss) return;
+    tot += ss.n || 0;
+    if ((ss.n || 0) > 0 && !ss.done) bfing = true;
+  });
+  var prog = tot ? ('自动抓取进度：已缓存 <b>' + tot + '</b> 条（目标 ≥5000' + (tot >= 5000 ? ' · 已达标' : (bfing ? ' · 历史回补中…' : ' · 回补结束（受限源诚实标注）')) + '）') : '';
+  h += '<div class="wldcat-foot">' + (prog ? prog + '<br>' : '') + '口径：来源=新浪财经7×24 / 同花顺快讯 / 东方财富快讯 / 财联社电报（参考涨停台催化工作区；页1每 60 秒刷新拿最新 + 历史页回补泵逐页补至 ≥5000 条缓存，东财·财联社受跨域/签名限制时诚实标「—」，环境恢复自动接通）。「🎯 本股」= 只看命中当前选中股名的快讯（在全量缓存上过滤）；命中自选股名红标 = 提醒线索，不构成买卖信号 · 不进钉钉 · 不参与打分 · 与四指标/五因子互不混用。</div>';
   return h;
 }
 /* 选中态解析：WLDASH.sel 有效优先，否则按侧栏顺序取第一只成功票（与既有 WATCH.open 单开互不影响） */
