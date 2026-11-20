@@ -640,6 +640,26 @@
     background-repeat:no-repeat; }
   .kl-chip.up b { color:var(--up); }
   .kl-chip.down b { color:var(--down); }
+  /* ★§351（2026-11-20 · 用户「二、缺陷（按风险排序），请逐一完善」①⑦）：首屏综合结论行。
+     老面板的毛病 = 多头证据与空头证据并排铺开、各说各话，读者自己当裁判 —— 本行给单一裁决 +
+     决策流（仓位 → 止损 → 失效条件）+ 分层证据列表（缺陷③ 参考层视觉权重分级在此落地）。
+     .kl-verdict 是 .kl-head 之前的独立块（.kl-verdict-wrap 包裹），点击 K 线时由点击处理器原地重写 innerHTML。 */
+  .kl-verdict-wrap { margin:2px 0 8px; }
+  .kl-verdict { display:flex; flex-wrap:wrap; align-items:center; gap:6px 14px;
+    padding:7px 12px; border-radius:8px; background:#ffffff08; border:1px solid var(--line);
+    font-size:12px; line-height:1.5; }
+  .kl-verdict .kv-ruling { display:inline-flex; align-items:baseline; gap:6px; font-weight:800; font-size:12.5px; }
+  .kl-verdict .kv-ruling .score { font-size:17px; font-weight:800; font-variant-numeric:tabular-nums; }
+  .kl-verdict .kv-flow { color:var(--muted); font-size:11.5px; }
+  .kl-verdict .kv-flow b { color:var(--text); font-variant-numeric:tabular-nums; }
+  .kl-verdict .kv-ev { display:inline-flex; flex-wrap:wrap; gap:4px; }
+  .kl-verdict .kv-ev .ev { display:inline-flex; align-items:center; padding:1px 8px; border-radius:999px; font-size:10.5px; white-space:nowrap; }
+  /* 证据三层分级（缺陷③）：信号层随档位着色（currentColor 边框，清仓=绿 / 买入=红，不与 A 股口径打架）
+     / 提示层虚线橙框 / 参考层灰暗框 —— 权重一眼可分 */
+  .kl-verdict .ev-sig  { border:1px solid currentColor; font-weight:700; background:#ffffff10; }
+  .kl-verdict .ev-hint { border:1px dashed #ffb74088; color:#ffb740; }
+  .kl-verdict .ev-ref  { border:1px solid var(--line); color:var(--dim); opacity:.82; }
+  .kl-verdict .kv-per { font-size:10.5px; color:#ffb740; border:1px dashed #ffb74066; padding:1px 8px; border-radius:999px; white-space:nowrap; }
   .kl-hint { font-size:11px; color:var(--dim); margin-left:auto; }
   /* 2026-10-03（用户要求）：图例 chip 里的 KDJ 徽标 —— 排在「量比」之后。
      K/D/J 数值用 b（白色，与 MA / 量比 chip 一致），状态词用 em 上色；
@@ -8387,6 +8407,22 @@ function klGain20Bands(klines, th) {
   if (cur) bands.push(cur);
   return bands;
 }
+function klMomSeries(klines, n) {
+  /* ★§350（2026-11-20 · 用户「根据动量判读，直接在 adx 下方绘制 5日/10日/20日动量曲线」）：
+     动量序列 = MOM_n[i] = (close[i] ÷ close[i−n] − 1) × 100 —— 与 §237 动量判读 / 钉钉推送
+     dingMomNumsOf / 「20日动量」列 mom20Of 同一口径（三处同源，勿另写判据）。
+     · 只用 kl[0..i]（分母是 i−n 根前收盘，天然无未来函数）；
+     · 前 n 根 / 分母缺失或 ≤0 / 收盘非正 → null（诚实留白，绝不凑 0）；
+     · n 需 ≥1 整数，klines 不足 → 全 null。参考层：不计分、不发信号、不进钉钉。 */
+  var out = [];
+  var N = (n >= 1 && isFinite(n)) ? Math.floor(n) : 0;
+  if (!klines || !klines.length || !N) { for (var q = 0; q < (klines ? klines.length : 0); q++) out.push(null); return out; }
+  for (var i = 0; i < klines.length; i++) {
+    var c1 = klines[i] && klines[i].close, c0 = (i >= N) ? klines[i - N] && klines[i - N].close : null;
+    out.push((c1 != null && isFinite(c1) && c1 > 0 && c0 != null && isFinite(c0) && c0 > 0) ? (c1 / c0 - 1) * 100 : null);
+  }
+  return out;
+}
 function klCysReboundAt(klines, i) {
   /* ★§345b 超跌反弹·买点确认（系列笔记「等确认，不抢左侧」落地）：
      ① 深度超跌前置 = 近 13 日（i−13..i−1）CYS13 最低 ≤ −15 —— 超跌只是观察前提，绝不单独当买点；
@@ -9152,7 +9188,7 @@ function renderChart(ind, focus, opt) {
      有 ~58px 可用带宽，20/25 阈值线间距也从 22.7px 拉开到 34.7px）。栈底整体下移：
      日线 adxB 722→758、dateY 744→780、H 766→802；非日线 adxB 558→594、dateY 580→616、H 602→638。
      热区高度 / 纵向网格 y2 都走 indB=adxB 表达式，自动跟随（无第二处字面量）。 */
-  var W = 1130, H = __wKjShow ? 802 : 638;
+  var W = 1130, H = __wKjShow ? 884 : 638;   /* ★§350：日线 +82（动量副图 68 + 间距 14）→ 802→884 */
   var padL = 58, padR = 64, padT = 58;
   var priceT = padT, priceB = 292;
   var volT = 326, volB = 394;
@@ -9171,8 +9207,14 @@ function renderChart(ind, focus, opt) {
        非日线 H 520→602、dateY 498→580；indB（指标栈底）→ adxB。
      · SuperTrend 不是副图，是价格面板上的叠加线（画在均线之后），不占新面板。 */
   var adxT = __wKjShow ? 654 : 490, adxB = __wKjShow ? 758 : 594;   /* ★ §324：面板 68→104 */
-  var indB = adxB;
-  var dateY = __wKjShow ? 780 : 616;
+  /* ★§350（2026-11-20 · 用户「在 adx 下方绘制 5日/10日/20日动量曲线」）：日线栈底再挂「动量 MOM」副图。
+     高度 +82（面板 68 + 间距 14，与 §210/§247 同款）→ 日线 H 802→884、dateY 780→862；
+     indB（指标栈底）→ momB：热区 / 纵向网格 / 分钟换日线 / 族级铺色自动延伸（无第二处字面量）。
+     仅日线出面板（__wKjShow 守卫，与周KDJ/主力状态同款）：动量判读三窗阈值（±12/±15/±20 等）
+     是「日」级 σ 标定，分钟图只覆盖半天、周线 5/10/20 是「周」—— 套用属假读数（§237 周期纪律）。 */
+  var momT = __wKjShow ? 772 : 0, momB = __wKjShow ? 840 : 0;
+  var indB = __wKjShow ? momB : adxB;
+  var dateY = __wKjShow ? 862 : 616;   /* ★§350：日线 780→862（动量副图占位） */
   var plotL = padL, plotR = W - padR;
 
   /* ---- ★ 2026-10-24 §206：60 根波段高点 → 压力位（必须在价格刻度之前算：它的价位要并入上沿）---- */
@@ -10889,18 +10931,63 @@ function renderChart(ind, focus, opt) {
        它已经不是压力而是参考支撑，继续写「压力」就是错口径（见 klPressOf ③）。 */
   if (__press && isFinite(__press.hi)) {
     var __pyP = Y(__press.hi);
-    var __pLab = (__press.broke ? '已突破 ' : '压力 ') + __press.hi.toFixed(2);
+    /* ★§353（2026-11-20 · 缺陷④「远压力位噪音」）：距现价 >8% 的远档压力**降透明 + 标签加「远档」**，
+       弱化视觉权重 —— 位仍是那个位（事实不删），但它对当下交易的意义有限，不该与贴脸压力同等醒目。
+       阈值 8% ≈ 2 倍 ATR 上限（ATR% 分档「>15% 太大」的中位水平），一档即可、不再细分。 */
+    var __prFar = (!__press.broke && __press.gapPct != null && isFinite(__press.gapPct) && __press.gapPct > 8);
+    var __pLab = (__press.broke ? '已突破 ' : '压力 ') + __press.hi.toFixed(2) + (__prFar ? ' · 远档' : '');
     /* 标签纵向夹紧：压力位恰在面板上沿时（未并刻度、但已贴顶）不许跑出价格区。 */
     var __pty = Math.max(priceT + 8.5, __pyP - 4.2);
     svg += '<g class="kl-press60" data-v="' + __press.hi.toFixed(2) + '" data-broke="' + (__press.broke ? '1' : '0') + '">' +
       '<line x1="' + plotL + '" y1="' + __pyP.toFixed(1) + '" x2="' + plotR + '" y2="' + __pyP.toFixed(1) +
         '" stroke="' + __prCol + '" stroke-width="1.1" stroke-dasharray="5 3"' +
-        ' stroke-opacity="' + (__press.broke ? '0.5' : '0.9') + '"/>' +
+        ' stroke-opacity="' + (__prFar ? ((__press.broke ? '0.5' : '0.9') * 0.55).toFixed(3) : (__press.broke ? '0.5' : '0.9')) + '"/>' +
       '<text x="' + (plotR - 3).toFixed(1) + '" y="' + __pty.toFixed(1) + '" text-anchor="end" ' +
         'font-size="8.5" font-weight="600" fill="' + __prCol + '" stroke="#0b1020" stroke-width="2.6" ' +
         'style="paint-order:stroke" stroke-opacity="0.9">' + escapeHtml(__pLab) + '</text>' +
       '</g>';
   }
+
+  /* ★§354（2026-11-20 · 缺陷⑦「无统一决策流 + 无 ATR 仓位/止损上图」）ATR 止损参考线上图：
+     · **仅 ST 非多头时画**（dir≠1 或未起算）—— ST 多头时 trailing 线本身就是止损参考（已上图），
+       再画一条就是双线噪音（缺陷③ 的教训反向利用：宁可少画）；
+     · 止损价 = 基准根收盘 − 1.5 × ATR14（TR 窗口与头部 ATR% chip 同源 14 根；与读数面板
+       srpJudge 的波动率止损同式）；
+     · 映射后越出价格面板（止损在窗内最低之下很深）→ **不画也不并刻度**（与 §206「>12% 不并入」
+       同一取舍：不为一条参考线压缩整段行情）；结论行决策流里的止损数值照常给出（诚实不缺位）；
+     · 色取 #3ddc97（清仓/止损档同色，图上未用过该色描边；虚线 2-4 与压力位 5-3 线型可分）。
+     参考层：不计分、不进四指标、不发信号。 */
+  var __stopDraw = null;
+  (function () {
+    var stDir0 = (__stOk && __stDirWin && __stDirWin[__focusVi] != null) ? __stDirWin[__focusVi] : null;
+    if (stDir0 === 1) return;
+    if (!(__focusEnd >= 1)) return;
+    var kF = kl[__focusEnd];
+    if (!kF || !isFinite(kF.close) || kF.close <= 0) return;
+    var sSum2 = 0, sCnt2 = 0, sM2;
+    for (sM2 = Math.max(1, __focusEnd - 13); sM2 <= __focusEnd; sM2++) {
+      var sKb = kl[sM2], sKp = kl[sM2 - 1];
+      if (!sKb || !sKp || !isFinite(sKb.high) || !isFinite(sKb.low) || !isFinite(sKp.close)) continue;
+      sSum2 += Math.max(sKb.high - sKb.low, Math.abs(sKb.high - sKp.close), Math.abs(sKb.low - sKp.close)); sCnt2++;
+    }
+    if (!sCnt2) return;
+    var sPx = kF.close - 1.5 * (sSum2 / sCnt2);
+    if (!(isFinite(sPx) && sPx > 0)) return;
+    var sY = Y(sPx);
+    if (!(sY > priceT + 2 && sY < priceB - 2)) return;   /* 越出面板 → 不画 */
+    __stopDraw = { px: sPx, y: sY };
+    svg += '<g class="kl-stopline" data-v="' + sPx.toFixed(2) + '">' +
+      '<line x1="' + plotL + '" y1="' + sY.toFixed(1) + '" x2="' + plotR + '" y2="' + sY.toFixed(1) +
+      '" stroke="#3ddc97" stroke-width="1.1" stroke-dasharray="2 4" stroke-opacity="0.85"><title>' +
+      escapeHtml('ATR 止损参考线（§354）：止损价 = 基准根收盘 ' + kF.close.toFixed(2) + ' − 1.5 × ATR14 = ' + sPx.toFixed(2) +
+        '（ATR14 = 基准根及其前 13 根真实波幅均值，与头部 ATR% chip 同源）。基准根 ST 非多头时才画 —— ' +
+        'ST 多头时 trailing 线本身就是止损参考，不画双线。收盘有效跌破才触发（±0.5% 属正常噪音）。' +
+        '本线只描述风险管理参考位，不计分、不进四指标、不构成买卖依据。') +
+      '</title></line>' +
+      '<text x="' + (plotR - 3).toFixed(1) + '" y="' + (sY - 4.2).toFixed(1) + '" text-anchor="end" ' +
+      'font-size="8.5" font-weight="600" fill="#3ddc97" stroke="#0b1020" stroke-width="2.6" style="paint-order:stroke">⛔止损 ' +
+      sPx.toFixed(2) + '</text></g>';
+  })();
 
   /* ★ 2026-10-17 §157（用户原话「国机精工也有问题，请准确识别 20 日均线、60 日均线」）：
      实测结论是**算得对、画得也对**（_probe_kma.js 11/0：三条线各 70 个点反算价格与 calcMA 误差 <0.013 元，
@@ -11313,6 +11400,75 @@ function renderChart(ind, focus, opt) {
     svg += '<text class="kl-adxcor" data-k="mdi" x="' + (plotR - 8) + '" y="' + (adxT + 35) + '" fill="#26c281" font-size="10" font-family="' + M + '" text-anchor="end" paint-order="stroke" stroke="#101830" stroke-width="2.6" stroke-linejoin="round">-DI' + aliSfx + ' ' + (__mdiWin[ali] != null ? __mdiWin[ali].toFixed(1) : '—') + '</text>';
   })();
 
+  /* ---- ★§350：动量副图（MOM5 / MOM10 / MOM20 三折线 · 仅日线 · 2026-11-20）----
+     · 口径 = klMomSeries（§237 动量判读 / 钉钉推送 dingMomNumsOf / 「20日动量」列三处同源：
+       MOM_n[i] = (close[i] ÷ close[i−n] − 1) × 100，只用 kl[0..i] 无未来函数）；
+     · 三线色：MOM5 天蓝 #38bdf8 · MOM10 粉 #f48fb1 · MOM20 白 #e8ecf6（主窗最醒目）——
+       避开 ADX 黄/红/绿（紧邻上方面板，同页对照不能同色）、KDJ 黄/紫/蓝、CYS #64b5f6、MA 色板；
+     · Y 映射对称：sym = max(25, 窗内最大 |MOM|)（25 = 0.5σ 与 ±20 阈值线的余量底座；暴涨暴跌段
+       自动放大不裁剪）；0 轴居中 —— 动量正负语义天然以 0 为界；
+     · 参考线：0 轴灰实线 · ±20 金虚线（2σ 档：MOM20<−20 深度超跌 / >+20 极端过热，判读块同阈值）+
+       轴标 · ±5 中性淡带（MOM20 中性带 −5~+5「拉锯区」，op 0.05 不喧宾）；
+     · 角标 kl-momcor 跟随基准根（点击历史 K 线 → 显示那根的三窗值，(至该日) 后缀同 ADX 款；
+       点击面板的完整判读走 §237 vpMomHtml 动量判读块，本角标只报数）；
+     · 数据不足（< 21 根，最长窗 MOM20 起算门槛）→ 明写「动量数据不足」，不画线不硬算；
+     · 参考层纪律：不计分、不进四指标、不发买卖信号、不进钉钉。 */
+  (function () {
+    if (!__wKjShow || typeof klMomSeries !== 'function') return;
+    svg += '<rect x="' + plotL + '" y="' + momT + '" width="' + (plotR - plotL) + '" height="' + (momB - momT) + '" rx="4" fill="#ffffff" fill-opacity="0.012"/>';
+    svg += '<text x="' + (padL - 8) + '" y="' + (momT + 11) + '" fill="#6b779b" font-size="10.5" font-weight="600" text-anchor="end">动量</text>';
+    var __m5w = klMomSeries(kl, 5).slice(start), __m10w = klMomSeries(kl, 10).slice(start), __m20w = klMomSeries(kl, 20).slice(start);
+    var __mOk = kl.length >= 21;
+    if (!__mOk) {
+      svg += '<text x="' + ((plotL + plotR) / 2).toFixed(1) + '" y="' + ((momT + momB) / 2 + 3.5).toFixed(1) +
+        '" fill="#5d6788" font-size="10.5" text-anchor="middle">动量数据不足（K线少于 21 根 —— 最长窗 MOM20 起算门槛）</text>';
+      return;
+    }
+    var __mSym = 25;
+    [__m5w, __m10w, __m20w].forEach(function (w) {
+      w.forEach(function (v) { if (v != null && isFinite(v) && Math.abs(v) > __mSym) __mSym = Math.abs(v); });
+    });
+    function YM(v) { return momB - (momB - momT) * ((v + __mSym) / (2 * __mSym)); }
+    /* ±5 中性淡带（MOM20「拉锯区」可视化底座）—— 先画带、再画线（线压带） */
+    svg += '<rect x="' + plotL + '" y="' + YM(5).toFixed(1) + '" width="' + (plotR - plotL) + '" height="' + (YM(-5) - YM(5)).toFixed(1) +
+      '" fill="#ffffff" fill-opacity="0.05" pointer-events="none"><title>' +
+      escapeHtml('MOM20 中性带 −5%~+5%（0.5σ 拉锯区）：带内不判多空，只看斜率 —— 动量判读口径（§237）') + '</title></rect>';
+    /* 0 轴 + ±20 金虚线 + 轴标 */
+    svg += '<line x1="' + plotL + '" y1="' + YM(0).toFixed(1) + '" x2="' + plotR + '" y2="' + YM(0).toFixed(1) +
+      '" stroke="#6b779b" stroke-width="1" stroke-opacity="0.45"/>';
+    [[20, '#ffb300'], [-20, '#ffb300']].forEach(function (t) {
+      svg += '<line x1="' + plotL + '" y1="' + YM(t[0]).toFixed(1) + '" x2="' + plotR + '" y2="' + YM(t[0]).toFixed(1) +
+        '" stroke="' + t[1] + '" stroke-width="1" stroke-opacity="0.5" stroke-dasharray="4 5"/>';
+    });
+    [[20, '+20'], [0, '0'], [-20, '−20']].forEach(function (t) {
+      svg += '<text x="' + (padL - 8) + '" y="' + (YM(t[0]) + 3.3).toFixed(1) + '" fill="#6b779b" font-size="9.5" text-anchor="end" font-family="' + M + '">' + t[1] + '</text>';
+    });
+    var MOM_LINES = [
+      { a: __m5w, c: '#38bdf8', n: 'MOM5', w: 1.2 },
+      { a: __m10w, c: '#f48fb1', n: 'MOM10', w: 1.2 },
+      { a: __m20w, c: '#e8ecf6', n: 'MOM20', w: 1.6 }
+    ];
+    MOM_LINES.forEach(function (L) {
+      var d = '', started = false;
+      L.a.forEach(function (v, idx) {
+        if (v == null || !isFinite(v)) { started = false; return; }
+        d += (started ? ' L' : ' M') + X(idx).toFixed(1) + ' ' + YM(v).toFixed(1);
+        started = true;
+      });
+      if (!d) return;
+      svg += '<path d="' + d.trim() + '" fill="none" stroke="' + L.c + '" stroke-opacity="0.22" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>';
+      svg += '<path d="' + d.trim() + '" fill="none" stroke="' + L.c + '" stroke-width="' + L.w + '" stroke-linejoin="round" stroke-linecap="round"/>';
+    });
+    /* 角标三行（跟随基准根：__focusVi / __focusDefault 与 ADX 角标同源；只报数不判读） */
+    var mli = __focusDefault ? (ks.length - 1) : Math.min(ks.length - 1, Math.max(0, __focusVi));
+    var mSfx = __focusDefault ? '' : '(至该日)';
+    MOM_LINES.forEach(function (L, li) {
+      svg += '<text class="kl-momcor" data-k="' + L.n + '" x="' + (plotR - 8) + '" y="' + (momT + 11 + li * 12) + '" fill="' + L.c +
+        '" font-size="10" font-family="' + M + '" text-anchor="end" paint-order="stroke" stroke="#101830" stroke-width="2.6" stroke-linejoin="round">' +
+        L.n + mSfx + ' ' + (L.a[mli] != null ? (L.a[mli] >= 0 ? '+' : '') + L.a[mli].toFixed(1) + '%' : '—') + '</text>';
+    });
+  })();
+
   /* 悬停热区已并入每根蜡烛的 <g class="cd">（见上方蜡烛循环）—— 不再单独画一层。
      ★ 拆成两层时 :hover 只到最上层，蜡烛的 `:hover .kb` 会变成死 CSS（本卡第一版踩过）。 */
   /* ★ §175：页脚口径随周期改写 —— 分钟图不能写「前复权」（分时数据本就是原始成交价）
@@ -11325,7 +11481,29 @@ function renderChart(ind, focus, opt) {
         ? ' 周 · 前复权 · MA5/20/60 = 5/20/60 周均线，KDJ(9,3,3) = 9 周 · 末根为本周进行中（量能偏小） · 底=ADX/DI 副图(红底带=多头强势区 · 紫底带=超买区 ADX>50) · 点击柱子看量价关系'
         : (__isMonth
           ? ' 月 · 前复权 · MA5/20/60 = 5/20/60 月均线，KDJ(9,3,3) = 9 月 · 末根为本月进行中（量能偏小） · 底=ADX/DI 副图(红底带=多头强势区 · 紫底带=超买区 ADX>50) · 点击柱子看量价关系'
-          : ' 日 · 前复权 · 副图：上=日KDJ / 中=周KDJ(9,3,3) / 下=CYS13(收盘÷13日均收盘−1 · 金虚线=−15深度超跌=反弹观察信号 · 紫虚线=−5回升确认 · 金点=深度超跌根 · 成本均线以均收盘近似——数据源无量额) / 底=ADX/DI(黄=ADX 趋势强度 · 红=+DI · 绿=-DI · 虚线 20/25/50 阈值 · 红底带=多头强势区 ADX≥25 且 +DI>-DI · 紫底带=超买区 ADX>50) · 主图红/绿粗线=SuperTrend(多头红支撑/空头绿阻力,▲▼=翻转) · 悬停看开高低收 · 点击柱子看当日量价关系'))) + '</text>';
+          : ' 日 · 前复权 · 副图：上=日KDJ / 中=周KDJ(9,3,3) / 下=CYS13(收盘÷13日均收盘−1 · 金虚线=−15深度超跌=反弹观察信号 · 紫虚线=−5回升确认 · 金点=深度超跌根 · 成本均线以均收盘近似——数据源无量额) / 底=ADX/DI(黄=ADX 趋势强度 · 红=+DI · 绿=-DI · 虚线 20/25/50 阈值 · 红底带=多头强势区 ADX≥25 且 +DI>-DI · 紫底带=超买区 ADX>50) / 最底=动量MOM副图(5/10/20日动量% · 金虚线±20=2σ档 · ±5淡带=拉锯区 · 角标随点击根) · 主图红/绿粗线=SuperTrend(多头红支撑/空头绿阻力,▲▼=翻转) · 悬停看开高低收 · 点击柱子看当日量价关系'))) + '</text>';
+  /* ★§352（2026-11-20 · 缺陷②「四指标得分不上图」）：得分徽标上图 —— 价格面板左上角小徽标，
+     显示**基准根**的四指标总分 + 档位动作（与 s4chip / 结论行 / 推送同一把尺子 s4SeriesOf，零第二套算法）。
+     · 徽标底 = 半透明深底 + 档位色描边（不遮下方蜡烛首列热区语义，纯 display 层）；
+     · 点击 K 线 → 点击处理器原地 patch（textContent + 颜色，§324 ADX 角标同款姿势）；
+     · 序列缺失 / 该根无分（s4kCalc 最低根数不足）→ 整枚徽标不出（诚实留白，不印 0）。 */
+  (function () {
+    if (typeof s4SeriesOf !== 'function' || typeof s4TierColor !== 'function') return;
+    var s4bSer = null;
+    try { s4bSer = s4SeriesOf({ kl: kl, ind: ind }); } catch (eS4b) { return; }
+    var s4bD = (s4bSer && s4bSer[__focusEnd]) ? s4bSer[__focusEnd] : null;
+    if (!s4bD || s4bD.total == null) return;
+    var s4bCol = s4bD.veto ? '#3ddc97' : s4TierColor(s4bD.total);
+    var s4bAct = s4bD.veto ? '清仓' : s4ActShort(s4bD.act);
+    var s4bX = plotL + 2, s4bY = priceT + 1;
+    svg += '<g class="kl-s4badge" data-v="' + s4bD.total + '">' +
+      '<rect x="' + s4bX + '" y="' + s4bY + '" width="124" height="13" rx="6.5" fill="#101830" fill-opacity="0.88" stroke="' + s4bCol + '" stroke-width="0.9"/>' +
+      '<text x="' + (s4bX + 62) + '" y="' + (s4bY + 9.7) + '" text-anchor="middle" font-size="9.5" font-weight="700" fill="' + s4bCol +
+      '" paint-order="stroke" stroke="#101830" stroke-width="2">四指标 ' + s4bD.total + ' · ' + s4bAct + '</text>' +
+      '<title>' + escapeHtml('四指标打分徽标（§352）：基准根的四指标总分与档位动作 —— 与头部「四指标打分」chip / 结论行 / 钉钉推送同一把尺子' +
+        '（s4kBuyDay：切片到该日、只用该日及之前数据、无未来函数）。档位（§229）：≥68 重仓买入 · ≥56 买入/加仓 · ≥42 轻仓试错 · ≥31 观察 · ≥17 减仓 · <17 或一票否决 → 清仓。' +
+        '点击 K 线 → 徽标跟随所点根。分数描述信号强度，买卖仍以四指标打分为唯一依据。') + '</title></g>';
+  })();
   svg += '</svg>';
 
   /* 顶部图例 chip：颜色与图上线条一一对应（★ 2026-10-04 起由 klDaysetHtml 统一生成，见 renderChart 之后） */
@@ -11393,7 +11571,12 @@ function renderChart(ind, focus, opt) {
     __dsKjChip = null;
   }
 
-  var head = '<div class="kl-head">' +
+  /* ★§351（2026-11-20 · 缺陷①⑦）：首屏综合结论行 —— .kl-head 之前独立一块：
+     裁决（四指标档位）+ 决策流（仓位/止损/失效）+ 分层证据（信号/提示/参考）+ 非日线口径警示。
+     基准根 = __dsGidx（与徽标组同一口径：默认末根 / 点击历史根即该根）；点击后由点击处理器
+     原地重写 .kl-verdict-wrap innerHTML（与 .kl-dayset 联动同款，不整图重绘）。 */
+  var head = '<div class="kl-verdict-wrap">' + klVerdictHtml(__ent, __dsGidx, __dsKj, __per) + '</div>' +
+    '<div class="kl-head">' +
     /* ★ §175：分钟周期角标 —— 明确「这不是日内分时图，是 5/30 分钟 K 线」，并把两条口径差异写在 tooltip 里，
        免得用户以为分钟图上少了东西是画漏了（少的是日线级结构带，按定义就不该出现在分钟轴上）。 */
     (__isMin
@@ -11481,7 +11664,10 @@ function renderChart(ind, focus, opt) {
       '历史不足 ' + __prN + ' 根 → 不画；基准根前 ' + __prN + ' 根的高点若比可见窗口最高价再高 12% 以上 → 也不画（否则整段行情被压成底部一条缝）。' +
       '周线 / 5·30 分钟线按「根」重算（' + __prN + ' 根 = ' + __prN + ' 周 / ' + __prN + ' 个 5 分钟）。' +
       '参考层：只标注，不计分、不进四指标 / VPS、不进钉钉、不发买卖信号。"><i class="sh sh-pline" style="color:' + __prCol + '"></i><b>' +
-      __prN + ' 根高 ' + __press.hi.toFixed(2) + (__press.broke ? ' · 已突破' : ' · 压力位') + '</b></span>' : '') +
+      __prN + ' 根高 ' + __press.hi.toFixed(2) + (__press.broke ? ' · 已突破' : ' · 压力位') + (__prFar ? ' · 远档(降噪)' : '') + '</b></span>' : '') +
+    /* ★§354：ATR 止损参考线图例 —— 图上画了才出 chip（图例与图一致原则，§206 同款纪律）；
+       画不出的三种情形（ST 多头 / 越出面板 / ATR 算不出）都不出 chip，止损数值仍在结论行决策流里如实给出。 */
+    (__stopDraw ? '<span class="kl-chip" title="ATR 止损参考线（§354）：止损价 = 基准根收盘 − 1.5 × ATR14（TR 窗口与 ATR% chip 同源）。基准根 ST 非多头时才画 —— ST 多头时 trailing 线（🧭 ST chip）本身就是止损参考，不画双线；越出价格面板也不画（不为参考线压缩行情）。收盘有效跌破才触发（±0.5% 属正常噪音）。参考层：不计分、不进四指标、不发买卖信号。">⛔ ATR止损 <b>' + __stopDraw.px.toFixed(2) + '</b></span>' : '') +
     /* ★ 2026-11-14 §318：SuperTrend / ADX 状态 chip —— 数值取图上同一份序列（__stWin / __adxWin 末根），
        不另算第二套；序列缺失（切片沙箱 / 数据不足）→ 整枚 chip 不出（诚实缺省，不印「ST —」占位）。 */
     (function () {
@@ -11545,6 +11731,18 @@ function renderChart(ind, focus, opt) {
     /* ★ 2026-10-13（用户要求）：MA5 斜率上拐 / 下拐 两枚图例 chip 已随「策略命中扫描」整块删除
        （该块是本图例唯一的来源；「MA5 斜率」本身仍在 K 线头部 chip 与表格列中正常显示）。
        ★ 2026-10-06 起的支撑 / 压力关键位图例（.sh-hline 横线图标 + 「关键位 N 条」chip）已按用户要求删除。 */
+    /* ★§355（2026-11-20 · 缺陷⑥「自创名词可读性」）：📖 术语速查 chip —— 平台自创名词一份 title 收齐，
+       一句话口径 + 一眼分层（信号源 / 状态描述 / 参考层）；每个名词在页面上的原生 chip/卡片悬停里
+       另有完整定义与实测数字，此处只做「入口索引」不重复展开。 */
+    '<span class="kl-chip" style="border-color:#5b8cff" title="📖 术语速查（自创名词 · 一句话口径）：&#10;' +
+      '【信号源】四指标 = 14日ATR + KDJ + MACD + 量能四维加权打分（s4kTotal），≥42 买点线 / ≥56 买入 / ≥68 重仓 —— 全站唯一买卖信号源；&#10;' +
+      '【状态描述】生命周期 1~4 阶段 = 积累/上升/分配/下跌（Weinstein 四阶段）· 挖土机 = 机头A（60日低→高涨&gt;30%）/ 机身B（距60日高回撤10%~30%）/ 铲斗C区（A∧B 成立后的接力观察区）—— 仅描述不参与买卖；&#10;' +
+      '【仓位词】中军 = 板块基本盘大、回撤可控的压舱石个股（S 级单票上限 15%）；重仓档 / 轻仓试错 = 四指标 68 / 42 两线对应的仓位动作；&#10;' +
+      '【读数】分位 = 20 日区间分位（0~1，≥0.80 高位 / ≤0.20 低位）· 动量 = 收盘÷N根前收盘−1（5/10/20）· dev 偏离度 = 现价相对 MA5 乖离（&gt;15% 极端超涨清仓档）· ATR% = 14 根真实波幅均值÷收盘（5~12 刚刚好）；&#10;' +
+      '【筹码近似】CYS13 = 收盘÷13日均收盘−1（≤−15 深度超跌；成本均线以均收盘近似 —— 数据源无量额，非真筹码成本）· 主力状态 = 换手率衰减筹码模型近似（红/黄/紫柱 + 散户套牢系数，非原版软件值）；&#10;' +
+      '【风控线】SuperTrend = ATR14×3 trailing 止损线（红多头/绿空头）· ATR止损 = 收盘−1.5×ATR14（ST 非多头时上图）· 盈亏比 = (压力−买价)÷(买价−止损)，读数面板 srpJudge 同源；&#10;' +
+      '【参考层】承接力 = 抛盘出现时下方买盘是否接得住（六维加权+一票否决）· 今昨强弱 = 昨日K线×今日路径矩阵 · 倍量形态 = 同色相邻两柱长短关系 —— 均不计分、不发信号；&#10;' +
+      '所有 chip / 图上标记悬停都有完整口径与实测数字；本速查只做入口索引。">📖 术语</span>' +
     '</div>';
   /* 量价信号不预计算（见 __KL_CACHE 注释）：只登记 klines 引用 + 窗口起点 + 代码（进阶结构需板块涨跌停幅度），点击时按需算那一根。
      ★ 2026-10-04：缓存补 ma5/ma20/ma60 数组 + 实时量比 vr —— 点击日徽标组直接复用（与图上曲线同源同口径）。
@@ -11788,6 +11986,141 @@ function momColHtml(mo) {
     '</div>';
 }
 /* ==== MOMTP-END ==== */
+
+/* =========================================================================
+   ★§351（2026-11-20 · 用户「二、缺陷（按风险排序），请逐一完善」缺陷①⑦）：首屏综合结论行。
+   老面板的毛病 = 多头证据（买点轨 / 主升段带 / 突破型）与空头证据（超跌带 / dev 超涨 / 破位）
+   并排铺开、各说各话，读者要自己当裁判 —— 本行给出**单一裁决 + 统一决策流**：
+     裁决（四指标档位） → 仓位（s4kAction 同源） → 止损价 → 失效条件 → 分层证据。
+   ■ 分层纪律（与全站一致，一个字不破）：
+     · 裁决与仓位**只认四指标打分**（s4kTierOf / s4kAction 同一把尺子）—— 它是唯一买卖信号源，
+       生命周期阶段 / 形态 / 参考层一律不参与裁决、只作证据陈列；
+     · 证据列表三层标注（缺陷③ 视觉分级在聚合层落地）：信号层（红实框）/ 提示层（橙虚框）/
+       参考层（灰暗框）；chip 本体字面被 _check_static 锁定，故分级只在本行实现；
+     · 止损价（缺陷⑦）：ST 多头时取 ST trailing（ATR14×3，已上图，不画双线）；否则取
+       收盘 − 1.5×ATR14（与读数面板 srpJudge 的波动率止损同式；ATR 窗口与 ATR% chip 同源 14 根）；
+     · 周线 / 月线 / 分钟口径（缺陷⑤）：裁决照出（四指标在同一周期K上重算），但追加一枚
+       口径警示「执行以本周期档位为准，勿与日线信号混读」；
+   ■ 缺数诚实留白：四指标算不出 → 裁决「—（四指标数据不足）」、仓位 / 止损「—」，
+     绝不印 0、绝不硬判；证据最多 5 条（信号 1 + 提示 2 + 参考 2）—— 聚合行不是明细堆场。
+   纯函数只读 ent.kl[0..gidx] 与已缓存序列，无未来函数；所有外部函数 typeof 守卫（vm 切片自洽）。
+   ========================================================================= */
+function klVerdictOf(ent, gidx, per, kj) {
+  var kl = (ent && ent.kl) ? ent.kl : null, kD = kl ? kl[gidx] : null;
+  if (!kD) return null;
+  var out = { ok: false, total: null, veto: false, ruling: '—', col: '#8892b0', pos: '—',
+    stop: null, stopSrc: '', evs: [] };
+  /* —— 信号层：四指标（唯一裁决来源）—— */
+  var s4ser = null;
+  try { s4ser = (typeof s4SeriesOf === 'function') ? s4SeriesOf(ent) : null; } catch (eS4v) { s4ser = null; }
+  var s4d = (s4ser && s4ser[gidx]) ? s4ser[gidx] : null;
+  if (s4d && s4d.total != null) {
+    out.ok = true; out.total = s4d.total; out.veto = !!s4d.veto;
+    out.col = s4d.veto ? '#3ddc97' : s4TierColor(s4d.total);
+    var s4short = s4ActShort(s4d.act);
+    out.ruling = s4d.veto ? '清仓/止损' : (s4short + (s4d.total >= 68 ? '（重仓档）' : ''));
+    if (s4d.veto) out.pos = '0仓';
+    else {
+      try { if (typeof s4kAction === 'function') { var __va = s4kAction(s4d.total); if (__va) out.pos = __va.pos; } } catch (eAv) { out.pos = '—'; }
+    }
+    out.evs.push({ t: 'sig', txt: '四指标 ' + s4d.total + ' · ' + (s4d.veto ? '清仓（一票否决）' : s4short) });
+  }
+  /* —— 止损：ST 多头取 ST trailing；否则 收盘 − 1.5×ATR14 —— */
+  try {
+    var stC = (ent && ent.ind && ent.ind.__stCache && ent.ind.__stCache.out) ? ent.ind.__stCache.out : null;
+    var stV = (stC && stC.ok && stC.st && stC.st[gidx] != null && isFinite(stC.st[gidx])) ? stC.st[gidx] : null;
+    var stDir = (stC && stC.ok && stC.dir && stC.dir[gidx] != null) ? stC.dir[gidx] : null;
+    if (stDir === 1 && stV != null) { out.stop = stV; out.stopSrc = 'ST多头线(ATR14×3)'; }
+    else {
+      var vSum = 0, vCnt = 0, vM;
+      for (vM = Math.max(1, gidx - 13); vM <= gidx; vM++) {
+        var vKb = kl[vM], vKp = kl[vM - 1];
+        if (!vKb || !vKp || !isFinite(vKb.high) || !isFinite(vKb.low) || !isFinite(vKp.close)) continue;
+        vSum += Math.max(vKb.high - vKb.low, Math.abs(vKb.high - vKp.close), Math.abs(vKb.low - vKp.close)); vCnt++;
+      }
+      if (vCnt > 0 && isFinite(kD.close) && kD.close > 0) { out.stop = kD.close - 1.5 * (vSum / vCnt); out.stopSrc = '收盘−1.5×ATR14'; }
+    }
+  } catch (eStV) { /* 止损算不出 → 留白 */ }
+  /* —— 提示层（最多 2 条）—— */
+  var evHint = 0;
+  try {
+    if (evHint < 2 && (per == null || per === 'day') && typeof klCysReboundAt === 'function' && klCysReboundAt(kl, gidx)) {
+      out.evs.push({ t: 'hint', txt: '🚀 超跌反弹买点' }); evHint++;
+    }
+  } catch (eRbV) { }
+  try {
+    if (evHint < 2 && (per == null || per === 'day') && typeof klCys13At === 'function' && kl.length >= 13) {
+      var c13 = klCys13At(kl, gidx);
+      if (c13 != null && isFinite(c13) && c13 <= -15) { out.evs.push({ t: 'hint', txt: 'CYS13 深度超跌 ' + c13.toFixed(1) + '%' }); evHint++; }
+    }
+  } catch (eC13V) { }
+  try {
+    if (evHint < 2 && ent.ma5 && ent.ma5[gidx] != null && ent.ma5[gidx] > 0 && isFinite(kD.close)) {
+      var dvV = (kD.close / ent.ma5[gidx] - 1) * 100;
+      var dbV = (typeof devBand === 'function') ? devBand(dvV) : null;
+      if (dbV && (dbV.k === 'extreme' || dbV.k === 'halve' || dbV.k === 'over')) {
+        out.evs.push({ t: 'hint', txt: 'dev +' + dvV.toFixed(1) + '% ' + dbV.label }); evHint++;
+      }
+    }
+  } catch (eDvV) { }
+  try {
+    if (evHint < 2 && typeof dingMomPosOf === 'function') {
+      var mpV = dingMomPosOf(kl.slice(0, gidx + 1));
+      if (mpV && mpV.brk && mpV.brk.ok) { out.evs.push({ t: 'hint', txt: '▲ 突破型高位' }); evHint++; }
+    }
+  } catch (eMpV) { }
+  /* —— 参考层（最多 2 条）—— */
+  var evRef = 0;
+  try {
+    var adxC = (ent && ent.ind && ent.ind.__adxCtx && ent.ind.__adxCtx.out && ent.ind.__adxCtx.out.ok) ? ent.ind.__adxCtx.out : null;
+    if (evRef < 2 && adxC && adxC.adx && adxC.adx[gidx] != null && isFinite(adxC.adx[gidx])) {
+      var avV = adxC.adx[gidx];
+      var dTx = (adxC.pdi && adxC.mdi && adxC.pdi[gidx] != null && adxC.mdi[gidx] != null && isFinite(adxC.pdi[gidx]) && isFinite(adxC.mdi[gidx]))
+        ? (adxC.pdi[gidx] > adxC.mdi[gidx] ? '多头' : (adxC.pdi[gidx] < adxC.mdi[gidx] ? '空头' : '')) : '';
+      out.evs.push({ t: 'ref', txt: 'ADX ' + avV.toFixed(0) + (dTx ? '·' + dTx : '') + (avV >= 25 ? ' 强趋势' : (avV >= 20 ? ' 弱趋势' : ' 震荡')) }); evRef++;
+    }
+  } catch (eAxV) { }
+  try {
+    if (evRef < 2 && kj && kj.ok) {
+      out.evs.push({ t: 'ref', txt: 'KDJ ' + (kj.signal === 'gold' ? '金叉·' : (kj.signal === 'dead' ? '死叉·' : '')) +
+        (typeof kdjZoneTxt === 'function' ? kdjZoneTxt(kj.zone) : '') }); evRef++;
+    }
+  } catch (eKjV) { }
+  try {
+    if (evRef < 2 && typeof dingMomPosOf === 'function') {
+      var mp2 = dingMomPosOf(kl.slice(0, gidx + 1));
+      if (mp2 && mp2.pos20 != null) out.evs.push({ t: 'ref', txt: '分位 ' + mp2.pos20.toFixed(2) });
+    }
+  } catch (eMp2V) { }
+  /* 证据截断：信号 1 条必留，提示 / 参考各最多 2 —— 上面 push 顺序已按层 */
+  if (out.evs.length > 5) out.evs = out.evs.slice(0, 5);
+  return out;
+}
+/* 结论行 → HTML。四参（ent, gidx, kj, per）与 klDaysetHtml 同参序，点击处理器原地重写 innerHTML。 */
+function klVerdictHtml(ent, gidx, kj, per) {
+  var vd = null;
+  try { vd = klVerdictOf(ent, gidx, per, kj); } catch (eVd) { vd = null; }
+  if (!vd) return '';
+  var perName = (per === 'week') ? '周线' : (per === 'month') ? '月线' : (per === 'm5') ? '5分钟' : (per === 'm30') ? '30分钟' : '';
+  var h = '<div class="kl-verdict">';
+  h += '<span class="kv-ruling" style="color:' + vd.col + '" title="裁决只认四指标打分（s4kTierOf 同一把尺子：≥68 重仓买入 / ≥56 买入·加仓 / ≥42 轻仓试错 / ≥31 观察·不买不加 / ≥17 减仓 / &lt;17 或一票否决 → 清仓·止损）。生命周期阶段、形态、参考层证据不参与裁决，只作陈列 —— 买卖仍以四指标打分为唯一依据。">⚖ 裁决' +
+    (vd.ok ? (' <b class="score">' + vd.total + '</b> ' + escapeHtml(vd.ruling)) : ' <b class="score">—</b>（四指标数据不足）') + '</span>';
+  h += '<span class="kv-flow" title="统一决策流（缺陷⑦）：仓位 = s4kAction 同源六档（S ≤15% / A ≤7% / 0仓）；' +
+    '止损 = ST 多头取 trailing 线（ATR14×3），否则收盘 − 1.5×ATR14（与读数面板 srpJudge 波动率止损同式）；' +
+    '失效 = 收盘有效跌破止损价（±0.5% 属正常噪音）或一票否决触发。">仓位 <b>' + escapeHtml(String(vd.pos || '—')) + '</b>' +
+    (vd.stop != null && isFinite(vd.stop) ? (' · 止损 <b>' + vd.stop.toFixed(2) + '</b>（' + escapeHtml(vd.stopSrc) + '）') : ' · 止损 —') +
+    ' · 失效：' + (vd.veto ? '一票否决已触发' : '收盘有效跌破止损价') + '</span>';
+  if (vd.evs && vd.evs.length) {
+    h += '<span class="kv-ev">';
+    vd.evs.forEach(function (evE) { h += '<span class="ev ev-' + evE.t + '"' + (evE.t === 'sig' ? ' style="color:' + vd.col + '"' : '') +
+      ' title="证据分层：信号层（随档位着色）= 参与裁决 · 提示层（橙虚框）= 需确认的买/险提示 · 参考层（灰框）= 仅描述不计分。">' + escapeHtml(evE.txt) + '</span>'; });
+    h += '</span>';
+  }
+  if (perName) h += '<span class="kv-per" title="口径警示（缺陷⑤）：本卡为' + perName + '，四指标 / KDJ / 动量 / ATR 均按本周期K重算；' +
+    '执行以本周期档位为准，勿与日线信号混读 —— 周线一根 ≈ 5 个交易日，同一打分在两把标尺上含义不同。">' + perName + '口径</span>';
+  h += '</div>';
+  return h;
+}
 
 function klDaysetHtml(ent, gidx, kj, raw, kjChipHtml, per) {
   /* ★ 2026-10-19 §176：周期单位 —— 徽标组里一批**硬口径**标签（前5日均量 / 20日动量 / 10日动量 /
@@ -41290,6 +41623,32 @@ function init() {
         bkBadge.outerHTML = brooksConclHtml(ent.kl, gidx, ent.per);
       }
     } catch (eBrooks330) { /* 形态特征替换失败不拖累面板 */ }
+    /* ★ 2026-11-20 §350b（用户要求「点击每一根k线，动量曲线显示对应的动量数值」）：
+       动量副图右上角三行 MOM5/10/20 角标跟随所点根 —— 点击 K 线时整图不重绘（§262 注释：
+       关键位重绘已下线，图不随点击根变化），SVG 角标原样停留在「最近交易日」口径 → 这里在
+       点击处理器内**原地 patch**（§343 wlExtRsPatch 同款免重绘模式）：
+       · 值 = klMomSeries(ent.kl, n)[gidx]（klMomSeries 是 renderChart 切片内顶层 function =
+         页面全局可直调；与图上曲线 / 页头动量判读三处同源，只用 kl[0..gidx] 无未来函数）；
+       · 格式与 renderChart 内角标逐字同源：(v>=0?'+':'')+v.toFixed(1)+'%'；算不出 →「—」；
+       · 后缀：历史根带「(至该日)」、点最后一根无后缀（= __focusDefault 口径），再点别的根自然覆盖；
+       · 仅日线卡（分钟/周线无动量面板，§350 纪律）；try/catch 失败静默不拖累面板。
+       纯展示层报数，不计分、不进四指标、不发买卖信号、不进钉钉。 */
+    try {
+      if (ent && ent.kl && ent.kl.length && (!ent.per || ent.per === 'day') &&
+          typeof klMomSeries === 'function' && gidx != null && gidx >= 0 && gidx < ent.kl.length) {
+        var __mSvg = wrap.querySelector('svg.chart');
+        if (__mSvg) {
+          var __mLast = (gidx >= ent.kl.length - 1);
+          var __mSfx = __mLast ? '' : '(至该日)';
+          [{ n: 'MOM5', w: 5 }, { n: 'MOM10', w: 10 }, { n: 'MOM20', w: 20 }].forEach(function (__M) {
+            var __ser = klMomSeries(ent.kl, __M.w);
+            var __v = (__ser && __ser[gidx] != null && isFinite(__ser[gidx])) ? __ser[gidx] : null;
+            var __el = __mSvg.querySelector('.kl-momcor[data-k="' + __M.n + '"]');
+            if (__el) __el.textContent = __M.n + __mSfx + ' ' + (__v != null ? (__v >= 0 ? '+' : '') + __v.toFixed(1) + '%' : '—');
+          });
+        }
+      }
+    } catch (eMomCor350b) { /* 动量角标 patch 失败不拖累面板 */ }
     /* ★ 2026-11-04 §263 → §263b → §263d（用户三轮迭代：①GW上方加全天预判+量比量 ②每一根K线逐日回算
        ③「四维确认」块**替代**全天预判块）：开盘八法四维确认面板块。
        数据 = ST.results[code].m5（已缓存）→ open8DayOf 逐日回算（判型/量比量与 computeOpen8 逐字同源）
@@ -41568,6 +41927,33 @@ function init() {
          这条路径是「点某根 K 线后重写徽标组」，拿不到 renderChart 的局部变量。 */
       if (ds && ent) ds.innerHTML = klDaysetHtml(ent, ent.start + i, kj, raw, null, ent.per);
     } catch (eDsV) { /* 徽标条联动失败不拖累面板 */ }
+    /* ★§351（2026-11-20 · 缺陷①）：首屏综合结论行跟随所点根 —— 与 .kl-dayset 同款原地重写
+       innerHTML（点击不整图重绘纪律）；klVerdictHtml 内部自兜 try/catch，失败返回空串时 wrap 保留原内容
+       （**不置空**：结论行一旦被清空，后续点击无从恢复）。 */
+    try {
+      var kvWrap = card.querySelector('.kl-verdict-wrap');
+      if (kvWrap && ent) {
+        var kvHtml = klVerdictHtml(ent, ent.start + i, kj, ent.per);
+        if (kvHtml) kvWrap.innerHTML = kvHtml;
+      }
+    } catch (eKvV) { /* 结论行联动失败不拖累面板 */ }
+    /* ★§352（2026-11-20 · 缺陷②）：四指标得分徽标跟随所点根 —— §324 ADX 角标同款原地 patch
+       （textContent + fill/stroke 换档位色），点击不整图重绘；该根无分 / 序列缺失 → 原地不动（不伪造）。 */
+    try {
+      var s4bG = wrap ? wrap.querySelector('g.kl-s4badge') : null;
+      if (s4bG && ent) {
+        var s4bSer = s4SeriesOf(ent);
+        var s4bD = (s4bSer && s4bSer[gidx]) ? s4bSer[gidx] : null;
+        var s4bTx = s4bG.querySelector('text'), s4bRc = s4bG.querySelector('rect');
+        if (s4bTx && s4bD && s4bD.total != null) {
+          var s4bCol = s4bD.veto ? '#3ddc97' : s4TierColor(s4bD.total);
+          var s4bSfx = (gidx < (((ent.ind && ent.ind.klines) ? ent.ind.klines.length : gidx + 1) - 1)) ? '(至该日)' : '';
+          s4bTx.textContent = '四指标 ' + s4bD.total + ' · ' + (s4bD.veto ? '清仓' : s4ActShort(s4bD.act)) + s4bSfx;
+          s4bTx.setAttribute('fill', s4bCol);
+          if (s4bRc) s4bRc.setAttribute('stroke', s4bCol);
+        }
+      }
+    } catch (eS4bV) { /* 得分徽标联动失败不拖累面板 */ }
     /* ★ 2026-11-14 §324（用户要求「点击每一根k线，最右侧显示对应的ADX,+DI,-DI数值」）：
        ADX 副图右侧三行角标跟随所点根 —— 点击**不整图重绘**（2026-10-13 纪律），角标原地改写 textContent：
        数据源 = renderChart 首绘时缓存的 ind.__adxCtx.out（klAdxSeries 全量序列，与副图三线/徽标 chip 同一份），
