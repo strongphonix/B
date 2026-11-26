@@ -9222,7 +9222,7 @@ function renderChart(ind, focus, opt) {
      有 ~58px 可用带宽，20/25 阈值线间距也从 22.7px 拉开到 34.7px）。栈底整体下移：
      日线 adxB 722→758、dateY 744→780、H 766→802；非日线 adxB 558→594、dateY 580→616、H 602→638。
      热区高度 / 纵向网格 y2 都走 indB=adxB 表达式，自动跟随（无第二处字面量）。 */
-  var W = 1130, H = __wKjShow ? 1048 : 638;   /* ★§383：日线再 +82（S4 四指标打分副图 68 + 间距 14）→ 966→1048 */
+  var W = 1130, H = __wKjShow ? 1130 : 638;   /* ★§385：日线再 +82（MA5斜率副图 68 + 间距 14）→ 1048→1130 */
   var padL = 58, padR = 64, padT = 58;
   var priceT = padT, priceB = 292;
   var volT = 326, volB = 394;
@@ -9247,22 +9247,27 @@ function renderChart(ind, focus, opt) {
      打分原料是日线级 s4kBuyDay（切片到该日），周/月/分钟序列没有对应口径 → 假读数不上图。 */
   var devT = 572, devB = 640;
   var s4T = 654, s4B = 722;
-  var zlT = 736, zlB = 804;   /* ★§383：CYS13 整体下移 82（原 §358 定的 654/722） */
+  /* ★§385（2026-11-26 · 用户指令「K线图中四指标下方增加显示MA5斜率」）：S4 之下、CYS13 之上再插
+     「MA5 斜率」副图 —— 同高 68、同间距 14，m5T 736 ~ m5B 804；CYS13 与其下各面板整体再下移 82
+     （zlT 818 / adxB 1004 / momB 1086 / dateY 1108 / H 1130）。仅日线出面板（__wKjShow 守卫）——
+     口径是「5 日均线的日斜率」（ma5SlopePct），周/月/分钟的 5 根是 5 周/5 月 → 假读数不上图。 */
+  var m5T = 736, m5B = 804;
+  var zlT = 818, zlB = 886;   /* ★§385：CYS13 整体下移 82（原 §383 定的 736/804） */
   /* ★ 2026-11-14 §318（用户要求「SuperTrend + ADX 示意图要在 k线图上显示出来」）：栈底再挂「ADX / DI」副图。
      · **所有周期都画**（ADX 按「根」算，日/周/月/分钟序列无差别 —— 与 KDJ 同层，不像周KDJ/主力状态
        那样只在日线画：那两块的原料是「日线筹码 / 周K对齐」，ADX 的原料就是当前序列本身）；
      · 高度 +82（面板 68 + 间距 14，与 §210/§247 同款）→ 日线 H 684→766、dateY 662→744；
        非日线 H 520→602、dateY 498→580；indB（指标栈底）→ adxB。
      · SuperTrend 不是副图，是价格面板上的叠加线（画在均线之后），不占新面板。 */
-  var adxT = __wKjShow ? 818 : 490, adxB = __wKjShow ? 922 : 594;   /* ★ §324：面板 68→104（★§383 起整体再下移 82） */
+  var adxT = __wKjShow ? 900 : 490, adxB = __wKjShow ? 1004 : 594;   /* ★ §324：面板 68→104（★§385 起整体再下移 82） */
   /* ★§350（2026-11-20 · 用户「在 adx 下方绘制 5日/10日/20日动量曲线」）：日线栈底再挂「动量 MOM」副图。
      高度 +82（面板 68 + 间距 14，与 §210/§247 同款）→ 日线 H 802→884、dateY 780→862；
      indB（指标栈底）→ momB：热区 / 纵向网格 / 分钟换日线 / 族级铺色自动延伸（无第二处字面量）。
      仅日线出面板（__wKjShow 守卫，与周KDJ/主力状态同款）：动量判读三窗阈值（±12/±15/±20 等）
      是「日」级 σ 标定，分钟图只覆盖半天、周线 5/10/20 是「周」—— 套用属假读数（§237 周期纪律）。 */
-  var momT = __wKjShow ? 936 : 0, momB = __wKjShow ? 1004 : 0;   /* ★§383：动量副图整体下移 82 */
+  var momT = __wKjShow ? 1018 : 0, momB = __wKjShow ? 1086 : 0;   /* ★§385：动量副图整体下移 82 */
   var indB = __wKjShow ? momB : adxB;
-  var dateY = __wKjShow ? 1026 : 616;   /* ★§350：日线 780→862；★§358 → 944；★§383 S4 副图再下移 82 → 1026 */
+  var dateY = __wKjShow ? 1108 : 616;   /* ★§350：日线 780→862；★§358 → 944；★§383 → 1026；★§385 MA5斜率副图再下移 82 → 1108 */
   var plotL = padL, plotR = W - padR;
 
   /* ---- ★ 2026-10-24 §206：60 根波段高点 → 压力位（必须在价格刻度之前算：它的价位要并入上沿）---- */
@@ -11230,30 +11235,27 @@ function renderChart(ind, focus, opt) {
       'font-family="' + M + '" text-anchor="end" paint-order="stroke" stroke="#101830" stroke-width="2.6" stroke-linejoin="round">J ' + Math.round(__wKjJ[wli]) + '</text>';
   })();
 
-  /* ===== ★§358：DEV5 五日乖离率副图（2026-11-22 · 用户指令「CYS13 上方绘制 dev 曲线，同时对超买、
-     超卖，回归均线三种状态用不同背景色标记」）=====
-     · 几何：日线栈内、周 KDJ 之下、CYS13 之上 —— devT 572 ~ devB 640（同高 68 / 同间距 14）。仅日线出面板
-       （__wKjShow 守卫，与周KDJ/主力状态/动量同款：口径是「5 日」，周/月线那 5 根是 5 周/5 月 → 假读数）。
-     · 数值口径 = 页面 dev 读数 / 选股器 F14 **完全同源**：dev =（该根收盘 − 该根 MA5）÷ 该根 MA5 × 100，
-       MA5 直接取 ind.ma5（calcMA(closes,5)，前 4 根为 null → 留白），**不另起一套均线** ——
-       用户在诊断页看到的 dev(至该日) 是多少，这里折线末点就是多少。
-     · 三状态背景色（用户给定 5 日乖离率实战口径 → 色义）：
-         超买档   +5% < dev ≤ +10%    红底 rgba(255,82,82,.22)    —— 短期涨幅过大、多头获利丰厚，减仓参考
-         强超买档 dev > +10%          红底 rgba(255,82,82,.36)
-         回归均线 −3% ≤ dev ≤ +3%     蓝灰底 rgba(120,144,190,.18) —— 紧贴 5 日均线的常态波动，持股观望
-         超卖档   −10% ≤ dev < −5%    绿底 rgba(38,194,129,.22)   —— 空头释放过度，低吸观察
-         强超卖档 dev < −10%          绿底 rgba(38,194,129,.36)
-       ±3% ~ ±5% 之间**不铺色**（留深底）→ 三状态互不粘连，过渡带一眼可辨。
-     · 阈值线：0 轴实线 / ±3 点线（常态带沿）/ ±5 虚线（超买超卖主阈）/ ±10 长虚线（强档）；
-       右侧留白列逐条标注「+10 强超买 / +5 超买 / −5 超卖 / −10 强超卖」，越界不画、间距 <9px 不叠字。
-     · 折线 #e8ecf6（中性白，与 MOM20 同一语义「主读数线」）—— 压在红/绿/蓝灰底带上对比最高；null 断开不硬连。
-     · 右侧角标 kl-devcor data-k="dev"（§328 点击跟随同模式，值 = 基准根 dev，2 位小数带号）。
-     · 参考层纪律：不计分、不进四指标、不发买卖信号、不进钉钉；缺数留白不硬算。 */
+  /* ===== ★§386：DEV5 五日乖离率副图改版（2026-11-26 · 用户指令「DEV曲线参考图片中的标准显示
+     判断结果，类似S4打分显示方式」——附「dev 偏离度 · 分档操作规则」卡截图）=====
+     · 几何不变：devT 572 ~ devB 640（周 KDJ 之下、S4 之上），仅日线出面板（__wKjShow 守卫）。
+     · 显示方式改 **§383 S4 同款**：固定档位刻度 + 六条横向档位色带 + 四条档位虚线 + 右侧档位标注
+       —— 曲线穿过哪条带 = 该根 dev 落在哪个档位，档位动作直读（替代 §358 三状态背景带）。
+     · 档位唯一真源 = DEV_BANDS / devBand（页面「dev 偏离度 · 分档操作规则」卡同一把尺子）：
+       ≥15 极端超涨（清仓/无条件离场）/ ≥10 减半 / ≥8 超涨 / ≥6 偏高 / ≥0 健康区 / <0 负偏离；
+       色带 / 虚线 / 标注 / 角标全部由 DEV_BANDS 驱动（hex→rgba 就地转换 + 每档 alpha 表），零第二套色值。
+     · 纵向刻度：档位基座固定 −6 ~ +18（静态覆盖全部档位边界 0/6/8/10/15）；
+       窗口极值越界时自适应外扩（档位线绝对位置不动，只拉伸顶/底带）—— 窄幅票带位静态可对照、
+       极端票不裁剪曲线（S4 固定 0~100 同思路，负偏离深坑由外扩兜住）。
+     · 零轴保留 §384 金虚线（#ffd166 1.5 / 6 4）；折线 #e8ecf6 不变（null 断开不硬连）。
+     · 角标 kl-devcor 改「DEV +x.xx%·档位短名」+ 色随档位（devBand 同源）；
+       点击跟随同步带档位；悬停明细 = 该根 dev + 档位动作全文案 + 口径。
+     · 参考层纪律不变：不计分、不参与四指标、不发买卖信号、不进钉钉；缺数留白不硬算。 */
   if (__wKjShow) (function () {
+    if (typeof devBand !== 'function' || typeof DEV_BANDS === 'undefined') return;   /* ★§386 档位真源守卫 */
     svg += '<text x="' + (padL - 8) + '" y="' + (devT + 11) + '" fill="#6b779b" font-size="10.5" font-weight="600" text-anchor="end">' +
       '<title>DEV5 五日乖离率 =（收盘 − MA5）÷ MA5 × 100（与页面 dev 读数 / 选股器 F14 同源，MA5 取 ind.ma5）&#10;' +
-      '背景色：红=超买（&gt;+5%，强档 &gt;+10%）· 绿=超卖（&lt;−5%，强档 &lt;−10%）· 蓝灰=回归均线（±3% 常态带）&#10;' +
-      '仅描述位置，不构成买卖依据。</title>DEV5</text>';
+      '背景色带（dev 分档操作规则 · DEV_BANDS 单一真源）：红=极端超涨 ≥15（清仓/无条件离场）· 红=减半 ≥10 · 橙=超涨 ≥8 · 浅橙=偏高 ≥6 · 绿=健康区 ≥0 · 蓝=负偏离 &lt;0&#10;' +
+      '曲线穿过哪条带 = 该根 dev 档位；仅描述位置，不构成买卖依据。</title>DEV5</text>';
     /* 窗口序列：(收盘 − MA5) ÷ MA5 × 100 —— m5 已是 ind.ma5 的可见窗切片（与价格面板 MA5 线同一条数组） */
     var __dvWin = [], __dvAny = false, __di, __dc, __dm, __dv0;
     for (__di = 0; __di < ks.length; __di++) {
@@ -11268,19 +11270,15 @@ function renderChart(ind, focus, opt) {
         '" fill="#5d6788" font-size="10.5" text-anchor="middle">DEV5 数据不足（MA5 序列为空 / K 线不足 5 根）</text>';
       return;
     }
-    /* 纵向刻度：窗口 min/max + 10% padding；跨度不足 12 个百分点时强制给到 ±5.5 —— 三条阈值线同屏可读，
-       否则窄幅盘整的票会把 ±3/±5 全挤出画布，「三状态」就无从对照。 */
-    var __dvHi = 0, __dvLo = 0;
+    /* ★§386 纵向刻度：档位基座固定 −6 ~ +18（静态覆盖全部档位边界 0/6/8/10/15，带位可对照）；
+       窗口极值越界时自适应外扩 ±1（档位线绝对位置不动，只拉伸顶/底带）—— S4 固定 0~100 同思路。 */
+    var __dvHi = 18, __dvLo = -6;
     for (__di = 0; __di < __dvWin.length; __di++) {
       __dv0 = __dvWin[__di];
       if (__dv0 == null || !isFinite(__dv0)) continue;
-      if (__dv0 > __dvHi) __dvHi = __dv0;
-      if (__dv0 < __dvLo) __dvLo = __dv0;
+      if (__dv0 > __dvHi) __dvHi = __dv0 + 1;
+      if (__dv0 < __dvLo) __dvLo = __dv0 - 1;
     }
-    var __dvPad = (__dvHi - __dvLo) * 0.10;
-    if (!(__dvPad > 0)) __dvPad = 0.5;
-    __dvHi += __dvPad; __dvLo -= __dvPad;
-    if ((__dvHi - __dvLo) < 12) { if (__dvHi < 5.5) __dvHi = 5.5; if (__dvLo > -5.5) __dvLo = -5.5; }
     function YDV(v) { return devB - (v - __dvLo) / (__dvHi - __dvLo) * (devB - devT); }
     /* 状态带：vA/vB 两个读数之间的整条横向色块，自动裁到面板内（越界/零高不发） */
     function __dvBand(vA, vB, fill) {
@@ -11291,34 +11289,38 @@ function renderChart(ind, focus, opt) {
       if (!((y1 - y0) > 0.3)) return;
       svg += '<rect x="' + plotL + '" y="' + y0.toFixed(1) + '" width="' + (plotR - plotL) + '" height="' + (y1 - y0).toFixed(1) + '" fill="' + fill + '"/>';
     }
-    __dvBand(10, __dvHi, 'rgba(255,82,82,0.36)');    /* 强超买 > +10 */
-    __dvBand(5, 10, 'rgba(255,82,82,0.22)');         /* 超买 +5 ~ +10 */
-    __dvBand(3, -3, 'rgba(120,144,190,0.18)');       /* 回归均线 −3 ~ +3 */
-    __dvBand(-5, -10, 'rgba(38,194,129,0.22)');      /* 超卖 −5 ~ −10 */
-    __dvBand(-10, __dvLo, 'rgba(38,194,129,0.36)');  /* 强超卖 < −10 */
-    /* 阈值线：0 轴 / ±3 点线 / ±5 虚线 / ±10 长虚线（越界不画） */
+    /* ★§386 六条档位色带（DEV_BANDS 单一真源：hex→rgba 就地转换 + 每档 alpha 表）；
+       顶带 [15, hi]、底带 [lo, 0] 随极值外扩拉伸，中间四条带静态 —— 曲线穿带即读档位。 */
+    function __dvHexA(hex, a) {
+      var h = hex.replace('#', '');
+      return 'rgba(' + parseInt(h.slice(0, 2), 16) + ',' + parseInt(h.slice(2, 4), 16) + ',' + parseInt(h.slice(4, 6), 16) + ',' + a + ')';
+    }
+    var __dvAlpha = { extreme: '0.30', halve: '0.20', over: '0.20', warn: '0.16', healthy: '0.14', neg: '0.16' };   /* ★ 字符串常量：数字 0.30 拼串会变 '0.3' */
+    for (var __dvbi = 0; __dvbi < DEV_BANDS.length; __dvbi++) {
+      var __dvUp = (__dvbi === 0) ? __dvHi : DEV_BANDS[__dvbi - 1].min;
+      var __dvLn = (__dvbi === DEV_BANDS.length - 1) ? __dvLo : DEV_BANDS[__dvbi].min;
+      __dvBand(__dvLn, __dvUp, __dvHexA(DEV_BANDS[__dvbi].color, __dvAlpha[DEV_BANDS[__dvbi].k] || 0.16));
+    }
+    /* 阈值线：0 轴金色虚线（§384 同款标记）/ 四条档位线（档位色 · 0.55 · 3 3 —— S4 同款） */
     svg += '<line x1="' + plotL + '" y1="' + YDV(0).toFixed(1) + '" x2="' + plotR + '" y2="' + YDV(0).toFixed(1) +
-      '" stroke="#22304f" stroke-width="1"/>';
-    [[-3, '#5d6788', 0.55, '2 3', 0.8], [3, '#5d6788', 0.55, '2 3', 0.8],
-     [-5, '#26c281', 0.80, '4 3', 1], [5, '#ff5252', 0.80, '4 3', 1],
-     [-10, '#26c281', 0.95, '6 4', 1], [10, '#ff5252', 0.95, '6 4', 1]].forEach(function (T) {
-      if (T[0] <= __dvLo || T[0] >= __dvHi) return;
-      svg += '<line x1="' + plotL + '" y1="' + YDV(T[0]).toFixed(1) + '" x2="' + plotR + '" y2="' + YDV(T[0]).toFixed(1) +
-        '" stroke="' + T[1] + '" stroke-width="' + T[4] + '" stroke-opacity="' + T[2] + '" stroke-dasharray="' + T[3] + '"/>';
-    });
-    /* 右侧留白列阈值标注（不压图内曲线；同侧上下间距 <9px 时后者不画，防叠字） */
+      '" stroke="#ffd166" stroke-width="1.5" stroke-dasharray="6 4"/>';
+    for (__dvbi = 0; __dvbi < DEV_BANDS.length - 1; __dvbi++) {
+      svg += '<line x1="' + plotL + '" y1="' + YDV(DEV_BANDS[__dvbi].min).toFixed(1) + '" x2="' + plotR + '" y2="' + YDV(DEV_BANDS[__dvbi].min).toFixed(1) +
+        '" stroke="' + DEV_BANDS[__dvbi].color + '" stroke-width="1" stroke-opacity="0.55" stroke-dasharray="3 3"/>';
+    }
+    /* ★§386 右侧留白列档位标注（按**带中心**放置，间距 <9px 时后者下让 9px 防叠字 —— S4 同款纪律） */
     var __dvUsedY = [];
-    [{ v: 10, t: '+10 强超买', c: '#ff8a8a' }, { v: 5, t: '+5 超买', c: '#ff8a8a' },
-     { v: -5, t: '−5 超卖', c: '#69e0a8' }, { v: -10, t: '−10 强超卖', c: '#69e0a8' }].forEach(function (L) {
-      if (L.v <= __dvLo || L.v >= __dvHi) return;
-      var ly = YDV(L.v) - 3.5;
-      if (ly < devT + 8) ly = YDV(L.v) + 8.5;
-      if (ly > devB - 1) ly = devB - 1;
-      for (var __ui = 0; __ui < __dvUsedY.length; __ui++) { if (Math.abs(__dvUsedY[__ui] - ly) < 9) return; }
-      __dvUsedY.push(ly);
-      svg += '<text x="' + (plotR + 5) + '" y="' + ly.toFixed(1) + '" fill="' + L.c + '" font-size="8.5" font-family="' + M +
-        '" text-anchor="start">' + L.t + '</text>';
-    });
+    for (__dvbi = 0; __dvbi < DEV_BANDS.length; __dvbi++) {
+      var __dvCv = (__dvbi === 0) ? (15 + __dvHi) / 2
+        : ((__dvbi === DEV_BANDS.length - 1) ? __dvLo / 2
+          : (DEV_BANDS[__dvbi].min + DEV_BANDS[__dvbi - 1].min) / 2);
+      var __dvLy = YDV(__dvCv) + 3;
+      for (var __dvui = 0; __dvui < __dvUsedY.length; __dvui++) { if (Math.abs(__dvUsedY[__dvui] - __dvLy) < 9) __dvLy = __dvUsedY[__dvui] + 9; }
+      if (__dvLy > devB - 1) __dvLy = devB - 1;
+      __dvUsedY.push(__dvLy);
+      svg += '<text x="' + (plotR + 5) + '" y="' + __dvLy.toFixed(1) + '" fill="' + DEV_BANDS[__dvbi].color + '" font-size="8.5" font-family="' + M +
+        '" text-anchor="start">' + DEV_BANDS[__dvbi].label + '</text>';
+    }
     /* 折线（null 断开不硬连） */
     var __dvD = '', __dvPen = false;
     for (__di = 0; __di < __dvWin.length; __di++) {
@@ -11330,31 +11332,26 @@ function renderChart(ind, focus, opt) {
     if (__dvD) {
       svg += '<path d="' + __dvD + '" fill="none" stroke="#e8ecf6" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" pointer-events="none"/>';
     }
-    /* 逐列热区 + 悬停明细（该根 dev 读数 + 三状态判读 + 口径） */
+    /* 逐列热区 + 悬停明细（★§386 该根 dev + devBand 档位动作全文案 + 口径） */
     for (__di = 0; __di < __dvWin.length; __di++) {
       var __dv2 = __dvWin[__di];
-      var __dvTag = (__dv2 == null || !isFinite(__dv2)) ? ' · 数据不足（MA5 缺失）' :
-        (__dv2 > 10 ? ' · 强超买（>+10%，短期涨幅过大，减仓参考）' :
-         (__dv2 > 5 ? ' · 超买（>+5%，多头获利丰厚，减仓参考）' :
-          (__dv2 >= 3 ? ' · 过渡带（+3%~+5%，未到超买）' :
-           (__dv2 > -3 ? ' · 回归均线（±3% 常态波动，持股观望）' :
-            (__dv2 > -5 ? ' · 过渡带（−5%~−3%）' :
-             (__dv2 > -10 ? ' · 超卖（<−5%，低吸观察）' : ' · 强超卖（<−10%，超跌反弹观察）'))))));
+      var __dvB6 = (__dv2 != null && isFinite(__dv2)) ? devBand(__dv2) : null;
       var __dvTip = ((ks[__di] && ks[__di].date) || '') + ' DEV5：' +
-        ((__dv2 == null || !isFinite(__dv2)) ? '—' : ((__dv2 >= 0 ? '+' : '') + __dv2.toFixed(2) + '%')) + __dvTag +
+        ((__dv2 == null || !isFinite(__dv2)) ? '—' : ((__dv2 >= 0 ? '+' : '') + __dv2.toFixed(2) + '%')) +
+        (__dvB6 ? (' · ' + __dvB6.label + '（' + __dvB6.act + '）') : ' · 数据不足（MA5 缺失）') +
         '&#10;口径：（该根收盘 − 该根 MA5）÷ 该根 MA5 × 100，MA5 取 ind.ma5 —— 与页面 dev 读数同一来源；' +
-        '&#10;三状态配色：红=超买 / 绿=超卖 / 蓝灰=回归均线（±3% 常态带），±3%~±5% 为过渡带不铺色；' +
-        '&#10;仅描述位置，不构成买卖依据。';
+        '&#10;档位色带（dev 分档操作规则 · DEV_BANDS）：≥15 极端超涨（清仓/无条件离场）/ ≥10 减半 / ≥8 超涨 / ≥6 偏高 / ≥0 健康区 / &lt;0 负偏离；' +
+        '&#10;曲线穿过哪条带 = 该根 dev 档位；仅描述位置，不构成买卖依据。';
       svg += '<rect x="' + (X(__di) - step / 2).toFixed(1) + '" y="' + devT + '" width="' + step.toFixed(1) +
         '" height="' + (devB - devT) + '" fill="transparent"><title>' + escapeHtml(__dvTip) + '</title></rect>';
     }
-    /* 右侧角标：末根读数（§328 点击跟随同款 class/data-k 寻址；色随状态） */
+    /* 右侧角标：末根读数 + 档位短名（§328 点击跟随同款 class/data-k 寻址；★§386 色随 devBand 档位） */
     var __dvLv = __dvWin[__dvWin.length - 1];
-    var __dvCol = (__dvLv == null || !isFinite(__dvLv)) ? '#5d6788' :
-      (__dvLv > 5 ? '#ff5252' : (__dvLv < -5 ? '#26c281' : (__dvLv >= -3 ? '#8fa3c8' : '#ffb300')));
+    var __dvB7 = (__dvLv != null && isFinite(__dvLv)) ? devBand(__dvLv) : null;
+    var __dvCol = __dvB7 ? __dvB7.color : '#5d6788';
     svg += '<text class="kl-devcor" data-k="dev" x="' + (plotR - 8) + '" y="' + (devT + 11) + '" fill="' + __dvCol + '" font-size="10" ' +
       'font-family="' + M + '" text-anchor="end" paint-order="stroke" stroke="#101830" stroke-width="2.6" stroke-linejoin="round">DEV ' +
-      ((__dvLv == null || !isFinite(__dvLv)) ? '—' : ((__dvLv >= 0 ? '+' : '') + __dvLv.toFixed(2) + '%')) + '</text>';
+      ((__dvLv == null || !isFinite(__dvLv)) ? '—' : ((__dvLv >= 0 ? '+' : '') + __dvLv.toFixed(2) + '%·' + __dvB7.label)) + '</text>';
   })();
 
   /* ===== ★§383：S4 四指标打分副图（2026-11-26 · 用户指令「想观察四指标打分与DEV之间的关系……
@@ -11468,8 +11465,94 @@ function renderChart(ind, focus, opt) {
       ((__s4Lv == null) ? '—' : (String(__s4Lv) + '·' + ((__s4raw2 && __s4raw2.veto) ? '清仓' : s4ActShort(__s4raw2 && __s4raw2.act)))) + '</text>';
   })();
 
+  /* ===== ★§385：MA5 斜率副图（2026-11-26 · 用户指令「K线图中四指标下方增加显示MA5斜率」）=====
+     · 几何：日线栈内、S4 四指标打分之下、CYS13 之上 —— m5T 736 ~ m5B 804（同高 68 / 同间距 14）。
+       仅日线出面板（__wKjShow 守卫）：口径是「5 日均线的日斜率」，周/月/分钟无对应口径。
+     · 数值口径 = 持仓日报 / 生命周期分类 **MA5斜率列完全同源**（L3841 段 ma5SlopePct）：
+       斜率 =（今 MA5 − 昨 MA5）÷ 昨 MA5 × 100（%/日）；MA5 直接取 ind.ma5 可见窗切片 m5，
+       首根（可见窗内无昨根）用全量 ind.ma5[start-1] 兜底，仍缺（序列头 / 前根为 null）→ 留白，不印 0。
+     · 零轴 = §384 同款金虚线（#ffd166 1.5 / 6 4）——「零轴之上 = MA5 向上」一眼可辨；
+       纵向刻度：窗口 min/max + 10% padding，跨度不足 2 个百分点时强制给到 ±1（窄幅盘整不至于压成直线）。
+     · 折线 #e8ecf6（中性白，与 DEV5/S4 同一语义「主读数线」）；null 断开不硬连。
+     · 右侧角标 kl-m5cor data-k="ma5s"（§328 点击跟随同模式，值 = 基准根斜率，2 位小数带号；
+       色 = 涨红跌绿：≥0 红 / <0 绿，与页面涨跌配色一致）。
+     · 参考层纪律：曲线只是把既有读数可视化，不计分、不参与四指标打分、不发买卖信号、不进钉钉；
+       缺数留白不硬算。 */
+  if (__wKjShow) (function () {
+    var __m5Win = [], __m5Any = false, __mi, __ma, __mb;
+    for (__mi = 0; __mi < ks.length; __mi++) {
+      __ma = m5[__mi];
+      __mb = (__mi >= 1) ? m5[__mi - 1] : ((start >= 1 && ind && ind.ma5) ? ind.ma5[start - 1] : null);
+      if (__ma == null || !isFinite(__ma) || __mb == null || !isFinite(__mb) || !(__mb > 0)) { __m5Win.push(null); continue; }
+      __m5Win.push((__ma - __mb) / __mb * 100);
+      if (__m5Win[__mi] != null) __m5Any = true;
+    }
+    svg += '<text x="' + (padL - 8) + '" y="' + (m5T + 11) + '" fill="#6b779b" font-size="10.5" font-weight="600" text-anchor="end">' +
+      '<title>MA5 斜率 =（今 MA5 − 昨 MA5）÷ 昨 MA5 × 100（%/日；与持仓日报 / 生命周期分类 MA5斜率列同尺 ma5SlopePct）&#10;' +
+      '零轴金虚线：之上 = MA5 向上（短期成本抬升），之下 = MA5 向下（短期成本回落）&#10;' +
+      '仅描述位置，不构成买卖依据。</title>MA5 斜率</text>';
+    if (!__m5Any) {
+      svg += '<text x="' + ((plotL + plotR) / 2).toFixed(1) + '" y="' + ((m5T + m5B) / 2 + 3.5).toFixed(1) +
+        '" fill="#5d6788" font-size="10.5" text-anchor="middle">MA5 斜率数据不足（MA5 序列为空 / K 线不足 6 根）</text>';
+    } else {
+      /* 纵向刻度：窗口 min/max + 10% padding；跨度不足 2 个百分点时强制给到 ±1 —— 零轴与波动都可读 */
+      var __m5Hi = 0, __m5Lo = 0;
+      for (__mi = 0; __mi < __m5Win.length; __mi++) {
+        if (__m5Win[__mi] == null) continue;
+        if (__m5Win[__mi] > __m5Hi) __m5Hi = __m5Win[__mi];
+        if (__m5Win[__mi] < __m5Lo) __m5Lo = __m5Win[__mi];
+      }
+      var __m5Pad = (__m5Hi - __m5Lo) * 0.10;
+      if (!(__m5Pad > 0)) __m5Pad = 0.2;
+      __m5Hi += __m5Pad; __m5Lo -= __m5Pad;
+      if ((__m5Hi - __m5Lo) < 2) { if (__m5Hi < 1) __m5Hi = 1; if (__m5Lo > -1) __m5Lo = -1; }
+      function YM5(v) { return m5B - (v - __m5Lo) / (__m5Hi - __m5Lo) * (m5B - m5T); }
+      /* 零轴金虚线（§384 同款标记：#ffd166 1.5 / 6 4） */
+      svg += '<line x1="' + plotL + '" y1="' + YM5(0).toFixed(1) + '" x2="' + plotR + '" y2="' + YM5(0).toFixed(1) +
+        '" stroke="#ffd166" stroke-width="1.5" stroke-dasharray="6 4"/>';
+      /* 折线（null 断开不硬连） */
+      var __m5D = '', __m5Pen = false;
+      for (__mi = 0; __mi < __m5Win.length; __mi++) {
+        if (__m5Win[__mi] == null || !isFinite(__m5Win[__mi])) { __m5Pen = false; continue; }
+        __m5D += (__m5Pen ? ' L' : 'M') + X(__mi).toFixed(1) + ' ' + YM5(__m5Win[__mi]).toFixed(1);
+        __m5Pen = true;
+      }
+      if (__m5D) {
+        svg += '<path d="' + __m5D + '" fill="none" stroke="#e8ecf6" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" pointer-events="none"/>';
+      }
+      /* 逐列热区 + 悬停明细（该根斜率 + 口径 + 无未来函数） */
+      for (__mi = 0; __mi < __m5Win.length; __mi++) {
+        var __m5v = __m5Win[__mi];
+        var __m5tip = ((ks[__mi] && ks[__mi].date) || '') + ' MA5斜率：' +
+          ((__m5v == null) ? '—' : ((__m5v >= 0 ? '+' : '') + __m5v.toFixed(2) + '%')) +
+          ((__m5v == null) ? ' · 数据不足（MA5 序列缺前根）' :
+            ((__m5v >= 0 ? ' · MA5 向上（短期成本抬升）' : ' · MA5 向下（短期成本回落）'))) +
+          '&#10;判读：向上 = 做多；向下 = 弱势反弹，不重仓（判读规则卡同文案）；' +
+          '&#10;口径：（今 MA5 − 昨 MA5）÷ 昨 MA5 × 100（%/日）—— 与持仓日报 / 生命周期分类 MA5斜率列同尺；' +
+          '&#10;MA5 取 ind.ma5（calcMA(closes,5)），只用该日及之前数据、无未来函数；曲线仅可视化，不构成买卖依据。';
+        svg += '<rect x="' + (X(__mi) - step / 2).toFixed(1) + '" y="' + m5T + '" width="' + step.toFixed(1) +
+          '" height="' + (m5B - m5T) + '" fill="transparent"><title>' + escapeHtml(__m5tip) + '</title></rect>';
+      }
+      /* 右侧角标：末根读数（色 = 涨红跌绿） */
+      var __m5Lv = __m5Win[__m5Win.length - 1];
+      var __m5Col = (__m5Lv == null) ? '#5d6788' : ((__m5Lv >= 0) ? '#ff8a8a' : '#69e0a8');
+      svg += '<text class="kl-m5cor" data-k="ma5s" x="' + (plotR - 8) + '" y="' + (m5T + 11) + '" fill="' + __m5Col + '" font-size="10" ' +
+        'font-family="' + M + '" text-anchor="end" paint-order="stroke" stroke="#101830" stroke-width="2.6" stroke-linejoin="round">斜率 ' +
+        ((__m5Lv == null) ? '—' : ((__m5Lv >= 0 ? '+' : '') + __m5Lv.toFixed(2) + '%')) + '</text>';
+    }
+  })();
+
+  /* ★§387/§388 底部判读行：日线图最底（日期刻度之下）专设一行，首绘即显示末根四项判读
+     （MA5斜率 / 连续破线 / 换手率 / J 指标，规则卡同文案）；点击任意 K 线原地改写为该根判读
+     （见点击处理器 §387 段）。判读层纪律：不计分、不发信号、不进钉钉。 */
+  if (__wKjShow && typeof klJdgTspans === 'function') {
+    svg += '<text class="kl-jdg" data-k="jdg" x="' + ((plotL + plotR) / 2).toFixed(1) + '" y="' + (H - 8) + '" fill="#8fa3c8" font-size="9.5" font-family="' + M + '" text-anchor="middle">' +
+      '<tspan fill="#6b779b">判读│</tspan>' +
+      klJdgTspans(ind, kl, kl.length - 1, (ind && ind.floatMarket != null) ? ind.floatMarket : null) + '</text>';
+  }
+
   /* ===== ★§345：CYS13 副图（2026-11-19 · 用户指令「K线图下方增加实时CYS13指标，替代主力状态指标」）=====
-     · 几何：日线 zlT 736 ~ zlB 804（★§383 起其上新增 S4 四指标打分副图，本面板整体再下移 82；参考层）；
+     · 几何：日线 zlT 818 ~ zlB 886（★§385 起其上新增 MA5 斜率副图，本面板整体再下移 82；参考层）；
        主力状态副图停画，但 __zlSer 序列仍保留
        （蜡烛悬停明细的主力状态四读数 / 头部 chip / 点击面板继续消费，不删）。
      · 口径：CYS13 = 收盘价 ÷ 13日均收盘 − 1（klCys13Series；成本均线以均收盘近似 —— 数据源无量额，
@@ -11777,7 +11860,7 @@ function renderChart(ind, focus, opt) {
         ? ' 周 · 前复权 · MA5/20/60 = 5/20/60 周均线，KDJ(9,3,3) = 9 周 · 末根为本周进行中（量能偏小） · 底=ADX/DI 副图(红底带=多头强势区 · 紫底带=超买区 ADX>50) · 点击柱子看量价关系'
         : (__isMonth
           ? ' 月 · 前复权 · MA5/20/60 = 5/20/60 月均线，KDJ(9,3,3) = 9 月 · 末根为本月进行中（量能偏小） · 底=ADX/DI 副图(红底带=多头强势区 · 紫底带=超买区 ADX>50) · 点击柱子看量价关系'
-          : ' 日 · 前复权 · 副图：上=日KDJ / 中=周KDJ(9,3,3) / 下=DEV5(五日乖离率 · 红=超买 绿=超卖 蓝灰=回归均线) / S4四指标打分(总分0~100固定刻度 · §229六档色带 68重仓/56买入/42轻仓/31观察/17减仓/<17清仓 · 白线=逐根总分 · 角标随点击根) / CYS13(收盘÷13日均收盘−1 · 金虚线=−15深度超跌=反弹观察信号 · 紫虚线=−5回升确认 · 金点=深度超跌根 · 成本均线以均收盘近似——数据源无量额) / 底=ADX/DI(黄=ADX 趋势强度 · 红=+DI · 绿=-DI · 虚线 20/25/50 阈值 · 红底带=多头强势区 ADX≥25 且 +DI>-DI · 紫底带=超买区 ADX>50) / 最底=动量MOM副图(5/10/20日动量% · 金虚线±20=2σ档 · ±5淡带=拉锯区 · 角标随点击根) · 主图红/绿粗线=SuperTrend(多头红支撑/空头绿阻力,▲▼=翻转) · 悬停看开高低收 · 点击柱子看当日量价关系'))) + '</text>';
+          : ' 日 · 前复权 · 副图：上=日KDJ / 中=周KDJ(9,3,3) / 下=DEV5(五日乖离率 · §386 档位色带 ≥15极端超涨清仓 / ≥10减半 / ≥8超涨 / ≥6偏高 / ≥0健康区 / <0负偏离 · 金虚线=零轴 · 角标随点击根) / S4四指标打分(总分0~100固定刻度 · §229六档色带 68重仓/56买入/42轻仓/31观察/17减仓/<17清仓 · 白线=逐根总分 · 角标随点击根) / MA5斜率((今MA5−昨MA5)÷昨MA5×100 · 金虚线=零轴 之上=向上 之下=向下 · 与MA5斜率列同尺 · 角标随点击根) / CYS13(收盘÷13日均收盘−1 · 金虚线=−15深度超跌=反弹观察信号 · 紫虚线=−5回升确认 · 金点=深度超跌根 · 成本均线以均收盘近似——数据源无量额) / 底=ADX/DI(黄=ADX 趋势强度 · 红=+DI · 绿=-DI · 虚线 20/25/50 阈值 · 红底带=多头强势区 ADX≥25 且 +DI>-DI · 紫底带=超买区 ADX>50) / 最底=动量MOM副图(5/10/20日动量% · 金虚线±20=2σ档 · ±5淡带=拉锯区 · 角标随点击根) · 主图红/绿粗线=SuperTrend(多头红支撑/空头绿阻力,▲▼=翻转) · 悬停看开高低收 · 点击柱子看当日量价关系'))) + '</text>';
   /* ★§352（2026-11-20 · 缺陷②「四指标得分不上图」）：得分徽标上图 —— 价格面板左上角小徽标，
      显示**基准根**的四指标总分 + 档位动作（与 s4chip / 结论行 / 推送同一把尺子 s4SeriesOf，零第二套算法）。
      · 徽标底 = 半透明深底 + 档位色描边（不遮下方蜡烛首列热区语义，纯 display 层）；
@@ -12841,6 +12924,84 @@ function klDaysetHtml(ent, gidx, kj, raw, kjChipHtml, per) {
        ★ 2026-11-07 §240：5日动量 紧贴 MA5斜率 之前（用户口令「MA5斜率(至该日) 前增加显示 5日动量(至该日)」）
        ★ 2026-11-19 §345：主力状态 chip 之后追加 CYS13 chip（用户指令「主力状态数值后增加显示CYS13数值」） */
     s4chip + adxChip + devChip + upChip + posChip + brkChip + mom10Chip + zlztChip + cys13Chip + patChip;
+}
+
+/* ===== ★§387/§388：点击 K 线 → 底部判读行（2026-11-26 · 用户指令「在k线图合适位置，点击k线，
+   显示对应图片中的判断结果」——附 MA5斜率 / 连续破线 / 换手率 三张判读规则卡截图；
+   ★§388 用户指令「J>100%超买，J<10%超卖——J指标请同时增加判断结果」追加第④段 J 判读）=====
+   四项判读（与页面判读规则卡逐字同文案，零第二套措辞）：
+   · MA5斜率：向上 = 做多；向下 = 弱势反弹，不重仓；
+   · 连续破线（收盘连续低于 MA5 天数）：1-2 天 = 减仓防守；≥3 天 = 无条件清仓；0 天 = 未破线；
+   · 换手率：<10% 正常；10~15% 活跃；≥15% 天量（加速/分歧）；
+   · J 指标（日KDJ 的 J）：J>100 超买（红）；J<10 超卖（绿）；10~100 中性（灰）。
+   显示位置：日线 K 线图最底部专设「判读」行（日期刻度之下）；首绘即显示末根判读，
+   点击任意 K 线原地改写为该根判读（(至该日) 后缀跟随惯例）。
+   J 取数：ind.__kdjCtx.J（首绘缓存全量序列）优先，缺则 kdjSeries(kl) 现算兜底（同一函数零第二套算法）。
+   换手率取数：末根用 ind.turnover（真实值）；历史根用流通市值反推近似（股本 = 流通市值 ÷ 价格，
+   假设股本不变 → 前缀「≈」诚实披露），缺 floatMarket → 「—」。
+   判读层纪律：不计分、不参与四指标打分、不发买卖信号、不进钉钉；缺数留白不印 0。 */
+function klJdgTspans(ind, kl, gidx, fm) {
+  var out = '';
+  var ma5 = (ind && ind.ma5) || null;
+  /* ① MA5 斜率（与 §385 副图同一数组同一公式） */
+  (function () {
+    var a = ma5 ? ma5[gidx] : null, b = (gidx >= 1 && ma5) ? ma5[gidx - 1] : null;
+    if (a != null && isFinite(a) && b != null && isFinite(b) && b > 0) {
+      var up = a >= b;
+      out += '<tspan fill="' + (up ? '#ff8a8a' : '#69e0a8') + '">│MA5斜率' + (up ? '向上=做多' : '向下=弱势反弹，不重仓') + '</tspan>';
+    } else out += '<tspan fill="#5d6788">│MA5斜率—</tspan>';
+  })();
+  /* ② 连续破线：从该根往前数「收盘 < MA5」的连续天数 */
+  (function () {
+    var bd = 0;
+    if (ma5) {
+      for (var j = gidx; j >= 0; j--) {
+        var c = (kl && kl[j]) ? kl[j].close : null, m = ma5[j];
+        if (c == null || !isFinite(c) || m == null || !isFinite(m) || !(m > 0) || !(c < m)) break;
+        bd++;
+      }
+    }
+    if (!bd) out += '<tspan fill="#8fa3c8">│连续破线0天=未破线（站上MA5）</tspan>';
+    else if (bd <= 2) out += '<tspan fill="#ffb26b">│连续破线' + bd + '天=减仓防守</tspan>';
+    else out += '<tspan fill="#ff6b6b">│连续破线' + bd + '天=无条件清仓</tspan>';
+  })();
+  /* ③ 换手率：末根 ind.turnover 真实值；历史根 floatMarket 反推近似（≈）；缺 → — */
+  (function () {
+    var t = null, approx = false;
+    var isLast = (kl && gidx === kl.length - 1);
+    if (isLast && ind && ind.turnover != null && isFinite(ind.turnover) && ind.turnover > 0) t = ind.turnover;
+    else {
+      var v = (kl && kl[gidx]) ? kl[gidx].volume : null;
+      var p = (kl && kl[gidx]) ? kl[gidx].close : null;
+      if (v != null && isFinite(v) && v > 0 && p != null && isFinite(p) && p > 0 && fm != null && isFinite(fm) && fm > 0) {
+        t = v * p / (fm * 1e8) * 100; approx = true;
+      }
+    }
+    if (t == null) out += '<tspan fill="#5d6788">│换手率—</tspan>';
+    else {
+      var tier = (t >= 15) ? ['天量（加速/分歧）', '#ff6b6b'] : ((t >= 10) ? ['活跃', '#ffb26b'] : ['正常', '#8fa3c8']);
+      out += '<tspan fill="' + tier[1] + '">│换手率' + (approx ? '≈' : '') + t.toFixed(2) + '%=' + tier[0] + '</tspan>';
+    }
+  })();
+  /* ④ J 指标（日KDJ 的 J，§388）：J>100 超买 / J<10 超卖 / 10~100 中性；
+     ind.__kdjCtx.J（首绘缓存全量序列）优先，缺则 kdjSeries(kl) 现算兜底 —— 同一函数零第二套算法 */
+  (function () {
+    var jv = null;
+    try {
+      if (ind && ind.__kdjCtx && ind.__kdjCtx.ok && ind.__kdjCtx.J && ind.__kdjCtx.J[gidx] != null) {
+        jv = ind.__kdjCtx.J[gidx];
+      } else if (typeof kdjSeries === 'function' && kl && kl.length) {
+        var __kjS = kdjSeries(kl);
+        if (__kjS && __kjS.J && __kjS.J[gidx] != null) jv = __kjS.J[gidx];
+      }
+    } catch (eJdg) { jv = null; }
+    if (jv == null || !isFinite(jv)) { out += '<tspan fill="#5d6788">│J—</tspan>'; return; }
+    var jr = Math.round(jv);
+    if (jr > 100) out += '<tspan fill="#ff6b6b">│J' + jr + '>100=超买</tspan>';
+    else if (jr < 10) out += '<tspan fill="#69e0a8">│J' + jr + '<10=超卖</tspan>';
+    else out += '<tspan fill="#8fa3c8">│J' + jr + '（10~100 中性）</tspan>';
+  })();
+  return out;
 }
 
 function indItem(label, value, desc, status) {
@@ -42350,15 +42511,18 @@ function init() {
             }
           }
           /* ★§358：DEV5 角标跟随 —— 与首绘折线 / 页面 dev 读数**同一来源**（ent.ma5 + ent.kl[gidx] 收盘），
-             值 =（收盘 − MA5）÷ MA5 × 100，2 位小数带号；MA5 为 null（前 4 根 / 数据不足）→ 「—」留白。 */
+             值 =（收盘 − MA5）÷ MA5 × 100，2 位小数带号；★§386 起带档位短名 + 色随 devBand 档位
+             （与首绘角标同格式）；MA5 为 null（前 4 根 / 数据不足）→ 「—」留白。 */
           var cor2DevEl = cor2Svg.querySelector('text.kl-devcor[data-k="dev"]');
           if (cor2DevEl) {
             var cor2Dcl = (ent.kl && ent.kl[gidx]) ? ent.kl[gidx].close : null;
             var cor2Dma = (ent.ind && ent.ind.ma5) ? ent.ind.ma5[gidx] : null;
             var cor2Dv = (cor2Dcl != null && isFinite(cor2Dcl) && cor2Dma != null && isFinite(cor2Dma) && cor2Dma > 0)
               ? (cor2Dcl - cor2Dma) / cor2Dma * 100 : null;
+            var cor2Db = (cor2Dv != null && isFinite(cor2Dv) && typeof devBand === 'function') ? devBand(cor2Dv) : null;
             cor2DevEl.textContent = 'DEV' + cor2Sfx + ' ' +
-              ((cor2Dv != null && isFinite(cor2Dv)) ? ((cor2Dv >= 0 ? '+' : '') + cor2Dv.toFixed(2) + '%') : '—');
+              ((cor2Dv != null && isFinite(cor2Dv)) ? ((cor2Dv >= 0 ? '+' : '') + cor2Dv.toFixed(2) + '%·' + (cor2Db ? cor2Db.label : '—')) : '—');
+            if (cor2Db) cor2DevEl.setAttribute('fill', cor2Db.color);
           }
           /* ★§383：S4 四指标打分角标跟随 —— 数据源 = s4SeriesOf(ent)（WeakMap+指纹缓存全量序列，
              与副图曲线 / §352 得分徽标同一份，零第二套算法），值 = 全量下标 gidx 处 total；
@@ -42376,6 +42540,29 @@ function init() {
             } else {
               cor2S4el.textContent = 'S4' + cor2Sfx + ' —';
             }
+          }
+          /* ★§385：MA5 斜率角标跟随 —— 数据源 = ind.ma5 全量序列（与副图曲线 / 页面 dev 读数同一数组，
+             零第二套均线），值 =（ma5[gidx] − ma5[gidx-1]）÷ ma5[gidx-1] × 100（与持仓日报 / 生命周期
+             MA5斜率列同尺 ma5SlopePct）；色 = 涨红跌绿；前根缺（序列头）→ 「—」留白。 */
+          var cor2M5el = cor2Svg.querySelector('text.kl-m5cor[data-k="ma5s"]');
+          if (cor2M5el) {
+            var cor2M5a = (ent.ind && ent.ind.ma5) ? ent.ind.ma5[gidx] : null;
+            var cor2M5b = (gidx >= 1 && ent.ind && ent.ind.ma5) ? ent.ind.ma5[gidx - 1] : null;
+            var cor2M5v = (cor2M5a != null && isFinite(cor2M5a) && cor2M5b != null && isFinite(cor2M5b) && cor2M5b > 0)
+              ? (cor2M5a - cor2M5b) / cor2M5b * 100 : null;
+            cor2M5el.textContent = '斜率' + cor2Sfx + ' ' +
+              ((cor2M5v != null && isFinite(cor2M5v)) ? ((cor2M5v >= 0 ? '+' : '') + cor2M5v.toFixed(2) + '%') : '—');
+            if (cor2M5v != null && isFinite(cor2M5v)) cor2M5el.setAttribute('fill', cor2M5v >= 0 ? '#ff8a8a' : '#69e0a8');
+          }
+          /* ★§387：底部判读行跟随所点根 —— klJdgTspans(ind, kl, gidx, floatMarket) 现算四项判读
+             （MA5斜率 / 连续破线 / 换手率 / §388 J 指标，规则卡同文案）；历史根换手率用流通市值反推近似
+             （前缀「≈」），末根用 ind.turnover 真实值；innerHTML 原地改写（判读行是纯 tspan 文本，无事件绑定）。 */
+          var cor2Jdg = cor2Svg.querySelector('text.kl-jdg[data-k="jdg"]');
+          if (cor2Jdg && typeof klJdgTspans === 'function') {
+            var cor2Fm = (ent.quote && ent.quote.floatMarket != null) ? ent.quote.floatMarket
+              : ((ent.ind && ent.ind.floatMarket != null) ? ent.ind.floatMarket : null);
+            cor2Jdg.innerHTML = '<tspan fill="#6b779b">判读' + cor2Sfx + '│</tspan>' +
+              klJdgTspans(ent.ind, ent.kl, gidx, cor2Fm);
           }
         }
         /* 量能两值：量 = 该根成交量；比 = 量比 r5（÷ 前 5 根均量不含当根，§212 同一公式；显式判 null） */
