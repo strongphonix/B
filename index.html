@@ -9222,7 +9222,7 @@ function renderChart(ind, focus, opt) {
      有 ~58px 可用带宽，20/25 阈值线间距也从 22.7px 拉开到 34.7px）。栈底整体下移：
      日线 adxB 722→758、dateY 744→780、H 766→802；非日线 adxB 558→594、dateY 580→616、H 602→638。
      热区高度 / 纵向网格 y2 都走 indB=adxB 表达式，自动跟随（无第二处字面量）。 */
-  var W = 1130, H = __wKjShow ? 966 : 638;   /* ★§358：日线再 +82（DEV5 副图 68 + 间距 14）→ 884→966 */
+  var W = 1130, H = __wKjShow ? 1048 : 638;   /* ★§383：日线再 +82（S4 四指标打分副图 68 + 间距 14）→ 966→1048 */
   var padL = 58, padR = 64, padT = 58;
   var priceT = padT, priceB = 292;
   var volT = 326, volB = 394;
@@ -9238,23 +9238,31 @@ function renderChart(ind, focus, opt) {
      devT 572 ~ devB 640；CYS13 与其下各面板整体下移 82（zlT 654 / adxB 840 / momB 922 / dateY 944 / H 966）。
      与 §210/§247/§318/§350 同一条手艺：只改本处常量，热区 / 纵向网格 / 族级铺色 / 分钟换日线
      一律走 indB 表达式自动跟随（无第二处字面量）。 */
+  /* ★§383（2026-11-26 · 用户指令「想观察四指标打分与DEV之间的关系……按照四指标打分买入、轻仓，
+     减仓，清仓，重仓等，在不同区域用不同颜色表示」，方案 A 定稿：DEV 下方新开独立子面板）：
+     DEV5 之下、CYS13 之上插入「S4 四指标打分」副图 —— 同高 68、同间距 14，s4T 654 ~ s4B 722；
+     CYS13 与其下各面板整体再下移 82（zlT 736 / adxB 922 / momB 1004 / dateY 1026 / H 1048）。
+     与 §210/§247/§318/§350/§358 同一条手艺：只改本处常量，热区 / 纵向网格 / 族级铺色 / 分钟换日线
+     一律走 indB 表达式自动跟随（无第二处字面量）。仅日线出面板（__wKjShow 守卫）——
+     打分原料是日线级 s4kBuyDay（切片到该日），周/月/分钟序列没有对应口径 → 假读数不上图。 */
   var devT = 572, devB = 640;
-  var zlT = 654, zlB = 722;
+  var s4T = 654, s4B = 722;
+  var zlT = 736, zlB = 804;   /* ★§383：CYS13 整体下移 82（原 §358 定的 654/722） */
   /* ★ 2026-11-14 §318（用户要求「SuperTrend + ADX 示意图要在 k线图上显示出来」）：栈底再挂「ADX / DI」副图。
      · **所有周期都画**（ADX 按「根」算，日/周/月/分钟序列无差别 —— 与 KDJ 同层，不像周KDJ/主力状态
        那样只在日线画：那两块的原料是「日线筹码 / 周K对齐」，ADX 的原料就是当前序列本身）；
      · 高度 +82（面板 68 + 间距 14，与 §210/§247 同款）→ 日线 H 684→766、dateY 662→744；
        非日线 H 520→602、dateY 498→580；indB（指标栈底）→ adxB。
      · SuperTrend 不是副图，是价格面板上的叠加线（画在均线之后），不占新面板。 */
-  var adxT = __wKjShow ? 736 : 490, adxB = __wKjShow ? 840 : 594;   /* ★ §324：面板 68→104（★§358 起整体下移 82） */
+  var adxT = __wKjShow ? 818 : 490, adxB = __wKjShow ? 922 : 594;   /* ★ §324：面板 68→104（★§383 起整体再下移 82） */
   /* ★§350（2026-11-20 · 用户「在 adx 下方绘制 5日/10日/20日动量曲线」）：日线栈底再挂「动量 MOM」副图。
      高度 +82（面板 68 + 间距 14，与 §210/§247 同款）→ 日线 H 802→884、dateY 780→862；
      indB（指标栈底）→ momB：热区 / 纵向网格 / 分钟换日线 / 族级铺色自动延伸（无第二处字面量）。
      仅日线出面板（__wKjShow 守卫，与周KDJ/主力状态同款）：动量判读三窗阈值（±12/±15/±20 等）
      是「日」级 σ 标定，分钟图只覆盖半天、周线 5/10/20 是「周」—— 套用属假读数（§237 周期纪律）。 */
-  var momT = __wKjShow ? 854 : 0, momB = __wKjShow ? 922 : 0;
+  var momT = __wKjShow ? 936 : 0, momB = __wKjShow ? 1004 : 0;   /* ★§383：动量副图整体下移 82 */
   var indB = __wKjShow ? momB : adxB;
-  var dateY = __wKjShow ? 944 : 616;   /* ★§350：日线 780→862；★§358 DEV5 副图再下移 82 → 944 */
+  var dateY = __wKjShow ? 1026 : 616;   /* ★§350：日线 780→862；★§358 → 944；★§383 S4 副图再下移 82 → 1026 */
   var plotL = padL, plotR = W - padR;
 
   /* ---- ★ 2026-10-24 §206：60 根波段高点 → 压力位（必须在价格刻度之前算：它的价位要并入上沿）---- */
@@ -11232,7 +11240,7 @@ function renderChart(ind, focus, opt) {
      · 三状态背景色（用户给定 5 日乖离率实战口径 → 色义）：
          超买档   +5% < dev ≤ +10%    红底 rgba(255,82,82,.22)    —— 短期涨幅过大、多头获利丰厚，减仓参考
          强超买档 dev > +10%          红底 rgba(255,82,82,.36)
-         回归均线 −3% ≤ dev ≤ +3%     蓝灰底 rgba(120,144,190,.14) —— 紧贴 5 日均线的常态波动，持股观望
+         回归均线 −3% ≤ dev ≤ +3%     蓝灰底 rgba(120,144,190,.18) —— 紧贴 5 日均线的常态波动，持股观望
          超卖档   −10% ≤ dev < −5%    绿底 rgba(38,194,129,.22)   —— 空头释放过度，低吸观察
          强超卖档 dev < −10%          绿底 rgba(38,194,129,.36)
        ±3% ~ ±5% 之间**不铺色**（留深底）→ 三状态互不粘连，过渡带一眼可辨。
@@ -11285,7 +11293,7 @@ function renderChart(ind, focus, opt) {
     }
     __dvBand(10, __dvHi, 'rgba(255,82,82,0.36)');    /* 强超买 > +10 */
     __dvBand(5, 10, 'rgba(255,82,82,0.22)');         /* 超买 +5 ~ +10 */
-    __dvBand(3, -3, 'rgba(120,144,190,0.14)');       /* 回归均线 −3 ~ +3 */
+    __dvBand(3, -3, 'rgba(120,144,190,0.18)');       /* 回归均线 −3 ~ +3 */
     __dvBand(-5, -10, 'rgba(38,194,129,0.22)');      /* 超卖 −5 ~ −10 */
     __dvBand(-10, __dvLo, 'rgba(38,194,129,0.36)');  /* 强超卖 < −10 */
     /* 阈值线：0 轴 / ±3 点线 / ±5 虚线 / ±10 长虚线（越界不画） */
@@ -11349,8 +11357,119 @@ function renderChart(ind, focus, opt) {
       ((__dvLv == null || !isFinite(__dvLv)) ? '—' : ((__dvLv >= 0 ? '+' : '') + __dvLv.toFixed(2) + '%')) + '</text>';
   })();
 
+  /* ===== ★§383：S4 四指标打分副图（2026-11-26 · 用户指令「想观察四指标打分与DEV之间的关系……
+     同时按照四指标打分买入、轻仓，减仓，清仓，重仓等，在不同区域用不同颜色表示」，方案 A 定稿：
+     DEV 下方新开独立子面板 + 纵向分数区域带）=====
+     · 几何：日线栈内、DEV5 之下、CYS13 之上 —— s4T 654 ~ s4B 722（同高 68 / 同间距 14）。
+       仅日线出面板（__wKjShow 守卫）：打分原料 = s4kBuyDay 日线级切片，周/月/分钟无对应口径。
+     · 数据源 = s4SeriesOf({kl, ind})（全量逐根 s4kBuyDay、WeakMap+指纹缓存、切片到该日、
+       只用该日及之前数据、无未来函数）—— 与 §352 得分徽标 / s4chip / 结论行 / 钉钉推送
+       **同一把尺子，零第二套算法**；可见窗值 = ser[start+idx]（与 ks 逐根对齐）。
+     · 纵向分数区域带（用户选定）：固定 0~100 刻度，按 §229 档位线 68/56/42/31/17 划六条水平淡色带
+       （色 = s4TierColor 同色系）：
+         68~100 重仓买入 红底 rgba(255,107,107,.30) / 56~68 买入·加仓 橙底 rgba(255,159,67,.20) /
+         42~56 轻仓试错 黄底 rgba(255,209,102,.16) / 31~42 观察（不买不加）灰底 rgba(141,153,174,.16) /
+         17~31 减仓 浅绿底 rgba(61,220,151,.12) / 0~17 清仓·止损 绿底 rgba(61,220,151,.24)。
+       固定刻度的理由：带位是「分数 → 档位」的静态语义（与 §229 线族一一对应），动态 min/max 会让
+       窄幅票的档位带整体消失；代价是曲线纵向占用被压缩，可接受（ADX 副图 0~60 固定映射同款先例）。
+     · 阈值线：五条档位线虚线（档位色、0.55 透明度）；右侧留白列按**带中心**标注档位短名
+       （68 重仓 / 56 买入 / 42 轻仓 / 31 观察 / 17 减仓 / 清仓），间距 <9px 自动下让不叠字。
+     · 折线 #e8ecf6（中性白，与 DEV5/MOM20 同一语义「主读数线」）；该根无分（s4kCalc 最低根数不足）
+       断开不硬连；读数防御性裁到 0~100（打分权重上限 100，正常不出界）。
+     · 右侧角标 kl-s4cor data-k="s4"（§328 点击跟随同模式，值 = 基准根总分 + 档位短名，色随档位；
+       veto 一票否决 → 清仓绿，与 §352 徽标 / s4ActColor 同规则）。
+     · 参考层纪律：曲线只是把既有信号可视化，不计分、不发买卖信号、不进钉钉；
+       买卖仍以四指标打分为唯一依据（档位动作唯一真源 = s4kAction）。 */
+  if (__wKjShow) (function () {
+    if (typeof s4SeriesOf !== 'function' || typeof s4TierColor !== 'function' || typeof s4ActShort !== 'function') return;
+    var __s4Ser = null;
+    try { __s4Ser = s4SeriesOf({ kl: kl, ind: ind }); } catch (eS4p) { return; }
+    if (!__s4Ser || !__s4Ser.length) return;
+    svg += '<text x="' + (padL - 8) + '" y="' + (s4T + 11) + '" fill="#6b779b" font-size="10.5" font-weight="600" text-anchor="end">' +
+      '<title>S4 四指标打分副图 = 逐根四指标总分曲线（s4kBuyDay 切片到该日、无未来函数，与 §352 得分徽标 / 结论行 / 钉钉推送同一把尺子）&#10;' +
+      '背景色带（§229 档位线 68/56/42/31/17，色随 s4TierColor）：红=重仓买入 ≥68 · 橙=买入/加仓 ≥56 · 黄=轻仓试错 ≥42 · 灰=观察 ≥31 · 浅绿=减仓 ≥17 · 绿=清仓 &lt;17&#10;' +
+      '一票否决（veto）以动作为准 → 清仓档，即使总分仍高。买卖决策仍以四指标打分为唯一依据。</title>S4 打分</text>';
+    var __s4Win = [], __s4Any = false, __si, __s4d;
+    for (__si = 0; __si < ks.length; __si++) {
+      __s4d = __s4Ser[start + __si];
+      __s4Win.push((__s4d && __s4d.total != null && isFinite(+__s4d.total)) ? +__s4d.total : null);
+      if (__s4Win[__si] != null) __s4Any = true;
+    }
+    if (!__s4Any) {
+      svg += '<text x="' + ((plotL + plotR) / 2).toFixed(1) + '" y="' + ((s4T + s4B) / 2 + 3.5).toFixed(1) +
+        '" fill="#5d6788" font-size="10.5" text-anchor="middle">S4 数据不足（K 线根数低于 s4kCalc 最低要求）</text>';
+      return;
+    }
+    function YS4(v) { return s4B - v / 100 * (s4B - s4T); }   /* 固定 0~100 刻度 */
+    /* 状态带：vA/vB 之间的整条横向色块，自动裁到面板内（越界/零高不发）—— DEV5 __dvBand 同款 */
+    function __s4Band(vA, vB, fill) {
+      var y0 = YS4(vA), y1 = YS4(vB), yt;
+      if (y0 > y1) { yt = y0; y0 = y1; y1 = yt; }
+      if (y0 < s4T) y0 = s4T;
+      if (y1 > s4B) y1 = s4B;
+      if (!((y1 - y0) > 0.3)) return;
+      svg += '<rect x="' + plotL + '" y="' + y0.toFixed(1) + '" width="' + (plotR - plotL) + '" height="' + (y1 - y0).toFixed(1) + '" fill="' + fill + '"/>';
+    }
+    __s4Band(68, 100, 'rgba(255,107,107,0.30)');   /* 重仓买入 ≥68 */
+    __s4Band(56, 68, 'rgba(255,159,67,0.20)');     /* 买入/加仓 ≥56 */
+    __s4Band(42, 56, 'rgba(255,209,102,0.16)');    /* 轻仓试错 ≥42 */
+    __s4Band(31, 42, 'rgba(141,153,174,0.16)');    /* 观察（不买不加）≥31 */
+    __s4Band(17, 31, 'rgba(61,220,151,0.12)');     /* 减仓 ≥17 */
+    __s4Band(0, 17, 'rgba(61,220,151,0.24)');      /* 清仓/止损 <17 */
+    /* 五条档位线（档位色虚线 0.55，固定刻度恒在面板内） */
+    [[68, '#ff6b6b'], [56, '#ff9f43'], [42, '#ffd166'], [31, '#8d99ae'], [17, '#3ddc97']].forEach(function (T) {
+      svg += '<line x1="' + plotL + '" y1="' + YS4(T[0]).toFixed(1) + '" x2="' + plotR + '" y2="' + YS4(T[0]).toFixed(1) +
+        '" stroke="' + T[1] + '" stroke-width="1" stroke-opacity="0.55" stroke-dasharray="3 3"/>';
+    });
+    /* 右侧留白列档位标注（按**带中心**放置，间距 <9px 时后者下让 9px，防叠字 —— DEV5 同款纪律） */
+    var __s4UsedY = [];
+    [{ v: 84, t: '68 重仓', c: '#ff8a8a' }, { v: 62, t: '56 买入', c: '#ffb26b' }, { v: 49, t: '42 轻仓', c: '#ffe08a' },
+     { v: 36.5, t: '31 观察', c: '#a7b1c4' }, { v: 24, t: '17 减仓', c: '#69e0a8' }, { v: 8.5, t: '清仓', c: '#3ddc97' }].forEach(function (L) {
+      var ly = YS4(L.v) + 3;
+      for (var __ui = 0; __ui < __s4UsedY.length; __ui++) { if (Math.abs(__s4UsedY[__ui] - ly) < 9) ly = __s4UsedY[__ui] + 9; }
+      if (ly > s4B - 1) ly = s4B - 1;
+      __s4UsedY.push(ly);
+      svg += '<text x="' + (plotR + 5) + '" y="' + ly.toFixed(1) + '" fill="' + L.c + '" font-size="8.5" font-family="' + M +
+        '" text-anchor="start">' + L.t + '</text>';
+    });
+    /* 折线（null 断开不硬连；防御性裁到面板内） */
+    var __s4D = '', __s4Pen = false;
+    for (__si = 0; __si < __s4Win.length; __si++) {
+      __s4d = __s4Win[__si];
+      if (__s4d == null || !isFinite(__s4d)) { __s4Pen = false; continue; }
+      var __s4y = YS4(Math.max(0, Math.min(100, __s4d)));
+      __s4D += (__s4Pen ? ' L' : 'M') + X(__si).toFixed(1) + ' ' + __s4y.toFixed(1);
+      __s4Pen = true;
+    }
+    if (__s4D) {
+      svg += '<path d="' + __s4D + '" fill="none" stroke="#e8ecf6" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" pointer-events="none"/>';
+    }
+    /* 逐列热区 + 悬停明细（该根总分 + 档位动作 + veto + 口径） */
+    for (__si = 0; __si < __s4Win.length; __si++) {
+      var __s4v = __s4Win[__si];
+      var __s4raw = __s4Ser[start + __si];
+      var __s4tip = ((ks[__si] && ks[__si].date) || '') + ' 四指标：' +
+        ((__s4v == null) ? '—' : String(__s4v)) +
+        ((__s4v == null) ? ' · 数据不足（s4kCalc 最低根数不够）' :
+          (' · ' + (typeof s4kAction === 'function' ? s4kAction(__s4v).name : (s4ActShort(__s4raw && __s4raw.act) + '档')) +
+           (__s4raw && __s4raw.veto ? '（⚠️ 一票否决 → 清仓档，即使总分仍高）' : ''))) +
+        '&#10;口径：s4kBuyDay 切片到该日、只用该日及之前数据、无未来函数 —— 与 §352 得分徽标 / 头部 chip / 结论行 / 钉钉推送同一把尺子；' +
+        '&#10;背景色带（§229）：≥68 重仓买入 / ≥56 买入·加仓 / ≥42 轻仓试错 / ≥31 观察 / ≥17 减仓 / &lt;17 或一票否决 → 清仓；' +
+        '&#10;曲线与色带仅把既有信号可视化，买卖仍以四指标打分为唯一依据。';
+      svg += '<rect x="' + (X(__si) - step / 2).toFixed(1) + '" y="' + s4T + '" width="' + step.toFixed(1) +
+        '" height="' + (s4B - s4T) + '" fill="transparent"><title>' + escapeHtml(__s4tip) + '</title></rect>';
+    }
+    /* 右侧角标：末根读数（§328 点击跟随同款 class/data-k 寻址；色随档位，veto → 清仓绿） */
+    var __s4Lv = __s4Win[__s4Win.length - 1];
+    var __s4raw2 = __s4Ser[start + __s4Win.length - 1];
+    var __s4Col = (__s4Lv == null) ? '#5d6788' : ((__s4raw2 && __s4raw2.veto) ? '#3ddc97' : s4TierColor(__s4Lv));
+    svg += '<text class="kl-s4cor" data-k="s4" x="' + (plotR - 8) + '" y="' + (s4T + 11) + '" fill="' + __s4Col + '" font-size="10" ' +
+      'font-family="' + M + '" text-anchor="end" paint-order="stroke" stroke="#101830" stroke-width="2.6" stroke-linejoin="round">S4 ' +
+      ((__s4Lv == null) ? '—' : (String(__s4Lv) + '·' + ((__s4raw2 && __s4raw2.veto) ? '清仓' : s4ActShort(__s4raw2 && __s4raw2.act)))) + '</text>';
+  })();
+
   /* ===== ★§345：CYS13 副图（2026-11-19 · 用户指令「K线图下方增加实时CYS13指标，替代主力状态指标」）=====
-     · 几何：日线 zlT 654 ~ zlB 722（★§358 起其上新增 DEV5 副图，本面板整体下移 82；参考层）；
+     · 几何：日线 zlT 736 ~ zlB 804（★§383 起其上新增 S4 四指标打分副图，本面板整体再下移 82；参考层）；
        主力状态副图停画，但 __zlSer 序列仍保留
        （蜡烛悬停明细的主力状态四读数 / 头部 chip / 点击面板继续消费，不删）。
      · 口径：CYS13 = 收盘价 ÷ 13日均收盘 − 1（klCys13Series；成本均线以均收盘近似 —— 数据源无量额，
@@ -11658,7 +11777,7 @@ function renderChart(ind, focus, opt) {
         ? ' 周 · 前复权 · MA5/20/60 = 5/20/60 周均线，KDJ(9,3,3) = 9 周 · 末根为本周进行中（量能偏小） · 底=ADX/DI 副图(红底带=多头强势区 · 紫底带=超买区 ADX>50) · 点击柱子看量价关系'
         : (__isMonth
           ? ' 月 · 前复权 · MA5/20/60 = 5/20/60 月均线，KDJ(9,3,3) = 9 月 · 末根为本月进行中（量能偏小） · 底=ADX/DI 副图(红底带=多头强势区 · 紫底带=超买区 ADX>50) · 点击柱子看量价关系'
-          : ' 日 · 前复权 · 副图：上=日KDJ / 中=周KDJ(9,3,3) / 下=CYS13(收盘÷13日均收盘−1 · 金虚线=−15深度超跌=反弹观察信号 · 紫虚线=−5回升确认 · 金点=深度超跌根 · 成本均线以均收盘近似——数据源无量额) / 底=ADX/DI(黄=ADX 趋势强度 · 红=+DI · 绿=-DI · 虚线 20/25/50 阈值 · 红底带=多头强势区 ADX≥25 且 +DI>-DI · 紫底带=超买区 ADX>50) / 最底=动量MOM副图(5/10/20日动量% · 金虚线±20=2σ档 · ±5淡带=拉锯区 · 角标随点击根) · 主图红/绿粗线=SuperTrend(多头红支撑/空头绿阻力,▲▼=翻转) · 悬停看开高低收 · 点击柱子看当日量价关系'))) + '</text>';
+          : ' 日 · 前复权 · 副图：上=日KDJ / 中=周KDJ(9,3,3) / 下=DEV5(五日乖离率 · 红=超买 绿=超卖 蓝灰=回归均线) / S4四指标打分(总分0~100固定刻度 · §229六档色带 68重仓/56买入/42轻仓/31观察/17减仓/<17清仓 · 白线=逐根总分 · 角标随点击根) / CYS13(收盘÷13日均收盘−1 · 金虚线=−15深度超跌=反弹观察信号 · 紫虚线=−5回升确认 · 金点=深度超跌根 · 成本均线以均收盘近似——数据源无量额) / 底=ADX/DI(黄=ADX 趋势强度 · 红=+DI · 绿=-DI · 虚线 20/25/50 阈值 · 红底带=多头强势区 ADX≥25 且 +DI>-DI · 紫底带=超买区 ADX>50) / 最底=动量MOM副图(5/10/20日动量% · 金虚线±20=2σ档 · ±5淡带=拉锯区 · 角标随点击根) · 主图红/绿粗线=SuperTrend(多头红支撑/空头绿阻力,▲▼=翻转) · 悬停看开高低收 · 点击柱子看当日量价关系'))) + '</text>';
   /* ★§352（2026-11-20 · 缺陷②「四指标得分不上图」）：得分徽标上图 —— 价格面板左上角小徽标，
      显示**基准根**的四指标总分 + 档位动作（与 s4chip / 结论行 / 推送同一把尺子 s4SeriesOf，零第二套算法）。
      · 徽标底 = 半透明深底 + 档位色描边（不遮下方蜡烛首列热区语义，纯 display 层）；
@@ -42240,6 +42359,23 @@ function init() {
               ? (cor2Dcl - cor2Dma) / cor2Dma * 100 : null;
             cor2DevEl.textContent = 'DEV' + cor2Sfx + ' ' +
               ((cor2Dv != null && isFinite(cor2Dv)) ? ((cor2Dv >= 0 ? '+' : '') + cor2Dv.toFixed(2) + '%') : '—');
+          }
+          /* ★§383：S4 四指标打分角标跟随 —— 数据源 = s4SeriesOf(ent)（WeakMap+指纹缓存全量序列，
+             与副图曲线 / §352 得分徽标同一份，零第二套算法），值 = 全量下标 gidx 处 total；
+             档位色随 s4TierColor（veto 一票否决 → 清仓绿，与徽标同规则）；该根无分 → 「—」留白。 */
+          var cor2S4el = cor2Svg.querySelector('text.kl-s4cor[data-k="s4"]');
+          if (cor2S4el) {
+            var cor2S4ser = null;
+            try { cor2S4ser = (typeof s4SeriesOf === 'function') ? s4SeriesOf(ent) : null; } catch (eS4c) { cor2S4ser = null; }
+            var cor2S4d = (cor2S4ser && cor2S4ser[gidx]) ? cor2S4ser[gidx] : null;
+            if (cor2S4d && cor2S4d.total != null) {
+              var cor2S4col = cor2S4d.veto ? '#3ddc97' : ((typeof s4TierColor === 'function') ? s4TierColor(cor2S4d.total) : '#e8ecf6');
+              cor2S4el.textContent = 'S4' + cor2Sfx + ' ' + cor2S4d.total + '·' +
+                (cor2S4d.veto ? '清仓' : ((typeof s4ActShort === 'function') ? s4ActShort(cor2S4d.act) : '—'));
+              cor2S4el.setAttribute('fill', cor2S4col);
+            } else {
+              cor2S4el.textContent = 'S4' + cor2Sfx + ' —';
+            }
           }
         }
         /* 量能两值：量 = 该根成交量；比 = 量比 r5（÷ 前 5 根均量不含当根，§212 同一公式；显式判 null） */
