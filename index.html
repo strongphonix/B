@@ -9222,7 +9222,7 @@ function renderChart(ind, focus, opt) {
      有 ~58px 可用带宽，20/25 阈值线间距也从 22.7px 拉开到 34.7px）。栈底整体下移：
      日线 adxB 722→758、dateY 744→780、H 766→802；非日线 adxB 558→594、dateY 580→616、H 602→638。
      热区高度 / 纵向网格 y2 都走 indB=adxB 表达式，自动跟随（无第二处字面量）。 */
-  var W = 1130, H = __wKjShow ? 1130 : 638;   /* ★§385：日线再 +82（MA5斜率副图 68 + 间距 14）→ 1048→1130 */
+  var W = 1130, H = __wKjShow ? 1130 : 638;   /* ★§389 曾 +20 给判读行专用带 → ★§390 判读行移到图左上角徽章右侧，底部带废除，H 回 1130 */
   var padL = 58, padR = 64, padT = 58;
   var priceT = padT, priceB = 292;
   var volT = 326, volB = 394;
@@ -11542,14 +11542,9 @@ function renderChart(ind, focus, opt) {
     }
   })();
 
-  /* ★§387/§388 底部判读行：日线图最底（日期刻度之下）专设一行，首绘即显示末根四项判读
-     （MA5斜率 / 连续破线 / 换手率 / J 指标，规则卡同文案）；点击任意 K 线原地改写为该根判读
-     （见点击处理器 §387 段）。判读层纪律：不计分、不发信号、不进钉钉。 */
-  if (__wKjShow && typeof klJdgTspans === 'function') {
-    svg += '<text class="kl-jdg" data-k="jdg" x="' + ((plotL + plotR) / 2).toFixed(1) + '" y="' + (H - 8) + '" fill="#8fa3c8" font-size="9.5" font-family="' + M + '" text-anchor="middle">' +
-      '<tspan fill="#6b779b">判读│</tspan>' +
-      klJdgTspans(ind, kl, kl.length - 1, (ind && ind.floatMarket != null) ? ind.floatMarket : null) + '</text>';
-  }
+  /* ★§390：底部判读行已废除 —— §387/§388 曾画在 y=H−28（更早 y=H−8），与页脚 y=H−6 同屏叠字乱码
+     （2026-11-27 用户报障截图）。判读行整体移到图左上角 kl-s4badge 徽章右侧同一行（见 svg 收尾段），
+     底部只保留页脚一行，H 回 1130。 */
 
   /* ===== ★§345：CYS13 副图（2026-11-19 · 用户指令「K线图下方增加实时CYS13指标，替代主力状态指标」）=====
      · 几何：日线 zlT 818 ~ zlB 886（★§385 起其上新增 MA5 斜率副图，本面板整体再下移 82；参考层）；
@@ -11883,6 +11878,20 @@ function renderChart(ind, focus, opt) {
         '（s4kBuyDay：切片到该日、只用该日及之前数据、无未来函数）。档位（§229）：≥68 重仓买入 · ≥56 买入/加仓 · ≥42 轻仓试错 · ≥31 观察 · ≥17 减仓 · <17 或一票否决 → 清仓。' +
         '点击 K 线 → 徽标跟随所点根。分数描述信号强度，买卖仍以四指标打分为唯一依据。') + '</title></g>';
   })();
+
+  /* ★§390：判读行挂在图左上角 kl-s4badge 徽章右侧同一行（2026-11-27 · 用户指令「直接把判断的语句
+     移动到k线图左上角的右侧」——§387/§388 底部判读行与页脚同屏叠字乱码，整行废除、上移至此）。
+     · 几何：x = plotL + 134（徽章 rect 右缘 plotL+126 + 8 间距），y = priceT + 10（与徽章文字同基线）；
+       text-anchor=start；徽章缺分（该根无打分）时本行仍在（静态位，顶部留白不碍读数）。
+     · 首绘 = __focusEnd 根（与徽章同基准：默认末根 / 点击历史根后由点击处理器原地改写）；
+       class/data-k 寻址不变（text.kl-jdg[data-k="jdg"]），点击跟随链路零改动。
+     · 周期不限（klJdgTspans 按根算：MA5斜率 / 连续破线 / 换手率 / J 各周期同口径）。
+     · 判读层纪律：不计分、不参与四指标打分、不发买卖信号、不进钉钉；缺数段内留白。 */
+  if (typeof klJdgTspans === 'function') {
+    svg += '<text class="kl-jdg" data-k="jdg" x="' + (plotL + 134) + '" y="' + (priceT + 10) + '" fill="#8fa3c8" font-size="9" font-family="' + M + '" text-anchor="start">' +
+      '<tspan fill="#6b779b">判读│</tspan>' +
+      klJdgTspans(ind, kl, __focusEnd, (ind && ind.floatMarket != null) ? ind.floatMarket : null) + '</text>';
+  }
   svg += '</svg>';
 
   /* 顶部图例 chip：颜色与图上线条一一对应（★ 2026-10-04 起由 klDaysetHtml 统一生成，见 renderChart 之后） */
@@ -12934,7 +12943,7 @@ function klDaysetHtml(ent, gidx, kj, raw, kjChipHtml, per) {
    · 连续破线（收盘连续低于 MA5 天数）：1-2 天 = 减仓防守；≥3 天 = 无条件清仓；0 天 = 未破线；
    · 换手率：<10% 正常；10~15% 活跃；≥15% 天量（加速/分歧）；
    · J 指标（日KDJ 的 J）：J>100 超买（红）；J<10 超卖（绿）；10~100 中性（灰）。
-   显示位置：日线 K 线图最底部专设「判读」行（日期刻度之下）；首绘即显示末根判读，
+   显示位置：K 线图左上角 kl-s4badge 徽章右侧同一行（★§390 · 2026-11-27 用户指令；§387 原放图底与页脚叠字乱码已废）；首绘即显示基准根判读，
    点击任意 K 线原地改写为该根判读（(至该日) 后缀跟随惯例）。
    J 取数：ind.__kdjCtx.J（首绘缓存全量序列）优先，缺则 kdjSeries(kl) 现算兜底（同一函数零第二套算法）。
    换手率取数：末根用 ind.turnover（真实值）；历史根用流通市值反推近似（股本 = 流通市值 ÷ 价格，
@@ -42554,7 +42563,7 @@ function init() {
               ((cor2M5v != null && isFinite(cor2M5v)) ? ((cor2M5v >= 0 ? '+' : '') + cor2M5v.toFixed(2) + '%') : '—');
             if (cor2M5v != null && isFinite(cor2M5v)) cor2M5el.setAttribute('fill', cor2M5v >= 0 ? '#ff8a8a' : '#69e0a8');
           }
-          /* ★§387：底部判读行跟随所点根 —— klJdgTspans(ind, kl, gidx, floatMarket) 现算四项判读
+          /* ★§387/§390：图左上角判读行跟随所点根 —— klJdgTspans(ind, kl, gidx, floatMarket) 现算四项判读
              （MA5斜率 / 连续破线 / 换手率 / §388 J 指标，规则卡同文案）；历史根换手率用流通市值反推近似
              （前缀「≈」），末根用 ind.turnover 真实值；innerHTML 原地改写（判读行是纯 tspan 文本，无事件绑定）。 */
           var cor2Jdg = cor2Svg.querySelector('text.kl-jdg[data-k="jdg"]');
