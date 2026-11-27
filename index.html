@@ -9020,6 +9020,91 @@ function klDateTxt(d) {
   return s;
 }
 
+/* ===== ★§392/§392b：主力资金净流入数据层（2026-11-27 · 用户指令「k线图，量能曲线下方增加主力资金净流入曲线」；
+   ★§392b 用户报「主力资金数据不准」→ 换源：新浪 MoneyFlow 分档口径与主流软件差异过大
+   （实测 600519 同日新浪 +5.14亿 vs 东财 −0.99亿，符号相反）→ 单一真源 = 东财 push2his
+   fflow/daykline（与主流软件同口径）；新浪通道弃用，不混口径。页面上下文实测（2026-11-27）：
+   fetch 直连 CORS 通过、121 条日级全历史（klines 正序 15 列 CSV）=====
+   klines 列：[0]=日期 [1]=主力净额(元) [2]=小单净 [3]=中单净 [4]=大单净 [5]=超大单净
+   [6]=主力净占比% [11]=收盘 [12]=涨跌幅%。
+   缓存 __FF_RAW_CACHE 按 secid 去重（promise 级，铺满整页多卡不重复拉）；串行队列 150ms 间隔。
+   缺数口径：北交所 / 通道失败 / 停牌缺日 → ind.__ffCtx={ok:false} 或逐根 null，面板明写「数据不足」，绝不硬算。
+   参考层纪律：主力资金流只是可视化辅助，不计分、不参与四指标打分、不发买卖信号、不进钉钉。
+   用户方法论⑤如实披露：大单拆小单会被软件识别为「散户流入」（实为主力进场）；对倒制造虚假流入 ——
+   曲线只是「软件口径的大单资金」，不辨真伪。 */
+function ffSecidOf(code) {
+  var c = String(code == null ? '' : code).trim().toLowerCase();
+  var m = c.match(/^(sh|sz|bj)?(\d{6})$/);          /* 兼容 600519 / sh600519 两种入参 */
+  if (!m) return null;
+  var d = m[2], p = m[1] || '';
+  if (!p) p = (/^(6|9)/.test(d)) ? 'sh' : ((/^(0|2|3)/.test(d)) ? 'sz' : '');
+  if (p === 'bj') return null;                      /* 北交所不入面板（诚实留白，不猜 secid） */
+  return (p === 'sh' ? '1.' : '0.') + d;
+}
+var __FF_RAW_CACHE = {};    /* secid → Promise<klines|null>（null = 拉过且失败，不再重试） */
+var __FF_Q = [], __FF_QBUSY = false;
+function __ffDequeue() {
+  if (__FF_QBUSY || !__FF_Q.length) return;
+  __FF_QBUSY = true;
+  var job = __FF_Q.shift();
+  job().then(function () {
+    setTimeout(function () { __FF_QBUSY = false; __ffDequeue(); }, 150);
+  });
+}
+function ffEnqueue(job) {
+  return new Promise(function (res) {
+    __FF_Q.push(function () { return job().then(res, function () { res(null); }); });
+    __ffDequeue();
+  });
+}
+function fundFlowFetchAsync(code) {
+  var sec = ffSecidOf(code);
+  if (!sec) return Promise.resolve(null);
+  if (__FF_RAW_CACHE[sec]) return __FF_RAW_CACHE[sec];
+  var p = ffEnqueue(function () {
+    var url = 'https://push2his.eastmoney.com/api/qt/stock/fflow/daykline/get?lmt=0&klt=101&secid=' + sec +
+      '&fields1=f1,f2,f3,f7&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61,f62,f63,f64,f65' +
+      '&ut=b2884a393a59ad64002292a3d9013315&_=' + Date.now();
+    var sig = (typeof AbortSignal !== 'undefined' && AbortSignal.timeout) ? AbortSignal.timeout(9000) : undefined;
+    return fetch(url, { signal: sig }).then(function (r) { return r.json(); }).then(function (j) {
+      var k = (j && j.data && j.data.klines) ? j.data.klines : null;
+      return (Array.isArray(k) && k.length) ? k : null;
+    }, function () { return null; });
+  });
+  __FF_RAW_CACHE[sec] = p;
+  return p;
+}
+function fundFlowPrepare(ind, code, rows) {
+  if (!ind) return null;
+  if (!rows || !rows.length || !(ind.klines && ind.klines.length)) { ind.__ffCtx = { ok: false }; return ind.__ffCtx; }
+  var byDate = {};
+  for (var i = 0; i < rows.length; i++) {
+    var c = String(rows[i] || '').split(',');
+    if (c.length < 13 || !c[0]) continue;
+    byDate[c[0]] = { net: +c[1], xd: +c[5], dd: +c[4], pct: +c[12], close: +c[11] };
+  }
+  var ctx = { ok: true, net: [], xd: [], dd: [], pct: [], close: [] };
+  for (var k = 0; k < ind.klines.length; k++) {
+    var d = ind.klines[k] ? ind.klines[k].date : null, v = (d && byDate[d]) ? byDate[d] : null;
+    ctx.net.push(v ? v.net : null); ctx.xd.push(v ? v.xd : null);
+    ctx.dd.push(v ? v.dd : null); ctx.pct.push(v ? v.pct : null); ctx.close.push(v ? v.close : null);
+  }
+  ind.__ffCtx = ctx;
+  return ctx;
+}
+/* 连续同号天数（用户方法论①：连续 3 天净流入 → 可能在吸筹；高位突然大幅净流出 → 可能出货）：
+   从 gidx 往前数 net 同号（>0 流入 / <0 流出）连续天数，1 = 当天；缺数 / 0 值即停。 */
+function ffStreakOf(ctx, gidx) {
+  if (!ctx || !ctx.ok || !ctx.net || ctx.net[gidx] == null || !isFinite(ctx.net[gidx]) || ctx.net[gidx] === 0) return { n: 0, dir: 0 };
+  var dir = ctx.net[gidx] > 0 ? 1 : -1, n = 0;
+  for (var t = gidx; t >= 0; t--) {
+    var v = ctx.net[t];
+    if (v == null || !isFinite(v) || v === 0 || (v > 0 ? 1 : -1) !== dir) break;
+    n++;
+  }
+  return { n: n, dir: dir };
+}
+
 function renderChart(ind, focus, opt) {
   var kl = (ind && ind.klines) ? ind.klines : [];
   var n = kl.length;
@@ -9222,52 +9307,57 @@ function renderChart(ind, focus, opt) {
      有 ~58px 可用带宽，20/25 阈值线间距也从 22.7px 拉开到 34.7px）。栈底整体下移：
      日线 adxB 722→758、dateY 744→780、H 766→802；非日线 adxB 558→594、dateY 580→616、H 602→638。
      热区高度 / 纵向网格 y2 都走 indB=adxB 表达式，自动跟随（无第二处字面量）。 */
-  var W = 1130, H = __wKjShow ? 1130 : 638;   /* ★§389 曾 +20 给判读行专用带 → ★§390 判读行移到图左上角徽章右侧，底部带废除，H 回 1130 */
+  var W = 1130, H = __wKjShow ? 1212 : 638;   /* ★§390 判读行移图左上角 H 回 1130 → ★§392 量能下方插入主力资金流副图（68+14）→ 1212 */
   var padL = 58, padR = 64, padT = 58;
   var priceT = padT, priceB = 292;
   var volT = 326, volB = 394;
   /* ★ 2026-10-03（用户要求「量能下，增加一行，指标 kdj」）：量能面板之下再挂一个 KDJ 副图。
-     几何与量能面板一致（高 68、间距 14），日期刻度与底部提示整体下移一个面板的高度。 */
-  var kdjT = 408, kdjB = 476;
+     几何与量能面板一致（高 68、间距 14），日期刻度与底部提示整体下移一个面板的高度。
+     ★§392（2026-11-27 · 用户指令「k线图，量能曲线下方增加主力资金净流入曲线」）：KDJ 之上插入
+     「主力资金」副图 —— 仅日线（资金流是日级数据，新浪 MoneyFlow 无周/分钟口径，§237 周期纪律）
+     → kdjT **首次变周期相关**：日线 490~558，非日线维持 408~476。 */
+  var ffT = __wKjShow ? 408 : 0, ffB = __wKjShow ? 476 : 0;
+  var kdjT = __wKjShow ? 490 : 408, kdjB = __wKjShow ? 558 : 476;
   /* ★ 2026-10-25 §210：周 KDJ 副图 —— 与日 KDJ **同高（68）同间距（14）**，两块面板几何完全平行，
-     于是 0~100 刻度、70/50/30 三条参考线的纵向位置都一致，上下对照不用换算。 */
-  var wKdjT = 490, wKdjB = 558;
+     于是 0~100 刻度、70/50/30 三条参考线的纵向位置都一致，上下对照不用换算。
+     ★§392：日线整体下移 82 → 572~640。 */
+  var wKdjT = __wKjShow ? 572 : 0, wKdjB = __wKjShow ? 640 : 0;
   /* ★ 2026-11-01 §247：主力状态副图 —— 同高（68）同间距（14），zlT 572~ zlB 640。 */
   /* ★§358（2026-11-22 · 用户指令「CYS13 上方绘制 dev 曲线，同时对超买、超卖、回归均线三种状态
      用不同背景色标记」）：周 KDJ 之下、CYS13 之上插入「DEV5 五日乖离率」副图 —— 同高 68、同间距 14，
-     devT 572 ~ devB 640；CYS13 与其下各面板整体下移 82（zlT 654 / adxB 840 / momB 922 / dateY 944 / H 966）。
+     devT 572 ~ devB 640（★§392 起 654~722）；CYS13 与其下各面板整体下移 82（zlT 654 / adxB 840 / momB 922 / dateY 944 / H 966）。
      与 §210/§247/§318/§350 同一条手艺：只改本处常量，热区 / 纵向网格 / 族级铺色 / 分钟换日线
      一律走 indB 表达式自动跟随（无第二处字面量）。 */
   /* ★§383（2026-11-26 · 用户指令「想观察四指标打分与DEV之间的关系……按照四指标打分买入、轻仓，
      减仓，清仓，重仓等，在不同区域用不同颜色表示」，方案 A 定稿：DEV 下方新开独立子面板）：
-     DEV5 之下、CYS13 之上插入「S4 四指标打分」副图 —— 同高 68、同间距 14，s4T 654 ~ s4B 722；
+     DEV5 之下、CYS13 之上插入「S4 四指标打分」副图 —— 同高 68、同间距 14，s4T 654 ~ s4B 722（★§392 起 736~804）；
      CYS13 与其下各面板整体再下移 82（zlT 736 / adxB 922 / momB 1004 / dateY 1026 / H 1048）。
      与 §210/§247/§318/§350/§358 同一条手艺：只改本处常量，热区 / 纵向网格 / 族级铺色 / 分钟换日线
      一律走 indB 表达式自动跟随（无第二处字面量）。仅日线出面板（__wKjShow 守卫）——
      打分原料是日线级 s4kBuyDay（切片到该日），周/月/分钟序列没有对应口径 → 假读数不上图。 */
-  var devT = 572, devB = 640;
-  var s4T = 654, s4B = 722;
+  var devT = __wKjShow ? 654 : 0, devB = __wKjShow ? 722 : 0;    /* ★§392：572/640 → 654/722 整体下移 82 */
+  var s4T = __wKjShow ? 736 : 0, s4B = __wKjShow ? 804 : 0;      /* ★§392：654/722 → 736/804 整体下移 82 */
   /* ★§385（2026-11-26 · 用户指令「K线图中四指标下方增加显示MA5斜率」）：S4 之下、CYS13 之上再插
-     「MA5 斜率」副图 —— 同高 68、同间距 14，m5T 736 ~ m5B 804；CYS13 与其下各面板整体再下移 82
+     「MA5 斜率」副图 —— 同高 68、同间距 14，m5T 736 ~ m5B 804（★§392 起 818~886）；CYS13 与其下各面板整体再下移 82
      （zlT 818 / adxB 1004 / momB 1086 / dateY 1108 / H 1130）。仅日线出面板（__wKjShow 守卫）——
      口径是「5 日均线的日斜率」（ma5SlopePct），周/月/分钟的 5 根是 5 周/5 月 → 假读数不上图。 */
-  var m5T = 736, m5B = 804;
-  var zlT = 818, zlB = 886;   /* ★§385：CYS13 整体下移 82（原 §383 定的 736/804） */
+  var m5T = __wKjShow ? 818 : 0, m5B = __wKjShow ? 886 : 0;      /* ★§392：736/804 → 818/886 整体下移 82 */
+  var zlT = __wKjShow ? 900 : 0, zlB = __wKjShow ? 968 : 0;      /* ★§385：CYS13 整体下移 82（原 §383 定的 736/804）；★§392 → 900/968 */
   /* ★ 2026-11-14 §318（用户要求「SuperTrend + ADX 示意图要在 k线图上显示出来」）：栈底再挂「ADX / DI」副图。
      · **所有周期都画**（ADX 按「根」算，日/周/月/分钟序列无差别 —— 与 KDJ 同层，不像周KDJ/主力状态
        那样只在日线画：那两块的原料是「日线筹码 / 周K对齐」，ADX 的原料就是当前序列本身）；
      · 高度 +82（面板 68 + 间距 14，与 §210/§247 同款）→ 日线 H 684→766、dateY 662→744；
        非日线 H 520→602、dateY 498→580；indB（指标栈底）→ adxB。
      · SuperTrend 不是副图，是价格面板上的叠加线（画在均线之后），不占新面板。 */
-  var adxT = __wKjShow ? 900 : 490, adxB = __wKjShow ? 1004 : 594;   /* ★ §324：面板 68→104（★§385 起整体再下移 82） */
+  var adxT = __wKjShow ? 982 : 490, adxB = __wKjShow ? 1086 : 594;   /* ★ §324：面板 68→104（★§385 起整体再下移 82；★§392 → 982/1086） */
   /* ★§350（2026-11-20 · 用户「在 adx 下方绘制 5日/10日/20日动量曲线」）：日线栈底再挂「动量 MOM」副图。
      高度 +82（面板 68 + 间距 14，与 §210/§247 同款）→ 日线 H 802→884、dateY 780→862；
      indB（指标栈底）→ momB：热区 / 纵向网格 / 分钟换日线 / 族级铺色自动延伸（无第二处字面量）。
      仅日线出面板（__wKjShow 守卫，与周KDJ/主力状态同款）：动量判读三窗阈值（±12/±15/±20 等）
      是「日」级 σ 标定，分钟图只覆盖半天、周线 5/10/20 是「周」—— 套用属假读数（§237 周期纪律）。 */
-  var momT = __wKjShow ? 1018 : 0, momB = __wKjShow ? 1086 : 0;   /* ★§385：动量副图整体下移 82 */
+  var momT = __wKjShow ? 1100 : 0, momB = __wKjShow ? 1168 : 0;  /* ★§385：动量副图整体下移 82；★§392 → 1100/1168 */
   var indB = __wKjShow ? momB : adxB;
-  var dateY = __wKjShow ? 1108 : 616;   /* ★§350：日线 780→862；★§358 → 944；★§383 → 1026；★§385 MA5斜率副图再下移 82 → 1108 */
+  var dateY = __wKjShow ? 1190 : 616;   /* ★§350：日线 780→862；★§358 → 944；★§383 → 1026；★§385 → 1108；★§392 主力资金流副图再下移 82 → 1190 */
   var plotL = padL, plotR = W - padR;
 
   /* ---- ★ 2026-10-24 §206：60 根波段高点 → 压力位（必须在价格刻度之前算：它的价位要并入上沿）---- */
@@ -11101,6 +11191,80 @@ function renderChart(ind, focus, opt) {
     '<text x="' + (plotR + 32) + '" y="' + (yL + 3.8).toFixed(1) + '" fill="#0b1020" font-size="10.5" font-weight="700" ' +
     'text-anchor="middle" font-family="' + M + '">' + last.close.toFixed(2) + '</text></g>';
 
+  /* ===== ★§392：主力资金净流入副图（2026-11-27 · 用户指令「k线图，量能曲线下方增加主力资金净流入曲线」）=====
+     · 几何：量能面板之下、KDJ 之上 —— ffT 408 ~ ffB 476（同高 68 / 同间距 14）；仅日线出面板（__wKjShow 守卫），
+       其下 KDJ 起全栈 +82；非日线不出面板、几何不动。
+     · 数值口径 = 新浪 MoneyFlow 逐日主力净流入（净额，元），窗口对称刻度（±max+10%pad）→ 零轴永远居中，
+       流入/流出幅度可比；折线逐段着色（段两端均值 ≥0 红 / <0 绿，与全站涨红跌绿一致）；null 断开不硬连。
+     · 零轴 = §384 同款金虚线（#ffd166 1.5 / 6 4）。
+     · 右侧角标 kl-ffcor data-k="ff"（§328 点击跟随同模式）：末根值（亿）+ 连续 N 天流入/流出（ffStreakOf）。
+     · 数据到达前先画「数据不足」占位（几何确定）；renderChart 收尾异步预取 → 拉到后原地重绘整图（见 return 前）。
+     · 参考层纪律：曲线只是把软件口径的大单资金可视化，不计分、不参与四指标打分、不发买卖信号、不进钉钉；
+       缺数留白不硬算；拆单/对倒失真在 title 与悬停明细如实披露（用户方法论⑤）。 */
+  if (__wKjShow) (function () {
+    var __ffCtx = (ind && ind.__ffCtx) ? ind.__ffCtx : null;
+    var __ffWin = [], __ffAny = false, __fi, __fi2;
+    if (__ffCtx && __ffCtx.ok) {
+      for (__fi = 0; __fi < ks.length; __fi++) {
+        var __fv0 = (start + __fi < __ffCtx.net.length) ? __ffCtx.net[start + __fi] : null;
+        __ffWin.push(__fv0);
+        if (__fv0 != null && isFinite(__fv0)) __ffAny = true;
+      }
+    }
+    svg += '<text x="' + (padL - 8) + '" y="' + (ffT + 11) + '" fill="#6b779b" font-size="10.5" font-weight="600" text-anchor="end">' +
+      '<title>主力资金净流入 = 大单买入金额 − 大单卖出金额（东财口径：超大单+大单净额，与主流软件同源；push2his 逐日历史，近 ~120 交易日）&#10;' +
+      '连续 3 天净流入 → 可能在吸筹；高位突然大幅净流出 → 可能出货（方法论①）；&#10;' +
+      '资金流入要结合股价看：价涨+流入=真涨 / 价不涨+流入=震荡吸筹 / 价涨+流出=最危险（拉高出货）（方法论③）；&#10;' +
+      '⚠ 假动作：大单拆小单会被软件识别为散户流入（实为主力进场）；对倒制造虚假流入 —— 曲线只是软件口径，不辨真伪（方法论⑤）；&#10;' +
+      '参考层：不计分、不参与四指标打分、不发买卖信号、不进钉钉；缺数留白不硬算。</title>主力资金</text>';
+    if (!__ffAny) {
+      svg += '<text x="' + ((plotL + plotR) / 2).toFixed(1) + '" y="' + ((ffT + ffB) / 2 + 3.5).toFixed(1) +
+        '" fill="#5d6788" font-size="10.5" text-anchor="middle">主力资金流数据不足（东财通道未加载 / 失败 / 非沪深A股）</text>';
+    } else {
+      /* 对称刻度：±max(|min|,|max|)+10% pad → 零轴居中 */
+      var __ffHi = 0;
+      for (__fi = 0; __fi < __ffWin.length; __fi++) {
+        if (__ffWin[__fi] != null && isFinite(__ffWin[__fi]) && Math.abs(__ffWin[__fi]) > __ffHi) __ffHi = Math.abs(__ffWin[__fi]);
+      }
+      var __ffYHi = __ffHi * 1.10 + 1;
+      function YFF(v) { return ffB - (v + __ffYHi) / (2 * __ffYHi) * (ffB - ffT); }
+      /* 零轴金虚线（§384 同款标记：#ffd166 1.5 / 6 4） */
+      svg += '<line x1="' + plotL + '" y1="' + YFF(0).toFixed(1) + '" x2="' + plotR + '" y2="' + YFF(0).toFixed(1) +
+        '" stroke="#ffd166" stroke-width="1.5" stroke-dasharray="6 4"/>';
+      /* 折线：逐段着色（段两端均值 ≥0 红 / <0 绿）；null 断开不硬连 */
+      for (__fi2 = 1; __fi2 < __ffWin.length; __fi2++) {
+        var __fa = __ffWin[__fi2 - 1], __fb = __ffWin[__fi2];
+        if (__fa == null || !isFinite(__fa) || __fb == null || !isFinite(__fb)) continue;
+        svg += '<path d="M' + X(__fi2 - 1).toFixed(1) + ' ' + YFF(__fa).toFixed(1) + 'L' + X(__fi2).toFixed(1) + ' ' + YFF(__fb).toFixed(1) +
+          '" fill="none" stroke="' + (((__fa + __fb) >= 0) ? '#ff8a8a' : '#69e0a8') + '" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" pointer-events="none"/>';
+      }
+      /* 逐列热区 + 悬停明细（该根净额 + 超大单净 + 连续天数 + 方法论判读 + 假动作披露） */
+      for (__fi2 = 0; __fi2 < __ffWin.length; __fi2++) {
+        var __fv2 = __ffWin[__fi2], __gi2 = start + __fi2;
+        var __ffStk = ffStreakOf(__ffCtx, __gi2);
+        var __fxd = (__gi2 < __ffCtx.xd.length) ? __ffCtx.xd[__gi2] : null;
+        var __fpct = (__gi2 < __ffCtx.pct.length) ? __ffCtx.pct[__gi2] : null;
+        var __ftip = ((ks[__fi2] && ks[__fi2].date) || '') + ' 主力资金净流入：' +
+          ((__fv2 == null) ? '—' : ((__fv2 >= 0 ? '+' : '') + (__fv2 / 1e8).toFixed(2) + '亿')) +
+          ((__fv2 != null && __ffStk.n >= 1) ? '（连续 ' + __ffStk.n + ' 天' + (__ffStk.dir > 0 ? '流入' : '流出') + '）' : '') +
+          '&#10;超大单净 ' + ((__fxd == null || !isFinite(__fxd)) ? '—' : ((__fxd >= 0 ? '+' : '') + (__fxd / 1e8).toFixed(2) + '亿')) +
+          '（机构级别）· 当日涨跌幅 ' + ((__fpct == null || !isFinite(__fpct)) ? '—' : ((__fpct >= 0 ? '+' : '') + __fpct.toFixed(2) + '%')) +
+          '&#10;判读：连续 3 天净流入 → 可能在吸筹；高位大幅净流出 → 可能出货；结合股价：价涨+流入=真涨 / 价不涨+流入=吸筹 / 价涨+流出=拉高出货（最危险）；' +
+          '&#10;⚠ 拆单/对倒会让软件口径失真 —— 曲线只是软件口径的大单资金，不辨真伪；东财近 ~120 交易日，更早无数据；参考层不计分、不发信号。';
+        svg += '<rect x="' + (X(__fi2) - step / 2).toFixed(1) + '" y="' + ffT + '" width="' + step.toFixed(1) +
+          '" height="' + (ffB - ffT) + '" fill="transparent"><title>' + escapeHtml(__ftip) + '</title></rect>';
+      }
+      /* 右侧角标：末根读数 + 连续天数（色 = 涨红跌绿；点击跟随 data-k="ff"） */
+      var __ffLv = __ffWin[__ffWin.length - 1];
+      var __ffStk2 = ffStreakOf(__ffCtx, start + ks.length - 1);
+      var __ffCol = (__ffLv == null) ? '#5d6788' : ((__ffLv >= 0) ? '#ff8a8a' : '#69e0a8');
+      svg += '<text class="kl-ffcor" data-k="ff" x="' + (plotR - 8) + '" y="' + (ffT + 11) + '" fill="' + __ffCol + '" font-size="10" ' +
+        'font-family="' + M + '" text-anchor="end" paint-order="stroke" stroke="#101830" stroke-width="2.6" stroke-linejoin="round">主力 ' +
+        ((__ffLv == null) ? '—' : ((__ffLv >= 0 ? '+' : '') + (__ffLv / 1e8).toFixed(2) + '亿' +
+        ((__ffStk2.n >= 1) ? '·连续' + __ffStk2.n + '天' + (__ffStk2.dir > 0 ? '流入' : '流出') : ''))) + '</text>';
+    }
+  })();
+
   /* ===== ★ 2026-10-03（用户要求「量能下，增加一行，指标 kdj」）KDJ 副图 =====
      面板几何与量能面板一致；口径与图例 KDJ 徽标 / 全站 kdjState 完全同源（KDJ_RULE 9,3,3）。
      · 参考线：70 超买（红虚）/ 50 中轴（弱实虚）/ 30 超卖（绿虚），数值标注在左侧刻度位。
@@ -11466,7 +11630,7 @@ function renderChart(ind, focus, opt) {
   })();
 
   /* ===== ★§385：MA5 斜率副图（2026-11-26 · 用户指令「K线图中四指标下方增加显示MA5斜率」）=====
-     · 几何：日线栈内、S4 四指标打分之下、CYS13 之上 —— m5T 736 ~ m5B 804（同高 68 / 同间距 14）。
+     · 几何：日线栈内、S4 四指标打分之下、CYS13 之上 —— m5T 818 ~ m5B 886（同高 68 / 同间距 14；★§392 起 736/804 → +82）。
        仅日线出面板（__wKjShow 守卫）：口径是「5 日均线的日斜率」，周/月/分钟无对应口径。
      · 数值口径 = 持仓日报 / 生命周期分类 **MA5斜率列完全同源**（L3841 段 ma5SlopePct）：
        斜率 =（今 MA5 − 昨 MA5）÷ 昨 MA5 × 100（%/日）；MA5 直接取 ind.ma5 可见窗切片 m5，
@@ -11547,7 +11711,7 @@ function renderChart(ind, focus, opt) {
      底部只保留页脚一行，H 回 1130。 */
 
   /* ===== ★§345：CYS13 副图（2026-11-19 · 用户指令「K线图下方增加实时CYS13指标，替代主力状态指标」）=====
-     · 几何：日线 zlT 818 ~ zlB 886（★§385 起其上新增 MA5 斜率副图，本面板整体再下移 82；参考层）；
+     · 几何：日线 zlT 900 ~ zlB 968（★§385 起其上新增 MA5 斜率副图、★§392 起新增主力资金流副图，本面板整体再下移 82；参考层）；
        主力状态副图停画，但 __zlSer 序列仍保留
        （蜡烛悬停明细的主力状态四读数 / 头部 chip / 点击面板继续消费，不删）。
      · 口径：CYS13 = 收盘价 ÷ 13日均收盘 − 1（klCys13Series；成本均线以均收盘近似 —— 数据源无量额，
@@ -12140,6 +12304,23 @@ function renderChart(ind, focus, opt) {
   __KL_CACHE[uid] = __ent;
   __KL_ORDER.push(uid);
   while (__KL_ORDER.length > __KL_CAP) { delete __KL_CACHE[__KL_ORDER.shift()]; }
+  /* ★§392：主力资金流异步预取 —— 首绘先出面板骨架（「数据不足」占位，几何确定），拉到后原地重绘 chart-wrap
+     （仅日线；__ffTried 防重试环；vm 单测 / 无 document 环境自动跳过 → 面板恒为占位，几何确定不抖动）；
+     拉失败 → __ffCtx={ok:false} 永久占位（不再反复请求）。 */
+  if (__wKjShow && ind && !ind.__ffCtx && !ind.__ffTried && ind.code &&
+      typeof fundFlowFetchAsync === 'function' && typeof document !== 'undefined' && typeof fetch === 'function') {
+    ind.__ffTried = true;
+    (function (__uid, __ind2) {
+      fundFlowFetchAsync(__ind2.code).then(function (__rows) {
+        fundFlowPrepare(__ind2, __ind2.code, __rows);
+        var __wrapEl = document.querySelector('.chart-wrap[data-uid="' + __uid + '"]');
+        if (!__wrapEl) return;
+        var __reHtml = renderChart(__ind2);
+        var __wi = __reHtml.indexOf('<div class="chart-wrap"');
+        if (__wi >= 0) __wrapEl.outerHTML = __reHtml.slice(__wi);
+      }).catch(function () {});
+    })(uid, ind);
+  }
   return head + '<div class="chart-wrap" data-vp="' + escapeHtml(JSON.stringify(vpRows)) +
     '" data-uid="' + uid + '">' + svg + '</div>';
 }
@@ -42575,6 +42756,19 @@ function init() {
             cor2M5el.textContent = '斜率' + cor2Sfx + ' ' +
               ((cor2M5v != null && isFinite(cor2M5v)) ? ((cor2M5v >= 0 ? '+' : '') + cor2M5v.toFixed(2) + '%') : '—');
             if (cor2M5v != null && isFinite(cor2M5v)) cor2M5el.setAttribute('fill', cor2M5v >= 0 ? '#ff8a8a' : '#69e0a8');
+          }
+          /* ★§392：主力资金流角标跟随所点根 —— 与 §385 MA5斜率角标完全同一套姿势（原地改写 textContent+fill）；
+             数据源 = ind.__ffCtx.net 全量序列（新浪逐日，日期对齐），值 = 该根净额（亿）+ ffStreakOf 连续天数；
+             缺数 → 原地不动（不伪造）。 */
+          var cor2Ff = cor2Svg.querySelector('text.kl-ffcor[data-k="ff"]');
+          if (cor2Ff && ent && ent.ind && ent.ind.__ffCtx && ent.ind.__ffCtx.ok) {
+            var cor2Ffv = (gidx < ent.ind.__ffCtx.net.length) ? ent.ind.__ffCtx.net[gidx] : null;
+            var cor2Fs = ffStreakOf(ent.ind.__ffCtx, gidx);
+            if (cor2Ffv != null && isFinite(cor2Ffv)) {
+              cor2Ff.textContent = '主力 ' + (cor2Ffv >= 0 ? '+' : '') + (cor2Ffv / 1e8).toFixed(2) + '亿' +
+                ((cor2Fs.n >= 1) ? ('·连续' + cor2Fs.n + '天' + (cor2Fs.dir > 0 ? '流入' : '流出')) : '');
+              cor2Ff.setAttribute('fill', cor2Ffv >= 0 ? '#ff8a8a' : '#69e0a8');
+            }
           }
           /* ★§387/§390：图左上角判读行跟随所点根 —— klJdgTspans(ind, kl, gidx, floatMarket) 现算四项判读
              （MA5斜率 / 连续破线 / 换手率 / §388 J 指标，规则卡同文案）；历史根换手率用流通市值反推近似
