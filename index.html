@@ -12939,7 +12939,9 @@ function klDaysetHtml(ent, gidx, kj, raw, kjChipHtml, per) {
    显示对应图片中的判断结果」——附 MA5斜率 / 连续破线 / 换手率 三张判读规则卡截图；
    ★§388 用户指令「J>100%超买，J<10%超卖——J指标请同时增加判断结果」追加第④段 J 判读）=====
    四项判读（与页面判读规则卡逐字同文案，零第二套措辞）：
-   · MA5斜率：向上 = 做多；向下 = 弱势反弹，不重仓；
+   · MA5斜率：向上 = 做多（★§391 2026-11-27 用户指令「MA5斜率向上 做多 增加天数」→ 追加连续向上天数
+     「（连续N天）」，ma5UpDaysOf 同口径按该日截断回数，1 = 翻上当天；向上判定同步 a>=b → a>b 与全站
+     ma5[t]−ma5[t−1]>0 同尺，杜绝「向上=做多（连续0天）」矛盾）；向下 = 弱势反弹，不重仓；
    · 连续破线（收盘连续低于 MA5 天数）：1-2 天 = 减仓防守；≥3 天 = 无条件清仓；0 天 = 未破线；
    · 换手率：<10% 正常；10~15% 活跃；≥15% 天量（加速/分歧）；
    · J 指标（日KDJ 的 J）：J>100 超买（红）；J<10 超卖（绿）；10~100 中性（灰）。
@@ -12952,12 +12954,23 @@ function klDaysetHtml(ent, gidx, kj, raw, kjChipHtml, per) {
 function klJdgTspans(ind, kl, gidx, fm) {
   var out = '';
   var ma5 = (ind && ind.ma5) || null;
-  /* ① MA5 斜率（与 §385 副图同一数组同一公式） */
+  /* ① MA5 斜率（与 §385 副图同一数组同一公式）；★§391（2026-11-27 用户指令「MA5斜率向上 做多 增加天数」）：
+     向上时追加连续向上天数「（连续N天）」——ma5UpDaysOf 同口径（ma5[t]−ma5[t−1]>0）按该日截断逐日回数
+     （与斜率往上 chip 同一循环），1 = 翻上当天，只用 kl[0..gidx] 无未来函数；向上恒 ud>=1（翻上当天=1）。
+     向上判定 a>=b → a>b 收紧与全站同尺（平盘不再算向上，否则会出现「向上=做多（连续0天）」矛盾）。 */
   (function () {
     var a = ma5 ? ma5[gidx] : null, b = (gidx >= 1 && ma5) ? ma5[gidx - 1] : null;
     if (a != null && isFinite(a) && b != null && isFinite(b) && b > 0) {
-      var up = a >= b;
-      out += '<tspan fill="' + (up ? '#ff8a8a' : '#69e0a8') + '">│MA5斜率' + (up ? '向上=做多' : '向下=弱势反弹，不重仓') + '</tspan>';
+      var up = a > b;
+      if (up) {
+        var ud = 0, ut, uA, uB;
+        for (ut = gidx; ut >= 1; ut--) {
+          uA = ma5[ut]; uB = ma5[ut - 1];
+          if (uA == null || uB == null || !isFinite(uA) || !isFinite(uB)) break;
+          if (uA - uB > 0) ud++; else break;
+        }
+        out += '<tspan fill="#ff8a8a">│MA5斜率向上=做多（连续' + ud + '天）</tspan>';
+      } else out += '<tspan fill="#69e0a8">│MA5斜率向下=弱势反弹，不重仓</tspan>';
     } else out += '<tspan fill="#5d6788">│MA5斜率—</tspan>';
   })();
   /* ② 连续破线：从该根往前数「收盘 < MA5」的连续天数 */
